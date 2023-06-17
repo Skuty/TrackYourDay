@@ -9,6 +9,7 @@ namespace UI.Core
 
         public SystemStateTracker()
         {
+            
             this.observers = new List<IObserver<SystemState>>();
         }
 

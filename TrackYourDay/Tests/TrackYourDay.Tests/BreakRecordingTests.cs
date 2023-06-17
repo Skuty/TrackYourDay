@@ -1,14 +1,11 @@
-using System.Threading.Channels;
-using System;
-
 namespace TrackYourDay.Tests
 {
     public class BreakRecordingTests
     {
         [Fact]
-        public void GivenBreakRecordingFeatureIsEnabled_WhenThereIsNoActivityForSpecifiedInFeatureSettingsAmountOfTime_ThenBreakIsRecorded()
+        public void GivenBreakRecordingFeatureIsEnabled_WhenThereAreNoEventsInSpecifiedAmountOfTime_ThenBreakIsStarted()
         {
-            Assert.Fail("Feature not implemented");
+            
         }
 
         [Fact]

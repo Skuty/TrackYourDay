@@ -4,7 +4,9 @@ VisualStudioVersion = 17.0.31611.283
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UI", "UI\UI.csproj", "{C387DCA2-B6D8-46CB-832C-FF92669D3E30}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackYourDay.Tests", "Tests\TrackYourDay.Tests\TrackYourDay.Tests.csproj", "{131D9D70-145E-498B-B4D4-53D9F7522D29}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackYourDay.Tests", "Tests\TrackYourDay.Tests\TrackYourDay.Tests.csproj", "{131D9D70-145E-498B-B4D4-53D9F7522D29}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackYourDay.Core", "TrackYourDay.Core\TrackYourDay.Core.csproj", "{DFDB9796-DCBF-4F01-AAD1-3AB941173E68}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,12 +24,16 @@ Global
 		{131D9D70-145E-498B-B4D4-53D9F7522D29}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{131D9D70-145E-498B-B4D4-53D9F7522D29}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{131D9D70-145E-498B-B4D4-53D9F7522D29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DFDB9796-DCBF-4F01-AAD1-3AB941173E68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DFDB9796-DCBF-4F01-AAD1-3AB941173E68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DFDB9796-DCBF-4F01-AAD1-3AB941173E68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DFDB9796-DCBF-4F01-AAD1-3AB941173E68}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		        SolutionGuid = {61F7FB11-1E47-470C-91E2-47F8143E1572}
 		SolutionGuid = {67D615D5-394B-4346-A26E-558AF9E3E0D1}
+		        SolutionGuid = {61F7FB11-1E47-470C-91E2-47F8143E1572}
 	EndGlobalSection
 EndGlobal
