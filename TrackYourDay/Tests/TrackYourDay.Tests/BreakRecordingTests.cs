@@ -1,8 +1,18 @@
+using TrackYourDay.Core;
+
 namespace TrackYourDay.Tests
 {
     public class BreakRecordingTests
     {
+        private readonly Features features;
+
+        public BreakRecordingTests()
+        {
+            this.features = new Features(isBreakRecordingEnabled: true);
+        }
+
         [Fact]
+
         public void GivenBreakRecordingFeatureIsEnabled_WhenThereAreNoEventsInSpecifiedAmountOfTime_ThenBreakIsStarted()
         {
             
