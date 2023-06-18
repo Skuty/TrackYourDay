@@ -15,7 +15,7 @@ namespace TrackYourDay.Tests
 
         public void GivenBreakRecordingFeatureIsEnabled_WhenThereAreNoEventsInSpecifiedAmountOfTime_ThenBreakIsStarted()
         {
-            
+            Assert.Fail("Feature not implemented");
         }
 
         [Fact]
