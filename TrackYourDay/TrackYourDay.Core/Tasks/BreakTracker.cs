@@ -1,47 +1,73 @@
 ﻿using MediatR;
+using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Events;
 
 namespace TrackYourDay.Core.Tasks
 {
     public class BreakTracker
     {
+        private readonly TimeSpan timeOfNoActivityToStartBreak;
+        private readonly bool isTrackingEnabled;
+        
         private readonly IPublisher publisher;
         private Queue<SystemEvent> eventsToProcess = new Queue<SystemEvent>();
         private List<EndedBreak> endedBreaks = new List<EndedBreak>();
         private StartedBreak? currentBreak;
 
-        public BreakTracker(IPublisher publisher)
+
+        public BreakTracker(IPublisher publisher, bool isTrackingEnabled)
         {
             this.publisher = publisher;
+            this.isTrackingEnabled = isTrackingEnabled;
+            this.timeOfNoActivityToStartBreak = TimeSpan.FromMinutes(5);
         }
 
         public void AddEventToProcess(SystemEvent systemEvent)
         {
+            if (!isTrackingEnabled)
+            {
+                return;
+            }
+
             if (systemEvent is null)
             {
                 throw new ArgumentNullException(nameof(systemEvent));
             }
 
-            eventsToProcess.Enqueue(systemEvent);
+            this.eventsToProcess.Enqueue(systemEvent);
         }
 
         public void ProcessEvents()
         {
+            if (!isTrackingEnabled)
+            {
+                return;
+            }
+
             while (eventsToProcess.Any())
             {
-                var systemEvent = eventsToProcess.Dequeue();
-                if (systemEvent is SystemLockedEvent)
+                var processedEvent = eventsToProcess.Dequeue();
+                if (this.currentBreak is null)
                 {
-                    if (currentBreak is not null)
+                    if (processedEvent.Activity is SystemLocked)
                     {
-                        var endedBreak = currentBreak.EndBreak(systemEvent.OccuredOn);
-                        endedBreaks.Add(endedBreak);
-                        currentBreak = null;
+                        this.currentBreak = new StartedBreak(processedEvent.EventDate);
+                        this.publisher.Publish(new BreakStartedNotifcation(Guid.NewGuid(), this.currentBreak));
+                        continue;
+                        ;
                     }
                 }
-                else if (systemEvent is SystemUnlockedEvent)
+
+                if (this.currentBreak is not null)
                 {
-                    currentBreak = new StartedBreak(systemEvent.OccuredOn);
+                    if (processedEvent.Activity is not SystemLocked)
+                    {
+                        var endedBreak = this.currentBreak.EndBreak(processedEvent.EventDate);
+                        this.endedBreaks.Add(endedBreak);
+                        this.currentBreak = null;
+                        this.publisher.Publish(new BreakEndedNotifcation(Guid.NewGuid(), endedBreak));
+                        continue;
+                    }
                 }
             }
         }

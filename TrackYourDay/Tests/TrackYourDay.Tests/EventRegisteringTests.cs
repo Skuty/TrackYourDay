@@ -75,11 +75,13 @@ namespace TrackYourDay.Tests
             publisherMock.Verify(x => x.Publish(It.IsAny<SystemEventRecognizedNotification>(), CancellationToken.None), Times.Once);
         }
 
+        private record class DummyActivity(string name) : Activity(name);
+
         private class AlwaysNewActivityRecognizingStrategy : IActivityRecognizingStrategy
         {
             public Activity RecognizeActivity()
             {
-                return new Activity($"Activity with random id: {DateTime.Now.Ticks}");
+                return new DummyActivity($"Activity with random id: {DateTime.Now.Ticks}");
             }
         }
 
@@ -87,7 +89,7 @@ namespace TrackYourDay.Tests
         {
             public Activity RecognizeActivity()
             {
-                return new Activity($"Same Activity");
+                return new DummyActivity($"Same Activity");
             }
         }
     }
