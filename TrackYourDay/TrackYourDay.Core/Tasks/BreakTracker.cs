@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using TrackYourDay.Core.Activities;
-using TrackYourDay.Core.Events;
 
 namespace TrackYourDay.Core.Tasks
 {
@@ -10,7 +9,7 @@ namespace TrackYourDay.Core.Tasks
         private readonly bool isTrackingEnabled;
         
         private readonly IPublisher publisher;
-        private Queue<SystemEvent> eventsToProcess = new Queue<SystemEvent>();
+        private Queue<ActivityEvent> eventsToProcess = new Queue<ActivityEvent>();
         private List<EndedBreak> endedBreaks = new List<EndedBreak>();
         private StartedBreak? currentBreak;
 
@@ -22,7 +21,7 @@ namespace TrackYourDay.Core.Tasks
             this.timeOfNoActivityToStartBreak = TimeSpan.FromMinutes(5);
         }
 
-        public void AddEventToProcess(SystemEvent systemEvent)
+        public void AddEventToProcess(ActivityEvent systemEvent)
         {
             if (!isTrackingEnabled)
             {

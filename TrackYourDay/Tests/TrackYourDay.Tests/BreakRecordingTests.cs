@@ -2,7 +2,6 @@ using MediatR;
 using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
-using TrackYourDay.Core.Events;
 using TrackYourDay.Core.Tasks;
 
 namespace TrackYourDay.Tests
@@ -41,7 +40,7 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var breakTracker = new BreakTracker(this.publisherMock.Object, this.features.IsBreakRecordingEnabled);
-            breakTracker.AddEventToProcess(SystemEvent.CreateEvent(DateTime.Now, new SystemLocked(), "Dummy event"));
+            breakTracker.AddEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new SystemLocked(), "Dummy event"));
 
             // Act
             breakTracker.ProcessEvents();
@@ -55,8 +54,8 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var breakTracker = new BreakTracker(this.publisherMock.Object, this.features.IsBreakRecordingEnabled);
-            breakTracker.AddEventToProcess(SystemEvent.CreateEvent(DateTime.Now, new SystemLocked(), "Dummy event"));
-            breakTracker.AddEventToProcess(SystemEvent.CreateEvent(DateTime.Now, new FocusOnApplication(), "Dummy event"));
+            breakTracker.AddEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new SystemLocked(), "Dummy event"));
+            breakTracker.AddEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new FocusOnApplication(), "Dummy event"));
 
             // Act
             breakTracker.ProcessEvents();
@@ -69,8 +68,8 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var breakTracker = new BreakTracker(this.publisherMock.Object, this.features.IsBreakRecordingEnabled);
-            breakTracker.AddEventToProcess(SystemEvent.CreateEvent(DateTime.Now, new SystemLocked(), "Dummy event"));
-            breakTracker.AddEventToProcess(SystemEvent.CreateEvent(DateTime.Now, new FocusOnApplication(), "Dummy event"));
+            breakTracker.AddEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new SystemLocked(), "Dummy event"));
+            breakTracker.AddEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new FocusOnApplication(), "Dummy event"));
 
             // Act
             breakTracker.ProcessEvents();

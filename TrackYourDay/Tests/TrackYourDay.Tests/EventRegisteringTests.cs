@@ -2,7 +2,6 @@ using FluentAssertions;
 using MediatR;
 using Moq;
 using TrackYourDay.Core.Activities;
-using TrackYourDay.Core.Events;
 namespace TrackYourDay.Tests
 {
     public class EventRegisteringTests
@@ -19,7 +18,7 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var eventRecognizingStrategy = new AlwaysNewActivityRecognizingStrategy();
-            var eventRecognizer = new SystemEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
+            var eventRecognizer = new ActivityEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
             var existingEventsCounts = 0;
 
             // Act
@@ -34,7 +33,7 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var eventRecognizingStrategy = new AlwaysNewActivityRecognizingStrategy();
-            var eventRecognizer = new SystemEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
+            var eventRecognizer = new ActivityEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
             eventRecognizer.RecognizeEvents();
             var existingEventsCounts = eventRecognizer.GetRegisteredEvents().Count;
 
@@ -50,7 +49,7 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var eventRecognizingStrategy = new AlwaysTheSameActivityRecognizingStrategy();
-            var eventRecognizer = new SystemEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
+            var eventRecognizer = new ActivityEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
             eventRecognizer.RecognizeEvents();
             var existingEventsCounts = eventRecognizer.GetRegisteredEvents().Count;
 
@@ -66,13 +65,13 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var eventRecognizingStrategy = new AlwaysNewActivityRecognizingStrategy();
-            var eventRecognizer = new SystemEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
+            var eventRecognizer = new ActivityEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
 
             // Act
             eventRecognizer.RecognizeEvents();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<SystemEventRecognizedNotification>(), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.IsAny<ActivityEventRecognizedNotification>(), CancellationToken.None), Times.Once);
         }
 
         private record class DummyActivity(string name) : Activity(name);
