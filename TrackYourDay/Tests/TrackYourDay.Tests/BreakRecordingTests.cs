@@ -20,7 +20,18 @@ namespace TrackYourDay.Tests
         [Fact]
         public void GivenBreakRecordingFeatureIsEnabledAndThereIsNoBreakStarted_WhenThereIsNoActivityInSpecifiedAmountOfTime_ThenBreakIsStarted()
         {
-            Assert.Fail("Feature not implemented");
+            // Arrange
+            var clock = new FakeClock();
+            var breakTracker = new BreakTracker(this.publisherMock.Object, this.features.IsBreakRecordingEnabled);
+            breakTracker.AddEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new FocusOnApplication(), "Dummy event"));
+            breakTracker.ProcessEvents();
+
+            // Act
+            clock.SetDate(DateTime.Now.AddMinutes(10));
+            breakTracker.ProcessEvents();
+
+            // Assert
+            this.publisherMock.Verify(x => x.Publish(It.IsAny<BreakStartedNotifcation>(), CancellationToken.None), Times.Once);
         }
 
         [Fact]
