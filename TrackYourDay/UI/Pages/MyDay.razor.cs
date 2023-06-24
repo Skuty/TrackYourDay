@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UI.Core;
+﻿using UI.Core;
 
 namespace UI.Pages
 {
@@ -42,7 +37,8 @@ namespace UI.Pages
             {
                 this.tracking = false;
                 this.myActivitiesService.Unsubscribe();
-            } else
+            }
+            else
             {
                 this.tracking = true;
                 this.myActivitiesService.Subscribe(activityTracker);

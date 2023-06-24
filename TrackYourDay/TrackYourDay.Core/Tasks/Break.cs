@@ -1,5 +1,5 @@
 ﻿namespace TrackYourDay.Core.Tasks
-{    
+{
     public record class StartedBreak(DateTime BreakStartedOn)
 
     {

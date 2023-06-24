@@ -22,18 +22,18 @@
         }
 
         public void AnalyzeNewSystemStates()
-         {   
+        {
             //Change to fifo safe queue
             foreach (var systemState in notProcessedSystemStates)
             {
-                if (this.processedSystemStates.Last().ActiveWindowName  != systemState.ActiveWindowName)
+                if (this.processedSystemStates.Last().ActiveWindowName != systemState.ActiveWindowName)
                 {
                     var newActivity = new MyActivity(DateTime.Now, $"Working on {systemState.ActiveWindowName}");
                     this.activities.Last().End();
-                    this.activities.Add( newActivity );
+                    this.activities.Add(newActivity);
 
-                } 
-                
+                }
+
                 processedSystemStates.Add(systemState);
             }
 

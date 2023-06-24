@@ -1,9 +1,4 @@
 ﻿using FluentAssertions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TrackYourDay.Core.Tasks;
 
 namespace TrackYourDay.Tests
@@ -41,7 +36,7 @@ namespace TrackYourDay.Tests
             var breakStartedOn = DateTime.Now;
             var breakEndedOn = breakStartedOn.AddMinutes(1);
             var breakEnded = new EndedBreak(breakStartedOn, breakEndedOn);
-            
+
             // Act and Assert
             breakEnded.BreakDuration.Should().Be(TimeSpan.FromMinutes(1));
         }

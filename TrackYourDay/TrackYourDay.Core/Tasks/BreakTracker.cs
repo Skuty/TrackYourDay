@@ -7,7 +7,7 @@ namespace TrackYourDay.Core.Tasks
     {
         private readonly TimeSpan timeOfNoActivityToStartBreak;
         private readonly bool isTrackingEnabled;
-        
+
         private readonly IPublisher publisher;
         private Queue<ActivityEvent> eventsToProcess = new Queue<ActivityEvent>();
         private List<EndedBreak> endedBreaks = new List<EndedBreak>();

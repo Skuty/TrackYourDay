@@ -9,7 +9,7 @@ namespace UI.Core
 
         public SystemStateTracker()
         {
-            
+
             this.observers = new List<IObserver<SystemState>>();
         }
 
@@ -25,7 +25,7 @@ namespace UI.Core
 
         private SystemState GetSystemState()
         {
-            
+
             var currentActiveWindowName = GetCaptionOfActiveWindow();
             return new SystemState(currentActiveWindowName);
         }

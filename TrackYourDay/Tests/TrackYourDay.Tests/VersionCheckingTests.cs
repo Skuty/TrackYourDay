@@ -1,7 +1,4 @@
-﻿using FluentAssertions;
-using TrackYourDay.Core.Tasks;
-
-namespace TrackYourDay.Tests
+﻿namespace TrackYourDay.Tests
 {
     public class VersionCheckingTests
     {
