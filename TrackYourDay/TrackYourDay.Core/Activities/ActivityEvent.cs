@@ -1,10 +1,10 @@
 ﻿namespace TrackYourDay.Core.Activities
 {
-    public record class ActivityEvent(Guid Id, DateTime EventDate, Activity Activity, string EventDescription)
+    public record class ActivityEvent(Guid Id, DateTime EventDate, Activity Activity)
     {
-        public static ActivityEvent CreateEvent(DateTime eventDate, Activity activity, string eventDescription)
+        public static ActivityEvent CreateEvent(DateTime eventDate, Activity activity)
         {
-            return new ActivityEvent(Guid.NewGuid(), eventDate, activity, eventDescription);
+            return new ActivityEvent(Guid.NewGuid(), eventDate, activity);
         }
     }
 }

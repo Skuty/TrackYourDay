@@ -26,7 +26,7 @@ namespace TrackYourDay.Core.Activities
 
             if (events.Count == 0)
             {
-                var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity, "Starting Event");
+                var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity);
                 events.Add(newEvent);
                 publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
                 return;
@@ -35,7 +35,7 @@ namespace TrackYourDay.Core.Activities
             ActivityEvent lastEvent = events.Last();
             if (currentActivity != lastEvent.Activity)
             {
-                var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity, "Event based on new activity");
+                var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity);
                 publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
                 events.Add(newEvent);
             }

@@ -4,11 +4,11 @@ using Moq;
 using TrackYourDay.Core.Activities;
 namespace TrackYourDay.Tests
 {
-    public class EventRegisteringTests
+    public class ActivityEventTrackingTests
     {
         private Mock<IPublisher> publisherMock;
 
-        public EventRegisteringTests()
+        public ActivityEventTrackingTests()
         {
             this.publisherMock = new Mock<IPublisher>();
         }

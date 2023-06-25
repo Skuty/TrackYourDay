@@ -21,6 +21,13 @@ namespace TrackYourDay.Core.Tasks
             this.isTrackingEnabled = isTrackingEnabled;
             this.timeOfNoActivityToStartBreak = TimeSpan.FromMinutes(5);
             this.clock = clock;
+            this.lastTimeOfActivity = this.clock.Now;
+        }
+
+        // <summary> This constructor is used only for testing purposes. It should be marked as internal/private in future.<summary>
+        public BreakTracker(StartedBreak startedBreak, IPublisher publisher, IClock clock, bool isTrackingEnabled) : this(publisher, clock, isTrackingEnabled)
+        {
+            this.currentBreak = startedBreak;
         }
 
         public void AddActivityEventToProcess(ActivityEvent systemEvent)
