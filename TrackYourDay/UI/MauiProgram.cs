@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.RecognizingStrategies;
 using TrackYourDay.Core.Breaks;
 using UI.Data;
 
@@ -33,6 +34,7 @@ public static class MauiProgram
         builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityEventTracker>());
 
         builder.Services.AddSingleton<IClock, Clock>();
+        builder.Services.AddSingleton<IActivityRecognizingStrategy, WindowNameActivityRecognizingStrategy>();
         builder.Services.AddSingleton<ActivityEventTracker>();
         builder.Services.AddSingleton<BreakTracker>();
 
