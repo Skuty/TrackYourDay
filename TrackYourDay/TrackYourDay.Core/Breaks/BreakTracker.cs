@@ -1,7 +1,8 @@
 ﻿using MediatR;
 using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Breaks.Notifications;
 
-namespace TrackYourDay.Core.Tasks
+namespace TrackYourDay.Core.Breaks
 {
     public class BreakTracker
     {
@@ -59,7 +60,7 @@ namespace TrackYourDay.Core.Tasks
                 if (this.currentBreak is null)
                 {
                     // Start Break If System Is Locked
-                    if (processedEvent.Activity is SystemLocked)
+                    if (processedEvent.Activity is SystemLockedActivity)
                     {
                         this.currentBreak = new StartedBreak(processedEvent.EventDate);
                         this.publisher.Publish(new BreakStartedNotifcation(Guid.NewGuid(), this.currentBreak));
@@ -80,7 +81,7 @@ namespace TrackYourDay.Core.Tasks
                 // Ending break;
                 if (this.currentBreak is not null)
                 {
-                    if (processedEvent.Activity is not SystemLocked)
+                    if (processedEvent.Activity is not SystemLockedActivity)
                     {
                         var endedBreak = this.currentBreak.EndBreak(processedEvent.EventDate);
                         this.endedBreaks.Add(endedBreak);

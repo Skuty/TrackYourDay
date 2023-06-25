@@ -2,7 +2,8 @@ using MediatR;
 using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
-using TrackYourDay.Core.Tasks;
+using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.Breaks.Notifications;
 
 namespace TrackYourDay.Tests
 {
@@ -13,7 +14,7 @@ namespace TrackYourDay.Tests
         public static IEnumerable<object[]> ActivityEventsToStopBreak =>
             new List<object[]>
             {
-                new object[] { ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00"), new FocusOnApplication()) }
+                new object[] { ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00"), new FocusOnApplicationActivity()) }
             }; 
         
         private Mock<IPublisher> publisherMock;
@@ -34,7 +35,7 @@ namespace TrackYourDay.Tests
             var breakTracker = new BreakTracker(this.publisherMock.Object, this.clockMock.Object, this.features.IsBreakRecordingEnabled);
             var lastEventDate = DateTime.Parse("2000-01-01 12:00:00");
             var timeAmountOfNoActivity = TimeSpan.FromMinutes(5);
-            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(lastEventDate, new FocusOnApplication()));
+            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(lastEventDate, new FocusOnApplicationActivity()));
             breakTracker.ProcessActivityEvents();
 
             // Act
@@ -53,7 +54,7 @@ namespace TrackYourDay.Tests
             var breakTracker = new BreakTracker(startedBreak, this.publisherMock.Object, this.clockMock.Object, this.features.IsBreakRecordingEnabled);
 
             // Act
-            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 01:00"), new SystemLocked()));
+            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 01:00"), new SystemLockedActivity()));
 
             // Assert
             this.publisherMock.Verify(x => x.Publish(It.IsAny<BreakEndedNotifcation>(), CancellationToken.None), Times.Never);
@@ -64,7 +65,7 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var breakTracker = new BreakTracker(this.publisherMock.Object, this.clockMock.Object, this.features.IsBreakRecordingEnabled);
-            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new SystemLocked()));
+            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new SystemLockedActivity()));
 
             // Act
             breakTracker.ProcessActivityEvents();
@@ -94,8 +95,8 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var breakTracker = new BreakTracker(this.publisherMock.Object, this.clockMock.Object, this.features.IsBreakRecordingEnabled);
-            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new SystemLocked()));
-            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new FocusOnApplication()));
+            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new SystemLockedActivity()));
+            breakTracker.AddActivityEventToProcess(ActivityEvent.CreateEvent(DateTime.Now, new FocusOnApplicationActivity()));
 
             // Act
             breakTracker.ProcessActivityEvents();

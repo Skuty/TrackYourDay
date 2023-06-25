@@ -2,7 +2,7 @@
 {
     public abstract record class Activity(string Name);
 
-    public record class SystemLocked() : Activity("System Locked");
+    public record class SystemLockedActivity() : Activity("System Locked");
 
-    public record class FocusOnApplication() : Activity("Focus on Application");
+    public record class FocusOnApplicationActivity() : Activity("Focus on Application");
 }

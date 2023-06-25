@@ -1,10 +1,10 @@
-﻿namespace TrackYourDay.Core.Activities
+﻿namespace TrackYourDay.Core.Activities.Repositories
 {
-    public class ActivityEventRepository
+    public class ActivityEventInMemoryRepository : IActivityEventRepository
     {
         private List<ActivityEvent> Events;
 
-        public ActivityEventRepository()
+        public ActivityEventInMemoryRepository()
         {
             Events = new List<ActivityEvent>();
         }

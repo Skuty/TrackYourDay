@@ -2,6 +2,9 @@ using FluentAssertions;
 using MediatR;
 using Moq;
 using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.Notifications;
+using TrackYourDay.Core.Activities.RecognizingStrategies;
+
 namespace TrackYourDay.Tests
 {
     public class ActivityEventTrackingTests

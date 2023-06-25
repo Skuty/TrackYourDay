@@ -1,19 +1,20 @@
 ﻿using MediatR;
+using TrackYourDay.Core.Activities.Repositories;
 
-namespace TrackYourDay.Core.Activities
+namespace TrackYourDay.Core.Activities.Notifications
 {
     internal class ActivityEventPersistenceHandler : INotificationHandler<ActivityEventRecognizedNotification>
     {
-        private readonly ActivityEventRepository systemEventRepository;
+        private readonly ActivityEventInMemoryRepository systemEventRepository;
 
         public ActivityEventPersistenceHandler()
         {
-            systemEventRepository = new ActivityEventRepository();
+            systemEventRepository = new ActivityEventInMemoryRepository();
         }
         public Task Handle(ActivityEventRecognizedNotification notification, CancellationToken cancellationToken)
         {
             // Place for inbox pattern
-            systemEventRepository.SaveEvent(notification.SystemEvent);
+            systemEventRepository.SaveEvent(notification.ActivityEvent);
             return Task.CompletedTask;
         }
     }

@@ -1,13 +1,13 @@
 ﻿using MediatR;
 
-namespace TrackYourDay.Core.Tasks
+namespace TrackYourDay.Core.Breaks.Notifications
 {
     public class BreakEndedNotifcation : INotification
     {
         public BreakEndedNotifcation(Guid notificationId, EndedBreak endedBreak)
         {
-            this.NotificationId = notificationId;
-            this.EndedBreak = endedBreak;
+            NotificationId = notificationId;
+            EndedBreak = endedBreak;
         }
 
         public Guid NotificationId { get; }
@@ -19,8 +19,8 @@ namespace TrackYourDay.Core.Tasks
     {
         public BreakStartedNotifcation(Guid notificationId, StartedBreak startedBreak)
         {
-            this.NotificationId = notificationId;
-            this.StartedBreak = startedBreak;
+            NotificationId = notificationId;
+            StartedBreak = startedBreak;
         }
 
         public Guid NotificationId { get; }

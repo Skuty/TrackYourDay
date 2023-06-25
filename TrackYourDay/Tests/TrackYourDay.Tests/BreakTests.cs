@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using TrackYourDay.Core.Tasks;
+using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Tests
 {

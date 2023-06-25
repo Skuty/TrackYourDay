@@ -1,4 +1,4 @@
-﻿namespace TrackYourDay.Core.Tasks
+﻿namespace TrackYourDay.Core.Breaks
 {
     public record class StartedBreak(DateTime BreakStartedOn)
 
@@ -18,10 +18,5 @@
 
             return new EndedBreak(BreakStartedOn, breakEndedOn);
         }
-    }
-
-    public record class EndedBreak(DateTime BreakStartedOn, DateTime BreakEndedOn)
-    {
-        public TimeSpan BreakDuration => BreakEndedOn - BreakStartedOn;
     }
 }
