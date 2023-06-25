@@ -22,7 +22,6 @@ public static class MauiProgram
         //Tracker Service registration
 
 
-
         //End of Tracker Service Registraiton
 
 #if DEBUG

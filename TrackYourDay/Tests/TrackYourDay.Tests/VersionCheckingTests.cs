@@ -2,19 +2,19 @@
 {
     public class VersionCheckingTests
     {
-        [Fact]
+        [Fact(Skip = "To be implemented in future")]
         public void ReturnsVersionOfCurrentApplication()
         {
             Assert.Fail("Not implemented");
         }
 
-        [Fact]
+        [Fact(Skip = "To be implemented in future")]
         public void ReturnsVersionOfNewestAvailableApplication()
         {
             Assert.Fail("Not implemented");
         }
 
-        [Fact]
+        [Fact(Skip = "To be implemented in future")]
         public void ReturnsTrueIfNewerVersionIsAvailable()
         {
             Assert.Fail("Not implemented");
