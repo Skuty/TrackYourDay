@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using TrackYourDay.Core.Breaks;
 
-namespace TrackYourDay.Tests
+namespace TrackYourDay.Tests.Breaks
 {
     public class BreakTests
     {

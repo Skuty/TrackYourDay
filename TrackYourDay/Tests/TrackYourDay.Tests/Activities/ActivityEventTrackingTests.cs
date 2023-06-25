@@ -5,7 +5,7 @@ using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Activities.Notifications;
 using TrackYourDay.Core.Activities.RecognizingStrategies;
 
-namespace TrackYourDay.Tests
+namespace TrackYourDay.Tests.Activities
 {
     public class ActivityEventTrackingTests
     {
@@ -13,7 +13,7 @@ namespace TrackYourDay.Tests
 
         public ActivityEventTrackingTests()
         {
-            this.publisherMock = new Mock<IPublisher>();
+            publisherMock = new Mock<IPublisher>();
         }
 
         [Fact]
@@ -21,14 +21,14 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var eventRecognizingStrategy = new AlwaysNewActivityRecognizingStrategy();
-            var eventRecognizer = new ActivityEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
+            var eventRecognizer = new ActivityEventTracker(publisherMock.Object, eventRecognizingStrategy);
             var existingEventsCounts = 0;
 
             // Act
             eventRecognizer.RecognizeEvents();
 
             // Assert
-            eventRecognizer.GetRegisteredEvents().Count.Should().Be(existingEventsCounts + 1);
+            eventRecognizer.GetRegisteredActivities().Count.Should().Be(existingEventsCounts + 1);
         }
 
         [Fact]
@@ -36,15 +36,15 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var eventRecognizingStrategy = new AlwaysNewActivityRecognizingStrategy();
-            var eventRecognizer = new ActivityEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
+            var eventRecognizer = new ActivityEventTracker(publisherMock.Object, eventRecognizingStrategy);
             eventRecognizer.RecognizeEvents();
-            var existingEventsCounts = eventRecognizer.GetRegisteredEvents().Count;
+            var existingEventsCounts = eventRecognizer.GetRegisteredActivities().Count;
 
             // Act
             eventRecognizer.RecognizeEvents();
 
             // Assert
-            eventRecognizer.GetRegisteredEvents().Count.Should().Be(existingEventsCounts + 1);
+            eventRecognizer.GetRegisteredActivities().Count.Should().Be(existingEventsCounts + 1);
         }
 
         [Fact]
@@ -52,15 +52,15 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var eventRecognizingStrategy = new AlwaysTheSameActivityRecognizingStrategy();
-            var eventRecognizer = new ActivityEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
+            var eventRecognizer = new ActivityEventTracker(publisherMock.Object, eventRecognizingStrategy);
             eventRecognizer.RecognizeEvents();
-            var existingEventsCounts = eventRecognizer.GetRegisteredEvents().Count;
+            var existingEventsCounts = eventRecognizer.GetRegisteredActivities().Count;
 
             // Act
             eventRecognizer.RecognizeEvents();
 
             // Assert
-            eventRecognizer.GetRegisteredEvents().Count.Should().Be(existingEventsCounts);
+            eventRecognizer.GetRegisteredActivities().Count.Should().Be(existingEventsCounts);
         }
 
         [Fact]
@@ -68,7 +68,7 @@ namespace TrackYourDay.Tests
         {
             // Arrange
             var eventRecognizingStrategy = new AlwaysNewActivityRecognizingStrategy();
-            var eventRecognizer = new ActivityEventTracker(this.publisherMock.Object, eventRecognizingStrategy);
+            var eventRecognizer = new ActivityEventTracker(publisherMock.Object, eventRecognizingStrategy);
 
             // Act
             eventRecognizer.RecognizeEvents();

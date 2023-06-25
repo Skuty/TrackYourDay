@@ -9,13 +9,13 @@ namespace TrackYourDay.Core.Activities
     {
         private readonly IPublisher publisher;
         private readonly IActivityRecognizingStrategy activityRecognizingStrategy;
-        private List<ActivityEvent> events;
+        private List<ActivityEvent> activityEvents;
 
         public ActivityEventTracker(IPublisher publisher, IActivityRecognizingStrategy activityRecognizingStrategy)
         {
             this.publisher = publisher;
             this.activityRecognizingStrategy = activityRecognizingStrategy;
-            this.events = new List<ActivityEvent>();
+            this.activityEvents = new List<ActivityEvent>();
         }
 
         public void RecognizeEvents()
@@ -26,26 +26,26 @@ namespace TrackYourDay.Core.Activities
                 return;
             }
 
-            if (events.Count == 0)
+            if (activityEvents.Count == 0)
             {
                 var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity);
-                events.Add(newEvent);
+                activityEvents.Add(newEvent);
                 publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
                 return;
             }
 
-            ActivityEvent lastEvent = events.Last();
+            ActivityEvent lastEvent = activityEvents.Last();
             if (currentActivity != lastEvent.Activity)
             {
                 var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity);
                 publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
-                events.Add(newEvent);
+                activityEvents.Add(newEvent);
             }
         }
 
-        public ImmutableList<ActivityEvent> GetRegisteredEvents()
+        public ImmutableList<ActivityEvent> GetRegisteredActivities()
         {
-            return events.ToImmutableList();
+            return activityEvents.ToImmutableList();
         }
     }
 }
