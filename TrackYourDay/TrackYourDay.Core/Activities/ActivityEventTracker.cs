@@ -7,43 +7,43 @@ namespace TrackYourDay.Core.Activities
     {
         private readonly IPublisher publisher;
         private readonly IActivityRecognizingStrategy activityRecognizingStrategy;
-        private List<ActivityEvent> Events;
+        private List<ActivityEvent> events;
 
         public ActivityEventTracker(IPublisher publisher, IActivityRecognizingStrategy activityRecognizingStrategy)
         {
             this.publisher = publisher;
             this.activityRecognizingStrategy = activityRecognizingStrategy;
-            Events = new List<ActivityEvent>();
+            this.events = new List<ActivityEvent>();
         }
 
         public void RecognizeEvents()
         {
-            Activity currentActivity = activityRecognizingStrategy.RecognizeActivity();
+            Activity currentActivity = this.activityRecognizingStrategy.RecognizeActivity();
             if (currentActivity is null)
             {
                 return;
             }
 
-            if (Events.Count == 0)
+            if (events.Count == 0)
             {
                 var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity, "Starting Event");
-                Events.Add(newEvent);
+                events.Add(newEvent);
                 publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
                 return;
             }
 
-            ActivityEvent lastEvent = Events.Last();
+            ActivityEvent lastEvent = events.Last();
             if (currentActivity != lastEvent.Activity)
             {
                 var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity, "Event based on new activity");
                 publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
-                Events.Add(newEvent);
+                events.Add(newEvent);
             }
         }
 
         public ImmutableList<ActivityEvent> GetRegisteredEvents()
         {
-            return Events.ToImmutableList();
+            return events.ToImmutableList();
         }
     }
 }
