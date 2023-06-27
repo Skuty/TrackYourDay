@@ -41,9 +41,6 @@ public static class MauiProgram
         builder.Services.AddHangfire(c => c.UseInMemoryStorage());
         builder.Services.AddHangfireServer();
 
-        var buildedBuilder = builder.Build();
-        var activityEventTracker = buildedBuilder.Services.GetRequiredService<ActivityEventTracker>();
-        RecurringJob.AddOrUpdate("ActivityTrackerJob", () => activityEventTracker.RecognizeEvents(), Cron.Minutely);
-        return buildedBuilder;
+        return builder.Build();
     }
 }

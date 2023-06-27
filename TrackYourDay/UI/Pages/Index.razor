@@ -1,7 +1,15 @@
 ﻿@page "/"
+@using Hangfire;
 
 <h1>Track Your Day!</h1>
 
 <div>Summed time of all Activities: --:--:--</div>
 
 <div>Summed time of all Breaks: --:--:--</div>
+
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+    }
+}
