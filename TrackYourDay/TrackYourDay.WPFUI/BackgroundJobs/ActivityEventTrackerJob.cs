@@ -2,12 +2,13 @@
 using Quartz;
 using System;
 using System.Threading.Tasks;
+using TrackYourDay.Core.Activities;
 
 namespace TrackYourDay.WPFUI.BackgroundJobs
 {
     internal class ActivityEventTrackerJob : IJob
     {
-        private readonly ISharedInstance sharedInstance;
+        private readonly ActivityEventTracker activityEventTracker;
 
         internal static IJobDetail DefaultJobDetail => JobBuilder.Create<ActivityEventTrackerJob>()
             .WithIdentity("ActivityEventTracker", "Trackers")
@@ -21,15 +22,14 @@ namespace TrackYourDay.WPFUI.BackgroundJobs
                   .RepeatForever())
              .Build();
 
-        public ActivityEventTrackerJob(ISharedInstance sharedInstance)
+        public ActivityEventTrackerJob(ActivityEventTracker activityEventTracker)
         {
-            this.sharedInstance = sharedInstance;
+            this.activityEventTracker = activityEventTracker;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
-            this.sharedInstance.Increment();
-            await Console.Out.WriteLineAsync("ActivityEventTrackerJob");
+            this.activityEventTracker.RecognizeEvents();
         }
     }
 }

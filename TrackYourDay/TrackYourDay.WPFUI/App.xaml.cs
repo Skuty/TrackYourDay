@@ -3,6 +3,10 @@ using Quartz;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using TrackYourDay.Core;
+using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.RecognizingStrategies;
+using TrackYourDay.Core.Breaks;
 using TrackYourDay.WPFUI.BackgroundJobs;
 
 namespace TrackYourDay.WPFUI
@@ -23,9 +27,17 @@ namespace TrackYourDay.WPFUI
         private void ConfigureServices(ServiceCollection serviceCollection)
         {
             serviceCollection.AddSingleton<ISharedInstance, SharedInstance>();
-            serviceCollection.AddWpfBlazorWebView();
+
+            serviceCollection.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityEventTracker>());
+            serviceCollection.AddSingleton<IClock, Clock>();
+            serviceCollection.AddScoped<IActivityRecognizingStrategy, WindowNameActivityRecognizingStrategy>();
+            serviceCollection.AddSingleton<ActivityEventTracker>();
+            serviceCollection.AddSingleton<BreakTracker>();
+
             serviceCollection.AddQuartz(o => o.UseMicrosoftDependencyInjectionJobFactory());
             serviceCollection.AddQuartzHostedService();
+
+            serviceCollection.AddWpfBlazorWebView();
         }
 
         private async Task ScheduleJobs()

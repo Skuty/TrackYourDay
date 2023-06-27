@@ -1,21 +1,24 @@
 @using Hangfire;
+@using TrackYourDay.Core.Activities;
 <h1>Counter</h1>
 
 <p>Current count: @currentCount</p>
 <p>Shared count: @sharedCount</p>
-
+<p>Activity: @activity</p>
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
 @code {
     [Inject]
-    private ISharedInstance sharedInstance { get; set; }
+    private ActivityEventTracker activityEventTracker { get; set; }
 
     private int currentCount = 0;
     private int sharedCount = 0;
+    private string activity = "None";
 
     private void IncrementCount()
     {
         currentCount++;
-        this.sharedCount = sharedInstance.GetCounter();
+        this.sharedCount = activityEventTracker.GetRegisteredActivities().Count();
+    this.activity = activityEventTracker.GetRegisteredActivities().FirstOrDefault()?.Activity.Name;
     }
 }
