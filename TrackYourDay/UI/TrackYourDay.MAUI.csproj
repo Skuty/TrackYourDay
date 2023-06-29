@@ -66,6 +66,11 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Remove="Resources\Images\maximize.png" />
+      <None Remove="Resources\Images\minimize.png" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Hangfire" Version="1.8.2" />
         <PackageReference Include="Hangfire.Core" Version="1.8.2" />
         <PackageReference Include="Hangfire.InMemory" Version="0.4.1" />

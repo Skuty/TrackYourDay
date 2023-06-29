@@ -1,16 +1,25 @@
 @using Hangfire;
+@using System.Windows;
 @using TrackYourDay.Core.Activities;
-<h1>Counter</h1>
 
-<p>Current count: @currentCount</p>
-<p>Shared count: @sharedCount</p>
-<p>Activity: @activity</p>
+@if(this.isFullScreen)
+{
+    <img src="images\minimize.png" style="height: 25px; width:25px" @onclick="this.TurnFullScreenOff"/>
+} 
+else
+{
+    <img src="images\maximize.png" style="height: 25px; width:25px" @onclick="this.TurnFullScreenOn" />
+}
+
+<p>Activities: 0 for 00:00</p>
+<p>Breaks: 0 for 00:00</p>
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
 @code {
     [Inject]
     private ActivityEventTracker activityEventTracker { get; set; }
 
+    private bool isFullScreen = false;
     private int currentCount = 0;
     private int sharedCount = 0;
     private string activity = "None";
@@ -19,6 +28,18 @@
     {
         currentCount++;
         this.sharedCount = activityEventTracker.GetRegisteredActivities().Count();
-    this.activity = activityEventTracker.GetRegisteredActivities().FirstOrDefault()?.Activity.Name;
+        this.activity = activityEventTracker.GetRegisteredActivities().FirstOrDefault()?.Activity.Name;
+    }
+
+    private void TurnFullScreenOn()
+    {
+        this.isFullScreen = true;
+        Application.Current.MainWindow.WindowState = WindowState.Maximized;
+    }
+
+    private void TurnFullScreenOff()
+    {
+        this.isFullScreen = false;
+        Application.Current.MainWindow.WindowState = WindowState.Normal;
     }
 }
