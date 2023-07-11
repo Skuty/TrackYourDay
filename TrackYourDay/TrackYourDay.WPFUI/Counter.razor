@@ -34,12 +34,12 @@ else
     private void TurnFullScreenOn()
     {
         this.isFullScreen = true;
-        Application.Current.MainWindow.WindowState = WindowState.Maximized;
+        Application.Current.MainWindow.Show();
     }
 
     private void TurnFullScreenOff()
     {
         this.isFullScreen = false;
-        Application.Current.MainWindow.WindowState = WindowState.Normal;
+        Application.Current.MainWindow.Hide();
     }
 }

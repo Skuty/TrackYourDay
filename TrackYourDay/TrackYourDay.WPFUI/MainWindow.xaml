@@ -4,10 +4,33 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:blazor="clr-namespace:Microsoft.AspNetCore.Components.WebView.Wpf;assembly=Microsoft.AspNetCore.Components.WebView.Wpf"
-        xmlns:local="clr-namespace:TrackYourDay.WPFUI"
+        xmlns:local="clr-namespace:TrackYourDay.WPFUI" 
+        xmlns:tb="http://www.hardcodet.net/taskbar" 
+        xmlns:uicommands="clr-namespace:TrackYourDay.WPFUI.Commands"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" Closing="Window_Closing" WindowStartupLocation="CenterScreen" WindowState="Maximized">
+
     <Grid>
+        <Grid.Resources>
+            <uicommands:ShowApplicationCommand x:Key="ShowApplicationCommand" />
+            <uicommands:CloseApplicationCommand x:Key="CloseApplicationCommand" />
+        </Grid.Resources>
+
+        <tb:TaskbarIcon 
+            ToolTipText="Track Your Day!" 
+            LeftClickCommand="{StaticResource ShowApplicationCommand}"
+            MenuActivation="RightClick">
+
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem 
+                        Header="Close" 
+                        Command="{StaticResource CloseApplicationCommand}"/>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+
+
         <blazor:BlazorWebView HostPage="wwwroot\index.html" Services="{DynamicResource services}">
             <blazor:BlazorWebView.RootComponents>
                 <blazor:RootComponent Selector="#app" ComponentType="{x:Type local:Counter}" />
