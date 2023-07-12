@@ -18,6 +18,7 @@
 
         <tb:TaskbarIcon 
             ToolTipText="Track Your Day!" 
+            IconSource="Resources\DefaultClockIcon.ico"
             LeftClickCommand="{StaticResource ShowApplicationCommand}"
             MenuActivation="RightClick">
 
