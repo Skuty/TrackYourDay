@@ -2,15 +2,6 @@
 @using System.Windows;
 @using TrackYourDay.Core.Activities;
 
-@if(this.isFullScreen)
-{
-    <img src="images\minimize.png" style="height: 25px; width:25px" @onclick="this.TurnFullScreenOff"/>
-} 
-else
-{
-    <img src="images\maximize.png" style="height: 25px; width:25px" @onclick="this.TurnFullScreenOn" />
-}
-
 <p>Activities: 0 for 00:00</p>
 <p>Breaks: 0 for 00:00</p>
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>

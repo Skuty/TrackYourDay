@@ -5,10 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:blazor="clr-namespace:Microsoft.AspNetCore.Components.WebView.Wpf;assembly=Microsoft.AspNetCore.Components.WebView.Wpf"
         xmlns:local="clr-namespace:TrackYourDay.WPFUI" 
+        xmlns:wwwpages="clr-namespace:TrackYourDay.WPFUI.wwwroot.Pages"
         xmlns:tb="http://www.hardcodet.net/taskbar" 
         xmlns:uicommands="clr-namespace:TrackYourDay.WPFUI.Commands"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" Closing="Window_Closing" WindowStartupLocation="CenterScreen" WindowState="Maximized">
+        Title="Track Your Day" Height="450" Width="800" Closing="Window_Closing" WindowStartupLocation="CenterScreen" WindowState="Maximized" Icon="/Resources/DefaultClockIcon.ico">
 
     <Grid>
         <Grid.Resources>
@@ -34,7 +35,7 @@
 
         <blazor:BlazorWebView HostPage="wwwroot\index.html" Services="{DynamicResource services}">
             <blazor:BlazorWebView.RootComponents>
-                <blazor:RootComponent Selector="#app" ComponentType="{x:Type local:Counter}" />
+                <blazor:RootComponent Selector="#app" ComponentType="{x:Type wwwpages:Summary}" />
             </blazor:BlazorWebView.RootComponents>
         </blazor:BlazorWebView>
     </Grid>
