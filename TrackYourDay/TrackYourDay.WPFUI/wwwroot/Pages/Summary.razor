@@ -1,36 +1,37 @@
 @using Hangfire;
 @using System.Windows;
 @using TrackYourDay.Core.Activities;
+@using TrackYourDay.Core.Breaks;
 
-<p>Activities: 0 for 00:00</p>
-<p>Breaks: 0 for 00:00</p>
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<p>Last activity: @lastActivity?.EventDate @lastActivity?.Activity?.Name </p>
+<p>Activities: @activitiesCount for @activitiesTotalTime.Hours : @activitiesTotalTime.Minutes</p>
+<p>Breaks: @breaksCount for @breaksTotalTime.Hours : @breaksTotalTime.Minutes</p>
+<button class="btn btn-primary" @onclick="Refresh">Click me</button>
 
 @code {
     [Inject]
     private ActivityEventTracker activityEventTracker { get; set; }
+    [Inject]
+    private BreakTracker breakTracker { get; set; }
 
-    private bool isFullScreen = false;
-    private int currentCount = 0;
-    private int sharedCount = 0;
-    private string activity = "None";
+    private ActivityEvent lastActivity;
+    private int activitiesCount;
+    private int breaksCount;
+    private TimeSpan activitiesTotalTime;
+    private TimeSpan breaksTotalTime;
 
-    private void IncrementCount()
+    private void Refresh()
     {
-        currentCount++;
-        this.sharedCount = activityEventTracker.GetRegisteredActivities().Count();
-        this.activity = activityEventTracker.GetRegisteredActivities().FirstOrDefault()?.Activity.Name;
-    }
+        this.activitiesCount = activityEventTracker.GetRegisteredActivities().Count;
+        this.lastActivity = activityEventTracker.GetRegisteredActivities().Last();
 
-    private void TurnFullScreenOn()
-    {
-        this.isFullScreen = true;
-        Application.Current.MainWindow.Show();
-    }
-
-    private void TurnFullScreenOff()
-    {
-        this.isFullScreen = false;
-        Application.Current.MainWindow.Hide();
+        this.breaksCount = breakTracker.endedBreaks.Count;
+        var TimeSpans = breakTracker.endedBreaks.Select(x => x.BreakDuration).ToList();
+        var result = new TimeSpan();
+        foreach (var span in TimeSpans)
+        {
+            result = result.Add(span);
+        }
+        this.breaksTotalTime = result;
     }
 }

@@ -12,7 +12,7 @@ namespace TrackYourDay.Core.Breaks
         private readonly IPublisher publisher;
         private readonly IClock clock;
         private Queue<ActivityEvent> eventsToProcess = new Queue<ActivityEvent>();
-        private List<EndedBreak> endedBreaks = new List<EndedBreak>();
+        public List<EndedBreak> endedBreaks = new List<EndedBreak>();
         private StartedBreak? currentBreak;
         private DateTime lastTimeOfActivity;
 
@@ -20,10 +20,20 @@ namespace TrackYourDay.Core.Breaks
         {
             this.publisher = publisher;
             this.isTrackingEnabled = isTrackingEnabled;
-            this.timeOfNoActivityToStartBreak = TimeSpan.FromMinutes(5);
+            this.timeOfNoActivityToStartBreak = TimeSpan.FromSeconds(5);
             this.clock = clock;
             this.lastTimeOfActivity = this.clock.Now;
         }
+
+        public BreakTracker(IPublisher publisher, IClock clock)
+        {
+            this.publisher = publisher;
+            this.isTrackingEnabled = true;
+            this.timeOfNoActivityToStartBreak = TimeSpan.FromSeconds(5);
+            this.clock = clock;
+            this.lastTimeOfActivity = this.clock.Now;
+        }
+
 
         // <summary> This constructor is used only for testing purposes. It should be marked as internal/private in future.<summary>
         public BreakTracker(StartedBreak startedBreak, IPublisher publisher, IClock clock, bool isTrackingEnabled) : this(publisher, clock, isTrackingEnabled)
