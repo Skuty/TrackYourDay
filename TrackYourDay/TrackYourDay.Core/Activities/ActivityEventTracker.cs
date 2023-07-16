@@ -38,8 +38,8 @@ namespace TrackYourDay.Core.Activities
             if (currentActivity != lastEvent.Activity)
             {
                 var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity);
-                publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
                 activityEvents.Add(newEvent);
+                publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
             }
         }
 

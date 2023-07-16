@@ -18,7 +18,7 @@ namespace TrackYourDay.Core.Activities.RecognizingStrategies
                 return new SystemLockedActivity();
             }
 
-            return new FocusOnApplicationActivity();
+            return new FocusOnApplicationActivity(currentActiveWindowName);
         }
 
         #region WindowName

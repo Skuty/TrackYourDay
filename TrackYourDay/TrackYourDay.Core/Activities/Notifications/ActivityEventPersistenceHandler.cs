@@ -11,6 +11,7 @@ namespace TrackYourDay.Core.Activities.Notifications
         {
             systemEventRepository = new ActivityEventInMemoryRepository();
         }
+
         public Task Handle(ActivityEventRecognizedNotification notification, CancellationToken cancellationToken)
         {
             // Place for inbox pattern

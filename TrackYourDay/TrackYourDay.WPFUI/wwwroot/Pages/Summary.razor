@@ -3,10 +3,17 @@
 @using TrackYourDay.Core.Activities;
 @using TrackYourDay.Core.Breaks;
 
-<p>Last activity: @lastActivity?.EventDate @lastActivity?.Activity?.Name </p>
-<p>Activities: @activitiesCount for @activitiesTotalTime.Hours : @activitiesTotalTime.Minutes</p>
-<p>Breaks: @breaksCount for @breaksTotalTime.Hours : @breaksTotalTime.Minutes</p>
-<button class="btn btn-primary" @onclick="Refresh">Click me</button>
+<h1><img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" /> Track Your Day</h1>
+<div>
+    <h2>Activities</h2>
+    <p>All activities: @activitiesCount</p>
+    <p>Last activity at @lastActivity?.EventDate - @lastActivity?.Activity.ToString()</p>
+</div>
+<div>
+    <h2>Breaks</h2>
+    <p>All breaks: @breaksCount with duration @allBreaksDuration.Hours h @allBreaksDuration.Minutes m @allBreaksDuration.Seconds s</p>
+    <p>Last ended break at @lastEndedBreak?.BreakStartedOn with duration @lastEndedBreak?.BreakDuration.Hours h @lastEndedBreak?.BreakDuration.Minutes m  @lastEndedBreak?.BreakDuration.Seconds s</p>
+</div>
 
 @code {
     [Inject]
@@ -16,9 +23,10 @@
 
     private ActivityEvent lastActivity;
     private int activitiesCount;
+
+    private EndedBreak lastEndedBreak;
     private int breaksCount;
-    private TimeSpan activitiesTotalTime;
-    private TimeSpan breaksTotalTime;
+    private TimeSpan allBreaksDuration;
 
     private void Refresh()
     {
@@ -26,12 +34,10 @@
         this.lastActivity = activityEventTracker.GetRegisteredActivities().Last();
 
         this.breaksCount = breakTracker.endedBreaks.Count;
-        var TimeSpans = breakTracker.endedBreaks.Select(x => x.BreakDuration).ToList();
-        var result = new TimeSpan();
-        foreach (var span in TimeSpans)
+        if (breakTracker.endedBreaks.Count > 0)
         {
-            result = result.Add(span);
+            this.allBreaksDuration = breakTracker.endedBreaks.Select(x => x.BreakDuration).Aggregate((x, y) => x.Add(y));
         }
-        this.breaksTotalTime = result;
+        this.lastEndedBreak = this.breakTracker.endedBreaks.Last();
     }
 }

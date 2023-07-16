@@ -14,7 +14,7 @@ namespace TrackYourDay.Tests.Activities
             // Arrange
             var activities = new List<ActivityEvent>()
             {
-                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00:00"), new FocusOnApplicationActivity())
+                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00:00"), new FocusOnApplicationActivity(string.Empty))
             };
             var sut = new ActivitiesSummary(activities);
 
@@ -34,9 +34,9 @@ namespace TrackYourDay.Tests.Activities
             // Arrange
             var activities = new List<ActivityEvent>()
             {
-                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00:00"), new FocusOnApplicationActivity()),
+                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00:00"), new FocusOnApplicationActivity(string.Empty)),
                 ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:30:00"), new SystemLockedActivity()),
-                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:45:00"), new FocusOnApplicationActivity())
+                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:45:00"), new FocusOnApplicationActivity(string.Empty))
             };
             var sut = new ActivitiesSummary(activities);
 
@@ -55,11 +55,11 @@ namespace TrackYourDay.Tests.Activities
             // Arrange
             var activities = new List<ActivityEvent>()
             {
-                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00:00"), new FocusOnApplicationActivity()),
+                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00:00"), new FocusOnApplicationActivity(string.Empty)),
                 ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:30:00"), new SystemLockedActivity()),
-                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:50:00"), new FocusOnApplicationActivity()),
+                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:50:00"), new FocusOnApplicationActivity(string.Empty)),
                 ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:55:00"), new SystemLockedActivity()),
-                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 13:00:00"), new FocusOnApplicationActivity())
+                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 13:00:00"), new FocusOnApplicationActivity(string.Empty))
             };
             var sut = new ActivitiesSummary(activities);
 
@@ -76,11 +76,11 @@ namespace TrackYourDay.Tests.Activities
             // Arrange
             var activities = new List<ActivityEvent>()
             {
-                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00:00"), new FocusOnApplicationActivity()),
+                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:00:00"), new FocusOnApplicationActivity(string.Empty)),
                 ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:30:00"), new SystemLockedActivity()),
-                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:50:00"), new FocusOnApplicationActivity()),
+                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:50:00"), new FocusOnApplicationActivity(string.Empty)),
                 ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 12:55:00"), new SystemLockedActivity()),
-                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 13:00:00"), new FocusOnApplicationActivity())
+                ActivityEvent.CreateEvent(DateTime.Parse("2000-01-01 13:00:00"), new FocusOnApplicationActivity(string.Empty))
             };
 
             var sut = new ActivitiesSummary(activities);
