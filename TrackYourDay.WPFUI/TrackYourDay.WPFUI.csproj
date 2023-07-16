@@ -30,7 +30,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\DefaultClockIcon.ico" />
+    <Resource Include="Resources\DefaultClockIcon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>
