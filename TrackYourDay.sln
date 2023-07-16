@@ -2,13 +2,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31611.283
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackYourDay.MAUI", "UI\TrackYourDay.MAUI.csproj", "{C387DCA2-B6D8-46CB-832C-FF92669D3E30}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackYourDay.Tests", "Tests\TrackYourDay.Tests\TrackYourDay.Tests.csproj", "{131D9D70-145E-498B-B4D4-53D9F7522D29}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackYourDay.Core", "TrackYourDay.Core\TrackYourDay.Core.csproj", "{DFDB9796-DCBF-4F01-AAD1-3AB941173E68}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackYourDay.WPFUI", "TrackYourDay.WPFUI\TrackYourDay.WPFUI.csproj", "{B31F4A04-C6DC-4BC8-9D45-2C4239A21FA3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackYourDay.WPFUI", "TrackYourDay.WPFUI\TrackYourDay.WPFUI.csproj", "{B31F4A04-C6DC-4BC8-9D45-2C4239A21FA3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,12 +14,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C387DCA2-B6D8-46CB-832C-FF92669D3E30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C387DCA2-B6D8-46CB-832C-FF92669D3E30}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C387DCA2-B6D8-46CB-832C-FF92669D3E30}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{C387DCA2-B6D8-46CB-832C-FF92669D3E30}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C387DCA2-B6D8-46CB-832C-FF92669D3E30}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C387DCA2-B6D8-46CB-832C-FF92669D3E30}.Release|Any CPU.Deploy.0 = Release|Any CPU
 		{131D9D70-145E-498B-B4D4-53D9F7522D29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{131D9D70-145E-498B-B4D4-53D9F7522D29}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{131D9D70-145E-498B-B4D4-53D9F7522D29}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -39,7 +31,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {67D615D5-394B-4346-A26E-558AF9E3E0D1}
 		        SolutionGuid = {61F7FB11-1E47-470C-91E2-47F8143E1572}
+		SolutionGuid = {67D615D5-394B-4346-A26E-558AF9E3E0D1}
 	EndGlobalSection
 EndGlobal
