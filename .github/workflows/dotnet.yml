@@ -30,4 +30,4 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Test
-      run: dotnet test --verbosity normal
+      run: dotnet test
