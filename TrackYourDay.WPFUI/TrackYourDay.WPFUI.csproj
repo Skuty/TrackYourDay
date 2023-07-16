@@ -25,12 +25,13 @@
     <ProjectReference Include="..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Resource Include="Resources\DefaultClockIcon.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
+<ItemGroup>
+    <None Remove="Resources\DefaultClockIcon.ico" />
   </ItemGroup>
-
+  <ItemGroup>
+    <Resource Include="Resources\DefaultClockIcon.ico" />
+  </ItemGroup>
+  
   <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
