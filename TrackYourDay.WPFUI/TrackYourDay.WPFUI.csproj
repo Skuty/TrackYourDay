@@ -26,9 +26,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Resources\DefaultClockIcon.ico">
+    <Content Include="Resources\DefaultClockIcon.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
