@@ -41,7 +41,6 @@ jobs:
       env:
         Configuration: ${{ matrix.configuration }}
 
-
     - name: Build the application
       run: msbuild .\TrackYourDay.sln /t:Rebuild /p:Configuration=Release
       env:
