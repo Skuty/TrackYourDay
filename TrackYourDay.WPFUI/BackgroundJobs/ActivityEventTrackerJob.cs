@@ -2,7 +2,7 @@
 using Quartz;
 using System;
 using System.Threading.Tasks;
-using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Old.Activities;
 
 namespace TrackYourDay.WPFUI.BackgroundJobs
 {
