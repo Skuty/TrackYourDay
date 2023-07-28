@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using System.Collections.Immutable;
-using TrackYourDay.Core.Activities.Notifications;
+using TrackYourDay.Core.Old.Activities.Notifications;
 using TrackYourDay.Core.Old.Activities.RecognizingStrategies;
 
 namespace TrackYourDay.Core.Old.Activities

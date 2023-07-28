@@ -1,8 +1,8 @@
 using MediatR;
 using Moq;
 using TrackYourDay.Core;
-using TrackYourDay.Core.Breaks;
 using TrackYourDay.Core.Old.Activities;
+using TrackYourDay.Core.Old.Breaks;
 using TrackYourDay.Core.Old.Breaks.Notifications;
 
 namespace TrackYourDay.Tests.Old.Breaks

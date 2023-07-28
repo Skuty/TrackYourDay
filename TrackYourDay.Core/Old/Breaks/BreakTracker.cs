@@ -1,6 +1,6 @@
 ﻿using MediatR;
-using TrackYourDay.Core.Breaks.Notifications;
 using TrackYourDay.Core.Old.Activities;
+using TrackYourDay.Core.Old.Breaks.Notifications;
 
 namespace TrackYourDay.Core.Old.Breaks
 {

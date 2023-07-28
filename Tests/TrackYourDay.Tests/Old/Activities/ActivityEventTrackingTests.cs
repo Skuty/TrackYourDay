@@ -1,7 +1,6 @@
 using FluentAssertions;
 using MediatR;
 using Moq;
-using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Old.Activities;
 using TrackYourDay.Core.Old.Activities.Notifications;
 using TrackYourDay.Core.Old.Activities.RecognizingStrategies;
