@@ -1,10 +1,28 @@
 ﻿namespace TrackYourDay.Tests.Activities
 {
+    public static class ActivityTypeFactory
+    {
+        public static FocusOnApplicationActivityType FocusOnApplicationActivityType(string applicationWindowTitle)
+        {
+            return new FocusOnApplicationActivityType(applicationWindowTitle);
+        }
+
+        public static MouseMovedActivityType MouseMovedActivityType(int xPosition, int yPosition)
+        {
+            return new MouseMovedActivityType(xPosition, yPosition);
+        }
+
+        public static SystemLockedActivityType SystemLockedActivityType()
+        {
+            return new SystemLockedActivityType();
+        }
+    }
+
     public abstract record class ActivityType(string ActivityDescription);
 
     public record class FocusOnApplicationActivityType : ActivityType
     {
-        public FocusOnApplicationActivityType(string ApplicationWindowTitle) : base("Focus on application")
+        public FocusOnApplicationActivityType(string ApplicationWindowTitle) : base($"Focus on application - {ApplicationWindowTitle}")
         {
         }
     }

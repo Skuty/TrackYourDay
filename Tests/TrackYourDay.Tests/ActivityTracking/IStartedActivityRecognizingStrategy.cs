@@ -4,11 +4,11 @@ namespace TrackYourDay.Tests.ActivityTracking
 {
     public interface IStartedActivityRecognizingStrategy
     {
-        public StartedActivity RecognizeActivity();
+        public ActivityType RecognizeActivity();
     }
 
     public interface IInstantActivityRecognizingStrategy
     {
-        public InstantActivity RecognizeActivity();
+        public ActivityType RecognizeActivity();
     }
 }

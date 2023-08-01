@@ -12,7 +12,7 @@ namespace TrackYourDay.Tests.Activities
             var startDate = DateTime.Parse("2008-01-10");
 
             // Act
-            var activity = ActivityFactory.StartedActivity(startDate);
+            var activity = ActivityFactory.StartedFocusOnApplicatoinActivity(startDate);
 
             // Assert
             activity.StartDate.Should().Be(startDate);
@@ -23,7 +23,7 @@ namespace TrackYourDay.Tests.Activities
         {
             // Arrange
             var startDate = DateTime.Parse("2008-01-10");
-            var activity = ActivityFactory.StartedActivity(startDate);
+            var activity = ActivityFactory.StartedFocusOnApplicatoinActivity(startDate);
             var endDate = DateTime.Parse("2008-01-10");
 
             // Act
@@ -38,7 +38,7 @@ namespace TrackYourDay.Tests.Activities
         {
             // Arrange
             var startDate = DateTime.Parse("2008-01-10");
-            var activity = ActivityFactory.StartedActivity(startDate);
+            var activity = ActivityFactory.StartedFocusOnApplicatoinActivity(startDate);
             var endDate = DateTime.Parse("2008-01-11");
 
             // Act
@@ -53,7 +53,7 @@ namespace TrackYourDay.Tests.Activities
         {
             // Arrange
             var startDate = DateTime.Parse("2008-01-10");
-            var activity = ActivityFactory.StartedActivity(startDate);
+            var activity = ActivityFactory.StartedFocusOnApplicatoinActivity(startDate);
             var endDate = DateTime.Parse("2008-01-20");
 
             // Act
@@ -69,7 +69,7 @@ namespace TrackYourDay.Tests.Activities
             var occuranceDate = DateTime.Parse("2008-01-10");
 
             // Act
-            var activity = ActivityFactory.InstantActivity(occuranceDate);
+            var activity = ActivityFactory.MouseMovedActivity(occuranceDate);
 
             // Assert
             activity.OccuranceDate.Should().Be(occuranceDate);

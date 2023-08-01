@@ -1,6 +1,7 @@
-﻿namespace TrackYourDay.Tests.ActivityTracking
+﻿using MediatR;
+using TrackYourDay.Tests.Activities;
+
+namespace TrackYourDay.Tests.ActivityTracking
 {
-    internal class PeriodicActivityStartedNotification
-    {
-    }
+    internal record class PeriodicActivityStartedNotification(Guid Guid, StartedActivity StartedActivity) : INotification;
 }

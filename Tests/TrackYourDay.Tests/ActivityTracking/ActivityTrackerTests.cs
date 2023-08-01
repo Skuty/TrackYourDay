@@ -30,7 +30,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityFactory.StartedActivity(DateTime.Parse("2020-01-01")));
+                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
 
             // Act
             activityEventTracker.RecognizeEvents();
@@ -44,13 +44,16 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityFactory.StartedActivity(DateTime.Parse("2020-01-01")));
+                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
+            this.activityEventTracker.RecognizeEvents();
+            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Another Application"));
 
             // Act
-            activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeEvents();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityEndedNotification>(), CancellationToken.None), Times.Once);
+            this.publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityEndedNotification >(), CancellationToken.None), Times.Once);
         }
 
         [Fact]
@@ -58,7 +61,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityFactory.StartedActivity(DateTime.Parse("2020-01-01")));
+                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
 
             // Act
             activityEventTracker.RecognizeEvents();
@@ -72,14 +75,15 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityFactory.StartedActivity(DateTime.Parse("2020-01-01")));
+                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
+            this.activityEventTracker.RecognizeEvents();
+            var existingNotificationsCount = this.publisherMock.Invocations.Count;
 
             // Act
-            activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeEvents();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<INotification>(), CancellationToken.None), Times.Never);
-
+            this.publisherMock.Invocations.Count.Should().Be(existingNotificationsCount);
         }
 
         [Fact]
@@ -87,7 +91,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.instantActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityFactory.InstantActivity(DateTime.Parse("2020-01-01")));
+                .Returns(ActivityTypeFactory.MouseMovedActivityType(0,0));
 
             // Act
             activityEventTracker.RecognizeEvents();
@@ -99,7 +103,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         public void WhenNewPeriodicActivityIsStarted_ThenItIsCurrentActivity() 
         {
             // Arrange
-            var activity = ActivityFactory.StartedActivity(DateTime.Parse("2020-01-01"));
+            var activity = ActivityTypeFactory.FocusOnApplicationActivityType("Application");
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
 
@@ -113,7 +117,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         public void WhenNewPeriodicActivityIsEnded_ThenItIsAddedToAllActivitiesList()
         {
             // Arrange
-            var activity = ActivityFactory.StartedActivity(DateTime.Parse("2020-01-01"));
+            var activity = ActivityTypeFactory.FocusOnApplicationActivityType("Application");
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
 
