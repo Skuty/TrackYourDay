@@ -4,6 +4,8 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using TrackYourDay.Core;
+using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Old.Activities.RecognizingStrategies;
 using TrackYourDay.WPFUI.BackgroundJobs;
 
 namespace TrackYourDay.WPFUI
@@ -25,11 +27,11 @@ namespace TrackYourDay.WPFUI
         {
             serviceCollection.AddSingleton<ISharedInstance, SharedInstance>();
 
-            serviceCollection.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityEventTracker>());
+            serviceCollection.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             serviceCollection.AddSingleton<IClock, Clock>();
-            serviceCollection.AddScoped<IActivityRecognizingStrategy, WindowNameActivityRecognizingStrategy>();
-            serviceCollection.AddSingleton<ActivityEventTracker>();
-            serviceCollection.AddSingleton<BreakTracker>();
+            serviceCollection.AddScoped<IStartedActivityRecognizingStrategy, DefaultActivityRecognizingStategy>();
+            serviceCollection.AddScoped<IInstantActivityRecognizingStrategy, DefaultInstantActivityRecognizingStrategy>();
+            serviceCollection.AddSingleton<ActivityTracker>();
 
             serviceCollection.AddQuartz(o => o.UseMicrosoftDependencyInjectionJobFactory());
             serviceCollection.AddQuartzHostedService();

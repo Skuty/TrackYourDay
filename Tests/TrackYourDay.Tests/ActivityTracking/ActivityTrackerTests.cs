@@ -39,7 +39,7 @@ namespace TrackYourDay.Tests.ActivityTracking
                 .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
 
             // Act
-            activityEventTracker.RecognizeEvents();
+            activityEventTracker.RecognizeActivity();
 
             // Assert
             publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedNotification>(), CancellationToken.None), Times.Once);
@@ -50,13 +50,10 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
-            this.activityEventTracker.RecognizeEvents();
-            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Another Application"));
 
             // Act
-            this.activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeActivity();
 
             // Assert
             this.publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityEndedNotification >(), CancellationToken.None), Times.Once);
@@ -70,7 +67,7 @@ namespace TrackYourDay.Tests.ActivityTracking
                 .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
 
             // Act
-            activityEventTracker.RecognizeEvents();
+            activityEventTracker.RecognizeActivity();
 
             // Assert
             publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedNotification>(), CancellationToken.None), Times.Once);
@@ -82,11 +79,11 @@ namespace TrackYourDay.Tests.ActivityTracking
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
-            this.activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeActivity();
             var existingNotificationsCount = this.publisherMock.Invocations.Count;
 
             // Act
-            this.activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeActivity();
 
             // Assert
             this.publisherMock.Invocations.Count.Should().Be(existingNotificationsCount);
@@ -100,7 +97,7 @@ namespace TrackYourDay.Tests.ActivityTracking
                 .Returns(ActivityTypeFactory.MouseMovedActivityType(0,0));
 
             // Act
-            this.activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeActivity();
 
             // Assert
             this.publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedNotification>(), CancellationToken.None), Times.Once);
@@ -115,7 +112,7 @@ namespace TrackYourDay.Tests.ActivityTracking
                 .Returns(activity);
 
             // Act
-            this.activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeActivity();
 
             // Assert
             this.activityEventTracker.GetCurrentActivity().ActivityType.Should().Be(activity);
@@ -128,12 +125,12 @@ namespace TrackYourDay.Tests.ActivityTracking
             var activity = ActivityTypeFactory.FocusOnApplicationActivityType("Application");
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
-            this.activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeActivity();
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("New Application"));
 
             // Act
-            this.activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeActivity();
 
             // Assert
             this.activityEventTracker.GetEndedActivities().LastOrDefault().ActivityType.Should().Be(activity);

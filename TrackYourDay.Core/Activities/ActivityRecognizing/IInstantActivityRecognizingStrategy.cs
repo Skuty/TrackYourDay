@@ -1,6 +1,6 @@
 ﻿namespace TrackYourDay.Core.Activities
 {
-    public interface IStartedActivityRecognizingStrategy
+    public interface IInstantActivityRecognizingStrategy
     {
         public ActivityType RecognizeActivity();
     }

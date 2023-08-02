@@ -27,9 +27,11 @@ namespace TrackYourDay.Core.Activities
             this.instantActivityRecognizingStrategy = instantActivityRecognizingStrategy;
             endedActivities = new List<EndedActivity>();
             instantActivities = new List<InstantActivity>();
+            this.currentStartedActivity = ActivityFactory.StartedActivity(
+                this.clock.Now, ActivityTypeFactory.ApplicationStartedActivityType("Track Your Day"));
         }
 
-        internal void RecognizeEvents()
+        public void RecognizeActivity()
         {
             ActivityType recognizedActivityType = startedActivityRecognizingStrategy.RecognizeActivity();
 
@@ -50,12 +52,12 @@ namespace TrackYourDay.Core.Activities
             };
         }
 
-        internal StartedActivity? GetCurrentActivity()
+        public StartedActivity GetCurrentActivity()
         {
             return this.currentStartedActivity;
         }
 
-        internal IReadOnlyCollection<EndedActivity> GetEndedActivities()
+        public IReadOnlyCollection<EndedActivity> GetEndedActivities()
         {
             return this.endedActivities.ToImmutableArray();
         }

@@ -1,14 +1,12 @@
-﻿using Hangfire;
-using Quartz;
-using System;
+﻿using Quartz;
 using System.Threading.Tasks;
-using TrackYourDay.Core.Old.Activities;
+using TrackYourDay.Core.Activities;
 
 namespace TrackYourDay.WPFUI.BackgroundJobs
 {
     internal class ActivityEventTrackerJob : IJob
     {
-        private readonly ActivityEventTracker activityEventTracker;
+        private readonly ActivityTracker activityTracker;
 
         internal static IJobDetail DefaultJobDetail => JobBuilder.Create<ActivityEventTrackerJob>()
             .WithIdentity("ActivityEventTracker", "Trackers")
@@ -22,14 +20,14 @@ namespace TrackYourDay.WPFUI.BackgroundJobs
                   .RepeatForever())
              .Build();
 
-        public ActivityEventTrackerJob(ActivityEventTracker activityEventTracker)
+        public ActivityEventTrackerJob(ActivityTracker activityTracker)
         {
-            this.activityEventTracker = activityEventTracker;
+            this.activityTracker = activityTracker;
         }
 
         public async Task Execute(IJobExecutionContext context)
         {
-            this.activityEventTracker.RecognizeEvents();
+            this.activityTracker.RecognizeActivity();
         }
     }
 }
