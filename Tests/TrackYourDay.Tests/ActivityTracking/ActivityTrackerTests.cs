@@ -1,6 +1,8 @@
 ﻿using FluentAssertions;
+using FluentAssertions.Common;
 using MediatR;
 using Moq;
+using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Activities.Notifications;
 
@@ -9,6 +11,7 @@ namespace TrackYourDay.Tests.ActivityTracking
     [Trait("Category", "Unit")]
     public class ActivityTrackerTests
     {
+        private Core.IClock clock;
         private Mock<IPublisher> publisherMock;
         private Mock<IStartedActivityRecognizingStrategy> startedActivityRecognizingStrategy;
         private Mock<IInstantActivityRecognizingStrategy> instantActivityRecognizingStrategy;
@@ -16,14 +19,16 @@ namespace TrackYourDay.Tests.ActivityTracking
 
         public ActivityTrackerTests()
         {
+            this.clock = new Clock();
             this.publisherMock = new Mock<IPublisher>();
             this.startedActivityRecognizingStrategy = new Mock<IStartedActivityRecognizingStrategy>();
             this.instantActivityRecognizingStrategy = new Mock<IInstantActivityRecognizingStrategy>();
 
             this.activityEventTracker = new ActivityTracker(
-                this.publisherMock.Object, 
+                this.clock,
+                this.publisherMock.Object,
                 this.startedActivityRecognizingStrategy.Object,
-                this.instantActivityRecognizingStrategy.Object);
+                this.instantActivityRecognizingStrategy.Object) ;
         }
 
         [Fact]
@@ -95,12 +100,13 @@ namespace TrackYourDay.Tests.ActivityTracking
                 .Returns(ActivityTypeFactory.MouseMovedActivityType(0,0));
 
             // Act
-            activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeEvents();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedNotification>(), CancellationToken.None), Times.Once);
+            this.publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedNotification>(), CancellationToken.None), Times.Once);
         }
 
+        [Fact]
         public void WhenNewPeriodicActivityIsStarted_ThenItIsCurrentActivity() 
         {
             // Arrange
@@ -109,24 +115,28 @@ namespace TrackYourDay.Tests.ActivityTracking
                 .Returns(activity);
 
             // Act
-            activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeEvents();
 
             // Assert
-            activityEventTracker.GetCurrentActivity().Should().Be(activity);
+            this.activityEventTracker.GetCurrentActivity().ActivityType.Should().Be(activity);
         }
 
+        [Fact]
         public void WhenNewPeriodicActivityIsEnded_ThenItIsAddedToAllActivitiesList()
         {
             // Arrange
             var activity = ActivityTypeFactory.FocusOnApplicationActivityType("Application");
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
+            this.activityEventTracker.RecognizeEvents();
+            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("New Application"));
 
             // Act
-            activityEventTracker.RecognizeEvents();
+            this.activityEventTracker.RecognizeEvents();
 
             // Assert
-            activityEventTracker.GetEndedActivities().LastOrDefault().Should().Be(activity);
+            this.activityEventTracker.GetEndedActivities().LastOrDefault().ActivityType.Should().Be(activity);
         }
     }
 }
