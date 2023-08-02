@@ -1,4 +1,4 @@
-﻿namespace TrackYourDay.Tests.Activities
+﻿namespace TrackYourDay.Core.Activities
 {
     public static class ActivityTypeFactory
     {

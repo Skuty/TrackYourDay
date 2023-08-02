@@ -4,9 +4,6 @@ using System;
 using System.Threading.Tasks;
 using System.Windows;
 using TrackYourDay.Core;
-using TrackYourDay.Core.Old.Activities;
-using TrackYourDay.Core.Old.Activities.RecognizingStrategies;
-using TrackYourDay.Core.Old.Breaks;
 using TrackYourDay.WPFUI.BackgroundJobs;
 
 namespace TrackYourDay.WPFUI

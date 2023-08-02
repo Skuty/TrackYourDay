@@ -1,6 +1,4 @@
-﻿using TrackYourDay.Tests.Activities;
-
-namespace TrackYourDay.Tests.ActivityTracking
+﻿namespace TrackYourDay.Core.Activities
 {
     public interface IStartedActivityRecognizingStrategy
     {

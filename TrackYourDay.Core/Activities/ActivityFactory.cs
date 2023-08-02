@@ -1,6 +1,6 @@
 ﻿using TrackYourDay.Core;
 
-namespace TrackYourDay.Tests.Activities
+namespace TrackYourDay.Core.Activities
 {
     public static class ActivityFactory
     {
@@ -22,7 +22,7 @@ namespace TrackYourDay.Tests.Activities
 
         public static InstantActivity MouseMovedActivity(DateTime occuranceDate)
         {
-            return new InstantActivity(occuranceDate, ActivityTypeFactory.MouseMovedActivityType(0,0));
+            return new InstantActivity(occuranceDate, ActivityTypeFactory.MouseMovedActivityType(0, 0));
         }
     }
 
@@ -30,7 +30,7 @@ namespace TrackYourDay.Tests.Activities
     {
         public EndedActivity End(DateTime endDate)
         {
-            return new EndedActivity(this.StartDate, endDate, this.ActivityType);
+            return new EndedActivity(StartDate, endDate, ActivityType);
         }
 
         public TimeSpan GetDuration(IClock clock)

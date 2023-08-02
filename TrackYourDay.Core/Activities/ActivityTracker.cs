@@ -1,8 +1,7 @@
 ﻿using MediatR;
-using TrackYourDay.Core.Old.Activities.Notifications;
-using TrackYourDay.Tests.Activities;
+using TrackYourDay.Core.Activities.Notifications;
 
-namespace TrackYourDay.Tests.ActivityTracking
+namespace TrackYourDay.Core.Activities
 {
     public class ActivityTracker
     {
@@ -15,35 +14,35 @@ namespace TrackYourDay.Tests.ActivityTracking
         private readonly List<InstantActivity> instantActivities;
 
         public ActivityTracker(
-            IPublisher publisher, 
+            IPublisher publisher,
             IStartedActivityRecognizingStrategy startedActivityRecognizingStrategy,
             IInstantActivityRecognizingStrategy instantActivityRecognizingStrategy)
         {
             this.publisher = publisher;
             this.startedActivityRecognizingStrategy = startedActivityRecognizingStrategy;
             this.instantActivityRecognizingStrategy = instantActivityRecognizingStrategy;
-            this.endedActivities = new List<EndedActivity>();
-            this.instantActivities = new List<InstantActivity>();
+            endedActivities = new List<EndedActivity>();
+            instantActivities = new List<InstantActivity>();
         }
 
         internal void RecognizeEvents()
         {
-            ActivityType recognizedActivityType = this.startedActivityRecognizingStrategy.RecognizeActivity();
+            ActivityType recognizedActivityType = startedActivityRecognizingStrategy.RecognizeActivity();
 
-            if (this.currentStartedActivity is null)
+            if (currentStartedActivity is null)
             {
-                this.currentStartedActivity = ActivityFactory.StartedActivity(DateTime.Now, recognizedActivityType);
-                this.publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), this.currentStartedActivity));
+                currentStartedActivity = ActivityFactory.StartedActivity(DateTime.Now, recognizedActivityType);
+                publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), currentStartedActivity));
                 return;
             }
 
-            if (this.currentStartedActivity.ActivityType != recognizedActivityType)
+            if (currentStartedActivity.ActivityType != recognizedActivityType)
             {
-                var endedActivity = this.currentStartedActivity.End(DateTime.Now);
-                this.endedActivities.Add(endedActivity);
-                this.currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedActivityType);
-                this.publisher.Publish(new PeriodicActivityEndedNotification(Guid.NewGuid(), endedActivity));
-                this.publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), this.currentStartedActivity));
+                var endedActivity = currentStartedActivity.End(DateTime.Now);
+                endedActivities.Add(endedActivity);
+                currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedActivityType);
+                publisher.Publish(new PeriodicActivityEndedNotification(Guid.NewGuid(), endedActivity));
+                publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), currentStartedActivity));
             };
         }
 

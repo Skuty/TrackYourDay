@@ -1,7 +1,8 @@
 ﻿using FluentAssertions;
 using MediatR;
 using Moq;
-using TrackYourDay.Tests.Activities;
+using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.Notifications;
 
 namespace TrackYourDay.Tests.ActivityTracking
 {

@@ -1,4 +1,0 @@
-﻿namespace TrackYourDay.Tests.ActivityTracking
-{
-
-}
