@@ -16,7 +16,7 @@ namespace TrackYourDay.WPFUI.BackgroundJobs
              .WithIdentity("ActivityEventTracker", "DefaultGroup")
              .StartNow()
              .WithSimpleSchedule(x => x
-                  .WithIntervalInSeconds(3)
+                  .WithIntervalInSeconds(15)
                   .RepeatForever())
              .Build();
 

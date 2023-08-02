@@ -10,7 +10,7 @@ namespace TrackYourDay.Core.Old.Activities.RecognizingStrategies
         {
             var currentActiveWindowName = GetCaptionOfActiveWindow();
 
-            if (currentActiveWindowName == "ekran blokady")
+            if (currentActiveWindowName.Contains("ekran blokady"))
             {
                 return ActivityTypeFactory.SystemLockedActivityType();
             }
