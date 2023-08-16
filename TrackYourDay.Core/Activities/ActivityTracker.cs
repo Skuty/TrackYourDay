@@ -25,30 +25,30 @@ namespace TrackYourDay.Core.Activities
             this.publisher = publisher;
             this.startedActivityRecognizingStrategy = startedActivityRecognizingStrategy;
             this.instantActivityRecognizingStrategy = instantActivityRecognizingStrategy;
-            endedActivities = new List<EndedActivity>();
-            instantActivities = new List<InstantActivity>();
+            this.endedActivities = new List<EndedActivity>();
+            this.instantActivities = new List<InstantActivity>();
             this.currentStartedActivity = ActivityFactory.StartedActivity(
                 this.clock.Now, ActivityTypeFactory.ApplicationStartedActivityType("Track Your Day"));
         }
 
         public void RecognizeActivity()
         {
-            ActivityType recognizedActivityType = startedActivityRecognizingStrategy.RecognizeActivity();
+            ActivityType recognizedActivityType = this.startedActivityRecognizingStrategy.RecognizeActivity();
 
-            if (currentStartedActivity is null)
+            if (this.currentStartedActivity is null)
             {
-                currentStartedActivity = ActivityFactory.StartedActivity(this.clock.Now, recognizedActivityType);
-                publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), currentStartedActivity));
+                this.currentStartedActivity = ActivityFactory.StartedActivity(this.clock.Now, recognizedActivityType);
+                this.publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), this.currentStartedActivity));
                 return;
             }
 
-            if (currentStartedActivity.ActivityType != recognizedActivityType)
+            if (this.currentStartedActivity.ActivityType != recognizedActivityType)
             {
-                var endedActivity = currentStartedActivity.End(this.clock.Now);
-                endedActivities.Add(endedActivity);
-                currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedActivityType);
-                publisher.Publish(new PeriodicActivityEndedNotification(Guid.NewGuid(), endedActivity));
-                publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), currentStartedActivity));
+                var endedActivity = this.currentStartedActivity.End(this.clock.Now);
+                this.endedActivities.Add(endedActivity);
+                this.currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedActivityType);
+                this.publisher.Publish(new PeriodicActivityEndedNotification(Guid.NewGuid(), endedActivity));
+                this.publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), this.currentStartedActivity));
             };
         }
 

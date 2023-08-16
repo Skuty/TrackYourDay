@@ -1,4 +1,5 @@
-﻿using TrackYourDay.Core.Old.Breaks;
+﻿
+using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Tests.Old.Breaks
 {

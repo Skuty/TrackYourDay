@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using TrackYourDay.Core.Breaks;
 using TrackYourDay.Core.Old.Activities.Notifications;
 
 namespace TrackYourDay.Core.Old.Breaks.Notifications
@@ -14,8 +15,8 @@ namespace TrackYourDay.Core.Old.Breaks.Notifications
         public Task Handle(ActivityEventRecognizedNotification notification, CancellationToken cancellationToken)
         {
             //Inbox here?
-            breakTracker.AddActivityEventToProcess(notification.ActivityEvent);
-            breakTracker.ProcessActivityEvents();
+            //breakTracker.AddActivityToProcess(notification.ActivityEvent);
+            breakTracker.ProcessActivities();
 
             return Task.CompletedTask;
         }
