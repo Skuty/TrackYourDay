@@ -120,7 +120,7 @@ namespace TrackYourDay.Tests.Breaks
 
             // Act
             breakTracker.AddActivityToProcess(instantActivity); 
-            //Change 
+            
             breakTracker.ProcessActivities();
 
             // Assert
