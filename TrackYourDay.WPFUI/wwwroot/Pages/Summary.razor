@@ -1,28 +1,36 @@
 @using Hangfire;
 @using System.Windows;
 @using TrackYourDay.Core.Activities;
+@using TrackYourDay.Core.Breaks;
 
 <h1><img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" /> Track Your Day</h1>
 <div>
     <h2>Activities</h2>
     <p>All activities: @activitiesCount</p>
     <p>All activities duration: @activitiesDuration.Hours h @activitiesDuration.Minutes m @activitiesDuration.Seconds s</p>
+    <p>Current activity: @currentActivity?.ActivityType.ActivityDescription</p>
     <p>Last activity: @lastActivity?.ActivityType.ActivityDescription</p>
     <p>Last activity ended at: @lastActivity?.EndDate</p>
-
+    <p>System locked activities: @systemLockedActivitiesCount</p>
+    <p>System locked activities duration: @systemLockedActivitiesDuration.Hours h @systemLockedActivitiesDuration.Minutes m @systemLockedActivitiesDuration.Seconds s</p>
 </div>
 <div>
     <h2>Breaks</h2>
-    <p>System locked activities: @systemLockedActivitiesCount</p>
-    <p>System locked activities duration: @systemLockedActivitiesDuration.Hours h @systemLockedActivitiesDuration.Minutes m @systemLockedActivitiesDuration.Seconds s</p>
+    <p>All breaks: @breaksCount</p>
+    <p>All breaks duration: @allBreaksDuration.Hours h @allBreaksDuration.Minutes m @allBreaksDuration.Seconds s</p>
+    <p>Last break: @lastEndedBreak?.BreakDescription</p>
+    <p>Last break started at: @lastEndedBreak?.BreakStartedAt</p>
+    <p>Last break ended at: @lastEndedBreak?.BreakEndedAt</p>
+
 </div>
 
 @code {
     [Inject]
     private ActivityTracker activityTracker { get; set; }
-    //[Inject]
-    //private BreakTracker breakTracker { get; set; }
+    [Inject]
+    private BreakTracker breakTracker { get; set; }
 
+    private StartedActivity? currentActivity;
     private EndedActivity? lastActivity;
     private int activitiesCount;
     private TimeSpan activitiesDuration;
@@ -30,7 +38,7 @@
     private int systemLockedActivitiesCount;
     private TimeSpan systemLockedActivitiesDuration;
 
-    //private EndedBreak lastEndedBreak;
+    private EndedBreak? lastEndedBreak;
     private int breaksCount;
     private TimeSpan allBreaksDuration;
 
@@ -39,6 +47,7 @@
         this.activitiesCount = this.activityTracker.GetEndedActivities().Count;
         this.activitiesDuration = this.activityTracker.GetEndedActivities().Select(x => x.GetDuration()).Aggregate((x, y) => x.Add(y));
         this.lastActivity = this.activityTracker.GetEndedActivities().LastOrDefault();
+        this.currentActivity = this.activityTracker.GetCurrentActivity();
 
         var systemLockedActivities = this.activityTracker.GetEndedActivities().Where(x => x.ActivityType is SystemLockedActivityType);
 
@@ -47,11 +56,11 @@
             this.systemLockedActivitiesCount = systemLockedActivities.Count();
             this.systemLockedActivitiesDuration = systemLockedActivities.Select(x => x.GetDuration()).Aggregate((x, y) => x.Add(y));
         }
-        //this.breaksCount = breakTracker.endedBreaks.Count;
-        //if (breakTracker.endedBreaks.Count > 0)
+        this.breaksCount = this.breakTracker.GetEndedBreaks().Count;
+        if (breakTracker.GetEndedBreaks().Count > 0)
         {
-            //this.allBreaksDuration = breakTracker.endedBreaks.Select(x => x.BreakDuration).Aggregate((x, y) => x.Add(y));
+            this.allBreaksDuration = breakTracker.GetEndedBreaks().Select(x => x.BreakDuration).Aggregate((x, y) => x.Add(y));
         }
-        //this.lastEndedBreak = this.breakTracker.endedBreaks.Last();
+        this.lastEndedBreak = this.breakTracker.GetEndedBreaks().LastOrDefault();
     }
 }

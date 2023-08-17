@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 using Quartz;
 using System;
 using System.Threading.Tasks;
@@ -33,7 +34,12 @@ namespace TrackYourDay.WPFUI
             serviceCollection.AddScoped<IStartedActivityRecognizingStrategy, DefaultActivityRecognizingStategy>();
             serviceCollection.AddScoped<IInstantActivityRecognizingStrategy, DefaultInstantActivityRecognizingStrategy>();
             serviceCollection.AddSingleton<ActivityTracker>();
-            serviceCollection.AddSingleton<BreakTracker>();
+            serviceCollection.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(
+                serviceCollection.GetRequiredService<IPublisher>(),
+                serviceCollection.GetRequiredService<IClock>(),
+                TimeSpan.FromMinutes(5)));
+            // Install notification handler
+            serviceCollection.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityStartedNotificationHandler>());
 
             serviceCollection.AddQuartz(o => o.UseMicrosoftDependencyInjectionJobFactory());
             serviceCollection.AddQuartzHostedService();

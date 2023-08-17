@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using System.Collections.ObjectModel;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Breaks.Notifications;
 
@@ -40,6 +41,7 @@ namespace TrackYourDay.Core.Breaks
             var activityToProcess = new ActivityToProcess(activityDate, activityType);
 
             this.activitiesToProcess.Enqueue(activityToProcess);
+            this.ProcessActivities();
         }
 
         private void AddActivityToProcess(StartedActivity startedActivity)
@@ -63,7 +65,7 @@ namespace TrackYourDay.Core.Breaks
                     // Start Break If System Is Locked
                     if (activityToProcess.ActivityType is SystemLockedActivityType)
                     {
-                        this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate);
+                        this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate, "System Locked");
                         this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
                         continue;
@@ -72,7 +74,7 @@ namespace TrackYourDay.Core.Breaks
                     // Start Break if there was no Activity for specified amount of time between events
                     if (activityToProcess.ActivityDate - this.lastTimeOfActivity > timeOfNoActivityToStartBreak)
                     {
-                        this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate);
+                        this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate, $"Lack of activity for {this.timeOfNoActivityToStartBreak.TotalMinutes} minutes");
                         this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
                         continue;
@@ -98,10 +100,15 @@ namespace TrackYourDay.Core.Breaks
             if (this.currentStartedBreak is null && 
                 (this.clock.Now - this.lastTimeOfActivity > this.timeOfNoActivityToStartBreak))
             {
-                this.currentStartedBreak = new StartedBreak(clock.Now);
+                this.currentStartedBreak = new StartedBreak(clock.Now, $"Lack of activity for {this.timeOfNoActivityToStartBreak.TotalMinutes} minutes");
                 this.lastTimeOfActivity = currentStartedBreak.BreakStartedAt;
                 this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
             }
+        }
+
+        public ReadOnlyCollection<EndedBreak> GetEndedBreaks()
+        {
+            return this.endedBreaks.AsReadOnly();
         }
     }
 }

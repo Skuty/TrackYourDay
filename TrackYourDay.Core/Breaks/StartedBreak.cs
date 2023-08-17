@@ -2,7 +2,7 @@
 
 namespace TrackYourDay.Core.Breaks
 {
-    public record class StartedBreak(DateTime BreakStartedAt)
+    public record class StartedBreak(DateTime BreakStartedAt, string BreakDescription)
     {
         public EndedBreak EndBreak(DateTime breakEndedAt)
         {
@@ -17,7 +17,7 @@ namespace TrackYourDay.Core.Breaks
             }
 
 
-            return new EndedBreak(this.BreakStartedAt, breakEndedAt);
+            return new EndedBreak(this.BreakStartedAt, breakEndedAt, this.BreakDescription);
         }
 
         public CanceledBreak CancelBreak(DateTime breakCanceledAt) 

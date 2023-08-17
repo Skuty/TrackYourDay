@@ -2,5 +2,5 @@
 
 namespace TrackYourDay.Core.Activities.Notifications
 {
-    internal record class PeriodicActivityStartedNotification(Guid Guid, IActivityToProcess StartedActivity) : INotification;
+    public record class PeriodicActivityStartedNotification(Guid Guid, StartedActivity StartedActivity) : INotification;
 }
