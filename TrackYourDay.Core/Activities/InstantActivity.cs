@@ -1,6 +1,6 @@
 ﻿namespace TrackYourDay.Core.Activities
 {
-    public record class InstantActivity(DateTime StartDate, ActivityType ActivityType) : IActivityToProcess
+    public record class InstantActivity(DateTime OccuranceDate, ActivityType ActivityType)
     {
         public TimeSpan GetDuration()
         {

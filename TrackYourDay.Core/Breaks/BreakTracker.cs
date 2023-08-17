@@ -9,7 +9,8 @@ namespace TrackYourDay.Core.Breaks
         private readonly TimeSpan timeOfNoActivityToStartBreak;
         private readonly IPublisher publisher;
         private readonly IClock clock;
-        private Queue<IActivityToProcess> activitiesToProcess = new Queue<StartedActivity>();
+        private Queue<StartedActivity> activitiesToProcessOld = new Queue<StartedActivity>();
+        private Queue<ActivityToProcess> activitiesToProcess = new Queue<ActivityToProcess>();
         private List<EndedBreak> endedBreaks = new List<EndedBreak>();
         private StartedBreak? currentStartedBreak;
         private DateTime lastTimeOfActivity;
@@ -29,29 +30,31 @@ namespace TrackYourDay.Core.Breaks
             this.currentStartedBreak = startedBreak;
         }
 
-        public void AddActivityToProcess(InstantActivity instantActivity)
+        public void AddActivityToProcess(DateTime activityDate, ActivityType activityType)
         {
-            if (instantActivity is null)
+            if (activityType is null)
             {
-                throw new ArgumentNullException(nameof(instantActivity));
+                throw new ArgumentNullException(nameof(activityType));
             }
 
-            this.activitiesToProcess.Enqueue(instantActivity);
+            var activityToProcess = new ActivityToProcess(activityDate, activityType);
+
+            this.activitiesToProcess.Enqueue(activityToProcess);
         }
 
-        public void AddActivityToProcess(StartedActivity startedActivity)
+        private void AddActivityToProcess(StartedActivity startedActivity)
         {
             if (startedActivity is null)
             {
                 throw new ArgumentNullException(nameof(startedActivity));
             }
 
-            this.activitiesToProcess.Enqueue(startedActivity);
+            this.activitiesToProcessOld.Enqueue(startedActivity);
         }
 
         public void ProcessActivities()
         {
-            while (activitiesToProcess.Any())
+            while (this.activitiesToProcess.Any())
             {
                 var activityToProcess = this.activitiesToProcess.Dequeue();
                 // Starting break;
@@ -60,17 +63,17 @@ namespace TrackYourDay.Core.Breaks
                     // Start Break If System Is Locked
                     if (activityToProcess.ActivityType is SystemLockedActivityType)
                     {
-                        this.currentStartedBreak = new StartedBreak(activityToProcess.StartDate);
-                        this.lastTimeOfActivity = activityToProcess.StartDate;
+                        this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate);
+                        this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
                         continue;
                     }
 
                     // Start Break if there was no Activity for specified amount of time between events
-                    if (activityToProcess.StartDate - this.lastTimeOfActivity > timeOfNoActivityToStartBreak)
+                    if (activityToProcess.ActivityDate - this.lastTimeOfActivity > timeOfNoActivityToStartBreak)
                     {
-                        this.currentStartedBreak = new StartedBreak(activityToProcess.StartDate);
-                        this.lastTimeOfActivity = activityToProcess.StartDate;
+                        this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate);
+                        this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
                         continue;
                     }
@@ -81,7 +84,7 @@ namespace TrackYourDay.Core.Breaks
                 {
                     if (activityToProcess.ActivityType is not SystemLockedActivityType)
                     {
-                        var endedBreak = this.currentStartedBreak.EndBreak(activityToProcess.StartDate);
+                        var endedBreak = this.currentStartedBreak.EndBreak(activityToProcess.ActivityDate);
                         this.endedBreaks.Add(endedBreak);
                         this.currentStartedBreak = null;
                         this.lastTimeOfActivity = endedBreak.BreakEndedAt;

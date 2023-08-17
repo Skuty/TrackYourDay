@@ -63,10 +63,11 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
             this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
             breakTracker.ProcessActivities();
-            publisherMock.Reset();
+            this.publisherMock.Reset();
 
             // Act
-            breakTracker.AddActivityToProcess(ActivityFactory.StartedSystemLockedActivity(DateTime.Now));
+            var startedActivity = ActivityFactory.StartedSystemLockedActivity(DateTime.Now);
+            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType);
             breakTracker.ProcessActivities();
 
             // Assert
@@ -79,7 +80,8 @@ namespace TrackYourDay.Tests.Breaks
         {
             // Arrange
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
-            breakTracker.AddActivityToProcess(ActivityFactory.StartedSystemLockedActivity(DateTime.Now));
+            var activityToProcess = ActivityFactory.StartedSystemLockedActivity(DateTime.Now);
+            breakTracker.AddActivityToProcess(activityToProcess.StartDate, activityToProcess.ActivityType);
 
             // Act
             breakTracker.ProcessActivities();
@@ -100,7 +102,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Act
-            breakTracker.AddActivityToProcess(startedActivity);
+            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType);
             breakTracker.ProcessActivities();
 
             // Assert
@@ -119,7 +121,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Act
-            breakTracker.AddActivityToProcess(instantActivity); 
+            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.ActivityType); 
             
             breakTracker.ProcessActivities();
 
