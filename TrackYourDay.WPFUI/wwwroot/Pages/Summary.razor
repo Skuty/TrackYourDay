@@ -4,26 +4,27 @@
 @using TrackYourDay.Core.Breaks;
 
 <h1><img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" /> Track Your Day</h1>
-<div>
-    <h2>Activities</h2>
-    <p>All activities: @activitiesCount</p>
-    <p>All activities duration: @activitiesDuration.Hours h @activitiesDuration.Minutes m @activitiesDuration.Seconds s</p>
-    <p>Current activity: @currentActivity?.ActivityType.ActivityDescription</p>
-    <p>Last activity: @lastActivity?.ActivityType.ActivityDescription</p>
-    <p>Last activity ended at: @lastActivity?.EndDate</p>
-    <p>System locked activities: @systemLockedActivitiesCount</p>
-    <p>System locked activities duration: @systemLockedActivitiesDuration.Hours h @systemLockedActivitiesDuration.Minutes m @systemLockedActivitiesDuration.Seconds s</p>
-</div>
-<div>
-    <h2>Breaks</h2>
-    <p>All breaks: @breaksCount</p>
-    <p>All breaks duration: @allBreaksDuration.Hours h @allBreaksDuration.Minutes m @allBreaksDuration.Seconds s</p>
-    <p>Last break: @lastEndedBreak?.BreakDescription</p>
-    <p>Last break started at: @lastEndedBreak?.BreakStartedAt</p>
-    <p>Last break ended at: @lastEndedBreak?.BreakEndedAt</p>
 
+<div>
+    <div>
+        <h2>Activities</h2>
+        <p>All activities: @activitiesCount</p>
+        <p>All activities duration: @activitiesDuration.Hours h @activitiesDuration.Minutes m @activitiesDuration.Seconds s</p>
+        <p>Current activity: @currentActivity?.ActivityType.ActivityDescription</p>
+        <p>Last activity: @lastActivity?.ActivityType.ActivityDescription</p>
+        <p>Last activity ended at: @lastActivity?.EndDate</p>
+        <p>System locked activities: @systemLockedActivitiesCount</p>
+        <p>System locked activities duration: @systemLockedActivitiesDuration.Hours h @systemLockedActivitiesDuration.Minutes m @systemLockedActivitiesDuration.Seconds s</p>
+    </div>
+    <div>
+        <h2>Breaks</h2>
+        <p>All breaks: @breaksCount</p>
+        <p>All breaks duration: @allBreaksDuration.Hours h @allBreaksDuration.Minutes m @allBreaksDuration.Seconds s</p>
+        <p>Last break: @lastEndedBreak?.BreakDescription</p>
+        <p>Last break started at: @lastEndedBreak?.BreakStartedAt</p>
+        <p>Last break ended at: @lastEndedBreak?.BreakEndedAt</p>
+    </div>
 </div>
-
 @code {
     [Inject]
     private ActivityTracker activityTracker { get; set; }
