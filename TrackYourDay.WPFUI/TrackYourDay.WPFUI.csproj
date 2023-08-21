@@ -27,6 +27,7 @@
 
 <ItemGroup>
     <None Remove="Resources\DefaultClockIcon.ico" />
+    <None Remove="Shared\NavMenu.razor.css" />
   </ItemGroup>
 
 <ItemGroup>
