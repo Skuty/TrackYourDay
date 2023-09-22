@@ -1,5 +1,4 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 
 namespace TrackYourDay.MAUI.Commands
@@ -15,7 +14,7 @@ namespace TrackYourDay.MAUI.Commands
 
         public void Execute(object? parameter)
         {
-            Application.Current.Quit();
+            System.Windows.Forms.Application.Exit();
         }
     }
 }
