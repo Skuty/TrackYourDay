@@ -1,4 +1,4 @@
-﻿@page "/counter"
+﻿@page "/activities"
 
 <h1>Counter</h1>
 
@@ -6,7 +6,11 @@
 
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
-@code {
+@code 
+    [Inject]
+    private ActivityTracker activityTracker { get; set; }
+
+
     private int currentCount = 0;
 
     private void IncrementCount()

@@ -47,7 +47,7 @@ namespace TrackYourDay.MAUI
                 q.ScheduleJob<ActivityEventTrackerJob>(trigger => trigger
                     .WithIdentity("Activity Recognizing Job")
                     .WithDescription("Job that periodically recognizes user activities")
-                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(10, IntervalUnit.Second))
+                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(5, IntervalUnit.Second))
                     .StartNow());
             });
 
