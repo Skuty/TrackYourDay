@@ -27,7 +27,7 @@ namespace TrackYourDay.MAUI
         builder.Services.AddBlazorWebViewDeveloperTools();
 		builder.Logging.AddDebug();
 #endif
-
+            
             builder.Services.AddSingleton<WeatherForecastService>();
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             builder.Services.AddSingleton<IClock, Clock>();
@@ -41,7 +41,16 @@ namespace TrackYourDay.MAUI
             // Install notification handler
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityStartedNotificationHandler>());
 
-            builder.Services.AddQuartz(o => o.UseMicrosoftDependencyInjectionJobFactory());
+            builder.Services.AddQuartz(q =>
+            {
+                q.UseMicrosoftDependencyInjectionJobFactory();
+                q.ScheduleJob<ActivityEventTrackerJob>(trigger => trigger
+                    .WithIdentity("Activity Recognizing Job")
+                    .WithDescription("Job that periodically recognizes user activities")
+                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(10, IntervalUnit.Second))
+                    .StartNow());
+            });
+
             builder.Services.AddQuartzHostedService();
 
 

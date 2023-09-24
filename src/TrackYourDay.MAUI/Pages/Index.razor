@@ -48,7 +48,7 @@
     private void Refresh()
     {
         this.activitiesCount = this.activityTracker.GetEndedActivities().Count;
-        this.activitiesDuration = this.activityTracker.GetEndedActivities().Select(x => x.GetDuration()).Aggregate((x, y) => x.Add(y));
+        this.activitiesDuration = this.activityTracker.GetEndedActivities().Any() ? this.activityTracker.GetEndedActivities().Select(x => x.GetDuration()).Aggregate((x, y) => x.Add(y))  : TimeSpan.Zero;
         this.lastActivity = this.activityTracker.GetEndedActivities().LastOrDefault();
         this.currentActivity = this.activityTracker.GetCurrentActivity();
 
