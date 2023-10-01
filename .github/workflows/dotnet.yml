@@ -11,40 +11,18 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        configuration: [Release]
 
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
- 
-    - uses: actions/cache@v1
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }} #hash of project files
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-    
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 7.0.x
-
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v1.0.2
-
-    - name: Restore NuGet packages
-      run: msbuild .\TrackYourDay.sln /t:Restore /p:Configuration=Release
-      env:
-        Configuration: ${{ matrix.configuration }}
-
-    - name: Build the application
-      run: msbuild .\TrackYourDay.sln /t:Rebuild /p:Configuration=Release
-      env:
-        Configuration: ${{ matrix.configuration }}
-
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
     - name: Test
-      run: dotnet test --no-build --configuration Release
+      run: dotnet test --no-build --verbosity normal
