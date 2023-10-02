@@ -3,8 +3,8 @@
   <PropertyGroup>
 	  <RootNamespace>TrackYourDay.WPFUI</RootNamespace>
 	  <OutputType>WinExe</OutputType>
-    <TargetFramework>net7.0-windows</TargetFramework>
-      <EnableWindowsTargeting>true</EnableWindowsTargeting>
+	  <TargetFramework>net7.0-windows10.0.19041.0</TargetFramework>
+	  <EnableWindowsTargeting>true</EnableWindowsTargeting>
 
 	  <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
