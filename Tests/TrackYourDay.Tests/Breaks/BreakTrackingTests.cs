@@ -43,7 +43,8 @@ namespace TrackYourDay.Tests.Breaks
         {
             // Arrange
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
-            this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:00:00"));
+            var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
+            this.clockMock.Setup(x => x.Now).Returns(breakStartDate);
             breakTracker.ProcessActivities();
             this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
 
@@ -51,7 +52,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Assert
-            this.publisherMock.Verify(x => x.Publish(It.IsAny<BreakStartedNotifcation>(), CancellationToken.None), Times.Once);
+            this.publisherMock.Verify(x => x.Publish(It.Is<BreakStartedNotifcation>(n => n.StartedBreak.BreakStartedAt == breakStartDate), CancellationToken.None), Times.Once);
         }
 
         [Fact]
@@ -80,14 +81,15 @@ namespace TrackYourDay.Tests.Breaks
         {
             // Arrange
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
-            var activityToProcess = ActivityFactory.StartedSystemLockedActivity(DateTime.Now);
+            var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
+            var activityToProcess = ActivityFactory.StartedSystemLockedActivity(breakStartDate);
             breakTracker.AddActivityToProcess(activityToProcess.StartDate, activityToProcess.ActivityType);
 
             // Act
             breakTracker.ProcessActivities();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<BreakStartedNotifcation>(), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.Is<BreakStartedNotifcation>(n => n.StartedBreak.BreakStartedAt == breakStartDate), CancellationToken.None), Times.Once);
         }
 
         [Theory]
@@ -96,7 +98,8 @@ namespace TrackYourDay.Tests.Breaks
         {
             // Arrange
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
-            this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:00:00"));
+            var breakStartedDate = DateTime.Parse("2000-01-01 12:00:00");
+            this.clockMock.Setup(x => x.Now).Returns(breakStartedDate);
             breakTracker.ProcessActivities();
             this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
             breakTracker.ProcessActivities();
@@ -106,7 +109,10 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<BreakEndedNotifcation>(), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.Is<BreakEndedNotifcation>(
+                n => n.EndedBreak.BreakEndedAt == startedActivity.StartDate
+                && n.EndedBreak.BreakStartedAt == breakStartedDate
+                ), CancellationToken.None), Times.Once);
         }
 
         [Theory]
@@ -115,7 +121,8 @@ namespace TrackYourDay.Tests.Breaks
         {
             // Arrange
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
-            this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:00:00"));
+            var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
+            this.clockMock.Setup(x => x.Now).Returns(breakStartDate);
             breakTracker.ProcessActivities();
             this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
             breakTracker.ProcessActivities();
@@ -126,7 +133,10 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<BreakEndedNotifcation>(), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.Is<BreakEndedNotifcation>(
+                n => n.EndedBreak.BreakEndedAt == instantActivity.OccuranceDate
+                && n.EndedBreak.BreakStartedAt == breakStartDate
+                ), CancellationToken.None), Times.Once);
         }
 
         [Fact(Skip = "To be implemented in future")]
