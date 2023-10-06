@@ -29,6 +29,10 @@ jobs:
           restore-keys: |
             dependencies-
 
-      - name: Build and Test
+      - name: Build 
         run: dotnet build --configuration Release --no-restore
-        # Add additional test steps here if needed
+
+      - name: Test
+        run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml"
+        env:
+          VSTEST_LOG_PATH: test_results.xml
