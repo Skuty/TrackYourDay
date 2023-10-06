@@ -24,7 +24,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var endedBreak in breaks)
+            @foreach (var endedBreak in breaks.TakeLast(100))
             {
                 <tr>
                     <td>@endedBreak.BreakStartedAt.ToShortDateString()</td>

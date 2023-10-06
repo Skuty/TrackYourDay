@@ -23,7 +23,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var activity in activities)
+            @foreach (var activity in activities.TakeLast(100))
             {
                 <tr>
                     <td>@activity.StartDate.ToShortDateString()</td>
