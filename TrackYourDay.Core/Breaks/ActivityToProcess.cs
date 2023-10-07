@@ -2,5 +2,5 @@
 
 namespace TrackYourDay.Core.Breaks
 {
-    public record class ActivityToProcess(DateTime ActivityDate, ActivityType ActivityType);
+    public record class ActivityToProcess(DateTime ActivityDate, ActivityType ActivityType, Guid ActivityGuid);
 }

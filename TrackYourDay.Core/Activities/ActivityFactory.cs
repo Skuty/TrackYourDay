@@ -6,12 +6,12 @@ namespace TrackYourDay.Core.Activities
     {
         public static StartedActivity StartedActivity(DateTime startDate, ActivityType activityType)
         {
-            return new StartedActivity(startDate, activityType);
+            return new StartedActivity(Guid.NewGuid(), startDate, activityType);
         }
 
         public static StartedActivity StartedFocusOnApplicatoinActivity(DateTime startDate)
         {
-            return new StartedActivity(startDate, ActivityTypeFactory.FocusOnApplicationActivityType("Not recognized application"));
+            return new StartedActivity(Guid.NewGuid(), startDate, ActivityTypeFactory.FocusOnApplicationActivityType("Not recognized application"));
         }
 
         public static EndedActivity EndedFocusOnApplicationActivity(DateTime startDate, DateTime endDate)
@@ -21,7 +21,7 @@ namespace TrackYourDay.Core.Activities
 
         public static StartedActivity StartedSystemLockedActivity(DateTime startDate)
         {
-            return new StartedActivity(startDate, ActivityTypeFactory.SystemLockedActivityType());
+            return new StartedActivity(Guid.Empty, startDate, ActivityTypeFactory.SystemLockedActivityType());
         }
 
         public static EndedActivity EndedSystemLockedActivity(DateTime startDate, DateTime endDate)

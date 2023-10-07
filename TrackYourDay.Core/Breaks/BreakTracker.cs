@@ -37,14 +37,14 @@ namespace TrackYourDay.Core.Breaks
             this.logger = logger;
         }
 
-        public void AddActivityToProcess(DateTime activityDate, ActivityType activityType)
+        public void AddActivityToProcess(DateTime activityDate, ActivityType activityType, Guid activityGuid)
         {
             if (activityType is null)
             {
                 throw new ArgumentNullException(nameof(activityType));
             }
 
-            var activityToProcess = new ActivityToProcess(activityDate, activityType);
+            var activityToProcess = new ActivityToProcess(activityDate, activityType, activityGuid);
             this.activitiesToProcess.Enqueue(activityToProcess);
             this.logger.LogInformation("Add: {ActivityToProcess}", activityToProcess);
             this.ProcessActivities();

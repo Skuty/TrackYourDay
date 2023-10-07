@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
-using FluentAssertions.Common;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
@@ -13,6 +13,7 @@ namespace TrackYourDay.Tests.ActivityTracking
     {
         private Core.IClock clock;
         private Mock<IPublisher> publisherMock;
+        private Mock<ILogger<ActivityTracker>> loggerMock;
         private Mock<IStartedActivityRecognizingStrategy> startedActivityRecognizingStrategy;
         private Mock<IInstantActivityRecognizingStrategy> instantActivityRecognizingStrategy;
         private ActivityTracker activityEventTracker;
@@ -20,6 +21,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         public ActivityTrackerTests()
         {
             this.clock = new Clock();
+            this.loggerMock = new Mock<ILogger<ActivityTracker>>();
             this.publisherMock = new Mock<IPublisher>();
             this.startedActivityRecognizingStrategy = new Mock<IStartedActivityRecognizingStrategy>();
             this.instantActivityRecognizingStrategy = new Mock<IInstantActivityRecognizingStrategy>();
@@ -28,7 +30,8 @@ namespace TrackYourDay.Tests.ActivityTracking
                 this.clock,
                 this.publisherMock.Object,
                 this.startedActivityRecognizingStrategy.Object,
-                this.instantActivityRecognizingStrategy.Object) ;
+                this.instantActivityRecognizingStrategy.Object,
+                this.loggerMock.Object);
         }
 
         [Fact]

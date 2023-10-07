@@ -1,4 +1,6 @@
+using Castle.Core.Logging;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
@@ -11,6 +13,7 @@ namespace TrackYourDay.Tests.Breaks
     [Trait("Given", "BreakRecordingFeatureIsEnabled")]
     public class BreakTrackingTests
     {
+        private Mock<ILogger<BreakTracker>> loggerMock;
         private Mock<IPublisher> publisherMock;
         private Mock<IClock> clockMock;
         private TimeSpan timeOfNoActivityToStartBreak;
@@ -36,13 +39,14 @@ namespace TrackYourDay.Tests.Breaks
             this.publisherMock = new Mock<IPublisher>();
             this.clockMock = new Mock<IClock>();
             this.timeOfNoActivityToStartBreak = TimeSpan.FromMinutes(5);
+            this.loggerMock = new Mock<ILogger<BreakTracker>>();
         }
 
         [Fact]
         public void GivenThereIsNoBreakStarted_WhenThereIsNoActivityInSpecifiedAmountOfTime_ThenBreakIsStarted()
         {
             // Arrange
-            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
+            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
             var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
             this.clockMock.Setup(x => x.Now).Returns(breakStartDate);
             breakTracker.ProcessActivities();
@@ -59,7 +63,7 @@ namespace TrackYourDay.Tests.Breaks
         public void GivenThereIsStartedBreak_WhenSystemIsBlocked_ThenBreakIsNotEndedAndBreakIsNotStarted()
         {
             // Arrange
-            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
+            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
             this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:00:00"));
             breakTracker.ProcessActivities();
             this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
@@ -68,7 +72,7 @@ namespace TrackYourDay.Tests.Breaks
 
             // Act
             var startedActivity = ActivityFactory.StartedSystemLockedActivity(DateTime.Now);
-            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType);
+            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType, Guid.Empty);
             breakTracker.ProcessActivities();
 
             // Assert
@@ -80,10 +84,10 @@ namespace TrackYourDay.Tests.Breaks
         public void GivenThereIsNoBreakStarted_WhenUserSessionInOperatingSystemIsBlocked_ThenBreakIsStarted()
         {
             // Arrange
-            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
+            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
             var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
             var activityToProcess = ActivityFactory.StartedSystemLockedActivity(breakStartDate);
-            breakTracker.AddActivityToProcess(activityToProcess.StartDate, activityToProcess.ActivityType);
+            breakTracker.AddActivityToProcess(activityToProcess.StartDate, activityToProcess.ActivityType, Guid.Empty);
 
             // Act
             breakTracker.ProcessActivities();
@@ -97,7 +101,7 @@ namespace TrackYourDay.Tests.Breaks
         public void GivenThereIsStartedBreak_WhenThereIsAnyPeriodicActivityOtherThanSystemLocked_ThenBreakIsEnded(StartedActivity startedActivity)
         {
             // Arrange
-            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
+            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
             var breakStartedDate = DateTime.Parse("2000-01-01 12:00:00");
             this.clockMock.Setup(x => x.Now).Returns(breakStartedDate);
             breakTracker.ProcessActivities();
@@ -105,7 +109,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Act
-            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType);
+            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType, Guid.Empty);
             breakTracker.ProcessActivities();
 
             // Assert
@@ -120,7 +124,7 @@ namespace TrackYourDay.Tests.Breaks
         public void GivenThereIsStartedBreak_WhenThereIsAnyInstantActivityOtherThanSystemLocked_ThenBreakIsEnded(InstantActivity instantActivity)
         {
             // Arrange
-            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak);
+            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
             var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
             this.clockMock.Setup(x => x.Now).Returns(breakStartDate);
             breakTracker.ProcessActivities();
@@ -128,7 +132,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Act
-            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.ActivityType); 
+            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.ActivityType, Guid.Empty); 
             
             breakTracker.ProcessActivities();
 
