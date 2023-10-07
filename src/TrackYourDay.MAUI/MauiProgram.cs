@@ -8,6 +8,8 @@ using TrackYourDay.MAUI.Data;
 using Quartz;
 using TrackYourDay.MAUI.BackgroundJobs;
 using Microsoft.Maui.LifecycleEvents;
+using Serilog;
+using Serilog.Events;
 
 namespace TrackYourDay.MAUI
 {
@@ -25,9 +27,17 @@ namespace TrackYourDay.MAUI
             builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG
-        builder.Services.AddBlazorWebViewDeveloperTools();
-		builder.Logging.AddDebug();
+            builder.Services.AddBlazorWebViewDeveloperTools();
 #endif
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .Enrich.FromLogContext()
+                .WriteTo.File("C:\\Logs\\TrackYourDay_.log", 
+                    rollingInterval: RollingInterval.Day)
+                .CreateLogger();
+
+            builder.Services.AddLogging(loggingBuilder =>
+                loggingBuilder.AddSerilog(dispose: true)); 
             
             builder.Services.AddSingleton<WeatherForecastService>();
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
@@ -38,7 +48,8 @@ namespace TrackYourDay.MAUI
             builder.Services.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(
                 serviceCollection.GetRequiredService<IPublisher>(),
                 serviceCollection.GetRequiredService<IClock>(),
-                TimeSpan.FromMinutes(5)));
+                TimeSpan.FromMinutes(1),
+                serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
             // Install notification handler
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityStartedNotificationHandler>());
 

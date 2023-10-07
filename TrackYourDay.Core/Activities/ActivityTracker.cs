@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
 using TrackYourDay.Core.Activities.Notifications;
 
@@ -6,6 +7,8 @@ namespace TrackYourDay.Core.Activities
 {
     public class ActivityTracker
     {
+        private readonly ILogger<ActivityTracker> logger;
+
         private readonly IClock clock;
         private readonly IPublisher publisher;
         private readonly IStartedActivityRecognizingStrategy startedActivityRecognizingStrategy;
@@ -19,8 +22,10 @@ namespace TrackYourDay.Core.Activities
             IClock clock,
             IPublisher publisher,
             IStartedActivityRecognizingStrategy startedActivityRecognizingStrategy,
-            IInstantActivityRecognizingStrategy instantActivityRecognizingStrategy)
+            IInstantActivityRecognizingStrategy instantActivityRecognizingStrategy,
+            ILogger<ActivityTracker> logger)
         {
+            this.logger = logger;
             this.clock = clock;
             this.publisher = publisher;
             this.startedActivityRecognizingStrategy = startedActivityRecognizingStrategy;

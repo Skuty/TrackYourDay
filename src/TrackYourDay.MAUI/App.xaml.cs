@@ -1,16 +1,16 @@
-﻿using Quartz;
+﻿using Microsoft.Extensions.Logging;
+using Quartz;
 
 namespace TrackYourDay.MAUI
 {
     public partial class App : Application
     {
         private readonly ISchedulerFactory schedulerFactory;
-
-        public App(ISchedulerFactory schedulerFactory)
+        public App(ISchedulerFactory schedulerFactory, ILogger<App> logger)
         {
             InitializeComponent();
             MainPage = new MainPage();
-            
+
             this.schedulerFactory = schedulerFactory;
         }
 

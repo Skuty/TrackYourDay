@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Breaks.Notifications;
@@ -7,28 +8,33 @@ namespace TrackYourDay.Core.Breaks
 {
     public class BreakTracker
     {
+        private readonly ILogger<BreakTracker> logger;
         private readonly TimeSpan timeOfNoActivityToStartBreak;
         private readonly IPublisher publisher;
         private readonly IClock clock;
         private Queue<StartedActivity> activitiesToProcessOld = new Queue<StartedActivity>();
+        //TODO: Imitate break on debugging and check processedActivities, there are activities in wrong order
         private Queue<ActivityToProcess> activitiesToProcess = new Queue<ActivityToProcess>();
+        private List<ActivityToProcess> processedActivities = new List<ActivityToProcess>();
         private List<EndedBreak> endedBreaks = new List<EndedBreak>();
         private StartedBreak? currentStartedBreak;
         private DateTime lastTimeOfActivity;
 
-        public BreakTracker(IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak)
+        public BreakTracker(IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger)
         {
             this.publisher = publisher;
             this.clock = clock;
             this.timeOfNoActivityToStartBreak = timeOfNoActivityToStartBreak;
 
             this.lastTimeOfActivity = this.clock.Now;
+            this.logger = logger;
         }
 
         // <summary> This constructor is used only for testing purposes. It should be marked as internal/private in future.<summary>
-        public BreakTracker(StartedBreak startedBreak, IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak) : this(publisher, clock, timeOfNoActivityToStartBreak)
+        public BreakTracker(StartedBreak startedBreak, IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger) : this(publisher, clock, timeOfNoActivityToStartBreak, logger)
         {
             this.currentStartedBreak = startedBreak;
+            this.logger = logger;
         }
 
         public void AddActivityToProcess(DateTime activityDate, ActivityType activityType)
@@ -39,8 +45,8 @@ namespace TrackYourDay.Core.Breaks
             }
 
             var activityToProcess = new ActivityToProcess(activityDate, activityType);
-
             this.activitiesToProcess.Enqueue(activityToProcess);
+            this.logger.LogInformation("Add: {ActivityToProcess}", activityToProcess);
             this.ProcessActivities();
         }
 
@@ -59,6 +65,7 @@ namespace TrackYourDay.Core.Breaks
             while (this.activitiesToProcess.Any())
             {
                 var activityToProcess = this.activitiesToProcess.Dequeue();
+                this.logger.LogInformation("Process: {ActivityToProcess}", activityToProcess);
                 // Starting break;
                 if (this.currentStartedBreak is null)
                 {
@@ -66,8 +73,10 @@ namespace TrackYourDay.Core.Breaks
                     if (activityToProcess.ActivityType is SystemLockedActivityType)
                     {
                         this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate, "System Locked");
+                        this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
                         this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
+                        this.processedActivities.Add(activityToProcess);
                         continue;
                     }
 
@@ -75,8 +84,10 @@ namespace TrackYourDay.Core.Breaks
                     if (activityToProcess.ActivityDate - this.lastTimeOfActivity > timeOfNoActivityToStartBreak)
                     {
                         this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate, $"Lack of activity for {this.timeOfNoActivityToStartBreak.TotalMinutes} minutes");
+                        this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
                         this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
+                        this.processedActivities.Add(activityToProcess);
                         continue;
                     }
                 }
@@ -87,10 +98,12 @@ namespace TrackYourDay.Core.Breaks
                     if (activityToProcess.ActivityType is not SystemLockedActivityType)
                     {
                         var endedBreak = this.currentStartedBreak.EndBreak(activityToProcess.ActivityDate);
+                        this.logger.LogInformation("End: {EndedBreak}", endedBreak);
                         this.endedBreaks.Add(endedBreak);
                         this.currentStartedBreak = null;
                         this.lastTimeOfActivity = endedBreak.BreakEndedAt;
                         this.publisher.Publish(new BreakEndedNotifcation(endedBreak));
+                        this.processedActivities.Add(activityToProcess);
                         continue;
                     }
                 }
@@ -101,6 +114,7 @@ namespace TrackYourDay.Core.Breaks
                 (this.clock.Now - this.lastTimeOfActivity > this.timeOfNoActivityToStartBreak))
             {
                 this.currentStartedBreak = new StartedBreak(clock.Now, $"Lack of activity for {this.timeOfNoActivityToStartBreak.TotalMinutes} minutes");
+                this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
                 this.lastTimeOfActivity = currentStartedBreak.BreakStartedAt;
                 this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
             }
