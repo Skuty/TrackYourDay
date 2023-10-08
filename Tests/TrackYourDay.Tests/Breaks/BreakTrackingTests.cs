@@ -143,7 +143,12 @@ namespace TrackYourDay.Tests.Breaks
                 ), CancellationToken.None), Times.Once);
         }
 
-        [Fact(Skip = "To be implemented in future")]
+        [Fact(Skip = "Postponed")]
+        public void Error_BreakStartDateWasNewRecognizedActivityInsteadOfLastActivityDate()
+        {
+        }
+
+            [Fact(Skip = "To be implemented in future")]
         public void GivenWhenBreakRecordingEnds_ThenBreakWaitsForConfirming()
         {
             // Arrange

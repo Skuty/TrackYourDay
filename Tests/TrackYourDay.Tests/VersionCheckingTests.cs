@@ -1,17 +1,47 @@
-﻿namespace TrackYourDay.Tests
+﻿using FluentAssertions;
+using TrackYourDay.Core.Versioning;
+
+namespace TrackYourDay.Tests
 {
     public class VersionCheckingTests
     {
+        [Theory]
+        [InlineData("0.0.1", "0.0.2")]
+        [InlineData("0.1.0", "0.2.0")]
+        [InlineData("0.1.0", "0.2.1")]
+        [InlineData("0.1.9", "0.2.0")]
+        [InlineData("1.0.0", "2.0.0")]
+        [InlineData("1.9.9", "2.0.0")]
+        public void WhenVersionIsNewer_ThenTrueIsReturned(string olderVersion, string newerVersion)
+        {
+            // Arrange
+            var older = new ApplicationVersion(olderVersion);
+            var newer = new ApplicationVersion(newerVersion);
+
+            // Act
+            var result = newer.IsNewerThan(older);
+
+            // Assert
+            result.Should().BeTrue();
+        }
+
         [Fact(Skip = "To be implemented in future")]
         public void ReturnsVersionOfCurrentApplication()
         {
             Assert.Fail("Not implemented");
         }
 
-        [Fact(Skip = "To be implemented in future")]
+        [Fact(Skip = "In progress")]
         public void ReturnsVersionOfNewestAvailableApplication()
         {
-            Assert.Fail("Not implemented");
+            // Arrange
+            var versioningSystemFacade = new VersioningSystemFacade();
+
+            // Act
+            var result = versioningSystemFacade.GetNewestAvailableApplicationVersion();
+
+            // Assert
+            result.Should().NotBeNull();
         }
 
         [Fact(Skip = "To be implemented in future")]
