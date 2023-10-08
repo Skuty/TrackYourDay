@@ -74,18 +74,22 @@ namespace TrackYourDay.Core.Breaks
                     {
                         this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate, "System Locked");
                         this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
-                        this.lastTimeOfActivity = activityToProcess.ActivityDate;
+                        //this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
                         this.processedActivities.Add(activityToProcess);
                         continue;
                     }
 
                     // Start Break if there was no Activity for specified amount of time between events
-                    if (activityToProcess.ActivityDate - this.lastTimeOfActivity > timeOfNoActivityToStartBreak)
+                    var timeOfLackOfActivity = activityToProcess.ActivityDate - this.lastTimeOfActivity;
+                    this.logger.LogInformation("Activity date: {ActivityDate}", activityToProcess.ActivityDate);
+                    this.logger.LogInformation("Last time of activity: {LastTimeOfActivity}", this.lastTimeOfActivity);
+                    this.logger.LogInformation("Time of lack of activity: {TimeOfLackOfActivity}", timeOfLackOfActivity);
+                    if (timeOfLackOfActivity > timeOfNoActivityToStartBreak)
                     {
-                        this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate, $"Lack of activity for {this.timeOfNoActivityToStartBreak.TotalMinutes} minutes");
+                        this.currentStartedBreak = new StartedBreak(this.lastTimeOfActivity, $"Lack of activity for {this.timeOfNoActivityToStartBreak.TotalMinutes} minutes");
                         this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
-                        this.lastTimeOfActivity = activityToProcess.ActivityDate;
+                        //this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
                         this.processedActivities.Add(activityToProcess);
                         continue;
@@ -101,12 +105,14 @@ namespace TrackYourDay.Core.Breaks
                         this.logger.LogInformation("End: {EndedBreak}", endedBreak);
                         this.endedBreaks.Add(endedBreak);
                         this.currentStartedBreak = null;
-                        this.lastTimeOfActivity = endedBreak.BreakEndedAt;
+                        this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.publisher.Publish(new BreakEndedNotifcation(endedBreak));
                         this.processedActivities.Add(activityToProcess);
                         continue;
                     }
                 }
+
+                this.lastTimeOfActivity = activityToProcess.ActivityDate;
             }
 
             // Start Break if there was no Activity for specified amount of time between last event and now
@@ -115,9 +121,9 @@ namespace TrackYourDay.Core.Breaks
             {
                 this.currentStartedBreak = new StartedBreak(clock.Now, $"Lack of activity for {this.timeOfNoActivityToStartBreak.TotalMinutes} minutes");
                 this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
-                this.lastTimeOfActivity = currentStartedBreak.BreakStartedAt;
+                //this.lastTimeOfActivity = currentStartedBreak.BreakStartedAt;
                 this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
-            }
+            }            
         }
 
         public ReadOnlyCollection<EndedBreak> GetEndedBreaks()
