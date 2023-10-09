@@ -31,7 +31,7 @@ namespace TrackYourDay.Tests
             Assert.Fail("Not implemented");
         }
 
-        [Fact(Skip = "In progress")]
+        [Fact]
         public void ReturnsVersionOfNewestAvailableApplication()
         {
             // Arrange

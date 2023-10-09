@@ -5,7 +5,7 @@ namespace TrackYourDay.Core.Versioning
 {
     public class VersioningSystemFacade
     {
-        private ApplicationVersion newestAvailableApplicationVersion;
+        private ApplicationVersion newestAvailableApplicationVersion = null!;
 
         public ApplicationVersion GetCurrentApplicationVersion()
         {
@@ -14,13 +14,19 @@ namespace TrackYourDay.Core.Versioning
 
         public ApplicationVersion GetNewestAvailableApplicationVersion()
         {
-            if (this.newestAvailableApplicationVersion == null)
+            try
             {
-                var versionFromGitHub = this.GetNewestReleaseNameFromGitHubRepositoryUsingRestApi();
-                this.newestAvailableApplicationVersion = new ApplicationVersion(versionFromGitHub);
-            }
+                if (this.newestAvailableApplicationVersion == null)
+                {
+                    var versionFromGitHub = this.GetNewestReleaseNameFromGitHubRepositoryUsingRestApi();
+                    this.newestAvailableApplicationVersion = new ApplicationVersion(versionFromGitHub);
+                }
 
-            return this.newestAvailableApplicationVersion;
+                return this.newestAvailableApplicationVersion;
+            } catch
+            {
+                return this.GetCurrentApplicationVersion();
+            }
         }
 
         public bool IsNewerVersionAvailable()
@@ -32,21 +38,24 @@ namespace TrackYourDay.Core.Versioning
         {
             var url = "https://api.github.com/repos/skuty/TrackYourDay/releases";
 
+            // TODO: Replace with injected HttpClient from IHttpClientFactory
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(url);
-            var productValue = new ProductInfoHeaderValue("TrackYourDay", "0.1");
+            var productValue = new ProductInfoHeaderValue("TrackYourDay", this.GetCurrentApplicationVersion().ToString());
 
             client.DefaultRequestHeaders.UserAgent.Add(productValue);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+
             HttpResponseMessage response = client.GetAsync(url).Result;
 
-            //if (response.IsSuccessStatusCode)
-            //{
-                var result = response.Content.ReadAsStringAsync().Result;
-                dynamic obj = JsonConvert.DeserializeObject<dynamic>(result);
 
-                return obj.First().name;
-            //}
+            if (response.IsSuccessStatusCode)
+            {
+                var json = response.Content.ReadAsStringAsync().Result;
+                var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
+
+                return result.OrderByDescending(v =>v.published_at).FirstOrDefault().name;
+            }
 
             throw new Exception("Cannot get newest release name from GitHub repository.");
         }

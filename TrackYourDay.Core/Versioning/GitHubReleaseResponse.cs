@@ -1,7 +1,9 @@
 ﻿namespace TrackYourDay.Core.Versioning
 {
-    public class GitHubReleaseResponse
+    internal class GitHubReleaseResponse
     {
-        public string name { get; set; }
+        internal string name { get; set; }
+
+        internal DateTime published_at { get; set; }
     }
 }

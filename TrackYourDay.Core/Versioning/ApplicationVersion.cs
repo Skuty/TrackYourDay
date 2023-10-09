@@ -26,7 +26,12 @@
                 throw new ArgumentException("Version {version} is not in supported format.", version);
             }
         }
-        
+
+        public override string ToString()
+        {
+            return $"{this.major}.{this.minor}.{this.patch}";
+        }
+
         public bool IsNewerThan(ApplicationVersion versionToCompare)
         {
             if (this.major > versionToCompare.major)
