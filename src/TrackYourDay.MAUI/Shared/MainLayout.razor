@@ -1,4 +1,5 @@
-﻿@inherits LayoutComponentBase
+﻿@using TrackYourDay.Core.Versioning;
+@inherits LayoutComponentBase
 
 <div class="page">
     <div class="sidebar">
@@ -7,7 +8,21 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+            @if(this.isNewVersionAvailable)
+            {
+                <div class="alert alert-warning" role="alert">
+                    <strong>There is a new version available!</strong> 
+                    You are currently using version @this.currentVersion, but version @this.newVersion is available.
+                    <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+                </div>
+            } else
+            {
+                <div class="alert alert-success" role="alert">
+                    <strong>You are using the latest version!</strong> 
+                    You are currently using version @this.currentVersion.
+                    <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+                </div>
+            }
         </div>
 
         <article class="content px-4">
@@ -15,3 +30,23 @@
         </article>
     </main>
 </div>
+
+@code {
+    [Inject]
+    private VersioningSystemFacade versioningSystemFacade { get; set; }
+
+    bool isNewVersionAvailable;
+    string currentVersion;
+    string newVersion;
+
+    protected override void OnInitialized()
+    {
+        this.currentVersion = this.versioningSystemFacade.GetCurrentApplicationVersion().ToString();
+
+        if (this.versioningSystemFacade.IsNewerVersionAvailable())
+        {
+            this.isNewVersionAvailable = true;
+            this.newVersion = this.versioningSystemFacade.GetNewestAvailableApplicationVersion().ToString();
+        }
+    }
+}

@@ -10,6 +10,7 @@ using TrackYourDay.MAUI.BackgroundJobs;
 using Microsoft.Maui.LifecycleEvents;
 using Serilog;
 using Serilog.Events;
+using TrackYourDay.Core.Versioning;
 
 namespace TrackYourDay.MAUI
 {
@@ -40,6 +41,7 @@ namespace TrackYourDay.MAUI
                 loggingBuilder.AddSerilog(dispose: true)); 
             
             builder.Services.AddSingleton<WeatherForecastService>();
+            builder.Services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             builder.Services.AddSingleton<IClock, Clock>();
             builder.Services.AddScoped<IStartedActivityRecognizingStrategy, DefaultActivityRecognizingStategy>();

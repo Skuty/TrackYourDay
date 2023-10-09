@@ -2,8 +2,8 @@
 {
     internal class GitHubReleaseResponse
     {
-        internal string name { get; set; }
+        public string name { get; set; }
 
-        internal DateTime published_at { get; set; }
+        public DateTime published_at { get; set; }
     }
 }

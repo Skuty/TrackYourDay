@@ -44,6 +44,11 @@
     private int breaksCount;
     private TimeSpan allBreaksDuration;
 
+    protected override void OnInitialized()
+    {
+        Refresh();
+    }
+
     private void Refresh()
     {
         this.activitiesCount = this.activityTracker.GetEndedActivities().Count;
