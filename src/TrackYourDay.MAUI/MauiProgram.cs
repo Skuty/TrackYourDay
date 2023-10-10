@@ -52,7 +52,7 @@ namespace TrackYourDay.MAUI
             builder.Services.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(
                 serviceCollection.GetRequiredService<IPublisher>(),
                 serviceCollection.GetRequiredService<IClock>(),
-                TimeSpan.FromMinutes(5),
+                Config.TimeOfNoActivityToStartBreak,
                 serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
             // Install notification handler
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityStartedNotificationHandler>());
@@ -63,7 +63,7 @@ namespace TrackYourDay.MAUI
                 q.ScheduleJob<ActivityEventTrackerJob>(trigger => trigger
                     .WithIdentity("Activity Recognizing Job")
                     .WithDescription("Job that periodically recognizes user activities")
-                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(5, IntervalUnit.Second))
+                    .WithDailyTimeIntervalSchedule(x => x.WithInterval((int)Config.FrequencyOfActivityDiscovering.TotalSeconds, IntervalUnit.Second))
                     .StartNow());
             });
 
