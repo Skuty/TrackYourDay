@@ -11,6 +11,7 @@ using Microsoft.Maui.LifecycleEvents;
 using Serilog;
 using Serilog.Events;
 using TrackYourDay.Core.Versioning;
+using MudBlazor.Services;
 
 namespace TrackYourDay.MAUI
 {
@@ -25,6 +26,7 @@ namespace TrackYourDay.MAUI
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
+            builder.Services.AddMudServices();
             builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG
@@ -66,6 +68,8 @@ namespace TrackYourDay.MAUI
             });
 
             builder.Services.AddQuartzHostedService();
+
+
 
             // https://learn.microsoft.com/en-us/answers/questions/1336207/how-to-remove-close-and-maximize-button-for-a-maui?cid=kerryherger
 #if WINDOWS
