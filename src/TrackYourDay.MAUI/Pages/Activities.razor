@@ -13,27 +13,23 @@
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Duration</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var activity in activities.TakeLast(100))
-            {
-                <tr>
-                    <td>@activity.StartDate.ToLongTimeString()</td>
-                    <td>@activity.EndDate.ToLongTimeString()</td>
-                    <td>@activity.GetDuration()</td>
-                    <td>@activity.ActivityType.ActivityDescription</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <MudDataGrid T="EndedActivity" Items="@activities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Activities</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.StartDate" Title="Break Started" Filterable="false" />
+            <PropertyColumn Property="x => x.EndDate" Title="Break Ended" Filterable="false" />
+            <PropertyColumn Property="x => x.GetDuration()" Title="Duration" SortBy="@_sortByDuration" />
+            <PropertyColumn Property="x => x.ActivityType.ActivityDescription" Title="Description" SortBy="@_sortByDescritpion" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="EndedActivity" />
+        </PagerContent>
+    </MudDataGrid>    
 }
 
 @code {
@@ -43,4 +39,30 @@ else
     {
         activities = this.activityTracker.GetEndedActivities().OrderByDescending(activity => activity.StartDate).ToList();
     }
+    
+    private string _searchString;
+
+    // custom sort by name length
+    private Func<EndedActivity, object> _sortByDuration => x =>
+    {
+        return x.GetDuration();
+    };
+
+    private Func<EndedActivity, object> _sortByDescritpion => x =>
+    {
+        return x.ActivityType.ActivityDescription;
+    };
+
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<EndedActivity, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.ActivityType.ActivityDescription.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
 }

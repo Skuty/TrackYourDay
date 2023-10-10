@@ -14,27 +14,23 @@
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Duration</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var endedBreak in breaks.TakeLast(100))
-            {
-                <tr>
-                    <td>@endedBreak.BreakStartedAt.ToLongTimeString()</td>
-                    <td>@endedBreak.BreakEndedAt.ToLongTimeString()</td>
-                    <td>@endedBreak.BreakDuration</td>
-                    <td>@endedBreak.BreakDescription</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <MudDataGrid T="EndedBreak" Items="@breaks" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Breaks</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.BreakStartedAt" Title="Break Started" Filterable="false" />
+            <PropertyColumn Property="x => x.BreakEndedAt" Title="Break Ended" Filterable="false" />
+            <PropertyColumn Property="x => x.BreakDuration" Title="Duration" SortBy="@_sortByDuration" />
+            <PropertyColumn Property="x => x.BreakDescription" Title="Description" SortBy="@_sortByDescritpion" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="EndedBreak" />
+        </PagerContent>
+    </MudDataGrid>
 }
 
 @code {
@@ -44,4 +40,29 @@ else
     {
         breaks = this.breakTracker.GetEndedBreaks().OrderByDescending(@break => @break.BreakStartedAt).ToList();
     }
+
+    private string _searchString;
+    
+    // custom sort by name length
+    private Func<EndedBreak, object> _sortByDuration => x =>
+    {
+        return x.BreakDuration;
+    };
+
+    private Func<EndedBreak, object> _sortByDescritpion => x =>
+    {
+        return x.BreakDescription;
+    };
+
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<EndedBreak, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.BreakDescription.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
 }
