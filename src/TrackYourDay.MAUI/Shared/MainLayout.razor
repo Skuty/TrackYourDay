@@ -10,17 +10,13 @@
         <div class="top-row px-4">
             @if(this.isNewVersionAvailable)
             {
-                <div class="alert alert-warning" role="alert">
-                    <strong>There is a new version available!</strong> 
-                    You are currently using version @this.currentVersion, but version @this.newVersion is available.
-                    <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+                <div class="alert alert-success" role="alert">
+                    You are currently using version @this.currentVersion, but version <a href="https://github.com/Skuty/TrackYourDay/releases/" target="_blank">@this.newVersion</a> is available.
                 </div>
             } else
             {
-                <div class="alert alert-success" role="alert">
-                    <strong>You are using the latest version!</strong> 
-                    You are currently using version @this.currentVersion.
-                    <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+                <div class="alert">
+                    You are using the latest version @this.currentVersion!
                 </div>
             }
         </div>

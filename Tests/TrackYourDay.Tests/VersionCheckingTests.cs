@@ -19,10 +19,10 @@ namespace TrackYourDay.Tests
             var newer = new ApplicationVersion(newerVersion);
 
             // Act
-            var result = newer.IsNewerThan(older);
+            var isNewerVersion = newer.IsNewerThan(older);
 
             // Assert
-            result.Should().BeTrue();
+            isNewerVersion.Should().BeTrue();
         }
 
         [Fact(Skip = "To be implemented in future")]

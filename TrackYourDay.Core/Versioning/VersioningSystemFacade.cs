@@ -9,7 +9,7 @@ namespace TrackYourDay.Core.Versioning
 
         public ApplicationVersion GetCurrentApplicationVersion()
         {
-            return new ApplicationVersion("0.0.0"); // After this there should be info on page about new version, check it
+            return new ApplicationVersion("0.0.1");
         }
 
         public ApplicationVersion GetNewestAvailableApplicationVersion()
@@ -31,7 +31,7 @@ namespace TrackYourDay.Core.Versioning
 
         public bool IsNewerVersionAvailable()
         {
-            return this.GetCurrentApplicationVersion().IsNewerThan(this.GetNewestAvailableApplicationVersion());
+            return this.GetNewestAvailableApplicationVersion().IsNewerThan(this.GetCurrentApplicationVersion());
         }
 
         private string GetNewestReleaseNameFromGitHubRepositoryUsingRestApi()
