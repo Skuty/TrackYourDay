@@ -50,7 +50,7 @@ namespace TrackYourDay.MAUI
             builder.Services.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(
                 serviceCollection.GetRequiredService<IPublisher>(),
                 serviceCollection.GetRequiredService<IClock>(),
-                TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(5),
                 serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
             // Install notification handler
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityStartedNotificationHandler>());
