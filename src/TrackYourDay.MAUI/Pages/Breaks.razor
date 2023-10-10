@@ -27,8 +27,8 @@ else
             @foreach (var endedBreak in breaks.TakeLast(100))
             {
                 <tr>
-                    <td>@endedBreak.BreakStartedAt.ToShortDateString()</td>
-                    <td>@endedBreak.BreakEndedAt.ToShortDateString()</td>
+                    <td>@endedBreak.BreakStartedAt.ToLongTimeString()</td>
+                    <td>@endedBreak.BreakEndedAt.ToLongTimeString()</td>
                     <td>@endedBreak.BreakDuration</td>
                     <td>@endedBreak.BreakDescription</td>
                 </tr>
@@ -42,6 +42,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        breaks = this.breakTracker.GetEndedBreaks().ToList();
+        breaks = this.breakTracker.GetEndedBreaks().OrderByDescending(@break => @break.BreakStartedAt).ToList();
     }
 }

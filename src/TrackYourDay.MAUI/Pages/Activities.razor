@@ -26,8 +26,8 @@ else
             @foreach (var activity in activities.TakeLast(100))
             {
                 <tr>
-                    <td>@activity.StartDate.ToShortDateString()</td>
-                    <td>@activity.EndDate.ToShortDateString()</td>
+                    <td>@activity.StartDate.ToLongTimeString()</td>
+                    <td>@activity.EndDate.ToLongTimeString()</td>
                     <td>@activity.GetDuration()</td>
                     <td>@activity.ActivityType.ActivityDescription</td>
                 </tr>
@@ -41,6 +41,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        activities = this.activityTracker.GetEndedActivities().ToList();
+        activities = this.activityTracker.GetEndedActivities().OrderByDescending(activity => activity.StartDate).ToList();
     }
 }
