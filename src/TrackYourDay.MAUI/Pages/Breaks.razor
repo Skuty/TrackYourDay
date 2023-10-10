@@ -22,8 +22,8 @@ else
                           AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="x => x.BreakStartedAt" Title="Break Started" Filterable="false" />
-            <PropertyColumn Property="x => x.BreakEndedAt" Title="Break Ended" Filterable="false" />
+            <PropertyColumn Property="x => x.BreakStartedAt.ToLongTimeString()" Title="Break Started" Filterable="false" />
+            <PropertyColumn Property="x => x.BreakEndedAt.ToLongTimeString()" Title="Break Ended" Filterable="false" />
             <PropertyColumn Property="x => x.BreakDuration" Title="Duration" SortBy="@_sortByDuration" />
             <PropertyColumn Property="x => x.BreakDescription" Title="Description" SortBy="@_sortByDescritpion" />
         </Columns>

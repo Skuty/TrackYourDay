@@ -90,6 +90,7 @@ namespace TrackYourDay.MAUI
                             case Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter:
                                 //disable the max button
                                 overlappedPresenter.IsMaximizable = true;
+                                overlappedPresenter.Maximize();
                                 break;
                         }
 
