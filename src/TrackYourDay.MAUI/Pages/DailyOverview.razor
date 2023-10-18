@@ -1,0 +1,80 @@
+﻿@page "/"
+@using TrackYourDay.Core.Activities;
+@using TrackYourDay.Core.Breaks;
+@using TrackYourDay.Core;
+
+
+<h1>
+    <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
+    Daily Overview
+</h1>
+<div>
+    <p>
+        You Worktime left for Today is: @workTimeLeft.Hours h @workTimeLeft.Minutes m @workTimeLeft.Seconds s
+    </p>
+    
+    <p>
+        Your Overhours for Today are: @overHours.Hours h @overHours.Minutes m @overHours.Seconds s
+    </p>
+
+    <p>
+        You were active Today for: @activitiesDuration.Hours h @activitiesDuration.Minutes m @activitiesDuration.Seconds s
+    </p>
+
+    <p>
+        You had Breaks for: @allBreaksDuration.Hours h @allBreaksDuration.Minutes m @allBreaksDuration.Seconds s
+    </p>
+
+
+</div>
+
+@code {
+    [Inject]
+    private ActivityTracker activityTracker { get; set; }
+    [Inject]
+    private BreakTracker breakTracker { get; set; }
+
+    private TimeSpan workTimeLeft;
+    private TimeSpan overHours;
+    private TimeSpan activitiesDuration;
+    private TimeSpan allBreaksDuration;
+
+    protected override void OnInitialized()
+    {
+        this.Refresh();
+    }
+
+    private void Refresh()
+    {
+        this.workTimeLeft = this.GetWorkTimeLeft();
+        this.overHours = this.GetOverHours();
+        this.activitiesDuration = this.GetActivitiesDuration();
+        this.allBreaksDuration = this.GetBreaksDuration();
+    }
+
+    private TimeSpan GetWorkTimeLeft()
+    {
+        var todaysActivitiesDuration = (this.activityTracker.GetEndedActivities().Any() ? this.activityTracker.GetEndedActivities().Select(x => x.GetDuration()).Aggregate((x, y) => x.Add(y)) : TimeSpan.Zero);
+        var workTimeLeft = Config.WorkDayDuration - Config.AllowedBreakDuration - todaysActivitiesDuration;
+        return workTimeLeft.TotalSeconds > 0 ? workTimeLeft : TimeSpan.Zero;
+    }
+
+    private TimeSpan GetOverHours()
+    {
+        var todaysActivitiesDuration = (this.activityTracker.GetEndedActivities().Any() ? this.activityTracker.GetEndedActivities().Select(x => x.GetDuration()).Aggregate((x, y) => x.Add(y)) : TimeSpan.Zero);
+        var workTimeLeft = Config.WorkDayDuration - Config.AllowedBreakDuration - todaysActivitiesDuration;
+
+        var overHours = workTimeLeft.TotalSeconds < 0 ? (workTimeLeft * -1) : TimeSpan.Zero;
+        return overHours;        
+    }
+
+    private TimeSpan GetActivitiesDuration()
+    {
+        return this.activityTracker.GetEndedActivities().Any() ? this.activityTracker.GetEndedActivities().Select(x => x.GetDuration()).Aggregate((x, y) => x.Add(y)) : TimeSpan.Zero;
+    }
+
+    private TimeSpan GetBreaksDuration()
+    {
+        return this.breakTracker.GetEndedBreaks().Any() ? this.breakTracker.GetEndedBreaks().Select(x => x.BreakDuration).Aggregate((x, y) => x.Add(y)) : TimeSpan.Zero;
+    }
+}
