@@ -8,6 +8,10 @@
 
         public static TimeSpan WorkDayDuration => TimeSpan.FromHours(8);
 
-        public static TimeSpan AllowedBreakDuration => TimeSpan.FromMinutes(90);
+        /// <summary>
+        /// Screen: 7x5 minutes = 35 minutes
+        /// Meal: 15 minutes
+        /// </summary>
+        public static TimeSpan AllowedBreakDuration => TimeSpan.FromMinutes(50);
     }
 }
