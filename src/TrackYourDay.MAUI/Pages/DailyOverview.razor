@@ -55,14 +55,14 @@
     private TimeSpan GetWorkTimeLeft()
     {
         var todaysActivitiesDuration = (this.activityTracker.GetEndedActivities().Any() ? this.activityTracker.GetEndedActivities().Select(x => x.GetDuration()).Aggregate((x, y) => x.Add(y)) : TimeSpan.Zero);
-        var workTimeLeft = Config.WorkDayDuration - Config.AllowedBreakDuration - todaysActivitiesDuration;
+        var workTimeLeft = Config.WorkdayDuration - Config.AllowedBreakDuration - todaysActivitiesDuration;
         return workTimeLeft.TotalSeconds > 0 ? workTimeLeft : TimeSpan.Zero;
     }
 
     private TimeSpan GetOverHours()
     {
         var todaysActivitiesDuration = (this.activityTracker.GetEndedActivities().Any() ? this.activityTracker.GetEndedActivities().Select(x => x.GetDuration()).Aggregate((x, y) => x.Add(y)) : TimeSpan.Zero);
-        var workTimeLeft = Config.WorkDayDuration - Config.AllowedBreakDuration - todaysActivitiesDuration;
+        var workTimeLeft = Config.WorkdayDuration - Config.AllowedBreakDuration - todaysActivitiesDuration;
 
         var overHours = workTimeLeft.TotalSeconds < 0 ? (workTimeLeft * -1) : TimeSpan.Zero;
         return overHours;        

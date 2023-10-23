@@ -59,7 +59,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
         }
 
         [Fact]
-        public void GivenThereWas7HoursAnd10MinutesMinutesOfActivitiesAndNoBreaks_WhenWorktimeLeftIsBeingCalculated_ThenWorkTimeLeftIsEqualTo0Minutes()
+        public void GivenThereWas7HoursAnd10MinutesMinutesOfActivitiesAndNoBreaks_WhenWorktimeLeftIsBeingCalculated_ThenWorkTimeLeftIsEqualTo50Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
@@ -72,11 +72,11 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.WorktimeLeft.Should().Be(TimeSpan.FromMinutes(0));
+            workday.WorktimeLeft.Should().Be(TimeSpan.FromMinutes(50));
         }
 
         [Fact]
-        public void GivenThereWas3HoursAnd30MinutesMinutesOfActivitiesAndNoBreaks_WhenWorktimeLeftIsBeingCalculated_ThenWorkTimeLeftIsEqualTo3HoursAnd40Minutes()
+        public void GivenThereWas3HoursAnd30MinutesMinutesOfActivitiesAndNoBreaks_WhenWorktimeLeftIsBeingCalculated_ThenWorkTimeLeftIsEqualTo4HoursAnd30Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
@@ -89,7 +89,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.WorktimeLeft.Should().Be(TimeSpan.FromHours(3).Add(TimeSpan.FromMinutes(40)));
+            workday.WorktimeLeft.Should().Be(TimeSpan.FromHours(4).Add(TimeSpan.FromMinutes(30)));
         }
     }
 }

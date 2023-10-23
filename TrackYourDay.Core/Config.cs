@@ -6,7 +6,7 @@
 
         public static TimeSpan FrequencyOfActivityDiscovering => TimeSpan.FromSeconds(5);
 
-        public static TimeSpan WorkDayDuration => TimeSpan.FromHours(8);
+        public static TimeSpan WorkdayDuration => TimeSpan.FromHours(8);
 
         /// <summary>
         /// Screen: 7x5 minutes = 35 minutes
