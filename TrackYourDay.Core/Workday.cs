@@ -31,7 +31,7 @@ namespace TrackYourDay.Core
             var timeOfAllBreaks = endedBreaks.Aggregate(TimeSpan.Zero, (durationSum, @break) => durationSum + @break.BreakDuration);
 
             TimeSpan breaksLeft;
-            //TODO: Extract static config from here
+            //TODO: Extract static config from here 
             if (timeOfAllBreaks.TotalSeconds > Config.AllowedBreakDuration.TotalSeconds)
             {
                 breaksLeft = TimeSpan.Zero;
