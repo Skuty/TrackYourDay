@@ -8,36 +8,65 @@
     <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
     Daily Overview
 </h1>
-<div>
-    <p>
-        You Worktime left for Today is: @workday.WorktimeLeft.Hours h @workday.WorktimeLeft.Minutes m @workday.WorktimeLeft.Seconds s
-    </p>
-    
-    <p>
-        Your Overhours for Today are: @workday.Overhours.Hours h @workday.Overhours.Minutes m @workday.Overhours.Seconds s
-    </p>
 
-    <hr />
+<MudExpansionPanels>
+    <MudExpansionPanel Text="Short overview" MaxHeight="230" IsInitiallyExpanded="true">
+        <MudGrid Justify="Justify.Center">
+            <MudItem>
+                <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
+                            @workday.WorktimeLeft.Hours h @workday.WorktimeLeft.Minutes m
+                        </text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudItem>
+            <MudItem>
+                <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@breaksLeftDataChart" InputLabels="@breaksLeftLabelsChart">
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
+                            @workday.BreaksLeft.Hours h @workday.BreaksLeft.Minutes m
+                        </text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudItem>
+            <MudItem>
+                <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@overhoursDataChart" InputLabels="@overhoursLabelsChart">
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
+                            @workday.Overhours.Hours h @workday.Overhours.Minutes m
+                        </text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudItem>
+        </MudGrid>
+    </MudExpansionPanel>
+    <MudExpansionPanel Text="Full overview" MaxHeight="500">
+        <p>
+            You Worktime left for Today is: @workday.WorktimeLeft.Hours h @workday.WorktimeLeft.Minutes m @workday.WorktimeLeft.Seconds s
+        </p>
 
-    <p>
-        You have Left Breaks for: @workday.BreaksLeft.Hours h @workday.BreaksLeft.Minutes m @workday.BreaksLeft.Seconds s
-    </p>
+        <p>
+            Your Overhours for Today are: @workday.Overhours.Hours h @workday.Overhours.Minutes m @workday.Overhours.Seconds s
+        </p>
 
-    <p>
-        You have Valid Breaks for Today: @workday.ValidBreaksUsed.Hours h @workday.ValidBreaksUsed.Minutes m @workday.ValidBreaksUsed.Seconds s
-    </p>
+        <p>
+            You have Left Breaks for: @workday.BreaksLeft.Hours h @workday.BreaksLeft.Minutes m @workday.BreaksLeft.Seconds s
+        </p>
 
-    <hr />
+        <p>
+            You have Valid Breaks for Today: @workday.ValidBreaksUsed.Hours h @workday.ValidBreaksUsed.Minutes m @workday.ValidBreaksUsed.Seconds s
+        </p>
 
-    <p>
-        You were active Today for: @workday.TimeOfAllActivities.Hours h @workday.TimeOfAllActivities.Minutes m @workday.TimeOfAllActivities.Seconds s
-    </p>
+        <p>
+            You were active Today for: @workday.TimeOfAllActivities.Hours h @workday.TimeOfAllActivities.Minutes m @workday.TimeOfAllActivities.Seconds s
+        </p>
 
-    <p>
-        You had All Breaks for: @workday.TimeOfAllBreaks.Hours h @workday.TimeOfAllBreaks.Minutes m @workday.TimeOfAllBreaks.Seconds s
-    </p>
-
-</div>
+        <p>
+            You had All Breaks for: @workday.TimeOfAllBreaks.Hours h @workday.TimeOfAllBreaks.Minutes m @workday.TimeOfAllBreaks.Seconds s
+        </p>
+    </MudExpansionPanel>
+</MudExpansionPanels>
 
 @code {
     [Inject]
@@ -47,6 +76,15 @@
 
     private Workday workday;
 
+    private double[] worktimeLeftDataChart = { 0, 0 };
+    private string[] worktimeLeftLabelsChart = { "Time to Work", "Worked Time" };
+
+    private double[] overhoursDataChart = { 0, 120 };
+    private string[] overhoursLabelsChart = { "Overhours done", "Max overhours" };
+
+    private double[] breaksLeftDataChart = { 0, 0 };
+    private string[] breaksLeftLabelsChart = { "Breaks left", "Breaks taken" };
+
     protected override void OnInitialized()
     {
         this.Refresh();
@@ -55,5 +93,13 @@
     private void Refresh()
     {
         this.workday = Workday.CreateBasedOn(this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
+
+        worktimeLeftDataChart[0] = this.workday.WorktimeLeft.TotalMinutes;
+        worktimeLeftDataChart[1] = Config.WorkdayDuration.TotalMinutes - this.workday.WorktimeLeft.TotalMinutes;
+
+        overhoursDataChart[0] = this.workday.Overhours.TotalMinutes;
+
+        breaksLeftDataChart[0] = this.workday.BreaksLeft.TotalMinutes;
+        breaksLeftDataChart[1] = this.workday.ValidBreaksUsed.TotalMinutes;
     }
 }
