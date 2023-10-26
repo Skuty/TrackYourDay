@@ -1,10 +1,14 @@
 name: Create Release manually
 
 on:
-    workflow_dispatch:
-        inputs:
-            version:
-                description: 'Version number'
+  workflow_dispatch:
+      inputs:
+          version:
+              description: 'Version number'
+              required: true
+          isPreRelease:
+                type: boolean
+                description: Is this version a pre release
                 required: true
 
 jobs:
@@ -32,15 +36,8 @@ jobs:
                 VSTEST_LOG_PATH: test_results.xml
             
             - name: Archive build output
-              uses: montudor/action-zip@v0.2.0
-              with:
-                files: |
-                    bin/**
-                exclude: |
-                    **/*.pdb
-                    **/*.xml
-                output: TrackYourDay_${{ github.event.inputs.version }}.zip
-
+              run: zip TrackYourDay_${{ github.event.inputs.version }}.zip ./* -r
+        
             - name: Create tag
               run: git tag ${{ github.event.inputs.version }}
               env:
@@ -50,10 +47,11 @@ jobs:
               uses: ad-m/github-push-action@master
               with:
                 github_token: ${{ secrets.GITHUB_TOKEN }}
-                branch: 'main'
+                branch: 'PoC'
                 tags: true
       
             - name: Create release
+              id: create_release
               uses: actions/create-release@v1
               with:
                 tag_name: ${{ github.event.inputs.version }}
@@ -63,12 +61,12 @@ jobs:
                     - Added feature X
                     - Fixed bug Y
                 draft: false
-                prerelease: false
+                prerelease: ${{ github.event.inputs.isPreRelease }}
 
             - name: Upload release asset
               uses: actions/upload-release-asset@v1
               with:
-                upload_url: ${{ steps.create-release.outputs.upload_url }}
-                asset_path: ./build.zip
-                asset_name: build.zip
+                upload_url: ${{ steps.create_release.outputs.upload_url }}
+                asset_path: ./TrackYourDay_${{ github.event.inputs.version }}.zip
+                asset_name: TrackYourDay_${{ github.event.inputs.version }}.zip
                 asset_content_type: application/zip
