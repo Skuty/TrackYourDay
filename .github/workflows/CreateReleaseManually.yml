@@ -1,0 +1,74 @@
+name: Create Release manually
+
+on:
+    workflow_dispatch:
+        inputs:
+            version:
+                description: 'Version number'
+                required: true
+
+jobs:
+    create-release:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+      
+            - name: Set up .NET Core
+              uses: actions/setup-dotnet@v3
+              with:
+                dotnet-version: 7.0.x  # Specify the .NET version you need
+
+            - name: Restore dependencies
+              run: dotnet restore
+                
+            - name: Build 
+              run: dotnet build --configuration Release --no-restore
+
+            - name: Test
+              run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml"
+              env:
+                VSTEST_LOG_PATH: test_results.xml
+            
+            - name: Archive build output
+              uses: montudor/action-zip@v0.2.0
+              with:
+                files: |
+                    bin/**
+                exclude: |
+                    **/*.pdb
+                    **/*.xml
+                output: TrackYourDay_${{ github.event.inputs.version }}.zip
+
+            - name: Create tag
+              run: git tag ${{ github.event.inputs.version }}
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Push tag
+              uses: ad-m/github-push-action@master
+              with:
+                github_token: ${{ secrets.GITHUB_TOKEN }}
+                branch: 'main'
+                tags: true
+      
+            - name: Create release
+              uses: actions/create-release@v1
+              with:
+                tag_name: ${{ github.event.inputs.version }}
+                release_name: Release ${{ github.event.inputs.version }}
+                body: |
+                    Changes in this release:
+                    - Added feature X
+                    - Fixed bug Y
+                draft: false
+                prerelease: false
+
+            - name: Upload release asset
+              uses: actions/upload-release-asset@v1
+              with:
+                upload_url: ${{ steps.create-release.outputs.upload_url }}
+                asset_path: ./build.zip
+                asset_name: build.zip
+                asset_content_type: application/zip
