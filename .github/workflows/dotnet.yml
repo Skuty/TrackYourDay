@@ -3,8 +3,10 @@ name: Build and Test
 on:
   push:
     branches:
-      - PoC  # Define the branch to trigger the workflow on
-
+      - main
+  pull_request:
+    branches:
+      - 'main'
 jobs:
   build:
     runs-on: windows-latest
