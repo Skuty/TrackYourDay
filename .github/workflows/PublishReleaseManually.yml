@@ -53,22 +53,11 @@ jobs:
                 github_token: ${{ secrets.GITHUB_TOKEN }}
                 branch: 'PoC'
                 tags: true
-      
-            - name: Create release
-              id: create_release
-              uses: actions/create-release@v1
-              with:
-                tag_name: ${{ github.event.inputs.version }}
-                release_name: Release ${{ github.event.inputs.version }}
-                body: |
-                    For Changes take a look at related commit description
-                draft: false
-                prerelease: ${{ github.event.inputs.isPreRelease }}
 
-            - name: Upload release asset
-              uses: actions/upload-release-asset@v1
+            - uses: ncipollo/release-action@v1
               with:
-                upload_url: ${{ steps.create_release.outputs.upload_url }}
-                asset_path: ./TrackYourDay_${{ github.event.inputs.version }}.zip
-                asset_name: TrackYourDay_${{ github.event.inputs.version }}.zip
-                asset_content_type: application/zip
+                artifacts: 'TrackYourDay_${{ github.event.inputs.version }}.zip'
+                artifactErrorsFailBuild: true
+                prerelease: ${{ github.event.inputs.isPreRelease }}
+                tag: ${{ github.event.inputs.version }}
+                artifactContentType: application/zip
