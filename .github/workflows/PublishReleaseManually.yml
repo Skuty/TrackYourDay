@@ -1,9 +1,6 @@
 name: Publish Release manually
 
 on:
-  push:
-    branches:
-      - PoC
   workflow_dispatch:
     inputs:
           version:
