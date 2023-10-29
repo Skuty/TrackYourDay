@@ -39,6 +39,7 @@ jobs:
               uses: thedoctor0/zip-release@0.7.1
               with:
                 type: 'zip'
+                path: 'src\TrackYourDay.MAUI\bin\Release\net7.0-windows10.0.19041.0\win10-x64'
                 filename: 'TrackYourDay_${{ github.event.inputs.version }}.zip'
                 exclusions: '*.git*'
 
