@@ -57,9 +57,7 @@ jobs:
                 tag_name: ${{ github.event.inputs.version }}
                 release_name: Release ${{ github.event.inputs.version }}
                 body: |
-                    Changes in this release:
-                    - Added feature X
-                    - Fixed bug Y
+                    For Changes take a look at related commit description
                 draft: false
                 prerelease: ${{ github.event.inputs.isPreRelease }}
 
