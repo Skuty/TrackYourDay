@@ -36,8 +36,12 @@ jobs:
                 VSTEST_LOG_PATH: test_results.xml
             
             - name: Archive build output
-              run: zip TrackYourDay_${{ github.event.inputs.version }}.zip ./* -r
-        
+              uses: thedoctor0/zip-release@0.7.1
+              with:
+                type: 'zip'
+                filename: 'TrackYourDay_${{ github.event.inputs.version }}.zip'
+                exclusions: '*.git*'
+
             - name: Create tag
               run: git tag ${{ github.event.inputs.version }}
               env:
