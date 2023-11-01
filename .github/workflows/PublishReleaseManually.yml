@@ -5,6 +5,7 @@ on:
     inputs:
           version:
               description: 'Version number'
+              default: 'v0.0.0'
               required: true
           isPreRelease:
                 type: boolean
