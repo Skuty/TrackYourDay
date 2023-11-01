@@ -17,7 +17,8 @@
         {
             try
             {
-                var splittedVersion = version.Split('.');
+                var versionWithoutSPrefix = version.Replace("v", string.Empty);
+                var splittedVersion = versionWithoutSPrefix.Split('.');
                 this.major = int.Parse(splittedVersion[0]);
                 this.minor = int.Parse(splittedVersion[1]);
                 this.patch = int.Parse(splittedVersion[2]);

@@ -6,9 +6,9 @@ namespace TrackYourDay.Tests
     public class VersionCheckingTests
     {
         [Theory]
-        [InlineData("0.0.1", "0.0.2")]
-        [InlineData("0.1.0", "0.2.0")]
-        [InlineData("0.1.0", "0.2.1")]
+        [InlineData("v0.0.1", "v0.0.2")]
+        [InlineData("v0.1.0", "v0.2.0")]
+        [InlineData("v0.1.0", "v0.2.1")]
         [InlineData("0.1.9", "0.2.0")]
         [InlineData("1.0.0", "2.0.0")]
         [InlineData("1.9.9", "2.0.0")]
