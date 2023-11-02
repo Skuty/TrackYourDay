@@ -30,6 +30,7 @@ namespace TrackYourDay.Core
         /// </summary>
         /// 
         public TimeSpan TimeAlreadyWorkded { get; }
+
         /// <summary>
         /// Amount of Time which Employee should work to fullfill regulation requirements
         /// </summary>
@@ -96,7 +97,7 @@ namespace TrackYourDay.Core
 
         private Workday(TimeSpan worktimeLeft, TimeSpan breaksLeft, TimeSpan overhours, TimeSpan timeOfAllActivities, TimeSpan timeOfAllBreaks, TimeSpan validBreaksUsed)
         {
-            TimeLeftForWork = worktimeLeft;
+            TimeLeftToWork = worktimeLeft;
             BreakTimeLeft = breaksLeft;
             OverhoursTime = overhours;
             TimeOfAllActivities = timeOfAllActivities;

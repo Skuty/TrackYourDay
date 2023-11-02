@@ -18,7 +18,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftForWork.Should().Be(TimeSpan.FromHours(8));
+            workday.TimeLeftToWork.Should().Be(TimeSpan.FromHours(8));
         }
 
         [Fact]
@@ -35,7 +35,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftForWork.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
+            workday.TimeLeftToWork.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftForWork.Should().Be(TimeSpan.FromMinutes(0));
+            workday.TimeLeftToWork.Should().Be(TimeSpan.FromMinutes(0));
         }
 
         [Fact]
@@ -72,7 +72,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftForWork.Should().Be(TimeSpan.FromMinutes(50));
+            workday.TimeLeftToWork.Should().Be(TimeSpan.FromMinutes(50));
         }
 
         [Fact]
@@ -89,7 +89,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftForWork.Should().Be(TimeSpan.FromHours(4).Add(TimeSpan.FromMinutes(30)));
+            workday.TimeLeftToWork.Should().Be(TimeSpan.FromHours(4).Add(TimeSpan.FromMinutes(30)));
         }
     }
 }
