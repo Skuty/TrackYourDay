@@ -32,7 +32,8 @@ namespace TrackYourDay.Core
         public TimeSpan TimeAlreadyWorkded { get; }
 
         /// <summary>
-        /// Amount of Time which Employee should work to fullfill regulation requirements
+        /// Amount of Time which Employee should work to fullfill regulation requirements.
+        /// This time does not include Breaks
         /// </summary>
         public TimeSpan TimeLeftToWork { get; }
 

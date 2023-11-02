@@ -42,6 +42,27 @@ namespace TrackYourDay.Tests.WorkdayComponents
         }
 
         [Fact]
+        public void GivenThereWas7HoursAnd10MinutesOfActivitiesAnd80MinutesOfBreaks_WhenOverhoursAreBeingCalculated_ThenOverhoursEqualsTo0Hours()
+        {
+            // Arrange
+            var endedActivities = new List<EndedActivity>
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 07:10"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
+            };
+            var endedBreaks = new List<EndedBreak>
+            {
+                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:20"), "Test Break")
+            };
+
+            // Act
+            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+
+            // Assert
+            workday.OverhoursTime.Should().Be(TimeSpan.FromHours(0));
+        }
+
+
+        [Fact]
         public void GivenThereWas8HoursOfActivitiesAnd50MinutesOfBreaks_WhenOverhoursAreBeingCalculated_ThenOverhoursEqualsTo50Minutes()
         {
             // Arrange
