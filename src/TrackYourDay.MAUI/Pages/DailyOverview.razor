@@ -16,7 +16,7 @@
                 <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                            @workday.WorktimeLeft.Hours h @workday.WorktimeLeft.Minutes m
+                            @workday.TimeLeftForWork.Hours h @workday.TimeLeftForWork.Minutes m
                         </text>
                     </CustomGraphics>
                 </MudChart>
@@ -25,7 +25,7 @@
                 <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@breaksLeftDataChart" InputLabels="@breaksLeftLabelsChart">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                            @workday.BreaksLeft.Hours h @workday.BreaksLeft.Minutes m
+                            @workday.BreakTimeLeft.Hours h @workday.BreakTimeLeft.Minutes m
                         </text>
                     </CustomGraphics>
                 </MudChart>
@@ -34,7 +34,7 @@
                 <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@overhoursDataChart" InputLabels="@overhoursLabelsChart">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                            @workday.Overhours.Hours h @workday.Overhours.Minutes m
+                            @workday.OverhoursTime.Hours h @workday.OverhoursTime.Minutes m
                         </text>
                     </CustomGraphics>
                 </MudChart>
@@ -43,19 +43,19 @@
     </MudExpansionPanel>
     <MudExpansionPanel Text="Full overview" MaxHeight="500">
         <p>
-            You Worktime left for Today is: @workday.WorktimeLeft.Hours h @workday.WorktimeLeft.Minutes m @workday.WorktimeLeft.Seconds s
+            You Worktime left for Today is: @workday.TimeLeftForWork.Hours h @workday.TimeLeftForWork.Minutes m @workday.TimeLeftForWork.Seconds s
         </p>
 
         <p>
-            Your Overhours for Today are: @workday.Overhours.Hours h @workday.Overhours.Minutes m @workday.Overhours.Seconds s
+            Your Overhours for Today are: @workday.OverhoursTime.Hours h @workday.OverhoursTime.Minutes m @workday.OverhoursTime.Seconds s
         </p>
 
         <p>
-            You have Left Breaks for: @workday.BreaksLeft.Hours h @workday.BreaksLeft.Minutes m @workday.BreaksLeft.Seconds s
+            You have Left Breaks for: @workday.BreakTimeLeft.Hours h @workday.BreakTimeLeft.Minutes m @workday.BreakTimeLeft.Seconds s
         </p>
 
         <p>
-            You have Valid Breaks for Today: @workday.ValidBreaksUsed.Hours h @workday.ValidBreaksUsed.Minutes m @workday.ValidBreaksUsed.Seconds s
+            You have Valid Breaks for Today: @workday.ValidBreakTimeUsed.Hours h @workday.ValidBreakTimeUsed.Minutes m @workday.ValidBreakTimeUsed.Seconds s
         </p>
 
         <p>
@@ -94,12 +94,12 @@
     {
         this.workday = Workday.CreateBasedOn(this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
 
-        worktimeLeftDataChart[0] = this.workday.WorktimeLeft.TotalMinutes;
-        worktimeLeftDataChart[1] = Config.WorkdayDuration.TotalMinutes - this.workday.WorktimeLeft.TotalMinutes;
+        worktimeLeftDataChart[0] = this.workday.TimeLeftForWork.TotalMinutes;
+        worktimeLeftDataChart[1] = Config.WorkdayDuration.TotalMinutes - this.workday.TimeLeftForWork.TotalMinutes;
 
-        overhoursDataChart[0] = this.workday.Overhours.TotalMinutes;
+        overhoursDataChart[0] = this.workday.OverhoursTime.TotalMinutes;
 
-        breaksLeftDataChart[0] = this.workday.BreaksLeft.TotalMinutes;
-        breaksLeftDataChart[1] = this.workday.ValidBreaksUsed.TotalMinutes;
+        breaksLeftDataChart[0] = this.workday.BreakTimeLeft.TotalMinutes;
+        breaksLeftDataChart[1] = this.workday.ValidBreakTimeUsed.TotalMinutes;
     }
 }

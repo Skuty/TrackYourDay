@@ -18,7 +18,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.BreaksLeft.Should().Be(TimeSpan.FromMinutes(50));
+            workday.BreakTimeLeft.Should().Be(TimeSpan.FromMinutes(50));
         }
 
         [Fact]
@@ -35,7 +35,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.BreaksLeft.Should().Be(TimeSpan.FromMinutes(35));
+            workday.BreakTimeLeft.Should().Be(TimeSpan.FromMinutes(35));
         }
 
         [Fact]
@@ -52,7 +52,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.BreaksLeft.Should().Be(TimeSpan.FromMinutes(0));
+            workday.BreakTimeLeft.Should().Be(TimeSpan.FromMinutes(0));
         }
 
         // TODO: split in summary activities and breaks to avoid problems with properly calculating break time
