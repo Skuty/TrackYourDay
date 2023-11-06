@@ -16,7 +16,7 @@
                 <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                            @workday.TimeLeftToWork.Hours h @workday.TimeLeftToWork.Minutes m
+                            @workday.TimeLeftToWorkActively.Hours h @workday.TimeLeftToWorkActively.Minutes m
                         </text>
                     </CustomGraphics>
                 </MudChart>
@@ -43,7 +43,7 @@
     </MudExpansionPanel>
     <MudExpansionPanel Text="Full overview" MaxHeight="500">
         <p>
-            You Worktime left for Today is: @workday.TimeLeftToWork.Hours h @workday.TimeLeftToWork.Minutes m @workday.TimeLeftToWork.Seconds s
+            You Worktime left for Today is: @workday.TimeLeftToWorkActively.Hours h @workday.TimeLeftToWorkActively.Minutes m @workday.TimeLeftToWorkActively.Seconds s
         </p>
 
         <p>
@@ -94,8 +94,8 @@
     {
         this.workday = Workday.CreateBasedOn(this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
 
-        worktimeLeftDataChart[0] = this.workday.TimeLeftToWork.TotalMinutes;
-        worktimeLeftDataChart[1] = Config.WorkdayDuration.TotalMinutes - this.workday.TimeLeftToWork.TotalMinutes;
+        worktimeLeftDataChart[0] = this.workday.TimeLeftToWorkActively.TotalMinutes;
+        worktimeLeftDataChart[1] = Config.WorkdayDuration.TotalMinutes - this.workday.TimeLeftToWorkActively.TotalMinutes;
 
         overhoursDataChart[0] = this.workday.OverhoursTime.TotalMinutes;
 

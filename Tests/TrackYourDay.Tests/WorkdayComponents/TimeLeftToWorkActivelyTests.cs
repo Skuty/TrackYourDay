@@ -5,10 +5,10 @@ using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Tests.WorkdayComponents
 {
-    public class WorktimeTests
+    public class TimeLeftToWorkActivelyTests
     {
         [Fact]
-        public void GivenThereWasNoActivitiesOrBreaks_WhenTimeLeftToWorkIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
+        public void GivenThereWasNoActivitiesOrBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>();
@@ -18,11 +18,11 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftToWork.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
         }
 
         [Fact]
-        public void GivenThereWasNoActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
+        public void GivenThereWasNoActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>();
@@ -35,11 +35,11 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftToWork.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
         }
 
         [Fact]
-        public void GivenThereWasNoActivitiesAndThereWas60MinutesOfBreaks_WhenTimeLeftToWorkIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
+        public void GivenThereWasNoActivitiesAndThereWas60MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>();
@@ -52,12 +52,12 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftToWork.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
         }
 
 
         [Fact]
-        public void GivenThereWas7HoursAnd10MinutesMinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
+        public void GivenThereWas7HoursAnd10MinutesMinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
@@ -73,11 +73,11 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftToWork.Should().Be(TimeSpan.FromMinutes(0));
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromMinutes(0));
         }
 
         [Fact]
-        public void GivenThereWas7HoursAnd20MinutesMinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
+        public void GivenThereWas7HoursAnd20MinutesMinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
@@ -93,12 +93,12 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftToWork.Should().Be(TimeSpan.FromMinutes(0));
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromMinutes(0));
         }
 
 
         [Fact]
-        public void GivenThereWas7HoursAnd10MinutesMinutesOfActivitiesAndNoBreaks_WhenTimeLeftToWorkIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
+        public void GivenThereWas7HoursAnd10MinutesMinutesOfActivitiesAndNoBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
@@ -111,11 +111,11 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftToWork.Should().Be(TimeSpan.FromMinutes(0));
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromMinutes(0));
         }
 
         [Fact]
-        public void GivenThereWas3HoursAnd30MinutesMinutesOfActivitiesAndNoBreaks_WhenTimeLeftToWorkIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo3HoursAnd40Minutes()
+        public void GivenThereWas3HoursAnd30MinutesMinutesOfActivitiesAndNoBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo3HoursAnd40Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
@@ -128,7 +128,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftToWork.Should().Be(TimeSpan.FromHours(3).Add(TimeSpan.FromMinutes(40)));
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(3).Add(TimeSpan.FromMinutes(40)));
         }
     }
 }

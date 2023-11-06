@@ -26,16 +26,22 @@ namespace TrackYourDay.Core
         public TimeSpan TimeOfAllBreaks { get; }
 
         /// <summary>
+        /// Amount of Time which Employee should work to fullfill regulation requirements
+        /// This time includes Breaks
+        /// </summary>
+        public TimeSpan OverallTimeLeftToWork { get; }
+
+        /// <summary>
         /// Amount of Time which Employee already worked
         /// </summary>
-        /// 
-        public TimeSpan TimeAlreadyWorkded { get; }
+        // TODO: Add missing unit tests
+        public TimeSpan TimeAlreadyActivelyWorkded { get; }
 
         /// <summary>
         /// Amount of Time which Employee should work to fullfill regulation requirements.
         /// This time does not include Breaks
         /// </summary>
-        public TimeSpan TimeLeftToWork { get; }
+        public TimeSpan TimeLeftToWorkActively { get; }
 
         /// <summary>
         /// Amount of Time which Employee worked more than regulation requirements
@@ -80,15 +86,12 @@ namespace TrackYourDay.Core
                 validBreaksUsed = timeOfAllBreaks;
             }
 
+            var timeLeftToWork = Config.WorkdayDuration - Config.AllowedBreakDuration - (timeOfAllActivities - timeOfAllBreaks);
 
-            //TODO: Correct this to ignore activities that were causing breaks etc.
-            var worktimeLeft = Config.WorkdayDuration - validBreaksUsed - timeOfAllActivities;
-
-
-            var overhours = worktimeLeft < TimeSpan.Zero ? worktimeLeft * -1 : TimeSpan.Zero;
+            var overhours = timeLeftToWork < TimeSpan.Zero ? timeLeftToWork * -1 : TimeSpan.Zero;
 
             return new Workday(
-                worktimeLeft >= TimeSpan.Zero ? worktimeLeft : TimeSpan.Zero,
+                timeLeftToWork >= TimeSpan.Zero ? timeLeftToWork : TimeSpan.Zero,
                 breaksLeft,
                 overhours, 
                 timeOfAllActivities, 
@@ -96,9 +99,9 @@ namespace TrackYourDay.Core
                 validBreaksUsed);
         }
 
-        private Workday(TimeSpan worktimeLeft, TimeSpan breaksLeft, TimeSpan overhours, TimeSpan timeOfAllActivities, TimeSpan timeOfAllBreaks, TimeSpan validBreaksUsed)
+        private Workday(TimeSpan timeLeftToWork, TimeSpan breaksLeft, TimeSpan overhours, TimeSpan timeOfAllActivities, TimeSpan timeOfAllBreaks, TimeSpan validBreaksUsed)
         {
-            TimeLeftToWork = worktimeLeft;
+            TimeLeftToWorkActively = timeLeftToWork;
             BreakTimeLeft = breaksLeft;
             OverhoursTime = overhours;
             TimeOfAllActivities = timeOfAllActivities;
