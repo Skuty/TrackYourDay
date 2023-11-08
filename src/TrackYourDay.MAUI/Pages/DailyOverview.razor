@@ -41,29 +41,10 @@
             </MudItem>
         </MudGrid>
     </MudExpansionPanel>
-    <MudExpansionPanel Text="Full overview" MaxHeight="500">
+    <MudExpansionPanel Text="Raw Workday" MaxHeight="500">
         <p>
-            You Worktime left for Today is: @workday.TimeLeftToWorkActively.Hours h @workday.TimeLeftToWorkActively.Minutes m @workday.TimeLeftToWorkActively.Seconds s
-        </p>
-
-        <p>
-            Your Overhours for Today are: @workday.OverhoursTime.Hours h @workday.OverhoursTime.Minutes m @workday.OverhoursTime.Seconds s
-        </p>
-
-        <p>
-            You have Left Breaks for: @workday.BreakTimeLeft.Hours h @workday.BreakTimeLeft.Minutes m @workday.BreakTimeLeft.Seconds s
-        </p>
-
-        <p>
-            You have Valid Breaks for Today: @workday.ValidBreakTimeUsed.Hours h @workday.ValidBreakTimeUsed.Minutes m @workday.ValidBreakTimeUsed.Seconds s
-        </p>
-
-        <p>
-            You were active Today for: @workday.TimeOfAllActivities.Hours h @workday.TimeOfAllActivities.Minutes m @workday.TimeOfAllActivities.Seconds s
-        </p>
-
-        <p>
-            You had All Breaks for: @workday.TimeOfAllBreaks.Hours h @workday.TimeOfAllBreaks.Minutes m @workday.TimeOfAllBreaks.Seconds s
+            Your raw Workday is <br />
+            @workday;
         </p>
     </MudExpansionPanel>
 </MudExpansionPanels>
@@ -95,7 +76,7 @@
         this.workday = Workday.CreateBasedOn(this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
 
         worktimeLeftDataChart[0] = this.workday.TimeLeftToWorkActively.TotalMinutes;
-        worktimeLeftDataChart[1] = Config.WorkdayDuration.TotalMinutes - this.workday.TimeLeftToWorkActively.TotalMinutes;
+        worktimeLeftDataChart[1] = this.workday.TimeAlreadyActivelyWorkded.TotalMinutes;
 
         overhoursDataChart[0] = this.workday.OverhoursTime.TotalMinutes;
 

@@ -98,6 +98,13 @@ namespace TrackYourDay.MAUI
                         appWindow.Closing += async (s, e) =>
                         {
                             e.Cancel = true;
+                            switch (appWindow.Presenter)
+                            {
+                                case Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter:
+                                    overlappedPresenter.Minimize();
+                                    break;
+                            }
+
                         };
                     });
                 });

@@ -45,6 +45,7 @@
                 return true;
             }
 
+            //TODO fix this for scenario 0.1.0 and 0.0.8
             if ( this.patch > versionToCompare.patch)
             {
                 return true;

@@ -7,7 +7,7 @@ namespace TrackYourDay.Core
     /// Represents Workday of hired Employee
     /// His details about worktime, breaks, etc.
     /// </summary>
-    public class Workday
+    public record class Workday
     {
         /// <summary>
         /// Represents all Activities even that longterm which could be Breaks

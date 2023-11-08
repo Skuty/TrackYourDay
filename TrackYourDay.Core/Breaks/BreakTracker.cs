@@ -65,6 +65,7 @@ namespace TrackYourDay.Core.Breaks
             while (this.activitiesToProcess.Any())
             {
                 var activityToProcess = this.activitiesToProcess.Dequeue();
+
                 this.logger.LogInformation("Process: {ActivityToProcess}", activityToProcess);
                 // Starting break;
                 if (this.currentStartedBreak is null)
