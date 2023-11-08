@@ -3,10 +3,6 @@ using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Core
 {
-    // Existing assumptions are conflicting with each other
-
-    //TODO: Add tests for not tested parts or extract them
-
     /// <summary>
     /// Represents Workday of hired Employee
     /// His details about worktime, breaks, etc.
@@ -58,37 +54,85 @@ namespace TrackYourDay.Core
         /// </summary>
         public TimeSpan ValidBreakTimeUsed { get; }
 
-        private Workday(TimeSpan timeLeftToWork, TimeSpan breaksLeft, TimeSpan overhours, TimeSpan timeOfAllActivities, TimeSpan timeOfAllBreaks, TimeSpan validBreaksUsed)
+        public Workday(
+            TimeSpan timeOfAllActivities, 
+            TimeSpan timeOfAllBreaks, 
+            TimeSpan overallTimeLeftToWork, 
+            TimeSpan timeLeftToWorkActively, 
+            TimeSpan timeAlreadyActivelyWorkded, 
+            TimeSpan overhoursTime, 
+            TimeSpan breakTimeLeft, 
+            TimeSpan validBreakTimeUsed)
         {
-            TimeLeftToWorkActively = timeLeftToWork;
-            BreakTimeLeft = breaksLeft;
-            OverhoursTime = overhours;
-            TimeOfAllActivities = timeOfAllActivities;
-            TimeOfAllBreaks = timeOfAllBreaks;
-            ValidBreakTimeUsed = validBreaksUsed;
+            this.TimeOfAllActivities = timeOfAllActivities;
+            this.TimeOfAllBreaks = timeOfAllBreaks;
+            this.OverallTimeLeftToWork = overallTimeLeftToWork;
+            this.TimeLeftToWorkActively = timeLeftToWorkActively;
+            this.TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded;
+            this.OverhoursTime = overhoursTime;
+            this.BreakTimeLeft = breakTimeLeft;
+            this.ValidBreakTimeUsed = validBreakTimeUsed;
         }
 
         public static Workday CreateBasedOn(IReadOnlyCollection<EndedActivity> endedActivities, IReadOnlyCollection<EndedBreak> endedBreaks)
         {
             var timeOfAllActivities = GetTimeOfAllActivities(endedActivities);
             var timeOfAllBreaks = GetTimeOfAllBreaks(endedBreaks);
+
+            var validBreakTimeUsed = GetValidBreakTimeUsed(timeOfAllBreaks);
+            var timeAlreadyActivelyWorkded = GetTimeAlreadyActivelyWorkded(timeOfAllActivities, timeOfAllBreaks, validBreakTimeUsed);
+
+            var overallTimeLeftToWork = GetOverallTimeLeftToWork(timeAlreadyActivelyWorkded, validBreakTimeUsed);
+            var timeLeftToWorkActively = GetTimeLeftToWorkActively(timeAlreadyActivelyWorkded);
+            var overhoursTime = GetOverhours(timeAlreadyActivelyWorkded);
             var breakTimeLeft = GetTimeOfBreaksLeft(timeOfAllBreaks);
-            var validBreaksUsed = GetTimeOfValidBreaksUsed(timeOfAllBreaks);
-            var timeLeftToWork = GetTimeLeftToWork(timeOfAllActivities, timeOfAllBreaks);
-            var overhours = GetOverhours(timeLeftToWork);
+
 
             return new Workday(
-                timeLeftToWork,
-                breakTimeLeft,
-                overhours,
                 timeOfAllActivities,
                 timeOfAllBreaks,
-                validBreaksUsed);
+                overallTimeLeftToWork,
+                timeLeftToWorkActively,
+                timeAlreadyActivelyWorkded,
+                overhoursTime,
+                breakTimeLeft,
+                validBreakTimeUsed);
         }
 
-        private static TimeSpan GetOverhours(TimeSpan timeLeftToWork)
+        private static TimeSpan GetValidBreakTimeUsed(TimeSpan timeOfAllBreaks)
         {
-            return timeLeftToWork < TimeSpan.Zero ? timeLeftToWork * -1 : TimeSpan.Zero;
+            if (timeOfAllBreaks.TotalSeconds >= Config.AllowedBreakDuration.TotalSeconds)
+            {
+                return Config.AllowedBreakDuration;
+            }
+            else
+            {
+                return timeOfAllBreaks;
+            }
+        }
+
+        private static TimeSpan GetTimeAlreadyActivelyWorkded(TimeSpan timeOfAllActivities, TimeSpan timeOfAllBreaks, TimeSpan validBreakTimeUsed)
+        {
+            return timeOfAllActivities - timeOfAllBreaks + validBreakTimeUsed;
+        }
+
+        private static TimeSpan GetTimeLeftToWorkActively(TimeSpan timeAlreadyActivelyWorkded)
+        {
+            //timealreadyActivelyWorked is negative
+            var timeLeftToWorkActively = Config.WorkdayDuration - Config.AllowedBreakDuration - timeAlreadyActivelyWorkded;
+            return timeLeftToWorkActively >= TimeSpan.Zero ? timeLeftToWorkActively : TimeSpan.Zero;
+        }
+
+        private static TimeSpan GetOverallTimeLeftToWork(TimeSpan timeAlreadyActivelyWorkded, TimeSpan validBreakTimeUsed)
+        {
+            return Config.WorkdayDuration - timeAlreadyActivelyWorkded - validBreakTimeUsed;
+        }
+
+        private static TimeSpan GetOverhours(TimeSpan timeAlreadyActivelyWorkded)
+        {
+            var overhours = Config.WorkdayDuration - Config.AllowedBreakDuration - timeAlreadyActivelyWorkded;
+
+            return overhours < TimeSpan.Zero ? overhours * -1 : TimeSpan.Zero;
         }
 
         private static TimeSpan GetTimeLeftToWork(TimeSpan timeOfAllActivities, TimeSpan timeOfAllBreaks)
@@ -100,32 +144,27 @@ namespace TrackYourDay.Core
         private static TimeSpan GetTimeOfValidBreaksUsed(TimeSpan timeOfAllBreaks)
         {
             TimeSpan validBreaksUsed;
-            if (timeOfAllBreaks.TotalSeconds > Config.AllowedBreakDuration.TotalSeconds)
+            if (timeOfAllBreaks.TotalSeconds >= Config.AllowedBreakDuration.TotalSeconds)
             {
-                validBreaksUsed = Config.AllowedBreakDuration;
+                return Config.AllowedBreakDuration;
             }
             else
             {
-                validBreaksUsed = timeOfAllBreaks;
+                return timeOfAllBreaks;
             }
-
-            return validBreaksUsed;
         }
 
         private static TimeSpan GetTimeOfBreaksLeft(TimeSpan timeOfAllBreaks)
         {
-            TimeSpan breaksLeft;
             //TODO: Extract static config from here 
             if (timeOfAllBreaks.TotalSeconds > Config.AllowedBreakDuration.TotalSeconds)
             {
-                breaksLeft = TimeSpan.Zero;
+                return TimeSpan.Zero;
             }
             else
             {
-                breaksLeft = Config.AllowedBreakDuration - timeOfAllBreaks;
+                return Config.AllowedBreakDuration - timeOfAllBreaks;
             }
-
-            return breaksLeft;
         }
 
         private static TimeSpan GetTimeOfAllBreaks(IReadOnlyCollection<EndedBreak> endedBreaks)

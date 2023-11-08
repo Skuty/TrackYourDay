@@ -6,6 +6,9 @@
 
         public static TimeSpan FrequencyOfActivityDiscovering => TimeSpan.FromSeconds(5);
 
+        /// <summary>
+        /// This time includes Time of Active working and Time of Breaks
+        /// </summary>
         public static TimeSpan WorkdayDuration => TimeSpan.FromHours(8);
 
         /// <summary>
