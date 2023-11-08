@@ -113,7 +113,8 @@ namespace TrackYourDay.Core
 
         private static TimeSpan GetTimeAlreadyActivelyWorkded(TimeSpan timeOfAllActivities, TimeSpan timeOfAllBreaks, TimeSpan validBreakTimeUsed)
         {
-            return timeOfAllActivities - timeOfAllBreaks + validBreakTimeUsed;
+            var timeAlreadyActivelyWorkded = timeOfAllActivities - timeOfAllBreaks + validBreakTimeUsed;
+            return timeAlreadyActivelyWorkded >= TimeSpan.Zero ? timeAlreadyActivelyWorkded : TimeSpan.Zero;
         }
 
         private static TimeSpan GetTimeLeftToWorkActively(TimeSpan timeAlreadyActivelyWorkded)
