@@ -57,7 +57,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
 
 
         [Fact]
-        public void GivenThereWas7HoursAnd10MinutesMinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
+        public void GivenThereWas8HoursMinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
@@ -73,7 +73,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromMinutes(0));
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(0));
         }
 
         [Fact]

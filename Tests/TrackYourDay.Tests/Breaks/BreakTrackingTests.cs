@@ -59,6 +59,32 @@ namespace TrackYourDay.Tests.Breaks
             this.publisherMock.Verify(x => x.Publish(It.Is<BreakStartedNotifcation>(n => n.StartedBreak.BreakStartedAt == breakStartDate), CancellationToken.None), Times.Once);
         }
 
+        /// <summary>
+        /// https://github.com/Skuty/TrackYourDay/issues/14#issuecomment-1803276288
+        /// Suggest that this scenario does not work while application is running
+        /// </summary>
+        [Fact]
+        public void GivenThereIsNoStartedBreakBut_WhenSystemIsBlocked_ThenBreakIsNotEndedAndBreakIsNotStarted()
+        {
+            // Arrange
+            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
+            this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:00:00"));
+            breakTracker.ProcessActivities();
+            this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
+            breakTracker.ProcessActivities();
+            this.publisherMock.Reset();
+
+            // Act
+            var startedActivity = ActivityFactory.StartedSystemLockedActivity(DateTime.Parse("2000-01-01 12:08:00"));
+            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType, Guid.Empty);
+            breakTracker.ProcessActivities();
+
+            // Assert
+            publisherMock.Verify(x => x.Publish(It.IsAny<BreakEndedNotifcation>(), CancellationToken.None), Times.Never);
+            publisherMock.Verify(x => x.Publish(It.IsAny<BreakStartedNotifcation>(), CancellationToken.None), Times.Never);
+        }
+
+
         [Fact]
         public void GivenThereIsStartedBreak_WhenSystemIsBlocked_ThenBreakIsNotEndedAndBreakIsNotStarted()
         {

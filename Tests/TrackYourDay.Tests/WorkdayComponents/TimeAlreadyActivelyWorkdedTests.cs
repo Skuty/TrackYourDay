@@ -39,12 +39,12 @@ namespace TrackYourDay.Tests.WorkdayComponents
         }
 
         [Fact]
-        public void GivenThereWas1HourOfActivitiesAnd50MinutesOfBreaks_WhenTimeAlreadyActivelyWorkdedIsBeingCalculated_ThenTimeAlreadyActivelyWorkdedIsEqualTo6HoursAnd10Minutes()
+        public void GivenThereWas1HourOfActivitiesAnd50MinutesOfBreaks_WhenTimeAlreadyActivelyWorkdedIsBeingCalculated_ThenTimeAlreadyActivelyWorkdedIsEqualTo10Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
             {
-                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:10"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
             };
             var endedBreaks = new List<EndedBreak>
             {
@@ -55,7 +55,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeAlreadyActivelyWorkded.Should().Be(TimeSpan.FromHours(0).Add(TimeSpan.FromMinutes(10)));
+            workday.TimeAlreadyActivelyWorkded.Should().Be(TimeSpan.FromMinutes(10));
         }
     }
 }
