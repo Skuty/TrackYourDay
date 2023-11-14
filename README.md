@@ -4,10 +4,28 @@ Another Time Tracking Tool that will Track Your Day by:
 * Disovering and Measuring Breaks that You have
 * Summarizing Your Work Day
 
+Planned:
+* Integration with popular Project Management Tools like Jira to allow registering of Worked Time
+
 ## Status
 ![Build and Test Status](https://github.com/skuty/TrackYourDay/actions/workflows/dotnet.yml/badge.svg?event=push)
 
 Newest version available at [Releases](https://github.com/Skuty/TrackYourDay/releases)
+
+## Supported platforms
+* Windows 10 and higher
+
+## Installation and Usage
+1. Download ZIP archive from [Releases](https://github.com/Skuty/TrackYourDay/releases)
+2. Extract to Local Drive
+3. Run TrackYourDay executable file
+
+To Run on Windows Startup:
+1. Open CommandLine
+2. Run command: shell:startup
+3. File Location Window will Open
+4. Create Shortcut to TrackYourDay executsble file
+5. Copy Shortcut to File Location
 
 ## Contribution
 
