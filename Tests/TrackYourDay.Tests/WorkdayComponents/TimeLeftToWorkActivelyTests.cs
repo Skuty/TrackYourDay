@@ -55,47 +55,42 @@ namespace TrackYourDay.Tests.WorkdayComponents
             workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
         }
 
-
         [Fact]
-        public void GivenThereWas8HoursMinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
+        public void GivenThereWas7HoursOfActivitiesAndNoBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkActivelyIsEqualTo10Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
             {
-                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 07:10"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 07:00"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
+            };
+            var endedBreaks = new List<EndedBreak>();
+
+            // Act
+            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+
+            // Assert
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromMinutes(10));
+        }
+
+        [Fact]
+        public void GivenThereWas6HoursOfAllActivitiesAndThereWas30MinutesOfBreaksWithinIt_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo1HourAnd40Minutes()
+        {
+            // Arrange
+            var endedActivities = new List<EndedActivity>
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 06:00"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
             };
             var endedBreaks = new List<EndedBreak>
             {
-                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
+                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:30"), "Test Break")
             };
 
             // Act
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(0));
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(1).Add(TimeSpan.FromMinutes(40)));
         }
-
-        [Fact]
-        public void GivenThereWas7HoursAnd20MinutesMinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
-        {
-            // Arrange
-            var endedActivities = new List<EndedActivity>
-            {
-                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 07:20"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
-            };
-            var endedBreaks = new List<EndedBreak>
-            {
-                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
-            };
-
-            // Act
-            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
-
-            // Assert
-            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromMinutes(0));
-        }
-
 
         [Fact]
         public void GivenThereWas7HoursAnd10MinutesMinutesOfActivitiesAndNoBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
@@ -112,6 +107,46 @@ namespace TrackYourDay.Tests.WorkdayComponents
 
             // Assert
             workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromMinutes(0));
+        }
+
+        [Fact]
+        public void GivenThereWas8HoursOfAllActivitiesAndThereWas50MinutesOfBreaksWithinIt_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo0Minutes()
+        {
+            // Arrange
+            var endedActivities = new List<EndedActivity>
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 08:00"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
+            };
+            var endedBreaks = new List<EndedBreak>
+            {
+                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
+            };
+
+            // Act
+            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+
+            // Assert
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(0));
+        }
+
+        [Fact]
+        public void GivenThereWas8HoursOfAllActivitiesAndThereWas60MinutesOfBreaksWithinIt_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo10Minutes()
+        {
+            // Arrange
+            var endedActivities = new List<EndedActivity>
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 08:00"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
+            };
+            var endedBreaks = new List<EndedBreak>
+            {
+                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), "Test Break")
+            };
+
+            // Act
+            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+
+            // Assert
+            workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromMinutes(10));
         }
 
         [Fact]

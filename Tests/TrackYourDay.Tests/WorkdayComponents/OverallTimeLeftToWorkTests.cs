@@ -39,7 +39,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
         }
 
         [Fact]
-        public void GivenThereWas1HourOfActivitiesAnd50MinutesOfBreaks_WhenOverallTimeLeftToWorkIsBeingCalculated_ThenOverallTimeLeftToWorkIsEqualTo6HoursAnd10Minutes()
+        public void GivenThereWas1HourOfAllActivitiesAnd50MinutesOfBreaksWithinIt_WhenOverallTimeLeftToWorkIsBeingCalculated_ThenOverallTimeLeftToWorkIsEqualTo7Hours()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>
@@ -55,7 +55,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
 
             // Assert
-            workday.OverallTimeLeftToWork.Should().Be(TimeSpan.FromHours(6).Add(TimeSpan.FromMinutes(10)));
+            workday.OverallTimeLeftToWork.Should().Be(TimeSpan.FromHours(7));
         }
     }
 }
