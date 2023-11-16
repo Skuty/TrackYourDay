@@ -1,4 +1,3 @@
-using Castle.Core.Logging;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -147,7 +146,7 @@ namespace TrackYourDay.Tests.Breaks
 
         [Theory]
         [MemberData(nameof(InstantActivitiesToStopBreak))]
-        public void GivenThereIsStartedBreak_WhenThereIsAnyInstantActivityOtherThanSystemLocked_ThenBreakIsEnded(InstantActivity instantActivity)
+        public void GivenThereIsStartedBreak_WhenThereIsAnyInstantActivity_ThenBreakIsEnded(InstantActivity instantActivity)
         {
             // Arrange
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
@@ -168,6 +167,31 @@ namespace TrackYourDay.Tests.Breaks
                 && n.EndedBreak.BreakStartedAt == breakStartDate
                 ), CancellationToken.None), Times.Once);
         }
+
+        [Theory(Skip = "Postponed - this probably is long term goal but not for now")]
+        [MemberData(nameof(InstantActivitiesToStopBreak))]
+        public void GivenThereIsStartedBreakAndSystemIsLocked_WhenThereIsAnyInstantActivity_ThenBreakIsNotEnded(InstantActivity instantActivity)
+        {
+            // Arrange
+            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
+            var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
+            this.clockMock.Setup(x => x.Now).Returns(breakStartDate);
+            breakTracker.ProcessActivities();
+            this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
+            breakTracker.ProcessActivities();
+
+            // Act
+            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.ActivityType, Guid.Empty);
+
+            breakTracker.ProcessActivities();
+
+            // Assert
+            publisherMock.Verify(x => x.Publish(It.Is<BreakEndedNotifcation>(
+                n => n.EndedBreak.BreakEndedAt == instantActivity.OccuranceDate
+                && n.EndedBreak.BreakStartedAt == breakStartDate
+                ), CancellationToken.None), Times.Once);
+        }
+
 
         [Fact(Skip = "Postponed")]
         public void Error_BreakStartDateWasNewRecognizedActivityInsteadOfLastActivityDate()
