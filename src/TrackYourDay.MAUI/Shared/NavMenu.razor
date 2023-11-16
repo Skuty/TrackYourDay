@@ -30,6 +30,10 @@
         </a>
 
     </nav>
+
+    <div style="position: fixed; bottom: 0;">
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary" OnClick="CloseApplication">Close Application</MudButton>
+    </div>
 </div>
 
 @code {
@@ -40,5 +44,11 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void CloseApplication()
+    {
+        // TODO: Extract it from Blazor UI to abstraction and Application aware implementation
+        System.Diagnostics.Process.GetCurrentProcess().Kill();
     }
 }
