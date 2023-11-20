@@ -126,7 +126,8 @@ namespace TrackYourDay.Core
 
         private static TimeSpan GetOverallTimeLeftToWork(TimeSpan timeAlreadyActivelyWorkded, TimeSpan validBreakTimeUsed)
         {
-            return Config.WorkdayDuration - timeAlreadyActivelyWorkded - validBreakTimeUsed;
+            var overallTinmeLeftToWork = Config.WorkdayDuration - timeAlreadyActivelyWorkded - validBreakTimeUsed;
+            return overallTinmeLeftToWork >= TimeSpan.Zero ? overallTinmeLeftToWork : TimeSpan.Zero;
         }
 
         private static TimeSpan GetOverhours(TimeSpan timeAlreadyActivelyWorkded)

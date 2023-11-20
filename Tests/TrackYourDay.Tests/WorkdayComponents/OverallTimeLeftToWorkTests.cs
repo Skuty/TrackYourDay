@@ -77,6 +77,24 @@ namespace TrackYourDay.Tests.WorkdayComponents
         }
 
         [Fact]
+        public void GivenThereWas9HourOfAllActivitiesAndNoBreaksWithinIt_WhenOverallTimeLeftToWorkIsBeingCalculated_ThenOverallTimeLeftToWorkIsEqualTo0Hours()
+        {
+            // Arrange
+            var endedActivities = new List<EndedActivity>
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 09:00"), SystemStateFactory.FocusOnApplicationState("Test application"))
+            };
+            var endedBreaks = new List<EndedBreak>();
+
+            // Act
+            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+
+            // Assert
+            workday.OverallTimeLeftToWork.Should().Be(TimeSpan.FromHours(0));
+        }
+
+
+        [Fact]
         public void GivenThereWas8HourOfAllActivitiesAnd10MinutesOfBreaksWithinIt_WhenOverallTimeLeftToWorkIsBeingCalculated_ThenOverallTimeLeftToWorkIsEqualTo0Hours()
         {
             // Arrange
