@@ -27,6 +27,9 @@ To Run on Windows Startup:
 4. Create Shortcut to TrackYourDay executsble file
 5. Copy Shortcut to File Location
 
+Tips:
+1. As long as application won't have Tray Icon, You can pin it to Task Bar to have it always in the same place
+
 ## Contribution
 
 For Feature Requests, Bugs, Questions or any topic, please create an [Issue](https://github.com/Skuty/TrackYourDay/issues/new/choose).  
