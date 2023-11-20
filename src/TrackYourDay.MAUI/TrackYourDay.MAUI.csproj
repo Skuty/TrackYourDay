@@ -27,10 +27,13 @@
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
     </PropertyGroup>
+	<ItemGroup>
+		<Resource Include="Resources\AppIcon\defaultclockicon.ico" />
+	</ItemGroup>
 
-    <ItemGroup>
+	<ItemGroup>
         <!-- App Icon -->
-        <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+        <MauiIcon Include="Resources\AppIcon\defaultclockicon.ico" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
 
         <!-- Splash Screen -->
         <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
@@ -44,6 +47,10 @@
 
         <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
         <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Resources\AppIcon\DefaultClockIcon.ico" />
     </ItemGroup>
 
     <ItemGroup>
@@ -63,5 +70,4 @@
     <ItemGroup>
       <ProjectReference Include="..\..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
     </ItemGroup>
-
 </Project>

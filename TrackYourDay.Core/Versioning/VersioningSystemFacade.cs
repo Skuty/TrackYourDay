@@ -9,7 +9,7 @@ namespace TrackYourDay.Core.Versioning
 
         public ApplicationVersion GetCurrentApplicationVersion()
         {
-            return new ApplicationVersion("0.1.0");
+            return new ApplicationVersion("0.1.1");
         }
 
         public ApplicationVersion GetNewestAvailableApplicationVersion()
