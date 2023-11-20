@@ -1,6 +1,6 @@
-﻿using TrackYourDay.Core.Activities;
+﻿using TrackYourDay.Core.Activities.SystemStates;
 
 namespace TrackYourDay.Core.Breaks
 {
-    public record class ActivityToProcess(DateTime ActivityDate, ActivityType ActivityType, Guid ActivityGuid);
+    public record class ActivityToProcess(DateTime ActivityDate, SystemState ActivityType, Guid ActivityGuid);
 }

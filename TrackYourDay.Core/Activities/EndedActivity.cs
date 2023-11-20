@@ -1,6 +1,8 @@
-﻿namespace TrackYourDay.Core.Activities
+﻿using TrackYourDay.Core.Activities.SystemStates;
+
+namespace TrackYourDay.Core.Activities
 {
-    public record class EndedActivity(DateTime StartDate, DateTime EndDate, ActivityType ActivityType)
+    public record class EndedActivity(DateTime StartDate, DateTime EndDate, SystemState ActivityType)
     {
         public TimeSpan GetDuration()
         {

@@ -2,6 +2,7 @@
 
 @using System.Windows;
 @using TrackYourDay.Core.Activities;
+@using TrackYourDay.Core.Activities.SystemStates;
 @using TrackYourDay.Core.Breaks;
 
 <h1><img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" /> Track Your Day</h1>
@@ -56,7 +57,7 @@
         this.lastActivity = this.activityTracker.GetEndedActivities().LastOrDefault();
         this.currentActivity = this.activityTracker.GetCurrentActivity();
 
-        var systemLockedActivities = this.activityTracker.GetEndedActivities().Where(x => x.ActivityType is SystemLockedActivityType);
+        var systemLockedActivities = this.activityTracker.GetEndedActivities().Where(x => x.ActivityType is SystemLockedState);
 
         if (systemLockedActivities.Any())
         {

@@ -1,6 +1,8 @@
-﻿namespace TrackYourDay.Core.Activities
+﻿using TrackYourDay.Core.Activities.SystemStates;
+
+namespace TrackYourDay.Core.Activities
 {
-    public record class StartedActivity(Guid Guid, DateTime StartDate, ActivityType ActivityType) : IActivityToProcess
+    public record class StartedActivity(Guid Guid, DateTime StartDate, SystemState ActivityType) : IActivityToProcess
     {
         public EndedActivity End(DateTime endDate)
         {

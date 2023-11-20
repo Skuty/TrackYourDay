@@ -1,21 +1,21 @@
 ﻿using System.Runtime.InteropServices;
 using System.Text;
-using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.SystemStates;
 
-namespace TrackYourDay.Core.Old.Activities.RecognizingStrategies
+namespace TrackYourDay.Core.Activities.ActivityRecognizing
 {
     public class DefaultActivityRecognizingStategy : IStartedActivityRecognizingStrategy
     {
-        ActivityType IStartedActivityRecognizingStrategy.RecognizeActivity()
+        SystemState IStartedActivityRecognizingStrategy.RecognizeActivity()
         {
             var currentActiveWindowName = GetCaptionOfActiveWindow();
 
             if (currentActiveWindowName.Contains("ekran blokady"))
             {
-                return ActivityTypeFactory.SystemLockedActivityType();
+                return SystemStateFactory.SystemLockedActivityType();
             }
 
-            return ActivityTypeFactory.FocusOnApplicationActivityType(currentActiveWindowName);
+            return SystemStateFactory.FocusOnApplicationActivityType(currentActiveWindowName);
         }
 
         #region WindowName
@@ -36,13 +36,13 @@ namespace TrackYourDay.Core.Old.Activities.RecognizingStrategies
         }
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern IntPtr GetForegroundWindow();
+        static extern nint GetForegroundWindow();
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+        static extern int GetWindowText(nint hWnd, StringBuilder text, int count);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern int GetWindowTextLength(IntPtr hWnd);
+        static extern int GetWindowTextLength(nint hWnd);
         #endregion
     }
 }

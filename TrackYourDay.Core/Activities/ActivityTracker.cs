@@ -1,7 +1,9 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
+using TrackYourDay.Core.Activities.ActivityRecognizing;
 using TrackYourDay.Core.Activities.Notifications;
+using TrackYourDay.Core.Activities.SystemStates;
 
 namespace TrackYourDay.Core.Activities
 {
@@ -33,12 +35,12 @@ namespace TrackYourDay.Core.Activities
             this.endedActivities = new List<EndedActivity>();
             this.instantActivities = new List<InstantActivity>();
             this.currentStartedActivity = ActivityFactory.StartedActivity(
-                this.clock.Now, ActivityTypeFactory.ApplicationStartedActivityType("Track Your Day"));
+                this.clock.Now, SystemStateFactory.ApplicationStartedActivityType("Track Your Day"));
         }
 
         public void RecognizeActivity()
         {
-            ActivityType recognizedActivityType = this.startedActivityRecognizingStrategy.RecognizeActivity();
+            SystemState recognizedActivityType = this.startedActivityRecognizingStrategy.RecognizeActivity();
 
             if (this.currentStartedActivity is null)
             {

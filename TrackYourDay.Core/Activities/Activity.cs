@@ -1,4 +1,6 @@
-﻿namespace TrackYourDay.Core.Activities
+﻿using TrackYourDay.Core.Activities.SystemStates;
+
+namespace TrackYourDay.Core.Activities
 {
     internal interface IActivityToProcess
     {
@@ -6,6 +8,6 @@
 
         DateTime StartDate { get; }
         
-        ActivityType ActivityType { get; }
+        SystemState ActivityType { get; }
     }
 }

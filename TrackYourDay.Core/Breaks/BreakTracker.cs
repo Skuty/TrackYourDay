@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.SystemStates;
 using TrackYourDay.Core.Breaks.Notifications;
 
 namespace TrackYourDay.Core.Breaks
@@ -37,7 +38,7 @@ namespace TrackYourDay.Core.Breaks
             this.logger = logger;
         }
 
-        public void AddActivityToProcess(DateTime activityDate, ActivityType activityType, Guid activityGuid)
+        public void AddActivityToProcess(DateTime activityDate, SystemState activityType, Guid activityGuid)
         {
             if (activityType is null)
             {
@@ -71,7 +72,7 @@ namespace TrackYourDay.Core.Breaks
                 if (this.currentStartedBreak is null)
                 {
                     // Start Break If System Is Locked
-                    if (activityToProcess.ActivityType is SystemLockedActivityType)
+                    if (activityToProcess.ActivityType is SystemLockedState)
                     {
                         this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate, "System Locked");
                         this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
@@ -100,7 +101,7 @@ namespace TrackYourDay.Core.Breaks
                 // Ending break;
                 if (this.currentStartedBreak is not null)
                 {
-                    if (activityToProcess.ActivityType is not SystemLockedActivityType)
+                    if (activityToProcess.ActivityType is not SystemLockedState)
                     {
                         var endedBreak = this.currentStartedBreak.EndBreak(activityToProcess.ActivityDate);
                         this.logger.LogInformation("End: {EndedBreak}", endedBreak);

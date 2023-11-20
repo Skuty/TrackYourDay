@@ -4,7 +4,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.ActivityRecognizing;
 using TrackYourDay.Core.Activities.Notifications;
+using TrackYourDay.Core.Activities.SystemStates;
 
 namespace TrackYourDay.Tests.ActivityTracking
 {
@@ -39,7 +41,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationActivityType("Application"));
 
             // Act
             activityEventTracker.RecognizeActivity();
@@ -53,7 +55,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Another Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationActivityType("Another Application"));
 
             // Act
             this.activityEventTracker.RecognizeActivity();
@@ -67,7 +69,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationActivityType("Application"));
 
             // Act
             activityEventTracker.RecognizeActivity();
@@ -81,7 +83,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationActivityType("Application"));
             this.activityEventTracker.RecognizeActivity();
             var existingNotificationsCount = this.publisherMock.Invocations.Count;
 
@@ -97,7 +99,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.instantActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityTypeFactory.MouseMovedActivityType(0,0));
+                .Returns(SystemStateFactory.MouseMovedActivityType(0,0));
 
             // Act
             this.activityEventTracker.RecognizeActivity();
@@ -110,7 +112,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         public void WhenNewPeriodicActivityIsStarted_ThenItIsCurrentActivity() 
         {
             // Arrange
-            var activity = ActivityTypeFactory.FocusOnApplicationActivityType("Application");
+            var activity = SystemStateFactory.FocusOnApplicationActivityType("Application");
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
 
@@ -125,12 +127,12 @@ namespace TrackYourDay.Tests.ActivityTracking
         public void WhenNewPeriodicActivityIsEnded_ThenItIsAddedToAllActivitiesList()
         {
             // Arrange
-            var activity = ActivityTypeFactory.FocusOnApplicationActivityType("Application");
+            var activity = SystemStateFactory.FocusOnApplicationActivityType("Application");
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
             this.activityEventTracker.RecognizeActivity();
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(ActivityTypeFactory.FocusOnApplicationActivityType("New Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationActivityType("New Application"));
 
             // Act
             this.activityEventTracker.RecognizeActivity();

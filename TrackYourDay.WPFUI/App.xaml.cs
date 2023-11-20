@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.ActivityRecognizing;
 using TrackYourDay.Core.Breaks;
-using TrackYourDay.Core.Old.Activities.RecognizingStrategies;
 using TrackYourDay.WPFUI.BackgroundJobs;
 
 namespace TrackYourDay.WPFUI
@@ -33,7 +33,7 @@ namespace TrackYourDay.WPFUI
             serviceCollection.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             serviceCollection.AddSingleton<IClock, Clock>();
             serviceCollection.AddScoped<IStartedActivityRecognizingStrategy, DefaultActivityRecognizingStategy>();
-            serviceCollection.AddScoped<IInstantActivityRecognizingStrategy, DefaultInstantActivityRecognizingStrategy>();
+            serviceCollection.AddScoped<IInstantActivityRecognizingStrategy, MousePositionRecognizingStrategy>();
             serviceCollection.AddSingleton<ActivityTracker>();
             serviceCollection.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(
                 serviceCollection.GetRequiredService<IPublisher>(),

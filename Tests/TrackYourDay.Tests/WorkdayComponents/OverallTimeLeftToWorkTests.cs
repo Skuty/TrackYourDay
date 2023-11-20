@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.SystemStates;
 using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Tests.WorkdayComponents
@@ -44,7 +45,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             // Arrange
             var endedActivities = new List<EndedActivity>
             {
-                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), SystemStateFactory.FocusOnApplicationActivityType("Test application"))
             };
             var endedBreaks = new List<EndedBreak>
             {
@@ -64,7 +65,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             // Arrange
             var endedActivities = new List<EndedActivity>
             {
-                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 08:00"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 08:00"), SystemStateFactory.FocusOnApplicationActivityType("Test application"))
             };
             var endedBreaks = new List<EndedBreak>();
 
@@ -81,7 +82,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             // Arrange
             var endedActivities = new List<EndedActivity>
             {
-                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 08:00"), ActivityTypeFactory.FocusOnApplicationActivityType("Test application"))
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 08:00"), SystemStateFactory.FocusOnApplicationActivityType("Test application"))
             };
             var endedBreaks = new List<EndedBreak>()
             {

@@ -1,6 +1,7 @@
-﻿namespace TrackYourDay.Core.Activities
+﻿using TrackYourDay.Core.Activities.SystemStates;
+namespace TrackYourDay.Core.Activities
 {
-    public record class InstantActivity(DateTime OccuranceDate, ActivityType ActivityType)
+    public record class InstantActivity(DateTime OccuranceDate, SystemState ActivityType)
     {
         public TimeSpan GetDuration()
         {
