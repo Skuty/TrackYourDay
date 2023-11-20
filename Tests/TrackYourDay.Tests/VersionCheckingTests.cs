@@ -11,6 +11,7 @@ namespace TrackYourDay.Tests
         [InlineData("v0.0.1", "v1.0.5")]
         [InlineData("v0.0.9", "v1.0.0")]
         [InlineData("v0.0.9", "v1.0.5")]
+        [InlineData("v0.0.11", "v0.1.0")]
         [InlineData("v0.1.0", "v0.2.0")]
         [InlineData("v0.1.0", "v0.2.1")]
         [InlineData("0.1.9", "0.2.0")]
