@@ -6,7 +6,7 @@ namespace TrackYourDay.Core.Activities.ActivityRecognizing
 {
     public class DefaultActivityRecognizingStategy : ISystemStateRecognizingStrategy
     {
-        SystemState ISystemStateRecognizingStrategy.RecognizeActivity()
+        public SystemState RecognizeActivity()
         {
             var currentActiveWindowName = GetCaptionOfActiveWindow();
 

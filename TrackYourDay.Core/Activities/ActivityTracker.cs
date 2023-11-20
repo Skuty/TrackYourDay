@@ -13,8 +13,8 @@ namespace TrackYourDay.Core.Activities
 
         private readonly IClock clock;
         private readonly IPublisher publisher;
-        private readonly ISystemStateRecognizingStrategy startedActivityRecognizingStrategy;
-        private readonly IInstantActivityRecognizingStrategy instantActivityRecognizingStrategy;
+        private readonly ISystemStateRecognizingStrategy systemStateRecognizingStrategy;
+        private readonly ISystemStateRecognizingStrategy mousePositionRecognizingStrategy;
         private StartedActivity currentStartedActivity;
         private InstantActivity lastInstantActivity;
         private readonly List<EndedActivity> endedActivities;
@@ -24,14 +24,14 @@ namespace TrackYourDay.Core.Activities
             IClock clock,
             IPublisher publisher,
             ISystemStateRecognizingStrategy startedActivityRecognizingStrategy,
-            IInstantActivityRecognizingStrategy instantActivityRecognizingStrategy,
+            ISystemStateRecognizingStrategy mousePositionRecognizingStrategy,
             ILogger<ActivityTracker> logger)
         {
             this.logger = logger;
             this.clock = clock;
             this.publisher = publisher;
-            this.startedActivityRecognizingStrategy = startedActivityRecognizingStrategy;
-            this.instantActivityRecognizingStrategy = instantActivityRecognizingStrategy;
+            this.systemStateRecognizingStrategy = startedActivityRecognizingStrategy;
+            this.mousePositionRecognizingStrategy = mousePositionRecognizingStrategy;
             this.endedActivities = new List<EndedActivity>();
             this.instantActivities = new List<InstantActivity>();
             this.currentStartedActivity = ActivityFactory.StartedActivity(
@@ -40,23 +40,31 @@ namespace TrackYourDay.Core.Activities
 
         public void RecognizeActivity()
         {
-            SystemState recognizedActivityType = this.startedActivityRecognizingStrategy.RecognizeActivity();
+            SystemState recognizedSystemState = this.systemStateRecognizingStrategy.RecognizeActivity();
 
             if (this.currentStartedActivity is null)
             {
-                this.currentStartedActivity = ActivityFactory.StartedActivity(this.clock.Now, recognizedActivityType);
+                this.currentStartedActivity = ActivityFactory.StartedActivity(this.clock.Now, recognizedSystemState);
                 this.publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), this.currentStartedActivity));
                 return;
             }
 
-            if (this.currentStartedActivity.ActivityType != recognizedActivityType)
+            if (this.currentStartedActivity.SystemState != recognizedSystemState)
             {
                 var endedActivity = this.currentStartedActivity.End(this.clock.Now);
                 this.endedActivities.Add(endedActivity);
-                this.currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedActivityType);
+                this.currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedSystemState);
                 this.publisher.Publish(new PeriodicActivityEndedNotification(Guid.NewGuid(), endedActivity));
                 this.publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), this.currentStartedActivity));
             };
+
+            SystemState recognizedMousePosition = this.mousePositionRecognizingStrategy.RecognizeActivity();
+            if (this.lastInstantActivity is null || this.lastInstantActivity.SystemState != recognizedMousePosition)
+            {
+                this.lastInstantActivity = ActivityFactory.MouseMovedActivity(this.clock.Now, recognizedMousePosition);
+                this.publisher.Publish(new InstantActivityOccuredNotification(Guid.NewGuid(), this.lastInstantActivity));
+                this.instantActivities.Add(this.lastInstantActivity);
+            }
         }
 
         public StartedActivity GetCurrentActivity()
@@ -67,6 +75,11 @@ namespace TrackYourDay.Core.Activities
         public IReadOnlyCollection<EndedActivity> GetEndedActivities()
         {
             return this.endedActivities.ToImmutableArray();
+        }
+
+        public IReadOnlyCollection<InstantActivity> GetInstantActivities()
+        {
+            return this.instantActivities.ToImmutableArray();
         }
     }
 }

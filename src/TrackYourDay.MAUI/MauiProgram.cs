@@ -47,8 +47,16 @@ namespace TrackYourDay.MAUI
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             builder.Services.AddSingleton<IClock, Clock>();
             builder.Services.AddScoped<ISystemStateRecognizingStrategy, DefaultActivityRecognizingStategy>();
-            builder.Services.AddScoped<IInstantActivityRecognizingStrategy, MousePositionRecognizingStrategy>();
-            builder.Services.AddSingleton<ActivityTracker>();
+            // Refactor to avoid this in future
+            builder.Services.AddSingleton<ActivityTracker>(container => {
+                var clock = container.GetRequiredService<IClock>();
+                var publisher = container.GetRequiredService<IPublisher>();
+                var startedActivityRecognizingStrategy = new DefaultActivityRecognizingStategy();
+                var mousePositionRecognizingStrategy = new MousePositionRecognizingStrategy();
+                var logger = container.GetRequiredService<ILogger<ActivityTracker>>();
+
+                return new ActivityTracker(clock, publisher, startedActivityRecognizingStrategy, mousePositionRecognizingStrategy, logger);
+            });
             builder.Services.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(
                 serviceCollection.GetRequiredService<IPublisher>(),
                 serviceCollection.GetRequiredService<IClock>(),

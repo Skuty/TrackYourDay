@@ -4,40 +4,52 @@
 @using TrackYourDay.MAUI.Data;
 @inject ActivityTracker activityTracker;
 
-<h1>Activities</h1>
-
-
-@if (activities == null)
+@if (this.periodicActivities == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
-    <MudDataGrid T="EndedActivity" Items="@activities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="true">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Activities</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        </ToolBarContent>
-        <Columns>
-            <PropertyColumn Property="x => x.StartDate.ToLongTimeString()" Title="Activity Started" Filterable="false" />
-            <PropertyColumn Property="x => x.EndDate.ToLongTimeString()" Title="Activity Ended" Filterable="false" />
-            <PropertyColumn Property="x => x.GetDuration()" Title="Duration" SortBy="@_sortByDuration" />
-            <PropertyColumn Property="x => x.ActivityType.ActivityDescription" Title="Description" SortBy="@_sortByDescritpion" />
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="EndedActivity" />
-        </PagerContent>
-    </MudDataGrid>    
+<MudExpansionPanels>
+    <MudExpansionPanel Text="Periodic Activities" MaxHeight="500" IsInitiallyExpanded="true">
+            <MudDataGrid T="EndedActivity" Items="@periodicActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="x => x.StartDate.ToLongTimeString()" Title="Activity Started" Filterable="false" />
+                <PropertyColumn Property="x => x.EndDate.ToLongTimeString()" Title="Activity Ended" Filterable="false" />
+                <PropertyColumn Property="x => x.GetDuration()" Title="Duration" SortBy="@_sortByDuration" />
+                <PropertyColumn Property="x => x.ActivityType.ActivityDescription" Title="Description" SortBy="@_sortByDescritpion" />
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="EndedActivity" />
+            </PagerContent>
+        </MudDataGrid>    
+    </MudExpansionPanel>
+        <MudExpansionPanel Text="Instant Activities" MaxHeight="500">
+            <MudDataGrid T="InstantActivity" Items="@instantActivities">
+                <Columns>
+                    <PropertyColumn Property="x => x.OccuranceDate.ToLongTimeString()" Title="Activity Occured" />
+                    <PropertyColumn Property="x => x.SystemState.ActivityDescription" Title="Description" />
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="InstantActivity" />
+                </PagerContent>
+            </MudDataGrid>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
 }
 
 @code {
-    private List<EndedActivity> activities;
+    private List<EndedActivity> periodicActivities;
+    private List<InstantActivity> instantActivities;
 
     protected override async Task OnInitializedAsync()
     {
-        activities = this.activityTracker.GetEndedActivities().OrderByDescending(activity => activity.StartDate).ToList();
+        this.periodicActivities = this.activityTracker.GetEndedActivities().OrderByDescending(activity => activity.StartDate).ToList();
+        this.instantActivities = this.activityTracker.GetInstantActivities().OrderByDescending(activity => activity.OccuranceDate).Take(50).ToList();
     }
     
     private string _searchString;

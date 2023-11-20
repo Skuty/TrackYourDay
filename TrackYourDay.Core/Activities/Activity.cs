@@ -8,6 +8,6 @@ namespace TrackYourDay.Core.Activities
 
         DateTime StartDate { get; }
         
-        SystemState ActivityType { get; }
+        SystemState SystemState { get; }
     }
 }

@@ -70,7 +70,7 @@ namespace TrackYourDay.Tests.Activities
             var occuranceDate = DateTime.Parse("2008-01-10");
 
             // Act
-            var activity = ActivityFactory.MouseMovedActivity(occuranceDate);
+            var activity = ActivityFactory.MouseMovedActivity(occuranceDate, null);
 
             // Assert
             activity.OccuranceDate.Should().Be(occuranceDate);

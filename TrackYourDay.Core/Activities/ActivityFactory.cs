@@ -5,9 +5,9 @@ namespace TrackYourDay.Core.Activities
 {
     public static class ActivityFactory
     {
-        public static StartedActivity StartedActivity(DateTime startDate, SystemState activityType)
+        public static StartedActivity StartedActivity(DateTime startDate, SystemState systemState)
         {
-            return new StartedActivity(Guid.NewGuid(), startDate, activityType);
+            return new StartedActivity(Guid.NewGuid(), startDate, systemState);
         }
 
         public static StartedActivity StartedFocusOnApplicatoinActivity(DateTime startDate)
@@ -30,9 +30,9 @@ namespace TrackYourDay.Core.Activities
             return new EndedActivity(startDate, endDate, SystemStateFactory.SystemLockedState());
         }
 
-        public static InstantActivity MouseMovedActivity(DateTime occuranceDate)
+        public static InstantActivity MouseMovedActivity(DateTime occuranceDate, SystemState systemState)
         {
-            return new InstantActivity(occuranceDate, SystemStateFactory.MouseMouvedEvent(0, 0));
+            return new InstantActivity(occuranceDate, systemState);
         }
     }
 }

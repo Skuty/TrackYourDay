@@ -3,7 +3,7 @@ using TrackYourDay.Core.Activities.SystemStates;
 
 namespace TrackYourDay.Core.Activities.ActivityRecognizing
 {
-    public class MousePositionRecognizingStrategy : IInstantActivityRecognizingStrategy
+    public class MousePositionRecognizingStrategy : ISystemStateRecognizingStrategy
     {
         public SystemState RecognizeActivity()
         {

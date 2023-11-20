@@ -17,7 +17,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         private Mock<IPublisher> publisherMock;
         private Mock<ILogger<ActivityTracker>> loggerMock;
         private Mock<ISystemStateRecognizingStrategy> startedActivityRecognizingStrategy;
-        private Mock<IInstantActivityRecognizingStrategy> instantActivityRecognizingStrategy;
+        private Mock<ISystemStateRecognizingStrategy> instantActivityRecognizingStrategy;
         private ActivityTracker activityEventTracker;
 
         public ActivityTrackerTests()
@@ -26,7 +26,7 @@ namespace TrackYourDay.Tests.ActivityTracking
             this.loggerMock = new Mock<ILogger<ActivityTracker>>();
             this.publisherMock = new Mock<IPublisher>();
             this.startedActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
-            this.instantActivityRecognizingStrategy = new Mock<IInstantActivityRecognizingStrategy>();
+            this.instantActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
 
             this.activityEventTracker = new ActivityTracker(
                 this.clock,
@@ -120,7 +120,7 @@ namespace TrackYourDay.Tests.ActivityTracking
             this.activityEventTracker.RecognizeActivity();
 
             // Assert
-            this.activityEventTracker.GetCurrentActivity().ActivityType.Should().Be(activity);
+            this.activityEventTracker.GetCurrentActivity().SystemState.Should().Be(activity);
         }
 
         [Fact]

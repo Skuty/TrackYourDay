@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.SystemStates;
 using TrackYourDay.Core.Breaks;
 using TrackYourDay.Core.Breaks.Notifications;
 
@@ -29,7 +30,7 @@ namespace TrackYourDay.Tests.Breaks
             new List<object[]>
             {
                         new object[] {
-                            ActivityFactory.MouseMovedActivity(DateTime.Parse("2000-01-01 12:00:00")) }
+                            ActivityFactory.MouseMovedActivity(DateTime.Parse("2000-01-01 12:10:00"), new MousePositionState(0,0)) }
             };
 
 
@@ -75,7 +76,7 @@ namespace TrackYourDay.Tests.Breaks
 
             // Act
             var startedActivity = ActivityFactory.StartedSystemLockedActivity(DateTime.Parse("2000-01-01 12:08:00"));
-            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType, Guid.Empty);
+            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.SystemState, Guid.Empty);
             breakTracker.ProcessActivities();
 
             // Assert
@@ -97,7 +98,7 @@ namespace TrackYourDay.Tests.Breaks
 
             // Act
             var startedActivity = ActivityFactory.StartedSystemLockedActivity(DateTime.Now);
-            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType, Guid.Empty);
+            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.SystemState, Guid.Empty);
             breakTracker.ProcessActivities();
 
             // Assert
@@ -112,7 +113,7 @@ namespace TrackYourDay.Tests.Breaks
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
             var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
             var activityToProcess = ActivityFactory.StartedSystemLockedActivity(breakStartDate);
-            breakTracker.AddActivityToProcess(activityToProcess.StartDate, activityToProcess.ActivityType, Guid.Empty);
+            breakTracker.AddActivityToProcess(activityToProcess.StartDate, activityToProcess.SystemState, Guid.Empty);
 
             // Act
             breakTracker.ProcessActivities();
@@ -134,7 +135,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Act
-            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.ActivityType, Guid.Empty);
+            breakTracker.AddActivityToProcess(startedActivity.StartDate, startedActivity.SystemState, Guid.Empty);
             breakTracker.ProcessActivities();
 
             // Assert
@@ -144,9 +145,8 @@ namespace TrackYourDay.Tests.Breaks
                 ), CancellationToken.None), Times.Once);
         }
 
-        [Theory]
-        [MemberData(nameof(InstantActivitiesToStopBreak))]
-        public void GivenThereIsStartedBreak_WhenThereIsAnyInstantActivity_ThenBreakIsEnded(InstantActivity instantActivity)
+        [Fact]
+        public void GivenThereIsStartedBreak_WhenThereIsAnyInstantActivity_ThenBreakIsEnded()
         {
             // Arrange
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
@@ -155,9 +155,10 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
             this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
             breakTracker.ProcessActivities();
+            var instantActivity = ActivityFactory.MouseMovedActivity(DateTime.Parse("2000-01-01 12:10:00"), new MousePositionState(0, 0));
 
             // Act
-            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.ActivityType, Guid.Empty); 
+            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.SystemState, Guid.Empty); 
             
             breakTracker.ProcessActivities();
 
@@ -168,9 +169,8 @@ namespace TrackYourDay.Tests.Breaks
                 ), CancellationToken.None), Times.Once);
         }
 
-        [Theory(Skip = "Postponed - this probably is long term goal but not for now")]
-        [MemberData(nameof(InstantActivitiesToStopBreak))]
-        public void GivenThereIsStartedBreakAndSystemIsLocked_WhenThereIsAnyInstantActivity_ThenBreakIsNotEnded(InstantActivity instantActivity)
+        [Fact]
+        public void GivenThereIsStartedBreakAndSystemIsLocked_WhenThereIsAnyInstantActivity_ThenBreakIsNotEnded()
         {
             // Arrange
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
@@ -179,9 +179,10 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
             this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
             breakTracker.ProcessActivities();
+            var instantActivity = ActivityFactory.MouseMovedActivity(DateTime.Parse("2000-01-01 12:10:00"), new MousePositionState(0, 0));
 
             // Act
-            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.ActivityType, Guid.Empty);
+            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.SystemState, Guid.Empty);
 
             breakTracker.ProcessActivities();
 
