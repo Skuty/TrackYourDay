@@ -2,7 +2,7 @@
 
 namespace TrackYourDay.Core.Activities.ActivityRecognizing
 {
-    public interface IInstantActivityRecognizingStrategy
+    public interface ISystemStateRecognizingStrategy
     {
         public SystemState RecognizeActivity();
     }

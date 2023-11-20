@@ -46,7 +46,7 @@ namespace TrackYourDay.MAUI
             builder.Services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             builder.Services.AddSingleton<IClock, Clock>();
-            builder.Services.AddScoped<IStartedActivityRecognizingStrategy, DefaultActivityRecognizingStategy>();
+            builder.Services.AddScoped<ISystemStateRecognizingStrategy, DefaultActivityRecognizingStategy>();
             builder.Services.AddScoped<IInstantActivityRecognizingStrategy, MousePositionRecognizingStrategy>();
             builder.Services.AddSingleton<ActivityTracker>();
             builder.Services.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(

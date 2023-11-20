@@ -4,18 +4,18 @@ using TrackYourDay.Core.Activities.SystemStates;
 
 namespace TrackYourDay.Core.Activities.ActivityRecognizing
 {
-    public class DefaultActivityRecognizingStategy : IStartedActivityRecognizingStrategy
+    public class DefaultActivityRecognizingStategy : ISystemStateRecognizingStrategy
     {
-        SystemState IStartedActivityRecognizingStrategy.RecognizeActivity()
+        SystemState ISystemStateRecognizingStrategy.RecognizeActivity()
         {
             var currentActiveWindowName = GetCaptionOfActiveWindow();
 
             if (currentActiveWindowName.Contains("ekran blokady"))
             {
-                return SystemStateFactory.SystemLockedActivityType();
+                return SystemStateFactory.SystemLockedState();
             }
 
-            return SystemStateFactory.FocusOnApplicationActivityType(currentActiveWindowName);
+            return SystemStateFactory.FocusOnApplicationState(currentActiveWindowName);
         }
 
         #region WindowName

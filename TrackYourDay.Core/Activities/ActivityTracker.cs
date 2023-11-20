@@ -13,7 +13,7 @@ namespace TrackYourDay.Core.Activities
 
         private readonly IClock clock;
         private readonly IPublisher publisher;
-        private readonly IStartedActivityRecognizingStrategy startedActivityRecognizingStrategy;
+        private readonly ISystemStateRecognizingStrategy startedActivityRecognizingStrategy;
         private readonly IInstantActivityRecognizingStrategy instantActivityRecognizingStrategy;
         private StartedActivity currentStartedActivity;
         private InstantActivity lastInstantActivity;
@@ -23,7 +23,7 @@ namespace TrackYourDay.Core.Activities
         public ActivityTracker(
             IClock clock,
             IPublisher publisher,
-            IStartedActivityRecognizingStrategy startedActivityRecognizingStrategy,
+            ISystemStateRecognizingStrategy startedActivityRecognizingStrategy,
             IInstantActivityRecognizingStrategy instantActivityRecognizingStrategy,
             ILogger<ActivityTracker> logger)
         {
@@ -35,7 +35,7 @@ namespace TrackYourDay.Core.Activities
             this.endedActivities = new List<EndedActivity>();
             this.instantActivities = new List<InstantActivity>();
             this.currentStartedActivity = ActivityFactory.StartedActivity(
-                this.clock.Now, SystemStateFactory.ApplicationStartedActivityType("Track Your Day"));
+                this.clock.Now, SystemStateFactory.ApplicationStartedEvent("Track Your Day"));
         }
 
         public void RecognizeActivity()

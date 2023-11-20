@@ -16,7 +16,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         private Core.IClock clock;
         private Mock<IPublisher> publisherMock;
         private Mock<ILogger<ActivityTracker>> loggerMock;
-        private Mock<IStartedActivityRecognizingStrategy> startedActivityRecognizingStrategy;
+        private Mock<ISystemStateRecognizingStrategy> startedActivityRecognizingStrategy;
         private Mock<IInstantActivityRecognizingStrategy> instantActivityRecognizingStrategy;
         private ActivityTracker activityEventTracker;
 
@@ -25,7 +25,7 @@ namespace TrackYourDay.Tests.ActivityTracking
             this.clock = new Clock();
             this.loggerMock = new Mock<ILogger<ActivityTracker>>();
             this.publisherMock = new Mock<IPublisher>();
-            this.startedActivityRecognizingStrategy = new Mock<IStartedActivityRecognizingStrategy>();
+            this.startedActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
             this.instantActivityRecognizingStrategy = new Mock<IInstantActivityRecognizingStrategy>();
 
             this.activityEventTracker = new ActivityTracker(
@@ -41,7 +41,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(SystemStateFactory.FocusOnApplicationActivityType("Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationState("Application"));
 
             // Act
             activityEventTracker.RecognizeActivity();
@@ -55,7 +55,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(SystemStateFactory.FocusOnApplicationActivityType("Another Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationState("Another Application"));
 
             // Act
             this.activityEventTracker.RecognizeActivity();
@@ -69,7 +69,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(SystemStateFactory.FocusOnApplicationActivityType("Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationState("Application"));
 
             // Act
             activityEventTracker.RecognizeActivity();
@@ -83,7 +83,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(SystemStateFactory.FocusOnApplicationActivityType("Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationState("Application"));
             this.activityEventTracker.RecognizeActivity();
             var existingNotificationsCount = this.publisherMock.Invocations.Count;
 
@@ -99,7 +99,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             this.instantActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(SystemStateFactory.MouseMovedActivityType(0,0));
+                .Returns(SystemStateFactory.MouseMouvedEvent(0,0));
 
             // Act
             this.activityEventTracker.RecognizeActivity();
@@ -112,7 +112,7 @@ namespace TrackYourDay.Tests.ActivityTracking
         public void WhenNewPeriodicActivityIsStarted_ThenItIsCurrentActivity() 
         {
             // Arrange
-            var activity = SystemStateFactory.FocusOnApplicationActivityType("Application");
+            var activity = SystemStateFactory.FocusOnApplicationState("Application");
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
 
@@ -127,12 +127,12 @@ namespace TrackYourDay.Tests.ActivityTracking
         public void WhenNewPeriodicActivityIsEnded_ThenItIsAddedToAllActivitiesList()
         {
             // Arrange
-            var activity = SystemStateFactory.FocusOnApplicationActivityType("Application");
+            var activity = SystemStateFactory.FocusOnApplicationState("Application");
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
             this.activityEventTracker.RecognizeActivity();
             this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(SystemStateFactory.FocusOnApplicationActivityType("New Application"));
+                .Returns(SystemStateFactory.FocusOnApplicationState("New Application"));
 
             // Act
             this.activityEventTracker.RecognizeActivity();

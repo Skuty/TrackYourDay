@@ -32,7 +32,7 @@ namespace TrackYourDay.WPFUI
 
             serviceCollection.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             serviceCollection.AddSingleton<IClock, Clock>();
-            serviceCollection.AddScoped<IStartedActivityRecognizingStrategy, DefaultActivityRecognizingStategy>();
+            serviceCollection.AddScoped<ISystemStateRecognizingStrategy, DefaultActivityRecognizingStategy>();
             serviceCollection.AddScoped<IInstantActivityRecognizingStrategy, MousePositionRecognizingStrategy>();
             serviceCollection.AddSingleton<ActivityTracker>();
             serviceCollection.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(

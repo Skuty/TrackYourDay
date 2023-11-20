@@ -12,27 +12,27 @@ namespace TrackYourDay.Core.Activities
 
         public static StartedActivity StartedFocusOnApplicatoinActivity(DateTime startDate)
         {
-            return new StartedActivity(Guid.NewGuid(), startDate, SystemStateFactory.FocusOnApplicationActivityType("Not recognized application"));
+            return new StartedActivity(Guid.NewGuid(), startDate, SystemStateFactory.FocusOnApplicationState("Not recognized application"));
         }
 
         public static EndedActivity EndedFocusOnApplicationActivity(DateTime startDate, DateTime endDate)
         {
-            return new EndedActivity(startDate, endDate, SystemStateFactory.FocusOnApplicationActivityType("Not recognized application"));
+            return new EndedActivity(startDate, endDate, SystemStateFactory.FocusOnApplicationState("Not recognized application"));
         }
 
         public static StartedActivity StartedSystemLockedActivity(DateTime startDate)
         {
-            return new StartedActivity(Guid.Empty, startDate, SystemStateFactory.SystemLockedActivityType());
+            return new StartedActivity(Guid.Empty, startDate, SystemStateFactory.SystemLockedState());
         }
 
         public static EndedActivity EndedSystemLockedActivity(DateTime startDate, DateTime endDate)
         {
-            return new EndedActivity(startDate, endDate, SystemStateFactory.SystemLockedActivityType());
+            return new EndedActivity(startDate, endDate, SystemStateFactory.SystemLockedState());
         }
 
         public static InstantActivity MouseMovedActivity(DateTime occuranceDate)
         {
-            return new InstantActivity(occuranceDate, SystemStateFactory.MouseMovedActivityType(0, 0));
+            return new InstantActivity(occuranceDate, SystemStateFactory.MouseMouvedEvent(0, 0));
         }
     }
 }
