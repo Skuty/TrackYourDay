@@ -41,10 +41,15 @@
             </MudItem>
         </MudGrid>
     </MudExpansionPanel>
-    <MudExpansionPanel Text="Raw Workday">
+    <MudExpansionPanel Text="All details of Your Workday">
         <p>
-            Your raw Workday is <br />
-            @workday;
+            <MudText><b>TimeOfAllActivities:</b> @workday.TimeOfAllActivities</MudText>
+            <MudText><b>TimeOfAllBreaks:</b> @workday.TimeOfAllBreaks</MudText>
+            <MudText><b>OverallTimeLeftToWork:</b> @workday.OverallTimeLeftToWork</MudText>
+            <MudText><b>TimeLeftToWorkActively:</b> @workday.TimeLeftToWorkActively</MudText>
+            <MudText><b>BreakTimeLeft:</b> @workday.BreakTimeLeft</MudText>
+            <MudText><b>ValidBreakTimeUsed:</b> @workday.ValidBreakTimeUsed</MudText>
+            <MudText><b>OverhoursTime:</b> @workday.OverhoursTime</MudText>
         </p>
     </MudExpansionPanel>
 </MudExpansionPanels>
