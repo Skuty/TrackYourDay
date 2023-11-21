@@ -11,7 +11,7 @@
 else
 {
 <MudExpansionPanels>
-    <MudExpansionPanel Text="Periodic Activities" MaxHeight="500" IsInitiallyExpanded="true">
+    <MudExpansionPanel Text="Periodic Activities" IsInitiallyExpanded="true">
             <MudDataGrid T="EndedActivity" Items="@periodicActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="true">
             <ToolBarContent>
                 <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
@@ -28,7 +28,7 @@ else
             </PagerContent>
         </MudDataGrid>    
     </MudExpansionPanel>
-        <MudExpansionPanel Text="Instant Activities" MaxHeight="500">
+        <MudExpansionPanel Text="Instant Activities">
             <MudDataGrid T="InstantActivity" Items="@instantActivities">
                 <Columns>
                     <PropertyColumn Property="x => x.OccuranceDate.ToLongTimeString()" Title="Activity Occured" />
@@ -49,7 +49,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         this.periodicActivities = this.activityTracker.GetEndedActivities().OrderByDescending(activity => activity.StartDate).ToList();
-        this.instantActivities = this.activityTracker.GetInstantActivities().OrderByDescending(activity => activity.OccuranceDate).Take(50).ToList();
+        this.instantActivities = this.activityTracker.GetInstantActivities().OrderByDescending(activity => activity.OccuranceDate).Take(500).ToList();
     }
     
     private string _searchString;
