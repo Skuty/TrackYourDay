@@ -35,7 +35,7 @@ namespace TrackYourDay.MAUI
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .Enrich.FromLogContext()
-                .WriteTo.File("C:\\Logs\\TrackYourDay_.log", 
+                .WriteTo.File("C:\\Logs\\TrackYourDay\\TrackYourDay_.log", 
                     rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
