@@ -1,0 +1,65 @@
+name: Publish Release manually
+
+on:
+  workflow_dispatch:
+    inputs:
+          version:
+              description: 'Version number'
+              default: 'v0.0.0'
+              required: true
+          isPreRelease:
+                type: boolean
+                description: Is this version a pre release
+                required: true
+
+jobs:
+    create-release:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+      
+            - name: Set up .NET Core
+              uses: actions/setup-dotnet@v3
+              with:
+                dotnet-version: 7.0.x  # Specify the .NET version you need
+
+            - name: Restore dependencies
+              run: dotnet restore
+                
+            - name: Build 
+              run: dotnet build --configuration Release --no-restore
+
+            - name: Test
+              run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml"
+              env:
+                VSTEST_LOG_PATH: test_results.xml
+            
+            - name: Archive build output
+              uses: thedoctor0/zip-release@0.7.1
+              with:
+                type: 'zip'
+                directory: 'src\TrackYourDay.MAUI\bin\Release\net7.0-windows10.0.19041.0\win10-x64'
+                filename: 'TrackYourDay_${{ github.event.inputs.version }}.zip'
+                exclusions: '*.git*'
+
+            - name: Create tag
+              run: git tag ${{ github.event.inputs.version }}
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Push tag
+              uses: ad-m/github-push-action@master
+              with:
+                github_token: ${{ secrets.GITHUB_TOKEN }}
+                branch: 'PoC'
+                tags: true
+
+            - uses: ncipollo/release-action@v1
+              with:
+                artifacts: 'src\TrackYourDay.MAUI\bin\Release\net7.0-windows10.0.19041.0\win10-x64\TrackYourDay_${{ github.event.inputs.version }}.zip'
+                artifactErrorsFailBuild: true
+                prerelease: ${{ github.event.inputs.isPreRelease }}
+                tag: ${{ github.event.inputs.version }}
+                artifactContentType: application/zip

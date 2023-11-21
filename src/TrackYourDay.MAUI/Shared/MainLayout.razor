@@ -1,0 +1,52 @@
+﻿@using TrackYourDay.Core.Versioning;
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            @if(this.isNewVersionAvailable)
+            {
+                <div class="alert alert-success" role="alert">
+                    You are currently using version @this.currentVersion, but version <a href="https://github.com/Skuty/TrackYourDay/releases/" target="_blank">@this.newVersion</a> is available.
+                </div>
+            } else
+            {
+                <div class="alert">
+                    You are using the latest version @this.currentVersion!
+                </div>
+            }
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    [Inject]
+    private VersioningSystemFacade versioningSystemFacade { get; set; }
+
+    bool isNewVersionAvailable;
+    string currentVersion;
+    string newVersion;
+
+    protected override void OnInitialized()
+    {
+        this.currentVersion = this.versioningSystemFacade.GetCurrentApplicationVersion().ToString();
+
+        if (this.versioningSystemFacade.IsNewerVersionAvailable())
+        {
+            this.isNewVersionAvailable = true;
+            this.newVersion = this.versioningSystemFacade.GetNewestAvailableApplicationVersion().ToString();
+        }
+    }
+}

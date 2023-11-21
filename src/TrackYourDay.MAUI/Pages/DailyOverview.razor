@@ -1,0 +1,91 @@
+﻿@page "/"
+@using TrackYourDay.Core.Activities;
+@using TrackYourDay.Core.Breaks;
+@using TrackYourDay.Core;
+
+
+<h1>
+    <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
+    Daily Overview
+</h1>
+
+<MudExpansionPanels>
+    <MudExpansionPanel Text="Short overview" IsInitiallyExpanded="true">
+        <MudGrid Justify="Justify.Center">
+            <MudItem>
+                <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
+                            @workday.TimeLeftToWorkActively.Hours h @workday.TimeLeftToWorkActively.Minutes m
+                        </text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudItem>
+            <MudItem>
+                <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@breaksLeftDataChart" InputLabels="@breaksLeftLabelsChart">
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
+                            @workday.BreakTimeLeft.Hours h @workday.BreakTimeLeft.Minutes m
+                        </text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudItem>
+            <MudItem>
+                <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@overhoursDataChart" InputLabels="@overhoursLabelsChart">
+                    <CustomGraphics>
+                        <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
+                            @workday.OverhoursTime.Hours h @workday.OverhoursTime.Minutes m
+                        </text>
+                    </CustomGraphics>
+                </MudChart>
+            </MudItem>
+        </MudGrid>
+    </MudExpansionPanel>
+    <MudExpansionPanel Text="All details of Your Workday">
+        <p>
+            <MudText><b>TimeOfAllActivities:</b> @workday.TimeOfAllActivities</MudText>
+            <MudText><b>TimeOfAllBreaks:</b> @workday.TimeOfAllBreaks</MudText>
+            <MudText><b>OverallTimeLeftToWork:</b> @workday.OverallTimeLeftToWork</MudText>
+            <MudText><b>TimeLeftToWorkActively:</b> @workday.TimeLeftToWorkActively</MudText>
+            <MudText><b>BreakTimeLeft:</b> @workday.BreakTimeLeft</MudText>
+            <MudText><b>ValidBreakTimeUsed:</b> @workday.ValidBreakTimeUsed</MudText>
+            <MudText><b>OverhoursTime:</b> @workday.OverhoursTime</MudText>
+        </p>
+    </MudExpansionPanel>
+</MudExpansionPanels>
+
+@code {
+    [Inject]
+    private ActivityTracker activityTracker { get; set; }
+    [Inject]
+    private BreakTracker breakTracker { get; set; }
+
+    private Workday workday;
+
+    private double[] worktimeLeftDataChart = { 0, 0 };
+    private string[] worktimeLeftLabelsChart = { "Time to Work", "Worked Time" };
+
+    private double[] overhoursDataChart = { 0, 120 };
+    private string[] overhoursLabelsChart = { "Overhours done", "Max overhours" };
+
+    private double[] breaksLeftDataChart = { 0, 0 };
+    private string[] breaksLeftLabelsChart = { "Breaks left", "Breaks taken" };
+
+    protected override void OnInitialized()
+    {
+        this.Refresh();
+    }
+
+    private void Refresh()
+    {
+        this.workday = Workday.CreateBasedOn(this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
+
+        worktimeLeftDataChart[0] = this.workday.TimeLeftToWorkActively.TotalMinutes;
+        worktimeLeftDataChart[1] = this.workday.TimeAlreadyActivelyWorkded.TotalMinutes;
+
+        overhoursDataChart[0] = this.workday.OverhoursTime.TotalMinutes;
+
+        breaksLeftDataChart[0] = this.workday.BreakTimeLeft.TotalMinutes;
+        breaksLeftDataChart[1] = this.workday.ValidBreakTimeUsed.TotalMinutes;
+    }
+}
