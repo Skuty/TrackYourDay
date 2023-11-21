@@ -10,7 +10,7 @@
 </h1>
 
 <MudExpansionPanels>
-    <MudExpansionPanel Text="Short overview" MaxHeight="230" IsInitiallyExpanded="true">
+    <MudExpansionPanel Text="Short overview" IsInitiallyExpanded="true">
         <MudGrid Justify="Justify.Center">
             <MudItem>
                 <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
@@ -41,7 +41,7 @@
             </MudItem>
         </MudGrid>
     </MudExpansionPanel>
-    <MudExpansionPanel Text="Raw Workday" MaxHeight="500">
+    <MudExpansionPanel Text="Raw Workday">
         <p>
             Your raw Workday is <br />
             @workday;
