@@ -29,11 +29,8 @@
             <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Secondary">Submit Bug or Feature Request</MudButton>
         </a>
 
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary" OnClick="CloseApplication">  Close the Application totally  </MudButton>
     </nav>
-
-    <div style="position: fixed; bottom: 0;">
-        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Primary" OnClick="CloseApplication">Close Application</MudButton>
-    </div>
 </div>
 
 @code {
@@ -41,14 +38,25 @@
 
     private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
+    [Inject] private IDialogService DialogService { get; set; }
+
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
 
-    private void CloseApplication()
+    private async void CloseApplication()
     {
-        // TODO: Extract it from Blazor UI to abstraction and Application aware implementation
-        System.Diagnostics.Process.GetCurrentProcess().Kill();
+        bool? result = await DialogService.ShowMessageBox(
+            "Closing application",
+            "Do You really want to Close Application?",
+            yesText: "Close!", cancelText: "Cancel");
+        string state = result == null ? "Canceled" : "Close!";
+
+        if (state == "Close!")
+        {
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
+        }
     }
 }
