@@ -60,13 +60,13 @@
 
 @code {
     //bool to send to MainLayout for shrinking sidebar and showing/hide menu text
-    private bool IconMenuActive { get; set; } = false;
+    private bool IconMenuActive { get; set; } = true;
 
     //EventCallback for sending bool to MainLayout
     [Parameter]
     public EventCallback<bool> ShowIconMenu { get; set; }
 
-    private bool collapseNavMenu = true;
+    private bool collapseNavMenu = false;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 

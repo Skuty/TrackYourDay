@@ -33,7 +33,7 @@
 </div>
 
 @code {
-    private bool _iconMenuActive { get; set; }
+    private bool _iconMenuActive { get; set; } = true;
     private string? IconMenuCssClass => _iconMenuActive ? "width: 80px;" : null;
 
     protected void ToggleIconMenu(bool iconMenuActive)
