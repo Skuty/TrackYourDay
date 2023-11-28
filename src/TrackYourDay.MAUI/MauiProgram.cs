@@ -12,6 +12,7 @@ using Serilog.Events;
 using TrackYourDay.Core.Versioning;
 using MudBlazor.Services;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
+using TrackYourDay.MAUI.Handlers;
 
 namespace TrackYourDay.MAUI
 {
@@ -62,6 +63,7 @@ namespace TrackYourDay.MAUI
                 serviceCollection.GetRequiredService<IClock>(),
                 Config.TimeOfNoActivityToStartBreak,
                 serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
+
             // Install notification handler
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityStartedNotificationHandler>());
 

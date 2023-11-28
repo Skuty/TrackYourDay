@@ -70,4 +70,16 @@
     <ItemGroup>
       <ProjectReference Include="..\..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="PopupDialogPage.xaml.cs">
+        <DependentUpon>PopupDialogPage.xaml</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <MauiXaml Update="PopupDialogPage.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </MauiXaml>
+    </ItemGroup>
 </Project>
