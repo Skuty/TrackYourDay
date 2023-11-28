@@ -1,0 +1,119 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <img src="Images/default-clock-icon.png" alt="Clock icon" aria-hidden="true" width="35" height="35" />
+        @if (!@IconMenuActive)
+        {
+            <a class="navbar-brand" href="">Track Your Day</a>
+        }
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span>
+                @if (!@IconMenuActive)
+                {
+                    <label>Home</label>
+                }
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="activities">
+                <span class="oi oi-clipboard" aria-hidden="true"></span>
+                @if (!@IconMenuActive)
+                {
+                    <label>Activities</label>
+                }
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="breaks">
+                <span class="oi oi-media-pause" aria-hidden="true"></span>
+                @if (!@IconMenuActive)
+                {
+                    <label>Breaks</label>
+                }
+            </NavLink>
+        </div>
+
+    </nav>
+</div>
+
+<div class="bottom-row">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="https://github.com/Skuty/TrackYourDay/issues/new/choose">
+                <span class="oi oi-bug" aria-hidden="true"></span>
+                @if (!@IconMenuActive)
+                {
+                    <label>Bug or Feature</label>
+                }
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" @onclick="CloseApplication" style="cursor: pointer">
+                <span class="oi oi-power-standby" aria-hidden="true"></span>
+                @if (!@IconMenuActive)
+                {
+                    <label>Exit</label>
+                }
+            </NavLink>
+        </div>
+
+    <div class="icon-menu-arrow">
+        @if (!@IconMenuActive)
+        {
+            <span class="oi oi-arrow-left" style="color: white;" @onclick="ToggleIconMenu"></span>
+        }
+        else
+        {
+            <span class="oi oi-arrow-right" style="color: white;" @onclick="ToggleIconMenu"></span>
+        }
+    </div>
+</div>
+
+@code {
+    //bool to send to MainLayout for shrinking sidebar and showing/hide menu text
+    private bool IconMenuActive { get; set; } = true;
+
+    //EventCallback for sending bool to MainLayout
+    [Parameter]
+    public EventCallback<bool> ShowIconMenu { get; set; }
+
+    private bool collapseNavMenu = false;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    //Method to toggle IconMenuActive bool and send bool via EventCallback
+    private async Task ToggleIconMenu()
+    {
+        IconMenuActive = !IconMenuActive;
+        await ShowIconMenu.InvokeAsync(IconMenuActive);
+    }
+
+    [Inject] private IDialogService DialogService { get; set; }
+
+    private async void CloseApplication()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Closing application",
+            "Do You really want to Close Application?",
+            yesText: "Close!", cancelText: "Cancel");
+        string state = result == null ? "Canceled" : "Close!";
+
+        if (state == "Close!")
+        {
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
+        }
+    }
+}
