@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="TrackYourDay.MAUI.PopupDialogPage"
+             x:Class="TrackYourDay.MAUI.DialogPage"
              xmlns:local="clr-namespace:TrackYourDay.MAUI"
-             Title="Popup">
+             Title="Dialog">
 
     <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
         <BlazorWebView.RootComponents>
-            <RootComponent Selector="#app" ComponentType="{x:Type local:Main}" />
+            <RootComponent Selector="#app" ComponentType="{x:Type local:Dialog}" />
         </BlazorWebView.RootComponents>
     </BlazorWebView>
     

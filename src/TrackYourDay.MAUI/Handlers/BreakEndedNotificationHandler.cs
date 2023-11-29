@@ -11,7 +11,7 @@ namespace TrackYourDay.MAUI.Handlers
             // Needed to show notification on main thread otherwise it will throw exception
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                Window breakRevokingPopupWindow = new Window(new PopupDialogPage());
+                Window breakRevokingPopupWindow = new Window(new DialogPage("/breakRevoke"));
                 Application.Current.OpenWindow(breakRevokingPopupWindow);
             });
 

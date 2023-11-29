@@ -72,13 +72,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="PopupDialogPage.xaml.cs">
-        <DependentUpon>PopupDialogPage.xaml</DependentUpon>
+      <Compile Update="DialogPage.xaml.cs">
+        <DependentUpon>DialogPage.xaml</DependentUpon>
       </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <MauiXaml Update="PopupDialogPage.xaml">
+      <MauiXaml Update="DialogPage.xaml">
         <Generator>MSBuild:Compile</Generator>
       </MauiXaml>
     </ItemGroup>

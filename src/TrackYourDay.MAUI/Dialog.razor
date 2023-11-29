@@ -1,0 +1,28 @@
+﻿@inject NavigationManager NavigationManager
+
+<Router AppAssembly="@typeof(Dialog).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(EmptyLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(EmptyLayout)">
+            <p role="alert">Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@code
+{
+    [Parameter] public string StartPath { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrEmpty(StartPath))
+        {
+            NavigationManager.NavigateTo(StartPath);
+        }
+
+        base.OnParametersSet();
+    }
+}
