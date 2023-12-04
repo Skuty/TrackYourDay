@@ -1,4 +1,6 @@
-﻿namespace TrackYourDay.MAUI
+﻿using Windows.UI.ViewManagement;
+
+namespace TrackYourDay.MAUI
 {
     public partial class MainPage : ContentPage
     {

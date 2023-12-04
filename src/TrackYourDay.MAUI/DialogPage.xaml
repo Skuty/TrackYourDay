@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="TrackYourDay.MAUI.DialogPage"
              xmlns:local="clr-namespace:TrackYourDay.MAUI"
+             Shell.NavBarIsVisible="False"
              Title="Dialog">
 
     <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
