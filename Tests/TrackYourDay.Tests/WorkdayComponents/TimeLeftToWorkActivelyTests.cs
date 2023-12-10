@@ -29,7 +29,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var endedActivities = new List<EndedActivity>();
             var endedBreaks = new List<EndedBreak>
             {
-                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
+                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
             };
 
             // Act
@@ -46,7 +46,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var endedActivities = new List<EndedActivity>();
             var endedBreaks = new List<EndedBreak>
             {
-                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), "Test Break")
+                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), "Test Break")
             };
 
             // Act
@@ -83,7 +83,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             };
             var endedBreaks = new List<EndedBreak>
             {
-                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:30"), "Test Break")
+                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:30"), "Test Break")
             };
 
             // Act
@@ -120,7 +120,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             };
             var endedBreaks = new List<EndedBreak>
             {
-                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
+                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
             };
 
             // Act
@@ -140,7 +140,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             };
             var endedBreaks = new List<EndedBreak>
             {
-                new EndedBreak(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), "Test Break")
+                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), "Test Break")
             };
 
             // Act

@@ -9,7 +9,7 @@ namespace TrackYourDay.MAUI.Handlers
     {
         public Task Handle(BreakEndedNotifcation notification, CancellationToken cancellationToken)
         {
-            this.OpenDialogPageInNewWindow("/breakRevoke");
+            this.OpenDialogPageInNewWindow($"/breakRevoke/{Guid.NewGuid()}");
 
             return Task.CompletedTask;
         }

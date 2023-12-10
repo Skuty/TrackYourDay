@@ -1,4 +1,4 @@
-﻿@page "/breakRevoke"
+﻿@page "/breakRevoke/{BreakGuid}"
 
 @using TrackYourDay.Core.Activities;
 @using TrackYourDay.Core.Breaks;
@@ -15,8 +15,12 @@
 else
 {
     <h1>Content</h1>
+
+    <p>Revoking break with Guid: @BreakGuid</p>
 }
 
 @code 
 {
+    [Parameter]
+    public string BreakGuid { get; set; }
 }

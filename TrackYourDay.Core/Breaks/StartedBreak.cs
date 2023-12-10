@@ -4,6 +4,8 @@ namespace TrackYourDay.Core.Breaks
 {
     public record class StartedBreak(DateTime BreakStartedAt, string BreakDescription)
     {
+        public Guid BreakGuid { get; } = Guid.NewGuid();
+
         public EndedBreak EndBreak(DateTime breakEndedAt)
         {
             if (breakEndedAt < this.BreakStartedAt)
@@ -17,12 +19,7 @@ namespace TrackYourDay.Core.Breaks
             }
 
 
-            return new EndedBreak(this.BreakStartedAt, breakEndedAt, this.BreakDescription);
-        }
-
-        public CanceledBreak CancelBreak(DateTime breakCanceledAt) 
-        { 
-            return new CanceledBreak(this, breakCanceledAt);
+            return new EndedBreak(this.BreakGuid, this.BreakStartedAt, breakEndedAt, this.BreakDescription);
         }
     }
 }
