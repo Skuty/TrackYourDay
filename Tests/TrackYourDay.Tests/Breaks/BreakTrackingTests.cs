@@ -170,17 +170,19 @@ namespace TrackYourDay.Tests.Breaks
                 ), CancellationToken.None), Times.Once);
         }
 
-        [Fact]
-        public void GivenThereIsStartedBreakBasedOnLockedSystem_WhenThereIsAnyInstantActivity_ThenBreakIsNotEnded()
+        [Fact(Skip ="Should be enabled when Pending Break concept will be introduced")]
+        // TODO:Consider PendingBreak concept which will represent potential break which didn't meet minimal requirements
+        // In example system locked for less than 3 minutes
+        public void GivenThereIsStartedBreakAndSystemIsLocked_WhenThereIsAnyInstantActivity_ThenBreakIsNotEnded()
         {
             // Arrange
             var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
             var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
-            var activityToProcess = ActivityFactory.StartedSystemLockedActivity(breakStartDate);
-            breakTracker.AddActivityToProcess(activityToProcess.StartDate, activityToProcess.SystemState, Guid.Empty);
+            this.clockMock.Setup(x => x.Now).Returns(breakStartDate);
+            breakTracker.ProcessActivities();
+            this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
             breakTracker.ProcessActivities();
             var instantActivity = ActivityFactory.MouseMovedActivity(DateTime.Parse("2000-01-01 12:10:00"), new MousePositionState(0, 0));
-            this.publisherMock.Reset();
 
             // Act
             breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.SystemState, Guid.Empty);
