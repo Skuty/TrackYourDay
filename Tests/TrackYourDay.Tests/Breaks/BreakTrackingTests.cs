@@ -203,7 +203,7 @@ namespace TrackYourDay.Tests.Breaks
         }
 
         [Fact]
-        public void GivenThereIsEndedBreak_WhenBreakIsRevoked_ThenItIsAvailableWithinEndedBreaks()
+        public void GivenThereIsEndedBreak_WhenBreakIsRevoked_ThenBreakIsRevoked()
         {
             // TODO: Resolve BreakTracker responsibilties to allow easier testing
             // Probably changing BreakTracker to operate on Workday may be a solution
@@ -214,6 +214,10 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
             this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
             breakTracker.ProcessActivities();
+            var instantActivity = ActivityFactory.MouseMovedActivity(DateTime.Parse("2000-01-01 12:10:00"), new MousePositionState(0, 0));
+            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.SystemState, Guid.Empty);
+            breakTracker.ProcessActivities();
+
             // TODO: Remove any callbacks to this remporary GetEndedBreaks method
             var endedBreak = breakTracker.GetEndedBreaks().First();
 
