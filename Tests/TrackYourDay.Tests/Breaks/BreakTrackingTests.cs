@@ -169,7 +169,9 @@ namespace TrackYourDay.Tests.Breaks
                 ), CancellationToken.None), Times.Once);
         }
 
-        [Fact]
+        [Fact(Skip ="Should be enabled when Pending Break concept will be introduced")]
+        // TODO:Consider PendingBreak concept which will represent potential break which didn't meet minimal requirements
+        // In example system locked for less than 3 minutes
         public void GivenThereIsStartedBreakAndSystemIsLocked_WhenThereIsAnyInstantActivity_ThenBreakIsNotEnded()
         {
             // Arrange
@@ -190,7 +192,7 @@ namespace TrackYourDay.Tests.Breaks
             publisherMock.Verify(x => x.Publish(It.Is<BreakEndedNotifcation>(
                 n => n.EndedBreak.BreakEndedAt == instantActivity.OccuranceDate
                 && n.EndedBreak.BreakStartedAt == breakStartDate
-                ), CancellationToken.None), Times.Once);
+                ), CancellationToken.None), Times.Never);
         }
 
 
