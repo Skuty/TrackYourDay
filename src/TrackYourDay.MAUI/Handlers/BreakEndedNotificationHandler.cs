@@ -22,8 +22,8 @@ namespace TrackYourDay.MAUI.Handlers
             {
                 Window breakRevokingPopupWindow = new Window(new DialogPage(path));
                 breakRevokingPopupWindow.Title = "Break Revoking";
-                breakRevokingPopupWindow.Width = 800;
-                breakRevokingPopupWindow.Height = 600;
+                breakRevokingPopupWindow.Width = 600;
+                breakRevokingPopupWindow.Height = 200;
                 Application.Current.OpenWindow(breakRevokingPopupWindow);
 
                 var localWindow = (breakRevokingPopupWindow.Handler.PlatformView as Microsoft.UI.Xaml.Window);
