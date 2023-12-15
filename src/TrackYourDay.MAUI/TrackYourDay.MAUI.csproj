@@ -5,7 +5,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net7.0-windows10.0.19041.0</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
         <OutputType>Exe</OutputType>
         <RootNamespace>TrackYourDay.MAUI</RootNamespace>
         <UseMaui>true</UseMaui>
@@ -33,7 +33,7 @@
 
 	<ItemGroup>
         <!-- App Icon -->
-        <MauiIcon Include="Resources\AppIcon\defaultclockicon.ico" />
+        <!--<MauiIcon Include="Resources\AppIcon\defaultclockicon.ico" />-->
 
         <!-- Splash Screen -->
         <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
@@ -56,6 +56,7 @@
     <ItemGroup>
         <PackageReference Include="MediatR" Version="12.1.1" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
+        <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231115000" />
         <PackageReference Include="MudBlazor" Version="6.10.0" />
         <PackageReference Include="Quartz" Version="3.7.0" />
         <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.7.0" />
@@ -72,13 +73,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="DialogPage.xaml.cs">
-        <DependentUpon>DialogPage.xaml</DependentUpon>
+      <Compile Update="BreakRevokePage.xaml.cs">
+        <DependentUpon>BreakRevokePage.xaml</DependentUpon>
       </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <MauiXaml Update="DialogPage.xaml">
+      <MauiXaml Update="BreakRevokePage.xaml">
         <Generator>MSBuild:Compile</Generator>
       </MauiXaml>
     </ItemGroup>

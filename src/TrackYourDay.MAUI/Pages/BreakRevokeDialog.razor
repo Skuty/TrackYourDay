@@ -34,10 +34,7 @@ else
         // TODO: Fix to work with multiple Break Revoking dialogs
         // Change below to command that will close this Window, otherwise there is
         // null reference exception caused by calling code withinitself
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            var currentWindow = Application.Current?.Windows.FirstOrDefault(w => w.Page is DialogPage);
+            var currentWindow = Application.Current?.Windows.FirstOrDefault(w => w.Page is BreakRevokePage);
             Application.Current?.CloseWindow(currentWindow);
-        });
     }
 }
