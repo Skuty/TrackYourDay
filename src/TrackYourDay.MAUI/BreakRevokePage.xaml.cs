@@ -8,7 +8,8 @@ public partial class BreakRevokePage : ContentPage
     private readonly Guid breakGuid;
     private readonly BreakTracker breakTracker;
     private readonly DispatcherTimer timer = new DispatcherTimer();
-
+    private readonly TimeSpan showPeriod;
+    private double counterStep; 
 
     public BreakRevokePage(Guid breakGuid, BreakTracker breakTracker)
 	{
@@ -16,25 +17,35 @@ public partial class BreakRevokePage : ContentPage
 
         this.breakGuid = breakGuid;
         this.breakTracker = breakTracker;
+        this.showPeriod = TimeSpan.FromSeconds(15);
+        this.counterStep = 1 / (this.showPeriod.TotalSeconds * 4);
 
-
-        timer.Interval = TimeSpan.FromSeconds(1);
+        timer.Interval = TimeSpan.FromMilliseconds(250);
         timer.Tick += Timer_Tick;
         timer.Start();
     }
 
     private void Timer_Tick(object sender, object e)
     {
-        this.progressBar.value ++
-        if (this.progressBar.Value >= 60)
+        this.progressBar.Progress += this.counterStep;
+        if (this.progressBar.Progress >= 1)
         {
             timer.Stop();
+            this.CloseThisWindow();
         }
     }
 
     public void OnRevokeBreakButtonClicked(object sender, EventArgs args)
 	{ 
-        this.breakTracker.RevokeBreak(this.breakGuid, DateTime.Now);
+        try
+        {
+            this.breakTracker.RevokeBreak(this.breakGuid, DateTime.Now);
+        } catch (Exception ex)
+        {
+            this.DisplayAlert("Something went wrong", $"{ex}", "OK");
+            return;
+        }
+
         this.CloseThisWindow();
     }
 
@@ -45,7 +56,7 @@ public partial class BreakRevokePage : ContentPage
 
     private void CloseThisWindow()
     {
-        var currentWindow = Application.Current?.Windows.FirstOrDefault(w => w.Page is BreakRevokePage);
-        Application.Current?.CloseWindow(currentWindow);
+        var currentWindow = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault(w => w.Page is BreakRevokePage);
+        Microsoft.Maui.Controls.Application.Current?.CloseWindow(currentWindow);
     }
 }

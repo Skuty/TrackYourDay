@@ -7,6 +7,7 @@
              Title="Track Your Day - Revoke Break">
     
     <StackLayout>
+        <ProgressBar HorizontalOptions="FillAndExpand" Progress="0" x:Name="progressBar" />
         <Label Text="Did You had a Break?" HorizontalOptions="Center" TextColor="DarkBlue" FontSize="30" />
         <Label Text="For around __ minutes" HorizontalOptions="Center" TextColor="Black" FontSize="15" />
         <Label Text="From __ until __" HorizontalOptions="Center" TextColor="Black" FontSize="15" />
@@ -19,7 +20,14 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            
+
+            <Button 
+                Grid.Column="1"
+                HorizontalOptions="FillAndExpand"
+                BackgroundColor="Green"
+                Text="Yes, I had a Break :)" 
+                Clicked="OnCancelRevokeBreakButtonClicked" />
+
             <Button 
                 Grid.Column="0"
                 HorizontalOptions="FillAndExpand"
@@ -27,16 +35,6 @@
                 Text="No, Revoke it!" 
                 Clicked="OnRevokeBreakButtonClicked" />
 
-            <Button 
-                Grid.Column="1"
-                HorizontalOptions="FillAndExpand"
-                BackgroundColor="Green"
-                Text="Yes, I had a Break" 
-                Clicked="OnCancelRevokeBreakButtonClicked" />
         </Grid>
-
-        
-        <ProgressBar HorizontalOptions="FillAndExpand" Progress="0" x:Name="progressBar" />
-        <ProgressBar HorizontalOptions="FillAndExpand" Progress="0.5" />
     </StackLayout>
 </ContentPage>

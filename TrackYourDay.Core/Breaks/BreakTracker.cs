@@ -134,6 +134,10 @@ namespace TrackYourDay.Core.Breaks
         {
             // TODO: Change this approach as mentioned in tests for BreakTracker as it will cause issues in future
             this.endedBreaks.TryRemove(breakGuid, out var endedBreak);
+            if (endedBreak is null)
+            {
+                throw new ArgumentException($"Break with guid {breakGuid} does not exist");
+            }
             var revokedBreak = endedBreak.Revoke(revokeDate);
             this.revokedBreaks.Add(revokedBreak);
 
