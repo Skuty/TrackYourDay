@@ -25,9 +25,9 @@ namespace TrackYourDay.Tests.Old.Breaks
             // Arrange
             var breaks = new List<EndedBreak>
             {
-                new EndedBreak(DateTime.Parse("2000-01-01 12:00:00"), DateTime.Parse("2000-01-01 12:01:00"), string.Empty),
-                new EndedBreak(DateTime.Parse("2000-01-01 12:10:00"), DateTime.Parse("2000-01-01 12:15:00"), string.Empty),
-                new EndedBreak(DateTime.Parse("2000-01-01 13:00:00"), DateTime.Parse("2000-01-01 14:15:00"), string.Empty),
+                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 12:00:00"), DateTime.Parse("2000-01-01 12:01:00"), string.Empty),
+                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 12:10:00"), DateTime.Parse("2000-01-01 12:15:00"), string.Empty),
+                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 13:00:00"), DateTime.Parse("2000-01-01 14:15:00"), string.Empty),
             };
 
             // Act
@@ -43,9 +43,9 @@ namespace TrackYourDay.Tests.Old.Breaks
             // Arrange
             var breaks = new List<EndedBreak>
             {
-                new EndedBreak(DateTime.Now, DateTime.Now.AddMinutes(1), string.Empty),
-                new EndedBreak(DateTime.Now, DateTime.Now.AddMinutes(1), string.Empty),
-                new EndedBreak(DateTime.Now, DateTime.Now.AddMinutes(1), string.Empty),
+                new EndedBreak(Guid.Empty, DateTime.Now, DateTime.Now.AddMinutes(1), string.Empty),
+                new EndedBreak(Guid.Empty, DateTime.Now, DateTime.Now.AddMinutes(1), string.Empty),
+                new EndedBreak(Guid.Empty, DateTime.Now, DateTime.Now.AddMinutes(1), string.Empty),
             };
 
             // Act

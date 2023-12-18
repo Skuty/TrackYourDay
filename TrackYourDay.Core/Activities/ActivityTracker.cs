@@ -4,6 +4,8 @@ using System.Collections.Immutable;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
 using TrackYourDay.Core.Activities.Notifications;
 using TrackYourDay.Core.Activities.SystemStates;
+using TrackYourDay.Core.Breaks.Notifications;
+using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Core.Activities
 {

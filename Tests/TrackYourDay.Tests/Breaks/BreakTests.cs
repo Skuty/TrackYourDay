@@ -35,10 +35,23 @@ namespace TrackYourDay.Core.Breaks
             // Arrange
             var breakStartedOn = DateTime.Now;
             var breakEndedOn = breakStartedOn.AddMinutes(1);
-            var breakEnded = new EndedBreak(breakStartedOn, breakEndedOn, string.Empty);
+            var breakEnded = new EndedBreak(Guid.Empty, breakStartedOn, breakEndedOn, string.Empty);
 
             // Act and Assert
             breakEnded.BreakDuration.Should().Be(TimeSpan.FromMinutes(1));
+        }
+
+        [Fact]
+        public void WhenEndedBreakIsRevoked_ThenItBecomesRevokedBreak()
+        {
+            // Arrange
+            var endedBreak = new EndedBreak(Guid.Empty, DateTime.Now, DateTime.Now.AddMinutes(5), "test");
+
+            // Act
+            var revokedBreak = endedBreak.Revoke(DateTime.Now);
+
+            // Assert
+            revokedBreak.Should().BeOfType<RevokedBreak>();
         }
     }
 }

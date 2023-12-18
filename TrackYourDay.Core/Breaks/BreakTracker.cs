@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Activities.SystemStates;
@@ -17,7 +18,8 @@ namespace TrackYourDay.Core.Breaks
         //TODO: Imitate break on debugging and check processedActivities, there are activities in wrong order
         private Queue<ActivityToProcess> activitiesToProcess = new Queue<ActivityToProcess>();
         private List<ActivityToProcess> processedActivities = new List<ActivityToProcess>();
-        private List<EndedBreak> endedBreaks = new List<EndedBreak>();
+        private ConcurrentDictionary<Guid, EndedBreak> endedBreaks = new ConcurrentDictionary<Guid, EndedBreak>();
+        private ConcurrentBag<RevokedBreak> revokedBreaks = new ConcurrentBag<RevokedBreak>();
         private StartedBreak? currentStartedBreak;
         private DateTime lastTimeOfActivity;
 
@@ -105,11 +107,11 @@ namespace TrackYourDay.Core.Breaks
                     {
                         var endedBreak = this.currentStartedBreak.EndBreak(activityToProcess.ActivityDate);
                         this.logger.LogInformation("End: {EndedBreak}", endedBreak);
-                        this.endedBreaks.Add(endedBreak);
+                        this.endedBreaks.TryAdd(endedBreak.BreakGuid, endedBreak);
                         this.currentStartedBreak = null;
                         this.lastTimeOfActivity = activityToProcess.ActivityDate;
-                        this.publisher.Publish(new BreakEndedNotifcation(endedBreak));
                         this.processedActivities.Add(activityToProcess);
+                        this.publisher.Publish(new BreakEndedNotifcation(endedBreak));
                         continue;
                     }
                 }
@@ -128,9 +130,23 @@ namespace TrackYourDay.Core.Breaks
             }            
         }
 
+        public void RevokeBreak(Guid breakGuid, DateTime revokeDate)
+        {
+            // TODO: Change this approach as mentioned in tests for BreakTracker as it will cause issues in future
+            this.endedBreaks.TryRemove(breakGuid, out var endedBreak);
+            if (endedBreak is null)
+            {
+                throw new ArgumentException($"Break with guid {breakGuid} does not exist");
+            }
+            var revokedBreak = endedBreak.Revoke(revokeDate);
+            this.revokedBreaks.Add(revokedBreak);
+
+            this.publisher.Publish(new BreakRevokedNotification(revokedBreak));
+        }
+
         public ReadOnlyCollection<EndedBreak> GetEndedBreaks()
         {
-            return this.endedBreaks.AsReadOnly();
+            return this.endedBreaks.ToList().Select(i => i.Value).ToList().AsReadOnly();
         }
     }
 }
