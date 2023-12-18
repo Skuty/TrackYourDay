@@ -1,3 +1,4 @@
+using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -185,8 +186,8 @@ namespace TrackYourDay.Tests.Breaks
 
             // Act
             breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.SystemState, Guid.Empty);
-
             breakTracker.ProcessActivities();
+            // TODO: Fix implementation as it is not working as expected
 
             // Assert
             publisherMock.Verify(x => x.Publish(It.Is<BreakEndedNotifcation>(
@@ -201,20 +202,32 @@ namespace TrackYourDay.Tests.Breaks
         {
         }
 
-            [Fact(Skip = "To be implemented in future")]
-        public void GivenWhenBreakRecordingEnds_ThenBreakWaitsForConfirming()
+        [Fact]
+        public void GivenThereIsEndedBreak_WhenBreakIsRevoked_ThenBreakIsRevoked()
         {
+            // TODO: Resolve BreakTracker responsibilties to allow easier testing
+            // Probably changing BreakTracker to operate on Workday may be a solution
             // Arrange
-            //var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object);
-            //breakTracker.AddActivityToProcess(ActivityEvent.CreateEvent(DateTime.Now, new SystemLockedActivity()));
-            //breakTracker.AddActivityToProcess(ActivityEvent.CreateEvent(DateTime.Now, new FocusOnApplicationActivity(string.Empty)));
+            var breakTracker = new BreakTracker(publisherMock.Object, clockMock.Object, this.timeOfNoActivityToStartBreak, this.loggerMock.Object);
+            var breakStartDate = DateTime.Parse("2000-01-01 12:00:00");
+            this.clockMock.Setup(x => x.Now).Returns(breakStartDate);
+            breakTracker.ProcessActivities();
+            this.clockMock.Setup(x => x.Now).Returns(DateTime.Parse("2000-01-01 12:06:00"));
+            breakTracker.ProcessActivities();
+            var instantActivity = ActivityFactory.MouseMovedActivity(DateTime.Parse("2000-01-01 12:10:00"), new MousePositionState(0, 0));
+            breakTracker.AddActivityToProcess(instantActivity.OccuranceDate, instantActivity.SystemState, Guid.Empty);
+            breakTracker.ProcessActivities();
 
-            //// Act
-            //breakTracker.ProcessActivities();
+            // TODO: Remove any callbacks to this remporary GetEndedBreaks method
+            var endedBreak = breakTracker.GetEndedBreaks().First();
 
-            //// Assert
-            //Assert.Fail("Postpone this test and feature. Do always on ending instead.");
-            //this.publisherMock.Verify(x => x.Publish(It.IsAny<BreakEndedNotifcation>(), CancellationToken.None), Times.Once);
+            // Act
+            breakTracker.RevokeBreak(endedBreak.BreakGuid, DateTime.Now);
+
+            // Assert
+            publisherMock.Verify(x => x.Publish(It.Is<BreakRevokedNotification>(
+                n => n.RevokedBreak.BreakGuid == endedBreak.BreakGuid
+                ), CancellationToken.None), Times.Once);
         }
     }
 }
