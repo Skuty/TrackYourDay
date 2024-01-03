@@ -68,6 +68,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
+      <ProjectReference Include="..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
     </ItemGroup>
 </Project>
