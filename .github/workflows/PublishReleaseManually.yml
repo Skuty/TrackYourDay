@@ -21,15 +21,15 @@ jobs:
               uses: actions/checkout@v3
       
             - name: Set up .NET Core
-              uses: actions/setup-dotnet@v3
+              uses: actions/setup-dotnet@v4
               with:
-                dotnet-version: 7.0.x  # Specify the .NET version you need
+                dotnet-version: 8.0.x  # Specify the .NET version you need
 
             - name: Restore dependencies
-              run: dotnet restore
+              run: dotnet restore --runtime win-x64
                 
             - name: Build 
-              run: dotnet build --configuration Release --no-restore
+              run: dotnet build --configuration Release
 
             - name: Test
               run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml"
@@ -40,7 +40,7 @@ jobs:
               uses: thedoctor0/zip-release@0.7.1
               with:
                 type: 'zip'
-                directory: 'src\TrackYourDay.MAUI\bin\Release\net7.0-windows10.0.19041.0\win10-x64'
+                directory: 'src\TrackYourDay.MAUI\bin\Release\net8.0-windows10.0.19041.0\win10-x64'
                 filename: 'TrackYourDay_${{ github.event.inputs.version }}.zip'
                 exclusions: '*.git*'
 
@@ -58,7 +58,7 @@ jobs:
 
             - uses: ncipollo/release-action@v1
               with:
-                artifacts: 'src\TrackYourDay.MAUI\bin\Release\net7.0-windows10.0.19041.0\win10-x64\TrackYourDay_${{ github.event.inputs.version }}.zip'
+                artifacts: 'src\TrackYourDay.MAUI\bin\Release\net8.0-windows10.0.19041.0\win10-x64\TrackYourDay_${{ github.event.inputs.version }}.zip'
                 artifactErrorsFailBuild: true
                 prerelease: ${{ github.event.inputs.isPreRelease }}
                 tag: ${{ github.event.inputs.version }}
