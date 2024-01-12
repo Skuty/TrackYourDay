@@ -54,7 +54,7 @@ namespace TrackYourDay.Core.Versioning
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
 
-                return result.OrderByDescending(v =>v.published_at).FirstOrDefault().name;
+                return result.Where(v => v.prerelease == false).OrderByDescending(v =>v.published_at).FirstOrDefault().name;
             }
 
             throw new Exception("Cannot get newest release name from GitHub repository.");
