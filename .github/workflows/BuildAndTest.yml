@@ -23,13 +23,13 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore --runtime win-x64
 
-      # - name: Cache dependencies
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: '**/src/TrackYourDay.MAUI/obj/project.assets.json'  # Adjust the path to your project's dependency files
-      #     key: dependencies-${{ hashFiles('**/obj/project.assets.json') }}
-      #     restore-keys: |
-      #       dependencies-
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: '**/src/TrackYourDay.MAUI/obj/project.assets.json'  # Adjust the path to your project's dependency files
+          key: dependencies-${{ hashFiles('**/obj/project.assets.json') }}
+          restore-keys: |
+            dependencies-
 
       - name: Build 
         run: dotnet build --configuration Release
