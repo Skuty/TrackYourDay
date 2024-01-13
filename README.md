@@ -21,7 +21,7 @@ Newest version available at [Releases](https://github.com/Skuty/TrackYourDay/rel
 3. Run TrackYourDay executable file
 
 To Run on Windows Startup:
-1. Open CommandLine
+1. Hit WindowsKey+R 
 2. Run command: shell:startup
 3. File Location Window will Open
 4. Create Shortcut to TrackYourDay executsble file
