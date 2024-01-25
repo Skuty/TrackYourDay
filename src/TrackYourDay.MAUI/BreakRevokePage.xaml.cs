@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using TrackYourDay.Core.Breaks;
+using TrackYourDay.MAUI.MauiPages;
 
 namespace TrackYourDay.MAUI;
 
@@ -9,26 +10,33 @@ public partial class BreakRevokePage : ContentPage
     private readonly BreakTracker breakTracker;
     private readonly DispatcherTimer timer = new DispatcherTimer();
     private readonly TimeSpan showPeriod;
+    private readonly BreakRevokeViewModel breakRevokeViewModel;
     private double counterStep;
 
-    public string forAroundMinutes { get; set; } = "forAroundAmount";
-    public string fromHour { get; set; } = "fromHour";
-    public string toHour { get; set; } = "toHour";
-
-    // Todo publish Break with breakGuid instead of just guid or other kind of readmodel
     public BreakRevokePage(Guid breakGuid, BreakTracker breakTracker)
 	{
 		InitializeComponent();
-
-        //breakPeriodLabel.SetBinding(Label.TextProperty, new Binding("breakPeriodBinding", source: this.forAroundMinutes));
-        //breakStartLabel.SetBinding(Label.TextProperty, new Binding("breakStartBinding", source: this.fromHour));
-        //breakEndLabel.SetBinding(Label.TextProperty, new Binding("breakEndLabel", source: this.toHour));
-
 
         this.breakGuid = breakGuid;
         this.breakTracker = breakTracker;
         this.showPeriod = TimeSpan.FromSeconds(120);
         this.counterStep = 1 / (this.showPeriod.TotalSeconds * 4);
+
+        // Todo publish Break with breakGuid instead of just guid or other kind of readmodel
+        var endedBreak = this.breakTracker.GetEndedBreaks().First(b => b.BreakGuid == breakGuid);
+
+        // TODO: Move UI text to xaml as use only values from view model
+        this.breakRevokeViewModel = new BreakRevokeViewModel()
+        {
+            BreakDuration = $"Break duration: {(int)endedBreak.BreakDuration.TotalMinutes} minutes",
+            BreakBorders = $"From: {endedBreak.BreakStartedAt.ToShortTimeString()} to {endedBreak.BreakEndedAt.ToShortTimeString()}",
+        };
+
+        this.breakPeriodLabel.BindingContext = this.breakRevokeViewModel;
+        this.breakBordersLabel.BindingContext = this.breakRevokeViewModel;
+
+        breakPeriodLabel.SetBinding(Label.TextProperty, "BreakDuration");
+        breakBordersLabel.SetBinding(Label.TextProperty, "BreakStartTime");
 
         timer.Interval = TimeSpan.FromMilliseconds(250);
         timer.Tick += Timer_Tick;

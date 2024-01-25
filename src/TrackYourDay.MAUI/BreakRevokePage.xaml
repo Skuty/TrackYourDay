@@ -11,15 +11,11 @@
         <Label Text="Did You had a Break?" HorizontalOptions="Center" TextColor="DarkBlue" FontSize="30" />
         <Label
             x:Name="breakPeriodLabel"
-            Text="{Binding forAroundMinutes, StringFormat='For around {0} minutes'}" 
+            Text="Loading ..." 
             HorizontalOptions="Center" TextColor="Black" FontSize="15" />
         <Label 
-            x:Name="breakStartLabel"
-            Text="{Binding fromHour, StringFormat='From {0}'}" 
-            HorizontalOptions="Center" TextColor="Black" FontSize="15" />
-        <Label 
-            x:Name="breakEndLabel"
-            Text="{Binding toHour, StringFormat='Until {0}'}" 
+            x:Name="breakBordersLabel"
+            Text="Loading ..." 
             HorizontalOptions="Center" TextColor="Black" FontSize="15" />
 
         <Grid>
