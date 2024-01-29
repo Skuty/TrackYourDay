@@ -35,12 +35,12 @@ public partial class BreakRevokePage : ContentPage
         this.breakPeriodLabel.BindingContext = this.breakRevokeViewModel;
         this.breakBordersLabel.BindingContext = this.breakRevokeViewModel;
 
-        breakPeriodLabel.SetBinding(Label.TextProperty, "BreakDuration");
-        breakBordersLabel.SetBinding(Label.TextProperty, "BreakStartTime");
+        this.breakPeriodLabel.SetBinding(Label.TextProperty, "BreakDuration");
+        this.breakBordersLabel.SetBinding(Label.TextProperty, "BreakBorders");
 
-        timer.Interval = TimeSpan.FromMilliseconds(250);
-        timer.Tick += Timer_Tick;
-        timer.Start();
+        this.timer.Interval = TimeSpan.FromMilliseconds(250);
+        this.timer.Tick += Timer_Tick;
+        this.timer.Start();
     }
 
     private void Timer_Tick(object sender, object e)
@@ -48,7 +48,7 @@ public partial class BreakRevokePage : ContentPage
         this.progressBar.Progress += this.counterStep;
         if (this.progressBar.Progress >= 1)
         {
-            timer.Stop();
+            this.timer.Stop();
             this.CloseThisWindow();
         }
     }
