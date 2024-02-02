@@ -19,6 +19,13 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v3
+
+            - name: Update Assembly version
+              uses: managedcode/MAUIAppVersion@v1
+              with:
+                csproj: 'src\TrackYourDay.MAUI\TrackYourDay.MAUI.csproj'
+                version: ${{ github.run_number }} 
+                displayVersion: ${{ github.event.inputs.version }}
       
             - name: Set up .NET Core
               uses: actions/setup-dotnet@v4
