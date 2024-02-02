@@ -9,10 +9,9 @@ using TrackYourDay.MAUI.BackgroundJobs;
 using Microsoft.Maui.LifecycleEvents;
 using Serilog;
 using Serilog.Events;
+using TrackYourDay.Core.Versioning;
 using MudBlazor.Services;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
-using System.Reflection;
-using TrackYourDay.MAUI.Versioning;
 
 namespace TrackYourDay.MAUI
 {
@@ -119,6 +118,7 @@ namespace TrackYourDay.MAUI
                 });
             });
 #endif
+
             return builder.Build();
         }
     }
