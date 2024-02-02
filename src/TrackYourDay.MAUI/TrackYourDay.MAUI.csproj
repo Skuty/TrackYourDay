@@ -16,7 +16,7 @@
     <ApplicationId>com.companyname.trackyourday.maui</ApplicationId>
     <ApplicationIdGuid>BC6881B5-564B-4F3B-A547-5149C1854FD4</ApplicationIdGuid>
     <!-- Versions -->
-    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>0.0.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</TargetPlatformMinVersion>

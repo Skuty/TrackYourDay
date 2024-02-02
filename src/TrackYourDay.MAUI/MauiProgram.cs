@@ -12,6 +12,7 @@ using Serilog.Events;
 using TrackYourDay.Core.Versioning;
 using MudBlazor.Services;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
+using System.Reflection;
 
 namespace TrackYourDay.MAUI
 {
@@ -40,8 +41,8 @@ namespace TrackYourDay.MAUI
                 .CreateLogger();
 
             builder.Services.AddLogging(loggingBuilder =>
-                loggingBuilder.AddSerilog(dispose: true)); 
-            
+                loggingBuilder.AddSerilog(dispose: true));
+            builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
             builder.Services.AddSingleton<WeatherForecastService>();
             builder.Services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
