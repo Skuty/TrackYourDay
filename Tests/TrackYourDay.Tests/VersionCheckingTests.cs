@@ -41,7 +41,7 @@ namespace TrackYourDay.Tests
         public void ReturnsVersionOfNewestAvailableApplication()
         {
             // Arrange
-            var versioningSystemFacade = new VersioningSystemFacade();
+            var versioningSystemFacade = new VersioningSystemFacade(new Version(1, 0));
 
             // Act
             var result = versioningSystemFacade.GetNewestAvailableApplicationVersion();

@@ -6,10 +6,16 @@ namespace TrackYourDay.Core.Versioning
     public class VersioningSystemFacade
     {
         private ApplicationVersion newestAvailableApplicationVersion = null!;
+        private ApplicationVersion currentApplicationVersion = null!;
+
+        public VersioningSystemFacade(Version assemblyVersion)
+        {
+            this.currentApplicationVersion = new ApplicationVersion(assemblyVersion);
+        }
 
         public ApplicationVersion GetCurrentApplicationVersion()
         {
-            return new ApplicationVersion("1.1.0");
+            return this.currentApplicationVersion ?? new ApplicationVersion(0, 0, 0);
         }
 
         public ApplicationVersion GetNewestAvailableApplicationVersion()

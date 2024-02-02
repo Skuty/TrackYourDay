@@ -28,6 +28,13 @@
             }
         }
 
+        public ApplicationVersion(Version version)
+        {
+            this.major = version.Major;
+            this.minor = version.Minor;
+            this.patch = version.Build > 0 ? version.Build : 0;
+        }
+
         public override string ToString()
         {
             return $"{this.major}.{this.minor}.{this.patch}";
