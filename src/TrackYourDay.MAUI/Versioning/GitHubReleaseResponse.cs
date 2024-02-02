@@ -1,4 +1,4 @@
-﻿namespace TrackYourDay.Core.Versioning
+﻿namespace TrackYourDay.MAUI.Versioning
 {
     internal class GitHubReleaseResponse
     {

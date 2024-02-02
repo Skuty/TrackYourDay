@@ -1,7 +1,8 @@
 ﻿using Newtonsoft.Json;
 using System.Net.Http.Headers;
+using System.Reflection;
 
-namespace TrackYourDay.Core.Versioning
+namespace TrackYourDay.MAUI.Versioning
 {
     public class VersioningSystemFacade
     {
@@ -9,29 +10,30 @@ namespace TrackYourDay.Core.Versioning
 
         public ApplicationVersion GetCurrentApplicationVersion()
         {
-            return new ApplicationVersion("1.1.0");
+            return new ApplicationVersion(Assembly.GetExecutingAssembly().GetName().Version);
         }
 
         public ApplicationVersion GetNewestAvailableApplicationVersion()
         {
             try
             {
-                if (this.newestAvailableApplicationVersion == null)
+                if (newestAvailableApplicationVersion == null)
                 {
-                    var versionFromGitHub = this.GetNewestReleaseNameFromGitHubRepositoryUsingRestApi();
-                    this.newestAvailableApplicationVersion = new ApplicationVersion(versionFromGitHub);
+                    var versionFromGitHub = GetNewestReleaseNameFromGitHubRepositoryUsingRestApi();
+                    newestAvailableApplicationVersion = new ApplicationVersion(versionFromGitHub);
                 }
 
-                return this.newestAvailableApplicationVersion;
-            } catch
+                return newestAvailableApplicationVersion;
+            }
+            catch
             {
-                return this.GetCurrentApplicationVersion();
+                return GetCurrentApplicationVersion();
             }
         }
 
         public bool IsNewerVersionAvailable()
         {
-            return this.GetNewestAvailableApplicationVersion().IsNewerThan(this.GetCurrentApplicationVersion());
+            return GetNewestAvailableApplicationVersion().IsNewerThan(GetCurrentApplicationVersion());
         }
 
         private string GetNewestReleaseNameFromGitHubRepositoryUsingRestApi()
@@ -41,7 +43,7 @@ namespace TrackYourDay.Core.Versioning
             // TODO: Replace with injected HttpClient from IHttpClientFactory
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(url);
-            var productValue = new ProductInfoHeaderValue("TrackYourDay", this.GetCurrentApplicationVersion().ToString());
+            var productValue = new ProductInfoHeaderValue("TrackYourDay", GetCurrentApplicationVersion().ToString());
 
             client.DefaultRequestHeaders.UserAgent.Add(productValue);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
@@ -54,7 +56,7 @@ namespace TrackYourDay.Core.Versioning
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
 
-                return result.Where(v => v.prerelease == false).OrderByDescending(v =>v.published_at).FirstOrDefault().name;
+                return result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at).FirstOrDefault().name;
             }
 
             throw new Exception("Cannot get newest release name from GitHub repository.");
