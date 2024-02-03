@@ -32,7 +32,7 @@ namespace TrackYourDay.Core.Activities
 
         public static InstantActivity MouseMovedActivity(DateTime occuranceDate, SystemState systemState)
         {
-            return new InstantActivity(occuranceDate, systemState);
+            return new InstantActivity(Guid.NewGuid(), occuranceDate, systemState);
         }
     }
 }

@@ -19,7 +19,6 @@ namespace TrackYourDay.MAUI.BackgroundJobs
         public Task Handle(PeriodicActivityStartedNotification notification, CancellationToken cancellationToken)
         {
             this.breakTracker.AddActivityToProcess(notification.StartedActivity.StartDate, notification.StartedActivity.SystemState, notification.StartedActivity.Guid);
-
             return Task.CompletedTask;
         }
     }
