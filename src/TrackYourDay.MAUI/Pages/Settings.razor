@@ -1,0 +1,60 @@
+﻿@page "/settings"
+@using TrackYourDay.Core.Settings
+
+<h1>Settings</h1>
+
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+    <MudTabPanel Text="Breaks">
+        <MudText>
+            How many minutes should pass without any Activity to Start Break?
+        </MudText>
+        <MudSlider TickMarks="true" TickMarkLabels="@labels" Step="5" Min="5" Max="30" Value="@minutesOfNoActivityToStartBreak" />
+    </MudTabPanel>
+    <MudTabPanel Text="Activities" Disabled="true">
+        <MudText>Planned</MudText>
+    </MudTabPanel>
+</MudTabs>
+
+<MudDialog @bind-IsVisible="isSettingsSavedDialogVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-3" /> Settings saved
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <p>New settings will be used after restarting application..</p>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettings" Class="px-10">Got it!</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowSettingsSavedDialog">Save</MudButton>
+
+@code {
+    [Inject]
+    private SettingsService settingsService { get; }
+
+    private int minutesOfNoActivityToStartBreak = 5;
+    private string[] labels = new string[] { "5", "10", "15", "20", "25", "30" };
+    private bool isSettingsSavedDialogVisible;
+
+    private void ShowSettingsSavedDialog() => isSettingsSavedDialogVisible = true;
+    private void HideSettingsSavedDialog() => isSettingsSavedDialogVisible = false;
+
+    private void LoadSettings()
+    {
+        this.minutesOfNoActivityToStartBreak = (int)this.settingsService
+            .GetCurrentSettingSet()
+            .BreaksSettings
+            .TimeOfNoActivityToStartBreak.TotalMinutes;
+    }
+
+    private void SaveSettings()
+    {
+        this.settingsService.SetTimeOfNoActivityToStartBreak(TimeSpan.FromMinutes(this.minutesOfNoActivityToStartBreak));
+        this.settingsService.PersistSettings();
+
+        this.ShowSettingsSavedDialog();
+    }
+}

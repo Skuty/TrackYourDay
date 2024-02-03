@@ -13,6 +13,7 @@ using TrackYourDay.Core.Versioning;
 using MudBlazor.Services;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
 using System.Reflection;
+using TrackYourDay.Core.Settings;
 
 namespace TrackYourDay.MAUI
 {
@@ -45,6 +46,8 @@ namespace TrackYourDay.MAUI
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
             builder.Services.AddSingleton<WeatherForecastService>();
             builder.Services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
+            builder.Services.AddSingleton<ISettingsSet, DefaultSettingsSet>();
+            builder.Services.AddSingleton<SettingsService>();
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             builder.Services.AddSingleton<IClock, Clock>();
             builder.Services.AddScoped<ISystemStateRecognizingStrategy, DefaultActivityRecognizingStategy>();
@@ -58,10 +61,14 @@ namespace TrackYourDay.MAUI
 
                 return new ActivityTracker(clock, publisher, startedActivityRecognizingStrategy, mousePositionRecognizingStrategy, logger);
             });
+
+            var activitiesSettings = new ActivitiesSettings();
+            var breaksSettings = new BreaksSettings();
+
             builder.Services.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(
                 serviceCollection.GetRequiredService<IPublisher>(),
                 serviceCollection.GetRequiredService<IClock>(),
-                Config.TimeOfNoActivityToStartBreak,
+                breaksSettings.TimeOfNoActivityToStartBreak,
                 serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
             // Install notification handler
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityStartedNotificationHandler>());
@@ -72,7 +79,7 @@ namespace TrackYourDay.MAUI
                 q.ScheduleJob<ActivityEventTrackerJob>(trigger => trigger
                     .WithIdentity("Activity Recognizing Job")
                     .WithDescription("Job that periodically recognizes user activities")
-                    .WithDailyTimeIntervalSchedule(x => x.WithInterval((int)Config.FrequencyOfActivityDiscovering.TotalSeconds, IntervalUnit.Second))
+                    .WithDailyTimeIntervalSchedule(x => x.WithInterval((int)activitiesSettings.FrequencyOfActivityDiscovering.TotalSeconds, IntervalUnit.Second))
                     .StartNow());
             });
 
