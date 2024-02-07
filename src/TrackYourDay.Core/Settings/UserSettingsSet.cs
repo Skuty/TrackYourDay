@@ -4,7 +4,7 @@ using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Core.Settings
 {
-    internal class UserSettingsSet : ISettingsSet
+    public class UserSettingsSet : ISettingsSet
     {
         public ActivitiesSettings ActivitiesSettings { get; init; }
 
