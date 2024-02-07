@@ -2,15 +2,21 @@
 {
     public class SettingsService
     {
-        private ISettingsSet currentSettings;
+        private readonly ISettingsRepository settingsRepository;
+        private ISettingsSet currentSettings = null;
 
-        public SettingsService()
+        public SettingsService(ISettingsRepository settingsRepository)
         {
-            this.currentSettings = new DefaultSettingsSet();    
+            this.settingsRepository = settingsRepository;
         }
 
         public ISettingsSet GetCurrentSettingSet()
         {
+            if (this.currentSettings is null)
+            {
+                this.currentSettings = this.settingsRepository.Get();
+            }
+
             return this.currentSettings;
         }
 
@@ -29,13 +35,15 @@
 
         public void PersistSettings()
         {
-            // TODO: Persist settings in local SqlLte DB
+            if (this.currentSettings is not null)
+            {
+                this.settingsRepository.Save(this.currentSettings);
+            }
         }
 
         public void LoadPersistedSettings()
         {
-            // TODO: Load settings from local DB
-            this.currentSettings = new DefaultSettingsSet();
+            this.currentSettings = this.settingsRepository.Get();
             // TODO: Publish notification SettingsChanged
         }
     }

@@ -46,8 +46,10 @@ namespace TrackYourDay.MAUI
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
             builder.Services.AddSingleton<WeatherForecastService>();
             builder.Services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
-            builder.Services.AddSingleton<ISettingsSet, DefaultSettingsSet>();
+            builder.Services.AddSingleton<ISettingsRepository, InMemorySettingsRepository>();
             builder.Services.AddSingleton<SettingsService>();
+            builder.Services.AddSingleton<ISettingsSet>(serviceProvider => 
+                serviceProvider.GetService<SettingsService>().GetCurrentSettingSet());
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             builder.Services.AddSingleton<IClock, Clock>();
             builder.Services.AddScoped<ISystemStateRecognizingStrategy, DefaultActivityRecognizingStategy>();
