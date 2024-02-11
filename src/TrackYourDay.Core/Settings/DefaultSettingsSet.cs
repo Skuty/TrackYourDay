@@ -5,7 +5,7 @@ namespace TrackYourDay.Core.Settings
 {
     public record class DefaultSettingsSet : ISettingsSet
     {
-        public ActivitiesSettings ActivitiesSettings => new ActivitiesSettings();
+        public ActivitiesSettings ActivitiesSettings => ActivitiesSettings.CreateDefaultSettings();
 
         public BreaksSettings BreaksSettings => new BreaksSettings();
 

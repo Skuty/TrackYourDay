@@ -22,10 +22,9 @@ namespace TrackYourDay.Core.Settings
                 var command = connection.CreateCommand();
                 command.CommandText =
                 @"
-                    CREATE TABLE [IF NOT EXISTS] [settings].SettingsSet (
-   	                    SettingsSetName NVARCHAR(MAX) NOT NULL,
-	                    SettingsSetContent NVARCHAR(MAX) NOT NULL
-                    );                
+                    CREATE TABLE IF NOT EXISTS settings (
+                       SettingsSetName NVARCHAR NOT NULL,
+                       SettingsSetContent NVARCHAR NOT NULL);
                 ";
                 command.ExecuteNonQuery();
             }
@@ -44,7 +43,7 @@ namespace TrackYourDay.Core.Settings
 
                 command.CommandText =
                 @"
-                    SELECT TOP 1 SettingsSetContent FROM [settings].SettingsSet ORDER BY rowid DESC
+                    SELECT SettingsSetContent FROM settings ORDER BY rowid DESC LIMIT 1;
                 ";
 
                 settingsSetContent = (string)command.ExecuteScalar();
@@ -83,8 +82,8 @@ namespace TrackYourDay.Core.Settings
                 var command = connection.CreateCommand();
                 command.CommandText =
                 @$"
-                    INSERT INTO [settings].SettingsSet
-                    VALUES ('UserSettingsSet', '${serializedSettings}');
+                    INSERT INTO settings (SettingsSetName, SettingsSetContent)
+                    VALUES ('UserSettingsSet', '{serializedSettings}');
                 ";
                 command.ExecuteNonQuery();
             }

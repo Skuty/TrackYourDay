@@ -64,7 +64,7 @@ namespace TrackYourDay.MAUI
                 return new ActivityTracker(clock, publisher, startedActivityRecognizingStrategy, mousePositionRecognizingStrategy, logger);
             });
 
-            var activitiesSettings = new ActivitiesSettings();
+            var activitiesSettings = ActivitiesSettings.CreateDefaultSettings();
             var breaksSettings = new BreaksSettings();
 
             builder.Services.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(

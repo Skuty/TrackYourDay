@@ -4,14 +4,14 @@
     {
         private readonly TimeSpan frequencyOfActivityDiscovering;
 
-        public ActivitiesSettings()
-        {
-            this.frequencyOfActivityDiscovering = TimeSpan.FromSeconds(5);
-        }
-
         public ActivitiesSettings(TimeSpan frequencyOfActivityDiscovering)
         {
             this.frequencyOfActivityDiscovering = frequencyOfActivityDiscovering;
+        }
+
+        public static ActivitiesSettings CreateDefaultSettings()
+        {
+            return new ActivitiesSettings(TimeSpan.FromSeconds(5));
         }
 
         public TimeSpan FrequencyOfActivityDiscovering => this.frequencyOfActivityDiscovering;
