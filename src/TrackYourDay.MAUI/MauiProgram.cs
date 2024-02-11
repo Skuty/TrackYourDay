@@ -46,7 +46,7 @@ namespace TrackYourDay.MAUI
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
             builder.Services.AddSingleton<WeatherForecastService>();
             builder.Services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
-            builder.Services.AddSingleton<ISettingsRepository, InMemorySettingsRepository>();
+            builder.Services.AddSingleton<ISettingsRepository, SqlLiteSettingsRepository>();
             builder.Services.AddSingleton<SettingsService>();
             builder.Services.AddSingleton<ISettingsSet>(serviceProvider => 
                 serviceProvider.GetService<SettingsService>().GetCurrentSettingSet());

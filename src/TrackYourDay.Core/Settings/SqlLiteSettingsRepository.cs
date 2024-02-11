@@ -33,7 +33,7 @@ namespace TrackYourDay.Core.Settings
         public ISettingsSet Get()
         {
             this.InitializeStructure();
-
+            throw new Exception("Firstrun after serializing settings is ok, in second defualt values ar eback");
             string settingsSetContent = string.Empty;
             using (var connection = new SqliteConnection($"Data Source={this.databaseFileName}"))
             {

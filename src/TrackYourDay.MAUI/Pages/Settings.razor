@@ -8,7 +8,9 @@
         <MudText>
             How many minutes should pass without any Activity to Start Break?
         </MudText>
-        <MudSlider TickMarks="true" TickMarkLabels="@labels" Step="5" Min="5" Max="30" Value="@minutesOfNoActivityToStartBreak" />
+        <MudSlider @bind-Value="minutesOfNoActivityToStartBreak"  TickMarks="true" Step="1" Min="1" Max="60">
+            @this.minutesOfNoActivityToStartBreak.ToString() minutes
+        </MudSlider>
     </MudTabPanel>
     <MudTabPanel Text="Activities" Disabled="true">
         <MudText>Planned</MudText>
@@ -25,19 +27,23 @@
         <p>New settings will be used after restarting application..</p>
     </DialogContent>
     <DialogActions>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettings" Class="px-10">Got it!</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="HideSettingsSavedDialog" Class="px-10">Got it!</MudButton>
     </DialogActions>
 </MudDialog>
 
-<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ShowSettingsSavedDialog">Save</MudButton>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettings">Save</MudButton>
 
 @code {
     [Inject]
-    private SettingsService settingsService { get; }
+    private SettingsService settingsService { get; init; }
 
     private int minutesOfNoActivityToStartBreak = 5;
-    private string[] labels = new string[] { "5", "10", "15", "20", "25", "30" };
     private bool isSettingsSavedDialogVisible;
+
+    protected override void OnInitialized()
+    {
+        this.LoadSettings();
+    }
 
     private void ShowSettingsSavedDialog() => isSettingsSavedDialogVisible = true;
     private void HideSettingsSavedDialog() => isSettingsSavedDialogVisible = false;
