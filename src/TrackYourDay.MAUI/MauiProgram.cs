@@ -65,7 +65,7 @@ namespace TrackYourDay.MAUI
             });
 
             var activitiesSettings = ActivitiesSettings.CreateDefaultSettings();
-            var breaksSettings = new BreaksSettings();
+            var breaksSettings = BreaksSettings.CreateDefaultSettings();
 
             builder.Services.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(
                 serviceCollection.GetRequiredService<IPublisher>(),

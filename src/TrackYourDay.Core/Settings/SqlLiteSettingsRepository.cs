@@ -1,16 +1,24 @@
 ﻿using Microsoft.Data.Sqlite;
+using System.IO;
 using System.Text.Json;
 
 namespace TrackYourDay.Core.Settings
 {
-    //TODO: Try to replace with settings per module and see what changes it implicates now and in future
+    //TODO: Try to replace with settings per m  odule and see what changes it implicates now and in future
     public class SqlLiteSettingsRepository : ISettingsRepository
     {
         private readonly string databaseFileName;
 
         public SqlLiteSettingsRepository()
         {
-            this.databaseFileName = "TrackYourDay.db";    
+            var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
+
+            if (!Directory.Exists(appDataPath))
+            {
+                Directory.CreateDirectory($"{appDataPath}");
+            }
+
+            this.databaseFileName = $"{appDataPath}\\TrackYourDay.db";
         }
 
         private void InitializeStructure()
@@ -33,7 +41,7 @@ namespace TrackYourDay.Core.Settings
         public ISettingsSet Get()
         {
             this.InitializeStructure();
-            throw new Exception("Firstrun after serializing settings is ok, in second defualt values ar eback");
+            //throw new Exception("Firstrun after serializing settings is ok, in second defualt values ar eback");
             string settingsSetContent = string.Empty;
             using (var connection = new SqliteConnection($"Data Source={this.databaseFileName}"))
             {

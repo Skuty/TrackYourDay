@@ -30,6 +30,8 @@ namespace TrackYourDay.Tests
             // Act
             this.sqlLiteSettingsRepository.Save(settingsToSave);
             var savedSettings = this.sqlLiteSettingsRepository.Get();
+            savedSettings = this.sqlLiteSettingsRepository.Get();
+            savedSettings = this.sqlLiteSettingsRepository.Get();
 
             // Assert
             // TODO Change it to equal or record to avoid val by val comparing

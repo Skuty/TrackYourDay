@@ -6,11 +6,16 @@ namespace TrackYourDay.Core.Settings
 {
     public class UserSettingsSet : ISettingsSet
     {
-        public ActivitiesSettings ActivitiesSettings { get; init; }
+        public UserSettingsSet()
+        {
+            
+        }
 
-        public BreaksSettings BreaksSettings { get; init; }
+        public ActivitiesSettings ActivitiesSettings { get; set; }
 
-        public WorkdayDefinition WorkdayDefinition { get; init; }
+        public BreaksSettings BreaksSettings { get; set; }
+
+        public WorkdayDefinition WorkdayDefinition { get; set; }
 
     }
 }

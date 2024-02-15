@@ -5,10 +5,16 @@ namespace TrackYourDay.Core.Settings
 {
     public record class DefaultSettingsSet : ISettingsSet
     {
+        public DefaultSettingsSet()
+        {
+            
+        }
+
         public ActivitiesSettings ActivitiesSettings => ActivitiesSettings.CreateDefaultSettings();
 
-        public BreaksSettings BreaksSettings => new BreaksSettings();
+        public BreaksSettings BreaksSettings => BreaksSettings.CreateDefaultSettings();
 
-        public WorkdayDefinition WorkdayDefinition => new WorkdayDefinition();
+        Exception("StackOverFlowHere > To much calls,rest of app persisting should works")
+        public WorkdayDefinition WorkdayDefinition => WorkdayDefinition.CreateDefaultDefinition();
     }
 }
