@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.UI;
+﻿using Microsoft.UI;
 using Quartz;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
@@ -27,7 +26,7 @@ namespace TrackYourDay.MAUI.BackgroundJobs.WorkdayNotificaitons
         {
             var workday = Workday.CreateBasedOn(this.settingsSet.WorkdayDefinition, this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
 
-            if (workday.TimeLeftToWorkActively < TimeSpan.FromMinutes(1000))
+            if (workday.TimeLeftToWorkActively < TimeSpan.FromMinutes(60))
             {
 
                 this.OpenSimpleNotificationPageInNewWindow(new SimpleNotificationViewModel(

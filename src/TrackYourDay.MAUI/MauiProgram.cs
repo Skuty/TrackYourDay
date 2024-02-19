@@ -7,7 +7,6 @@ using TrackYourDay.MAUI.Data;
 using Quartz;
 using Microsoft.Maui.LifecycleEvents;
 using Serilog;
-using Serilog.Events;
 using TrackYourDay.Core.Versioning;
 using MudBlazor.Services;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
@@ -90,7 +89,7 @@ namespace TrackYourDay.MAUI
                 q.ScheduleJob<ShowNotificationWithTimeLeftToEndOfWorkday>(trigger => trigger
                     .WithIdentity("Workday Notifications Job")
                     .WithDescription("Job that periodically checks Workday details and based on it shows notifications for user")
-                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(10, IntervalUnit.Second))
+                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(5, IntervalUnit.Minute))
                     .StartNow());
             });
 
