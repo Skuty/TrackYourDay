@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using TrackYourDay.Core.Activities;
 
-namespace TrackYourDay.MAUI.BackgroundJobs
+namespace TrackYourDay.MAUI.BackgroundJobs.ActivityTracking
 {
     internal class ActivityEventTrackerJob : IJob
     {
@@ -27,7 +27,7 @@ namespace TrackYourDay.MAUI.BackgroundJobs
 
         public async Task Execute(IJobExecutionContext context)
         {
-            this.activityTracker.RecognizeActivity();
+            activityTracker.RecognizeActivity();
         }
     }
 }

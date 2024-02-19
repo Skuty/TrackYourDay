@@ -5,7 +5,6 @@ using TrackYourDay.Core.Breaks;
 using TrackYourDay.Core;
 using TrackYourDay.MAUI.Data;
 using Quartz;
-using TrackYourDay.MAUI.BackgroundJobs;
 using Microsoft.Maui.LifecycleEvents;
 using Serilog;
 using Serilog.Events;
@@ -14,6 +13,8 @@ using MudBlazor.Services;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
 using System.Reflection;
 using TrackYourDay.Core.Settings;
+using TrackYourDay.MAUI.BackgroundJobs.ActivityTracking;
+using TrackYourDay.MAUI.BackgroundJobs.BreakTracking;
 
 namespace TrackYourDay.MAUI
 {
@@ -73,7 +74,7 @@ namespace TrackYourDay.MAUI
                 breaksSettings.TimeOfNoActivityToStartBreak,
                 serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
             // Install notification handler
-            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityStartedNotificationHandler>());
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<AddActivityToProcessWhenActivityStartedNotificationHandler>());
 
             builder.Services.AddQuartz(q =>
             {
