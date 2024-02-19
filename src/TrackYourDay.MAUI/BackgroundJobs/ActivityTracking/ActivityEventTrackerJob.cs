@@ -1,8 +1,7 @@
 ﻿using Quartz;
-using System.Threading.Tasks;
 using TrackYourDay.Core.Activities;
 
-namespace TrackYourDay.MAUI.BackgroundJobs
+namespace TrackYourDay.MAUI.BackgroundJobs.ActivityTracking
 {
     internal class ActivityEventTrackerJob : IJob
     {

@@ -5,15 +5,16 @@ using TrackYourDay.Core.Breaks;
 using TrackYourDay.Core;
 using TrackYourDay.MAUI.Data;
 using Quartz;
-using TrackYourDay.MAUI.BackgroundJobs;
 using Microsoft.Maui.LifecycleEvents;
 using Serilog;
-using Serilog.Events;
 using TrackYourDay.Core.Versioning;
 using MudBlazor.Services;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
 using System.Reflection;
 using TrackYourDay.Core.Settings;
+using TrackYourDay.MAUI.BackgroundJobs.ActivityTracking;
+using TrackYourDay.MAUI.BackgroundJobs.BreakTracking;
+using TrackYourDay.MAUI.BackgroundJobs.WorkdayNotificaitons;
 
 namespace TrackYourDay.MAUI
 {
@@ -73,15 +74,22 @@ namespace TrackYourDay.MAUI
                 breaksSettings.TimeOfNoActivityToStartBreak,
                 serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
             // Install notification handler
-            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityStartedNotificationHandler>());
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<AddActivityToProcessWhenActivityStartedNotificationHandler>());
 
             builder.Services.AddQuartz(q =>
             {
                 q.UseMicrosoftDependencyInjectionJobFactory();
+
                 q.ScheduleJob<ActivityEventTrackerJob>(trigger => trigger
                     .WithIdentity("Activity Recognizing Job")
                     .WithDescription("Job that periodically recognizes user activities")
                     .WithDailyTimeIntervalSchedule(x => x.WithInterval((int)activitiesSettings.FrequencyOfActivityDiscovering.TotalSeconds, IntervalUnit.Second))
+                    .StartNow());
+
+                q.ScheduleJob<ShowNotificationWithTimeLeftToEndOfWorkday>(trigger => trigger
+                    .WithIdentity("Workday Notifications Job")
+                    .WithDescription("Job that periodically checks Workday details and based on it shows notifications for user")
+                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(5, IntervalUnit.Minute))
                     .StartNow());
             });
 

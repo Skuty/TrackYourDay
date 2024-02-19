@@ -62,4 +62,14 @@
   <ItemGroup>
     <ProjectReference Include="..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Update="SimpleNotificationPage..xaml.cs">
+      <DependentUpon>SimpleNotificationPage..xaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <MauiXaml Update="SimpleNotificationPage..xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
+  </ItemGroup>
 </Project>

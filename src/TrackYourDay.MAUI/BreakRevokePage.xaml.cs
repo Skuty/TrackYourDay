@@ -6,12 +6,13 @@ namespace TrackYourDay.MAUI;
 
 public partial class BreakRevokePage : ContentPage
 {
-    private readonly Guid breakGuid;
-    private readonly BreakTracker breakTracker;
     private readonly DispatcherTimer timer = new DispatcherTimer();
     private readonly TimeSpan showPeriod;
-    private readonly BreakRevokeViewModel breakRevokeViewModel;
     private double counterStep;
+
+    private readonly Guid breakGuid;
+    private readonly BreakTracker breakTracker;
+    private readonly BreakRevokeViewModel breakRevokeViewModel;
 
     public BreakRevokePage(Guid breakGuid, BreakTracker breakTracker)
 	{
