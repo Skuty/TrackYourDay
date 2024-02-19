@@ -15,7 +15,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var endedBreaks = new List<EndedBreak>();
 
             // Act
-            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
             workday.BreakTimeLeft.Should().Be(TimeSpan.FromMinutes(50));
@@ -33,7 +33,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             };
 
             // Act
-            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
             workday.BreakTimeLeft.Should().Be(TimeSpan.FromMinutes(35));
@@ -51,7 +51,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             };
 
             // Act
-            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
             workday.BreakTimeLeft.Should().Be(TimeSpan.FromMinutes(0));

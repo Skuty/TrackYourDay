@@ -16,7 +16,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var endedBreaks = new List<EndedBreak>();
 
             // Act
-            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
             workday.OverhoursTime.Should().Be(TimeSpan.FromHours(0));
@@ -36,7 +36,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             };
 
             // Act
-            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
             workday.OverhoursTime.Should().Be(TimeSpan.FromMinutes(0));
@@ -56,7 +56,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             };
 
             // Act
-            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
             workday.OverhoursTime.Should().Be(TimeSpan.FromHours(0));
@@ -73,7 +73,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var endedBreaks = new List<EndedBreak>();
             
             // Act
-            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
             workday.OverhoursTime.Should().Be(TimeSpan.FromMinutes(50));
@@ -93,7 +93,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
             };
 
             // Act
-            var workday = Workday.CreateBasedOn(endedActivities, endedBreaks);
+            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
             workday.OverhoursTime.Should().Be(TimeSpan.FromMinutes(40)); 

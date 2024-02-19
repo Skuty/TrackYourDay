@@ -2,6 +2,7 @@
 @using TrackYourDay.Core.Activities;
 @using TrackYourDay.Core.Breaks;
 @using TrackYourDay.Core;
+@using TrackYourDay.Core.Settings
 
 
 <h1>
@@ -54,7 +55,9 @@
     </MudExpansionPanel>
 </MudExpansionPanels>
 
-@code {
+    @code {
+    [Inject]
+    private ISettingsSet settingsSet { get; set; }
     [Inject]
     private ActivityTracker activityTracker { get; set; }
     [Inject]
@@ -78,7 +81,7 @@
 
     private void Refresh()
     {
-        this.workday = Workday.CreateBasedOn(this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
+        this.workday = Workday.CreateBasedOn(this.settingsSet.WorkdayDefinition, this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
 
         worktimeLeftDataChart[0] = this.workday.TimeLeftToWorkActively.TotalMinutes;
         worktimeLeftDataChart[1] = this.workday.TimeAlreadyActivelyWorkded.TotalMinutes;
