@@ -5,10 +5,10 @@
         private readonly TimeSpan workdayDuration;
         private readonly TimeSpan allowedBreakDuration;
 
-        public WorkdayDefinition(TimeSpan timeSpan1, TimeSpan timeSpan2)
+        public WorkdayDefinition(TimeSpan workdayDuration, TimeSpan allowedBreakDuration)
         {
-            this.workdayDuration = timeSpan1;
-            this.allowedBreakDuration = timeSpan2;
+            this.workdayDuration = workdayDuration;
+            this.allowedBreakDuration = allowedBreakDuration;
         }
 
         /// <summary>
