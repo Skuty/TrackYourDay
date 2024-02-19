@@ -9,11 +9,11 @@
             this.frequencyOfActivityDiscovering = frequencyOfActivityDiscovering;
         }
 
+        public TimeSpan FrequencyOfActivityDiscovering => this.frequencyOfActivityDiscovering;
+
         public static ActivitiesSettings CreateDefaultSettings()
         {
             return new ActivitiesSettings(TimeSpan.FromSeconds(5));
         }
-
-        public TimeSpan FrequencyOfActivityDiscovering => this.frequencyOfActivityDiscovering;
     }
 }

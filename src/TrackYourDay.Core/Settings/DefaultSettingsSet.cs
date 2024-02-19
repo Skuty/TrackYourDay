@@ -3,7 +3,7 @@ using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Core.Settings
 {
-    public record class DefaultSettingsSet : ISettingsSet
+    public sealed record class DefaultSettingsSet : ISettingsSet
     {
         public DefaultSettingsSet()
         {

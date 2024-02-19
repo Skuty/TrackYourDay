@@ -6,9 +6,11 @@ namespace TrackYourDay.Core.Settings
 {
     public class UserSettingsSet : ISettingsSet
     {
-        public UserSettingsSet()
+        public UserSettingsSet(ActivitiesSettings activitiesSettings, BreaksSettings breaksSettings, WorkdayDefinition workdayDefinition)
         {
-            
+            ActivitiesSettings = activitiesSettings;
+            BreaksSettings = breaksSettings;
+            WorkdayDefinition = workdayDefinition;
         }
 
         public ActivitiesSettings ActivitiesSettings { get; set; }
@@ -16,6 +18,5 @@ namespace TrackYourDay.Core.Settings
         public BreaksSettings BreaksSettings { get; set; }
 
         public WorkdayDefinition WorkdayDefinition { get; set; }
-
     }
 }

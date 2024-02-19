@@ -22,13 +22,10 @@
 
         public void SetTimeOfNoActivityToStartBreak(TimeSpan timeOfNoActivityToStartBreak)
         {
-            this.currentSettings = new UserSettingsSet()
-            {
-                // TODO Check and use Records createBasedOn feature
-                ActivitiesSettings = this.currentSettings.ActivitiesSettings,
-                BreaksSettings = new Breaks.BreaksSettings(timeOfNoActivityToStartBreak),
-                WorkdayDefinition= this.currentSettings.WorkdayDefinition,
-            };
+            this.currentSettings = new UserSettingsSet(
+                this.currentSettings.ActivitiesSettings, 
+                new Breaks.BreaksSettings(timeOfNoActivityToStartBreak), 
+                this.currentSettings.WorkdayDefinition);
 
             // TODO: Publish notification SettingsChanged
         }
