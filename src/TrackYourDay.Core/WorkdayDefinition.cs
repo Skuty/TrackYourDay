@@ -22,7 +22,7 @@
         /// </summary>
         public TimeSpan AllowedBreakDuration => allowedBreakDuration;
 
-        public WorkdayDefinition CreateDefaultDefinition()
+        public static WorkdayDefinition CreateDefaultDefinition()
         {
             return new WorkdayDefinition(TimeSpan.FromHours(8), TimeSpan.FromMinutes(50));
         }

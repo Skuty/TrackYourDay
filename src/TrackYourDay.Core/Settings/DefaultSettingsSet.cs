@@ -14,7 +14,6 @@ namespace TrackYourDay.Core.Settings
 
         public BreaksSettings BreaksSettings => BreaksSettings.CreateDefaultSettings();
 
-        Exception("StackOverFlowHere > To much calls,rest of app persisting should works")
         public WorkdayDefinition WorkdayDefinition => WorkdayDefinition.CreateDefaultDefinition();
     }
 }
