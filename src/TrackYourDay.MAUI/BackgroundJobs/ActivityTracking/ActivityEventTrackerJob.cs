@@ -1,5 +1,4 @@
 ﻿using Quartz;
-using System.Threading.Tasks;
 using TrackYourDay.Core.Activities;
 
 namespace TrackYourDay.MAUI.BackgroundJobs.ActivityTracking
@@ -27,7 +26,7 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ActivityTracking
 
         public async Task Execute(IJobExecutionContext context)
         {
-            activityTracker.RecognizeActivity();
+            this.activityTracker.RecognizeActivity();
         }
     }
 }

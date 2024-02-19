@@ -15,6 +15,7 @@ using System.Reflection;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.MAUI.BackgroundJobs.ActivityTracking;
 using TrackYourDay.MAUI.BackgroundJobs.BreakTracking;
+using TrackYourDay.MAUI.BackgroundJobs.WorkdayNotificaitons;
 
 namespace TrackYourDay.MAUI
 {
@@ -79,10 +80,17 @@ namespace TrackYourDay.MAUI
             builder.Services.AddQuartz(q =>
             {
                 q.UseMicrosoftDependencyInjectionJobFactory();
+
                 q.ScheduleJob<ActivityEventTrackerJob>(trigger => trigger
                     .WithIdentity("Activity Recognizing Job")
                     .WithDescription("Job that periodically recognizes user activities")
                     .WithDailyTimeIntervalSchedule(x => x.WithInterval((int)activitiesSettings.FrequencyOfActivityDiscovering.TotalSeconds, IntervalUnit.Second))
+                    .StartNow());
+
+                q.ScheduleJob<ShowNotificationWithTimeLeftToEndOfWorkday>(trigger => trigger
+                    .WithIdentity("Workday Notifications Job")
+                    .WithDescription("Job that periodically checks Workday details and based on it shows notifications for user")
+                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(10, IntervalUnit.Second))
                     .StartNow());
             });
 
