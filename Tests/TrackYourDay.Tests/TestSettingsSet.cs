@@ -5,8 +5,8 @@ namespace TrackYourDay.Tests
 {
     internal static class TestSettingsSet
     {
-        public static BreaksSettings BreakSettings => new BreaksSettings();
+        public static BreaksSettings BreakSettings => BreaksSettings.CreateDefaultSettings();
 
-        public static WorkdayDefinition WorkdayDefinition => new WorkdayDefinition();
+        public static WorkdayDefinition WorkdayDefinition => WorkdayDefinition.CreateDefaultDefinition();
     }
 }

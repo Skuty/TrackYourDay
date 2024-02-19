@@ -20,18 +20,14 @@ namespace TrackYourDay.Tests
         public void WhenPersistingSettingsAndRetreiving_ThenSettingsHaveSameValues()
         {
             // Arrange
-            var settingsToSave = new UserSettingsSet()
-            {
-                ActivitiesSettings = new ActivitiesSettings(TimeSpan.FromSeconds(1)),
-                BreaksSettings = new BreaksSettings(TimeSpan.FromSeconds(2)),
-                WorkdayDefinition = new WorkdayDefinition()
-            };
+            var settingsToSave = new UserSettingsSet(
+                new ActivitiesSettings(TimeSpan.FromSeconds(1)),
+                new BreaksSettings(TimeSpan.FromSeconds(2)),
+                WorkdayDefinition.CreateDefaultDefinition());
 
             // Act
             this.sqlLiteSettingsRepository.Save(settingsToSave);
             var savedSettings = this.sqlLiteSettingsRepository.Get();
-            savedSettings = this.sqlLiteSettingsRepository.Get();
-            savedSettings = this.sqlLiteSettingsRepository.Get();
 
             // Assert
             // TODO Change it to equal or record to avoid val by val comparing
