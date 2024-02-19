@@ -1,16 +1,7 @@
 ﻿namespace TrackYourDay.Core.Breaks
 {
-    public class BreaksSettings
+    public record class BreaksSettings(TimeSpan TimeOfNoActivityToStartBreak)
     {
-        private readonly TimeSpan timeOfNoActivityToStartBreak;
-
-        public BreaksSettings(TimeSpan timeOfNoActivityToStartBreak)
-        {
-            this.timeOfNoActivityToStartBreak = timeOfNoActivityToStartBreak;
-        }
-
-        public TimeSpan TimeOfNoActivityToStartBreak => this.timeOfNoActivityToStartBreak;
-
         public static BreaksSettings CreateDefaultSettings()
         {
             return new BreaksSettings(TimeSpan.FromMinutes(5));
