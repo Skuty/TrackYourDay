@@ -20,9 +20,6 @@ jobs:
         with:
           dotnet-version: 8.0.x  # Specify the .NET version you need
 
-      - name: Restore dependencies
-        run: dotnet restore --runtime win-x64
-
       - name: Cache dependencies
         uses: actions/cache@v3
         with:
@@ -31,7 +28,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Build 
+      - name: Restore dependencies
+        run: dotnet restore --runtime win-x64
+      
+      - name: Build
         run: dotnet build --configuration Release
 
       - name: Test
