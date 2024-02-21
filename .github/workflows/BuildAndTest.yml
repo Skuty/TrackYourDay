@@ -15,23 +15,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up .NET Core
+      - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x  # Specify the .NET version you need
+          dotnet-version: 8.0.x  
 
-      - name: Restore dependencies
-        run: dotnet restore --runtime win-x64
-
-      - name: Cache dependencies
+      - name: Cache NuGet packages
+        id: cache-nugetpackages
         uses: actions/cache@v2
         with:
-          path: '**/src/TrackYourDay.MAUI/obj/project.assets.json'  # Adjust the path to your project's dependency files
-          key: dependencies-${{ hashFiles('**/obj/project.assets.json') }}
+          path: ~\.nuget\packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: |
-            dependencies-
+            ${{ runner.os }}-nuget-
 
-      - name: Build 
+      - name: Restore dependencies
+        if: steps.cache-nugetpackages.outputs.cache-hit != 'true'
+        run: dotnet restore --runtime win-x64
+      
+      - name: Build
         run: dotnet build --configuration Release
 
       - name: Test
