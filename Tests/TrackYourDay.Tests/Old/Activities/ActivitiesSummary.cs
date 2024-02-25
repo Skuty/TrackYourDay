@@ -1,4 +1,4 @@
-﻿using TrackYourDay.Core.Old.Activities;
+﻿using TrackYourDay.Tests.Old.Old.Activities;
 
 namespace TrackYourDay.Tests.Old.Activities
 {

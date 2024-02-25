@@ -6,7 +6,7 @@ using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Activities.SystemStates;
 using TrackYourDay.Core.Breaks;
-using TrackYourDay.Core.Breaks.Notifications;
+using TrackYourDay.Core.Breaks.Events;
 
 namespace TrackYourDay.Tests.Breaks
 {
@@ -57,7 +57,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Assert
-            this.publisherMock.Verify(x => x.Publish(It.Is<BreakStartedNotifcation>(n => n.StartedBreak.BreakStartedAt == breakStartDate), CancellationToken.None), Times.Once);
+            this.publisherMock.Verify(x => x.Publish(It.Is<BreakStartedEvent>(n => n.StartedBreak.BreakStartedAt == breakStartDate), CancellationToken.None), Times.Once);
         }
 
         /// <summary>
@@ -81,8 +81,8 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<BreakEndedNotifcation>(), CancellationToken.None), Times.Never);
-            publisherMock.Verify(x => x.Publish(It.IsAny<BreakStartedNotifcation>(), CancellationToken.None), Times.Never);
+            publisherMock.Verify(x => x.Publish(It.IsAny<BreakEndedEvent>(), CancellationToken.None), Times.Never);
+            publisherMock.Verify(x => x.Publish(It.IsAny<BreakStartedEvent>(), CancellationToken.None), Times.Never);
         }
 
 
@@ -103,8 +103,8 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<BreakEndedNotifcation>(), CancellationToken.None), Times.Never);
-            publisherMock.Verify(x => x.Publish(It.IsAny<BreakStartedNotifcation>(), CancellationToken.None), Times.Never);
+            publisherMock.Verify(x => x.Publish(It.IsAny<BreakEndedEvent>(), CancellationToken.None), Times.Never);
+            publisherMock.Verify(x => x.Publish(It.IsAny<BreakStartedEvent>(), CancellationToken.None), Times.Never);
         }
 
         [Fact]
@@ -120,7 +120,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.Is<BreakStartedNotifcation>(n => n.StartedBreak.BreakStartedAt == breakStartDate), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.Is<BreakStartedEvent>(n => n.StartedBreak.BreakStartedAt == breakStartDate), CancellationToken.None), Times.Once);
         }
 
         [Theory]
@@ -140,7 +140,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.Is<BreakEndedNotifcation>(
+            publisherMock.Verify(x => x.Publish(It.Is<BreakEndedEvent>(
                 n => n.EndedBreak.BreakEndedAt == startedActivity.StartDate
                 && n.EndedBreak.BreakStartedAt == breakStartedDate
                 ), CancellationToken.None), Times.Once);
@@ -164,7 +164,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.ProcessActivities();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.Is<BreakEndedNotifcation>(
+            publisherMock.Verify(x => x.Publish(It.Is<BreakEndedEvent>(
                 n => n.EndedBreak.BreakEndedAt == instantActivity.OccuranceDate
                 && n.EndedBreak.BreakStartedAt == breakStartDate
                 ), CancellationToken.None), Times.Once);
@@ -190,7 +190,7 @@ namespace TrackYourDay.Tests.Breaks
             // TODO: Fix implementation as it is not working as expected
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.Is<BreakEndedNotifcation>(
+            publisherMock.Verify(x => x.Publish(It.Is<BreakEndedEvent>(
                 n => n.EndedBreak.BreakEndedAt == instantActivity.OccuranceDate
                 && n.EndedBreak.BreakStartedAt == breakStartDate
                 ), CancellationToken.None), Times.Never);
@@ -225,7 +225,7 @@ namespace TrackYourDay.Tests.Breaks
             breakTracker.RevokeBreak(endedBreak.BreakGuid, DateTime.Now);
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.Is<BreakRevokedNotification>(
+            publisherMock.Verify(x => x.Publish(It.Is<BreakRevokedEvent>(
                 n => n.RevokedBreak.BreakGuid == endedBreak.BreakGuid
                 ), CancellationToken.None), Times.Once);
         }

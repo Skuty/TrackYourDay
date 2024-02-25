@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Activities.SystemStates;
-using TrackYourDay.Core.Breaks.Notifications;
+using TrackYourDay.Core.Breaks.Events;
 
 namespace TrackYourDay.Core.Breaks
 {
@@ -79,7 +79,7 @@ namespace TrackYourDay.Core.Breaks
                         this.currentStartedBreak = new StartedBreak(activityToProcess.ActivityDate, "System Locked");
                         this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
                         //this.lastTimeOfActivity = activityToProcess.ActivityDate;
-                        this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
+                        this.publisher.Publish(new BreakStartedEvent(this.currentStartedBreak));
                         this.processedActivities.Add(activityToProcess);
                         continue;
                     }
@@ -94,7 +94,7 @@ namespace TrackYourDay.Core.Breaks
                         this.currentStartedBreak = new StartedBreak(this.lastTimeOfActivity, $"Lack of activity for {this.timeOfNoActivityToStartBreak.TotalMinutes} minutes");
                         this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
                         //this.lastTimeOfActivity = activityToProcess.ActivityDate;
-                        this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
+                        this.publisher.Publish(new BreakStartedEvent(this.currentStartedBreak));
                         this.processedActivities.Add(activityToProcess);
                         continue;
                     }
@@ -111,7 +111,7 @@ namespace TrackYourDay.Core.Breaks
                         this.currentStartedBreak = null;
                         this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.processedActivities.Add(activityToProcess);
-                        this.publisher.Publish(new BreakEndedNotifcation(endedBreak));
+                        this.publisher.Publish(new BreakEndedEvent(endedBreak));
                         continue;
                     }
                 }
@@ -126,7 +126,7 @@ namespace TrackYourDay.Core.Breaks
                 this.currentStartedBreak = new StartedBreak(clock.Now, $"Lack of activity for {this.timeOfNoActivityToStartBreak.TotalMinutes} minutes");
                 this.logger.LogInformation("Start: {StartedBreak}", this.currentStartedBreak);
                 //this.lastTimeOfActivity = currentStartedBreak.BreakStartedAt;
-                this.publisher.Publish(new BreakStartedNotifcation(this.currentStartedBreak));
+                this.publisher.Publish(new BreakStartedEvent(this.currentStartedBreak));
             }            
         }
 
@@ -141,7 +141,7 @@ namespace TrackYourDay.Core.Breaks
             var revokedBreak = endedBreak.Revoke(revokeDate);
             this.revokedBreaks.Add(revokedBreak);
 
-            this.publisher.Publish(new BreakRevokedNotification(revokedBreak));
+            this.publisher.Publish(new BreakRevokedEvent(revokedBreak));
         }
 
         public ReadOnlyCollection<EndedBreak> GetEndedBreaks()

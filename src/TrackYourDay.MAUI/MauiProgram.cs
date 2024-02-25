@@ -74,7 +74,7 @@ namespace TrackYourDay.MAUI
                 breaksSettings.TimeOfNoActivityToStartBreak,
                 serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
             // Install notification handler
-            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<AddActivityToProcessWhenActivityStartedNotificationHandler>());
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<AddActivityToProcessWhenActivityStartedEventHandler>());
 
             builder.Services.AddQuartz(q =>
             {

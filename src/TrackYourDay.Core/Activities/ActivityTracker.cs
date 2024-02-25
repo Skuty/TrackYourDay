@@ -2,9 +2,8 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
-using TrackYourDay.Core.Activities.Notifications;
+using TrackYourDay.Core.Activities.Events;
 using TrackYourDay.Core.Activities.SystemStates;
-using TrackYourDay.Core.Breaks.Notifications;
 using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Core.Activities
@@ -47,7 +46,7 @@ namespace TrackYourDay.Core.Activities
             if (this.currentStartedActivity is null)
             {
                 this.currentStartedActivity = ActivityFactory.StartedActivity(this.clock.Now, recognizedSystemState);
-                this.publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), this.currentStartedActivity));
+                this.publisher.Publish(new PeriodicActivityStartedEvent(Guid.NewGuid(), this.currentStartedActivity));
                 return;
             }
 
@@ -56,15 +55,15 @@ namespace TrackYourDay.Core.Activities
                 var endedActivity = this.currentStartedActivity.End(this.clock.Now);
                 this.endedActivities.Add(endedActivity);
                 this.currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedSystemState);
-                this.publisher.Publish(new PeriodicActivityEndedNotification(Guid.NewGuid(), endedActivity));
-                this.publisher.Publish(new PeriodicActivityStartedNotification(Guid.NewGuid(), this.currentStartedActivity));
+                this.publisher.Publish(new PeriodicActivityEndedEvent(Guid.NewGuid(), endedActivity));
+                this.publisher.Publish(new PeriodicActivityStartedEvent(Guid.NewGuid(), this.currentStartedActivity));
             };
 
             SystemState recognizedMousePosition = this.mousePositionRecognizingStrategy.RecognizeActivity();
             if (this.lastInstantActivity is null || this.lastInstantActivity.SystemState != recognizedMousePosition)
             {
                 this.lastInstantActivity = ActivityFactory.MouseMovedActivity(this.clock.Now, recognizedMousePosition);
-                this.publisher.Publish(new InstantActivityOccuredNotification(Guid.NewGuid(), this.lastInstantActivity));
+                this.publisher.Publish(new InstantActivityOccuredEvent(Guid.NewGuid(), this.lastInstantActivity));
                 this.instantActivities.Add(this.lastInstantActivity);
             }
         }

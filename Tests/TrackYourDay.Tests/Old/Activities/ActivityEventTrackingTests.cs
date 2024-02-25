@@ -1,9 +1,9 @@
 using FluentAssertions;
 using MediatR;
 using Moq;
-using TrackYourDay.Core.Old.Activities;
-using TrackYourDay.Core.Old.Activities.Notifications;
-using TrackYourDay.Core.Old.Activities.RecognizingStrategies;
+using TrackYourDay.Tests.Old.Old.Activities;
+using TrackYourDay.Tests.Old.Old.Activities.Notifications;
+using TrackYourDay.Tests.Old.Old.Activities.RecognizingStrategies;
 
 namespace TrackYourDay.Tests.Old.Activities
 {
@@ -74,7 +74,7 @@ namespace TrackYourDay.Tests.Old.Activities
             eventRecognizer.RecognizeEvents();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<ActivityEventRecognizedNotification>(), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.IsAny<ActivityEventRecognizedEvent>(), CancellationToken.None), Times.Once);
         }
 
         private record class DummyActivity(string name) : Activity(name);

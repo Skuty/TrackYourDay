@@ -1,23 +1,23 @@
 ﻿using MediatR;
 using Microsoft.UI;
 using TrackYourDay.Core.Breaks;
-using TrackYourDay.Core.Breaks.Notifications;
+using TrackYourDay.Core.Breaks.Events;
 using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.Handlers
 {
-    internal class BreakEndedNotificationHandler : INotificationHandler<BreakEndedNotifcation>
+    internal class BreakEndedEventHandler : INotificationHandler<BreakEndedEvent>
     {
         private readonly BreakTracker breakTracker;
 
-        public BreakEndedNotificationHandler(BreakTracker breakTracker)
+        public BreakEndedEventHandler(BreakTracker breakTracker)
         {
             this.breakTracker = breakTracker;
         }
 
-        public Task Handle(BreakEndedNotifcation notification, CancellationToken cancellationToken)
+        public Task Handle(BreakEndedEvent _event, CancellationToken cancellationToken)
         {
-            this.OpenDialogPageInNewWindow(notification.EndedBreak.BreakGuid);
+            this.OpenDialogPageInNewWindow(_event.EndedBreak.BreakGuid);
 
             return Task.CompletedTask;
         }

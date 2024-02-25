@@ -1,4 +1,4 @@
-﻿namespace TrackYourDay.Core.Old.Activities.Repositories
+﻿namespace TrackYourDay.Tests.Old.Old.Activities.Repositories
 {
     public class ActivityEventInMemoryRepository : IActivityEventRepository
     {

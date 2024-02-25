@@ -1,9 +1,9 @@
 ﻿using MediatR;
 using System.Collections.Immutable;
-using TrackYourDay.Core.Old.Activities.Notifications;
-using TrackYourDay.Core.Old.Activities.RecognizingStrategies;
+using TrackYourDay.Tests.Old.Old.Activities.Notifications;
+using TrackYourDay.Tests.Old.Old.Activities.RecognizingStrategies;
 
-namespace TrackYourDay.Core.Old.Activities
+namespace TrackYourDay.Tests.Old.Old.Activities
 {
     public class ActivityEventTracker
     {
@@ -30,7 +30,7 @@ namespace TrackYourDay.Core.Old.Activities
             {
                 var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity);
                 activityEvents.Add(newEvent);
-                publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
+                publisher.Publish(new ActivityEventRecognizedEvent(Guid.NewGuid(), newEvent));
                 return;
             }
 
@@ -39,7 +39,7 @@ namespace TrackYourDay.Core.Old.Activities
             {
                 var newEvent = ActivityEvent.CreateEvent(DateTime.Now, currentActivity);
                 activityEvents.Add(newEvent);
-                publisher.Publish(new ActivityEventRecognizedNotification(Guid.NewGuid(), newEvent));
+                publisher.Publish(new ActivityEventRecognizedEvent(Guid.NewGuid(), newEvent));
             }
         }
 
