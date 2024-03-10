@@ -1,5 +1,5 @@
-﻿using TrackYourDay.Core;
-using TrackYourDay.Core.Breaks;
+﻿using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.Workdays;
 
 namespace TrackYourDay.Tests
 {

@@ -1,4 +1,4 @@
-﻿namespace TrackYourDay.Core
+﻿namespace TrackYourDay.Core.Workdays
 {
     /// <param name="WorkdayDuration">This time includes Time of Active working and Time of Breaks</param>
     /// <param name="AllowedBreakDuration">Screen: 7x5 minutes = 35 minutes, Meal: 15 minutes</param>

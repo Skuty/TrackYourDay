@@ -15,6 +15,8 @@ using TrackYourDay.Core.Settings;
 using TrackYourDay.MAUI.BackgroundJobs.ActivityTracking;
 using TrackYourDay.MAUI.BackgroundJobs.BreakTracking;
 using TrackYourDay.MAUI.BackgroundJobs.WorkdayNotificaitons;
+using TrackYourDay.MAUI.BackgroundJobs;
+using TrackYourDay.Core.Notifications;
 
 namespace TrackYourDay.MAUI
 {
@@ -53,6 +55,10 @@ namespace TrackYourDay.MAUI
                 serviceProvider.GetService<SettingsService>().GetCurrentSettingSet());
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
             builder.Services.AddSingleton<IClock, Clock>();
+            
+            builder.Services.AddSingleton<NotificationRepository>();
+            builder.Services.AddSingleton<NotificationService>();
+
             builder.Services.AddScoped<ISystemStateRecognizingStrategy, DefaultActivityRecognizingStategy>();
             // Refactor to avoid this in future
             builder.Services.AddSingleton<ActivityTracker>(container => {
@@ -86,10 +92,10 @@ namespace TrackYourDay.MAUI
                     .WithDailyTimeIntervalSchedule(x => x.WithInterval((int)activitiesSettings.FrequencyOfActivityDiscovering.TotalSeconds, IntervalUnit.Second))
                     .StartNow());
 
-                q.ScheduleJob<ShowNotificationWithTimeLeftToEndOfWorkday>(trigger => trigger
-                    .WithIdentity("Workday Notifications Job")
-                    .WithDescription("Job that periodically checks Workday details and based on it shows notifications for user")
-                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(5, IntervalUnit.Minute))
+                q.ScheduleJob<NotificationsProcessorJob>(trigger => trigger
+                    .WithIdentity("Notifications Processor Job")
+                    .WithDescription("Job that periodically checks for notifications to process")
+                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(1, IntervalUnit.Minute))
                     .StartNow());
             });
 

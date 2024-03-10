@@ -1,9 +1,9 @@
 ﻿using Microsoft.UI;
 using Quartz;
-using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Breaks;
 using TrackYourDay.Core.Settings;
+using TrackYourDay.Core.Workdays;
 using TrackYourDay.MAUI.MauiPages;
 using WinRT.Interop;
 

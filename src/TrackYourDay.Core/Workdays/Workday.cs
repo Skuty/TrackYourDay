@@ -2,7 +2,7 @@
 using TrackYourDay.Core.Breaks;
 using TrackYourDay.Core.Settings;
 
-namespace TrackYourDay.Core
+namespace TrackYourDay.Core.Workdays
 {
     /// <summary>
     /// Represents Workday of hired Employee
@@ -10,6 +10,8 @@ namespace TrackYourDay.Core
     /// </summary>
     public record class Workday
     {
+        public DateOnly Date { get; }
+
         /// <summary>
         /// Represents all Activities even that longterm which could be Breaks
         /// </summary>
@@ -56,23 +58,23 @@ namespace TrackYourDay.Core
         public TimeSpan ValidBreakTimeUsed { get; }
 
         private Workday(
-            TimeSpan timeOfAllActivities, 
-            TimeSpan timeOfAllBreaks, 
-            TimeSpan overallTimeLeftToWork, 
-            TimeSpan timeLeftToWorkActively, 
-            TimeSpan timeAlreadyActivelyWorkded, 
-            TimeSpan overhoursTime, 
-            TimeSpan breakTimeLeft, 
+            TimeSpan timeOfAllActivities,
+            TimeSpan timeOfAllBreaks,
+            TimeSpan overallTimeLeftToWork,
+            TimeSpan timeLeftToWorkActively,
+            TimeSpan timeAlreadyActivelyWorkded,
+            TimeSpan overhoursTime,
+            TimeSpan breakTimeLeft,
             TimeSpan validBreakTimeUsed)
         {
-            this.TimeOfAllActivities = timeOfAllActivities;
-            this.TimeOfAllBreaks = timeOfAllBreaks;
-            this.OverallTimeLeftToWork = overallTimeLeftToWork;
-            this.TimeLeftToWorkActively = timeLeftToWorkActively;
-            this.TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded;
-            this.OverhoursTime = overhoursTime;
-            this.BreakTimeLeft = breakTimeLeft;
-            this.ValidBreakTimeUsed = validBreakTimeUsed;
+            TimeOfAllActivities = timeOfAllActivities;
+            TimeOfAllBreaks = timeOfAllBreaks;
+            OverallTimeLeftToWork = overallTimeLeftToWork;
+            TimeLeftToWorkActively = timeLeftToWorkActively;
+            TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded;
+            OverhoursTime = overhoursTime;
+            BreakTimeLeft = breakTimeLeft;
+            ValidBreakTimeUsed = validBreakTimeUsed;
         }
 
         public static Workday CreateBasedOn(WorkdayDefinition workdayDefinition, IReadOnlyCollection<EndedActivity> endedActivities, IReadOnlyCollection<EndedBreak> endedBreaks)
