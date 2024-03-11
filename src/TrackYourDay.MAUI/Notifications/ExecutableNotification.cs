@@ -1,4 +1,6 @@
-﻿/// <summary>
+﻿using System.Xml.Linq;
+
+/// <summary>
 /// Draft of Notification
 /// </summary>
 /// <TODO>
@@ -12,10 +14,13 @@ namespace TrackYourDay.MAUI.Notifications
 
         public string Name { get; protected set; }
 
-        public bool IsEnabled { get; private set; }
+        public bool IsEnabled { get; protected set; }
 
         protected ExecutableNotification()
         {
+            this.Guid = Guid.NewGuid();
+            this.Name = this.Guid.ToString();
+            this.IsEnabled = false;
         }
 
         public ExecutableNotification(Guid guid, string name, bool isEnabled)

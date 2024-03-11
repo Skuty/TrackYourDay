@@ -50,22 +50,7 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<AddActivityToProcessWhenActivityStartedEventHandler>());
 
-            builder.Services.AddQuartz(q =>
-            {
-                q.UseMicrosoftDependencyInjectionJobFactory();
-
-                q.ScheduleJob<ActivityEventTrackerJob>(trigger => trigger
-                    .WithIdentity("Activity Recognizing Job")
-                    .WithDescription("Job that periodically recognizes user activities")
-                    .WithDailyTimeIntervalSchedule(x => x.WithInterval((int)ActivitiesSettings.CreateDefaultSettings().FrequencyOfActivityDiscovering.TotalSeconds, IntervalUnit.Second))
-                    .StartNow());
-
-                q.ScheduleJob<NotificationsProcessorJob>(trigger => trigger
-                    .WithIdentity("Notifications Processor Job")
-                    .WithDescription("Job that periodically checks for notifications to process")
-                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(1, IntervalUnit.Minute))
-                    .StartNow());
-            });
+            builder.Services.AddBackgroundJobs();
 
             builder.Services.AddQuartzHostedService();
 

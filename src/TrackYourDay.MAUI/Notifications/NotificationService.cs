@@ -1,6 +1,4 @@
-﻿using TrackYourDay.MAUI.BackgroundJobs;
-
-/// <summary>
+﻿/// <summary>
 /// Draft of Notification
 /// </summary>
 /// <TODO>
@@ -21,6 +19,7 @@ namespace TrackYourDay.MAUI.Notifications
             this.executableNotificationFactory = executableNotificationFactory;
             this.ScheduleNotification(this.executableNotificationFactory.GetNearWorkdayEnd());
             this.ScheduleNotification(this.executableNotificationFactory.GetWorkDayEnd());
+            this.ScheduleNotification(this.executableNotificationFactory.GetTipForDay());
         }
 
         public void ProcessScheduledNotifications()
