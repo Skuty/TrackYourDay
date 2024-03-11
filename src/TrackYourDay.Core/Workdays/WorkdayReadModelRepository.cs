@@ -1,4 +1,7 @@
-﻿namespace TrackYourDay.Core.Workdays
+﻿using MediatR;
+using TrackYourDay.Core.Activities.Events;
+
+namespace TrackYourDay.Core.Workdays
 {
     public class WorkdayReadModelRepository
     {
@@ -28,3 +31,4 @@
         }
     }
 }
+    

@@ -1,5 +1,7 @@
 ﻿using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.Events;
 using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.Breaks.Events;
 using TrackYourDay.Core.Settings;
 
 namespace TrackYourDay.Core.Workdays
@@ -182,5 +184,19 @@ namespace TrackYourDay.Core.Workdays
             return endedActivities.Aggregate(TimeSpan.Zero, (durationSum, activity) => durationSum + activity.GetDuration());
         }
 
+        internal void Include(PeriodicActivityEndedEvent notification)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal void Include(BreakEndedEvent notification)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal void Include(BreakRevokedEvent notification)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
