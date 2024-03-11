@@ -1,4 +1,4 @@
-﻿namespace TrackYourDay.MAUI.Notifications
+﻿namespace TrackYourDay.Core.Notifications
 {
     public class NotificationRepository
     {

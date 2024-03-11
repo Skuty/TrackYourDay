@@ -1,4 +1,5 @@
-﻿using TrackYourDay.Core.Workdays;
+﻿using TrackYourDay.Core.Notifications;
+using TrackYourDay.Core.Workdays;
 using TrackYourDay.MAUI.MauiPages;
 
 /// <summary>
@@ -7,7 +8,7 @@ using TrackYourDay.MAUI.MauiPages;
 /// <TODO>
 /// Handle persisting different configuration for different notifications (conditions, etc)
 /// </TODO>
-namespace TrackYourDay.MAUI.Notifications.Concrete
+namespace TrackYourDay.MAUI.UiNotifications
 {
     public class EndOfWorkDayNotification : ExecutableNotification
     {

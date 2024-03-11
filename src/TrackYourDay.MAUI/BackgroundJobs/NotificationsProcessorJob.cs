@@ -1,5 +1,5 @@
 ﻿using Quartz;
-using TrackYourDay.MAUI.Notifications;
+using TrackYourDay.Core.Notifications;
 
 namespace TrackYourDay.MAUI.BackgroundJobs
 {

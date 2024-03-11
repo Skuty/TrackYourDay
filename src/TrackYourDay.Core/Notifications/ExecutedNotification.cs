@@ -4,7 +4,7 @@
 /// <TODO>
 /// Handle persisting different configuration for different notifications (conditions, etc)
 /// </TODO>
-namespace TrackYourDay.MAUI.Notifications
+namespace TrackYourDay.Core.Notifications
 {
     public sealed class ExecutedNotification
     {

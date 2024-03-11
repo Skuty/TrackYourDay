@@ -5,12 +5,13 @@ using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
 using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.Notifications;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.Versioning;
 using TrackYourDay.Core.Workdays;
 using TrackYourDay.MAUI.BackgroundJobs;
 using TrackYourDay.MAUI.BackgroundJobs.ActivityTracking;
-using TrackYourDay.MAUI.Notifications;
+using TrackYourDay.MAUI.UiNotifications;
 
 namespace TrackYourDay.MAUI.ServiceRegistration
 {
@@ -46,7 +47,7 @@ namespace TrackYourDay.MAUI.ServiceRegistration
         public static IServiceCollection AddNotifications(this IServiceCollection services)
         {
             services.AddSingleton<WorkdayReadModelRepository>();
-            services.AddSingleton<ExecutableNotificationFactory>();
+            services.AddSingleton<INotificationFactory, UiNotificationFactory>();
             services.AddSingleton<NotificationRepository>();
             services.AddSingleton<NotificationService>();
 

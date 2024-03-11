@@ -4,27 +4,25 @@
 /// <TODO>
 /// Handle persisting different configuration for different notifications (conditions, etc)
 /// </TODO>
-namespace TrackYourDay.MAUI.Notifications
+namespace TrackYourDay.Core.Notifications
 {
     public class NotificationService
     {
-        private readonly ExecutableNotificationFactory executableNotificationFactory;
+        private readonly INotificationFactory notitficationFactory;
         private readonly List<ExecutableNotification> scheduledNotifications;
         private readonly NotificationRepository notificationRepository = null!;
 
-        public NotificationService(ExecutableNotificationFactory executableNotificationFactory)
+        public NotificationService(INotificationFactory executableNotificationFactory)
         {
             //this.scheduledNotifications = this.notificationRepository.GetAll().ToList();
-            this.scheduledNotifications = new List<ExecutableNotification>();
-            this.executableNotificationFactory = executableNotificationFactory;
-            this.ScheduleNotification(this.executableNotificationFactory.GetNearWorkdayEnd());
-            this.ScheduleNotification(this.executableNotificationFactory.GetWorkDayEnd());
-            this.ScheduleNotification(this.executableNotificationFactory.GetTipForDay());
+            scheduledNotifications = new List<ExecutableNotification>();
+            this.notitficationFactory = executableNotificationFactory;
+            this.ScheduleNotification(this.notitficationFactory.GetDefaultNotification());
         }
 
         public void ProcessScheduledNotifications()
         {
-            foreach (var scheduledNotification in this.scheduledNotifications)
+            foreach (var scheduledNotification in scheduledNotifications)
             {
                 if (scheduledNotification.ShouldBeExecuted())
                 {
@@ -40,7 +38,7 @@ namespace TrackYourDay.MAUI.Notifications
 
         private void ScheduleNotification(ExecutableNotification scheduledNotification)
         {
-            this.scheduledNotifications.Add(scheduledNotification);
+            scheduledNotifications.Add(scheduledNotification);
             //this.notificationRepository.Add(scheduledNotification);
             //TODO: Publish notification
         }

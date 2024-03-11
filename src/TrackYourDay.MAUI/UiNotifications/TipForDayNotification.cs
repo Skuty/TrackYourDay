@@ -1,4 +1,5 @@
-﻿using TrackYourDay.MAUI.MauiPages;
+﻿using TrackYourDay.Core.Notifications;
+using TrackYourDay.MAUI.MauiPages;
 
 /// <summary>
 /// Draft of Notification
@@ -6,13 +7,13 @@
 /// <TODO>
 /// Handle persisting different configuration for different notifications (conditions, etc)
 /// </TODO>
-namespace TrackYourDay.MAUI.Notifications.Concrete
+namespace TrackYourDay.MAUI.UiNotifications
 {
     public class TipForDayNotification : ExecutableNotification
     {
         public TipForDayNotification() : base()
         {
-            IsEnabled = true;
+            this.IsEnabled = true;
         }
 
         public override bool ShouldBeExecuted()

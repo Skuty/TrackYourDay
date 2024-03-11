@@ -6,7 +6,7 @@
 /// <TODO>
 /// Handle persisting different configuration for different notifications (conditions, etc)
 /// </TODO>
-namespace TrackYourDay.MAUI.Notifications
+namespace TrackYourDay.Core.Notifications
 {
     public abstract class ExecutableNotification
     {
@@ -18,9 +18,9 @@ namespace TrackYourDay.MAUI.Notifications
 
         protected ExecutableNotification()
         {
-            this.Guid = Guid.NewGuid();
-            this.Name = this.Guid.ToString();
-            this.IsEnabled = false;
+            Guid = Guid.NewGuid();
+            Name = Guid.ToString();
+            IsEnabled = false;
         }
 
         public ExecutableNotification(Guid guid, string name, bool isEnabled)
