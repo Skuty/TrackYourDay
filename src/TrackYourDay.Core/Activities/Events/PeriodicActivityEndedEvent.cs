@@ -2,5 +2,5 @@
 
 namespace TrackYourDay.Core.Activities.Events
 {
-    public record class PeriodicActivityEndedEvent(Guid Guid, EndedActivity StartedActivity) : INotification;
+    public record class PeriodicActivityEndedEvent(Guid Guid, EndedActivity EndedActivity) : INotification;
 }
