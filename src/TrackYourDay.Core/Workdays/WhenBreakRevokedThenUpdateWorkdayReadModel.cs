@@ -16,7 +16,7 @@ namespace TrackYourDay.Core.Workdays
         public Task Handle(BreakRevokedEvent notification, CancellationToken cancellationToken)
         {
             var workday = this.workdayReadModelRepository.Get(DateOnly.FromDateTime(DateTime.Today));
-            workday.Include(notification);
+            workday.Include(notification.RevokedBreak);
             this.workdayReadModelRepository.AddOrUpdate(workday);
 
             return Task.CompletedTask;

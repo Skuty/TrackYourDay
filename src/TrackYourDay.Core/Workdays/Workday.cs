@@ -1,8 +1,6 @@
 ﻿using TrackYourDay.Core.Activities;
-using TrackYourDay.Core.Activities.Events;
 using TrackYourDay.Core.Breaks;
-using TrackYourDay.Core.Breaks.Events;
-using TrackYourDay.Core.Settings;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TrackYourDay.Core.Workdays
 {
@@ -87,12 +85,41 @@ namespace TrackYourDay.Core.Workdays
             ValidBreakTimeUsed = validBreakTimeUsed;
         }
 
-        public static Workday Create(WorkdayDefinition workdayDefinition)
+        public static Workday CreateForDate(DateOnly date, WorkdayDefinition workdayDefinition)
         {
             return new Workday()
+            {
+                Date = date,
+                WorkdayDefinition = workdayDefinition,
+                TimeOfAllActivities = TimeSpan.Zero,
+                TimeOfAllBreaks = TimeSpan.Zero,
+                OverallTimeLeftToWork = workdayDefinition.WorkdayDuration,
+                TimeLeftToWorkActively = workdayDefinition.WorkdayDuration - workdayDefinition.AllowedBreakDuration,
+                TimeAlreadyActivelyWorkded = TimeSpan.Zero,
+                OverhoursTime = TimeSpan.Zero,
+                BreakTimeLeft = workdayDefinition.AllowedBreakDuration,
+                ValidBreakTimeUsed = TimeSpan.Zero
+            };
         }
 
         public static Workday CreateBasedOn(WorkdayDefinition workdayDefinition, IReadOnlyCollection<EndedActivity> endedActivities, IReadOnlyCollection<EndedBreak> endedBreaks)
+        {
+            var workday = CreateForDate(DateOnly.FromDateTime(DateTime.Today), workdayDefinition);
+
+            foreach (var endedActivity in endedActivities)
+            {
+                workday = workday.Include(endedActivity);
+            }
+
+            foreach (var endedBreak in endedBreaks)
+            {
+                workday = workday.Include(endedBreak);
+            }
+
+            return workday;
+        }
+
+        public static Workday CreateBasedOnOld(WorkdayDefinition workdayDefinition, IReadOnlyCollection<EndedActivity> endedActivities, IReadOnlyCollection<EndedBreak> endedBreaks)
         {
             var timeOfAllActivities = GetTimeOfAllActivities(endedActivities);
             var timeOfAllBreaks = GetTimeOfAllBreaks(endedBreaks);
@@ -117,6 +144,7 @@ namespace TrackYourDay.Core.Workdays
                 breakTimeLeft,
                 validBreakTimeUsed);
         }
+
 
         private static TimeSpan GetValidBreakTimeUsed(TimeSpan timeOfAllBreaks, WorkdayDefinition workdayDefinition)
         {
@@ -228,28 +256,88 @@ namespace TrackYourDay.Core.Workdays
 
         //TODO: Zweryfikowaćdwa podejścia:
         /// Zaaplikować każdy event do dnia lub tylko składową eventu per metoda
-        internal Workday Include(PeriodicActivityEndedEvent notification)
+        internal Workday Include(EndedActivity endedActivity)
         {
+            //var timeOfAllActivities = this.TimeOfAllActivities + endedActivity.GetDuration();
+            //var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded + endedActivity.GetDuration();
+            //var overallTimeLeftToWork = this.OverallTimeLeftToWork - endedActivity.GetDuration();
+            //var timeLeftToWorkActively = this.TimeLeftToWorkActively - endedActivity.GetDuration();
+            //var overhoursTime = timeLeftToWorkActively <= TimeSpan.Zero ? this.OverhoursTime + endedActivity.GetDuration() : this.OverhoursTime;
+
+            var timeOfAllActivities = this.TimeOfAllActivities + endedActivity.GetDuration();
+            var timeOfAllBreaks = this.TimeOfAllBreaks;
+            var overallTimeLeftToWork = this.OverallTimeLeftToWork - endedActivity.GetDuration();
+            var timeLeftToWorkActively = this.TimeLeftToWorkActively - endedActivity.GetDuration(); 
+            var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded + endedActivity.GetDuration();
+            var overhoursTime = this.WorkdayDefinition.WorkdayDuration - this.WorkdayDefinition.AllowedBreakDuration - timeAlreadyActivelyWorkded;
+            var breakTimeLeft = this.BreakTimeLeft;
+            var validBreakTimeUsed = this.ValidBreakTimeUsed;
+
             return new Workday(this)
             {
-                TimeOfAllActivities = this.GetTimeOfAllActivities(
-                    this.TimeOfAllActivities, notification.EndedActivity.GetDuration()),
-                
-                TimeAlreadyActivelyWorkded = this.GetTimeAlreadyActivelyWorkded(),
-                OverallTimeLeftToWork = this.GetOverallTimeLeftToWork(),
-                TimeLeftToWorkActively = this.GetTimeLeftToWorkActively(),
-                OverhoursTime = this.GetOverhoursTime(),
+                TimeOfAllActivities = timeOfAllActivities,
+                TimeOfAllBreaks = timeOfAllBreaks,
+                OverallTimeLeftToWork = overallTimeLeftToWork >= TimeSpan.Zero ? overallTimeLeftToWork : TimeSpan.Zero,
+                TimeLeftToWorkActively = timeLeftToWorkActively >= TimeSpan.Zero ? timeLeftToWorkActively : TimeSpan.Zero, 
+                TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded,
+                OverhoursTime = overhoursTime < TimeSpan.Zero ? OverhoursTime + (overhoursTime * -1) : OverhoursTime,
+                BreakTimeLeft = breakTimeLeft,
+                ValidBreakTimeUsed = validBreakTimeUsed
             };
         }
 
-        internal Workday Include(BreakEndedEvent notification)
+        internal Workday Include(EndedBreak endedBreak)
         {
-            throw new NotImplementedException();
+            //var breakTimeLeft = this.BreakTimeLeft - endedBreak.BreakDuration;
+
+            var timeOfAllActivities = this.TimeOfAllActivities;
+            var timeOfAllBreaks = this.TimeOfAllBreaks + endedBreak.BreakDuration;
+            var timeLeftToWorkActively = this.TimeLeftToWorkActively - endedBreak.BreakDuration; 
+            var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded;
+            var overhoursTime = this.OverhoursTime;
+            var breakTimeLeft = this.BreakTimeLeft - endedBreak.BreakDuration;
+            var validBreakTimeUsed = this.ValidBreakTimeUsed + endedBreak.BreakDuration;
+            var overallTimeLeftToWork = WorkdayDefinition.WorkdayDuration - timeAlreadyActivelyWorkded - (validBreakTimeUsed >= WorkdayDefinition.AllowedBreakDuration ? WorkdayDefinition.AllowedBreakDuration : validBreakTimeUsed);
+
+
+            return new Workday(this)
+            {
+                TimeOfAllActivities = timeOfAllActivities,
+                TimeOfAllBreaks = timeOfAllBreaks,
+                OverallTimeLeftToWork = overallTimeLeftToWork,
+                TimeLeftToWorkActively = timeLeftToWorkActively,
+                TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded,
+                OverhoursTime = overhoursTime,
+                BreakTimeLeft = breakTimeLeft >= TimeSpan.Zero ? breakTimeLeft : TimeSpan.Zero,
+                ValidBreakTimeUsed = validBreakTimeUsed >= WorkdayDefinition.AllowedBreakDuration ? WorkdayDefinition.AllowedBreakDuration : validBreakTimeUsed
+            };
         }
 
-        internal Workday Include(BreakRevokedEvent notification)
+        internal Workday Include(RevokedBreak revokedBreak)
         {
-            throw new NotImplementedException();
+            // TODO: Because calculating breaks that are lost if values go below zero
+            // Workday should be extended to contain all data (not events) breakTimeUsed, BreakTimeRevoked, etc.
+            var timeOfAllActivities = this.TimeOfAllActivities;
+            var timeOfAllBreaks = this.TimeOfAllBreaks - revokedBreak.EndedBreak.BreakDuration;
+            var overallTimeLeftToWork = this.OverallTimeLeftToWork; // ToFix as above
+            var timeLeftToWorkActively = this.TimeLeftToWorkActively;
+            var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded;
+            var overhoursTime = this.OverhoursTime;
+            var breakTimeLeft = WorkdayDefinition.AllowedBreakDuration - this.BreakTimeLeft + revokedBreak.EndedBreak.BreakDuration; // ToFix
+            var validBreakTimeUsed = this.ValidBreakTimeUsed; // ToFix
+
+
+            return new Workday(this)
+            {
+                TimeOfAllActivities = timeOfAllActivities,
+                TimeOfAllBreaks = timeOfAllBreaks,
+                OverallTimeLeftToWork = overallTimeLeftToWork,
+                TimeLeftToWorkActively = timeLeftToWorkActively,
+                TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded,
+                OverhoursTime = overhoursTime,
+                BreakTimeLeft = breakTimeLeft > TimeSpan.Zero ? breakTimeLeft : TimeSpan.Zero,
+                ValidBreakTimeUsed = validBreakTimeUsed
+            };
         }
     }
 }
