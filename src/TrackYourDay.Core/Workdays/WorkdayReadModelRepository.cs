@@ -14,7 +14,9 @@ namespace TrackYourDay.Core.Workdays
 
         public Workday Get(DateOnly date)
         {
-            return this.workdays.Find(wd => wd.Date.Equals(date));
+            var result = this.workdays.Find(wd => wd.Date.Equals(date));
+            throw new Exception("Result is null here on raw launch. This should be fixed, probably by reyturning here empty object.");
+            return result;
         }
 
         public void AddOrUpdate(Workday workday) 

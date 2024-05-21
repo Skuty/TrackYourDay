@@ -1,6 +1,5 @@
 ﻿using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Breaks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TrackYourDay.Core.Workdays
 {
@@ -264,6 +263,8 @@ namespace TrackYourDay.Core.Workdays
             //var timeLeftToWorkActively = this.TimeLeftToWorkActively - endedActivity.GetDuration();
             //var overhoursTime = timeLeftToWorkActively <= TimeSpan.Zero ? this.OverhoursTime + endedActivity.GetDuration() : this.OverhoursTime;
 
+            // Validate below to check GivenThereWas1HourOfActivitiesAnd50MinutesOfBreaks_WhenTimeAlreadyActivelyWorkdedIsBeingCalculated_ThenTimeAlreadyActivelyWorkdedIsEqualTo10Minutes
+
             var timeOfAllActivities = this.TimeOfAllActivities + endedActivity.GetDuration();
             var timeOfAllBreaks = this.TimeOfAllBreaks;
             var overallTimeLeftToWork = this.OverallTimeLeftToWork - endedActivity.GetDuration();
@@ -293,7 +294,7 @@ namespace TrackYourDay.Core.Workdays
             var timeOfAllActivities = this.TimeOfAllActivities;
             var timeOfAllBreaks = this.TimeOfAllBreaks + endedBreak.BreakDuration;
             var timeLeftToWorkActively = this.TimeLeftToWorkActively - endedBreak.BreakDuration; 
-            var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded;
+            var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded - endedBreak.BreakDuration;
             var overhoursTime = this.OverhoursTime;
             var breakTimeLeft = this.BreakTimeLeft - endedBreak.BreakDuration;
             var validBreakTimeUsed = this.ValidBreakTimeUsed + endedBreak.BreakDuration;
@@ -306,7 +307,7 @@ namespace TrackYourDay.Core.Workdays
                 TimeOfAllBreaks = timeOfAllBreaks,
                 OverallTimeLeftToWork = overallTimeLeftToWork,
                 TimeLeftToWorkActively = timeLeftToWorkActively,
-                TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded,
+                TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded >= TimeSpan.Zero ? timeAlreadyActivelyWorkded : TimeSpan.Zero,
                 OverhoursTime = overhoursTime,
                 BreakTimeLeft = breakTimeLeft >= TimeSpan.Zero ? breakTimeLeft : TimeSpan.Zero,
                 ValidBreakTimeUsed = validBreakTimeUsed >= WorkdayDefinition.AllowedBreakDuration ? WorkdayDefinition.AllowedBreakDuration : validBreakTimeUsed
