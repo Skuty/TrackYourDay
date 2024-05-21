@@ -293,7 +293,7 @@ namespace TrackYourDay.Core.Workdays
 
             var timeOfAllActivities = this.TimeOfAllActivities;
             var timeOfAllBreaks = this.TimeOfAllBreaks + endedBreak.BreakDuration;
-            var timeLeftToWorkActively = this.TimeLeftToWorkActively - endedBreak.BreakDuration; 
+            var timeLeftToWorkActively = this.TimeLeftToWorkActively + endedBreak.BreakDuration; 
             var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded - endedBreak.BreakDuration;
             var overhoursTime = this.OverhoursTime;
             var breakTimeLeft = this.BreakTimeLeft - endedBreak.BreakDuration;

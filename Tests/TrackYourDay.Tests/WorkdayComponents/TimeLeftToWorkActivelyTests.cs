@@ -8,6 +8,7 @@ namespace TrackYourDay.Tests.WorkdayComponents
 {
     public class TimeLeftToWorkActivelyTests
     {
+        //Given Workday is 7h 10m of active work and 50 minutes of break which gives 8h
         [Fact]
         public void GivenThereWasNoActivitiesOrBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
