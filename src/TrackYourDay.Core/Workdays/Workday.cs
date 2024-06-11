@@ -21,6 +21,16 @@ namespace TrackYourDay.Core.Workdays
         public TimeSpan TimeOfAllActivities { get; init; }
 
         /// <summary>
+        /// Represents all Activities even that longterm which could be Breaks
+        /// </summary>
+        /// <remarks>
+        /// Its equivalent of the public property that does not have to be public.
+        /// As private property it can be helpfull
+        /// </remarks>
+        private TimeSpan timeOfAllActivities { get; set; }
+
+
+        /// <summary>
         /// Represents all Breaks even that which are over the limit
         /// </summary>
         [Obsolete("Will be removed as it is not part of Workday")]
@@ -301,6 +311,8 @@ namespace TrackYourDay.Core.Workdays
             // getted by property will be non negative. More fields, a bit confusing persisted ones. Maybe could be done more clear?
             // 2. While including, hold as private rest of fields and persist and/or calculate from scratch
             // 3. One more private field, that would hold all activities duration and based on that other calculations would be done
+
+            // Solution 3 seems to be most appropiate
 
             var timeLeftToWorkActively = this.TimeLeftToWorkActively + endedBreak.BreakDuration; 
             var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded - endedBreak.BreakDuration;
