@@ -295,6 +295,13 @@ namespace TrackYourDay.Core.Workdays
             var timeOfAllBreaks = this.TimeOfAllBreaks + endedBreak.BreakDuration;
             // Below: timelefttoworkactively in previous method would be minus, but we are cutting to zero so when we are adding here
             // then its 50 more than expected in fact.
+
+            // Two approaches can be applied:
+            // 1. Add private members that will be serialized - ie. timeLeftToWorkActively that will be negative any while 
+            // getted by property will be non negative. More fields, a bit confusing persisted ones. Maybe could be done more clear?
+            // 2. While including, hold as private rest of fields and persist and/or calculate from scratch
+            // 3. One more private field, that would hold all activities duration and based on that other calculations would be done
+
             var timeLeftToWorkActively = this.TimeLeftToWorkActively + endedBreak.BreakDuration; 
             var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded - endedBreak.BreakDuration;
             var overhoursTime = this.OverhoursTime;
