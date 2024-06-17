@@ -37,6 +37,15 @@ namespace TrackYourDay.Core.Workdays
         public TimeSpan TimeOfAllBreaks { get; init; }
 
         /// <summary>
+        /// Represents all Activities even that longterm which could be Breaks
+        /// </summary>
+        /// <remarks>
+        /// Its equivalent of the public property that does not have to be public.
+        /// As private property it can be helpfull
+        /// </remarks>
+        public TimeSpan timeOfAllBreaks { get; init; }
+
+        /// <summary>
         /// Amount of Time which Employee should work to fullfill regulation requirements
         /// This time includes Breaks
         /// </summary>
@@ -275,14 +284,15 @@ namespace TrackYourDay.Core.Workdays
 
             // Validate below to check GivenThereWas1HourOfActivitiesAnd50MinutesOfBreaks_WhenTimeAlreadyActivelyWorkdedIsBeingCalculated_ThenTimeAlreadyActivelyWorkdedIsEqualTo10Minutes
 
+            this.timeOfAllActivities += endedActivity.GetDuration();
             var timeOfAllActivities = this.TimeOfAllActivities + endedActivity.GetDuration();
             var timeOfAllBreaks = this.TimeOfAllBreaks;
-            var overallTimeLeftToWork = this.OverallTimeLeftToWork - endedActivity.GetDuration();
             var timeLeftToWorkActively = this.TimeLeftToWorkActively - endedActivity.GetDuration(); 
             var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded + endedActivity.GetDuration();
             var overhoursTime = this.WorkdayDefinition.WorkdayDuration - this.WorkdayDefinition.AllowedBreakDuration - timeAlreadyActivelyWorkded;
             var breakTimeLeft = this.BreakTimeLeft;
             var validBreakTimeUsed = this.ValidBreakTimeUsed;
+            var overallTimeLeftToWork = this.WorkdayDefinition.WorkdayDuration - timeAlreadyActivelyWorkded - validBreakTimeUsed;
 
             return new Workday(this)
             {
@@ -314,13 +324,24 @@ namespace TrackYourDay.Core.Workdays
 
             // Solution 3 seems to be most appropiate
 
-            var timeLeftToWorkActively = this.TimeLeftToWorkActively + endedBreak.BreakDuration; 
+            // Not working solution
+            //var timeLeftToWorkActively = this.TimeLeftToWorkActively + endedBreak.BreakDuration; 
+
+            // Approach to Working solution
+            var timeLeftToWorkActively = this.timeOfAllActivities - this.TimeOfAllBreaks; 
             var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded - endedBreak.BreakDuration;
             var overhoursTime = this.OverhoursTime;
             var breakTimeLeft = this.BreakTimeLeft - endedBreak.BreakDuration;
             var validBreakTimeUsed = this.ValidBreakTimeUsed + endedBreak.BreakDuration;
-            var overallTimeLeftToWork = WorkdayDefinition.WorkdayDuration - timeAlreadyActivelyWorkded - (validBreakTimeUsed >= WorkdayDefinition.AllowedBreakDuration ? WorkdayDefinition.AllowedBreakDuration : validBreakTimeUsed);
-
+            if (timeOfAllBreaks.TotalSeconds >= this.WorkdayDefinition.AllowedBreakDuration.TotalSeconds)
+            {
+                validBreakTimeUsed = this.WorkdayDefinition.AllowedBreakDuration;
+            }
+            else
+            {
+                validBreakTimeUsed = timeOfAllBreaks;
+            }
+            var overallTimeLeftToWork = this.WorkdayDefinition.WorkdayDuration - (timeAlreadyActivelyWorkded >= TimeSpan.Zero ? timeAlreadyActivelyWorkded : TimeSpan.Zero) - validBreakTimeUsed;
 
             return new Workday(this)
             {
@@ -331,7 +352,7 @@ namespace TrackYourDay.Core.Workdays
                 TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded >= TimeSpan.Zero ? timeAlreadyActivelyWorkded : TimeSpan.Zero,
                 OverhoursTime = overhoursTime,
                 BreakTimeLeft = breakTimeLeft >= TimeSpan.Zero ? breakTimeLeft : TimeSpan.Zero,
-                ValidBreakTimeUsed = validBreakTimeUsed >= WorkdayDefinition.AllowedBreakDuration ? WorkdayDefinition.AllowedBreakDuration : validBreakTimeUsed
+                ValidBreakTimeUsed = validBreakTimeUsed
             };
         }
 
