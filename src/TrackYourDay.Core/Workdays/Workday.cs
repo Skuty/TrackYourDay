@@ -43,7 +43,7 @@ namespace TrackYourDay.Core.Workdays
         /// Its equivalent of the public property that does not have to be public.
         /// As private property it can be helpfull
         /// </remarks>
-        public TimeSpan timeOfAllBreaks { get; init; }
+        public TimeSpan timeOfAllBreaks { get; set; }
 
         /// <summary>
         /// Amount of Time which Employee should work to fullfill regulation requirements
@@ -313,6 +313,7 @@ namespace TrackYourDay.Core.Workdays
 
             var timeOfAllActivities = this.TimeOfAllActivities;
             var timeOfAllBreaks = this.TimeOfAllBreaks + endedBreak.BreakDuration;
+            this.timeOfAllBreaks = timeOfAllBreaks;
             // Below: timelefttoworkactively in previous method would be minus, but we are cutting to zero so when we are adding here
             // then its 50 more than expected in fact.
 
