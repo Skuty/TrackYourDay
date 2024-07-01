@@ -24,10 +24,13 @@ namespace TrackYourDay.Tests.WorkdayComponents
         }
 
         [Fact]
-        public void GivenThereWasNoActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
+        public void GivenThereWas50MinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
             // Arrange
-            var endedActivities = new List<EndedActivity>();
+            var endedActivities = new List<EndedActivity>()
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), SystemStateFactory.FocusOnApplicationState("Test application"))
+            };
             var endedBreaks = new List<EndedBreak>
             {
                 new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
@@ -40,11 +43,16 @@ namespace TrackYourDay.Tests.WorkdayComponents
             workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
         }
 
+        // Todo: Add somewhere BreakTime won't ever never be lesser than ActivitiesTime
         [Fact]
-        public void GivenThereWasNoActivitiesAndThereWas60MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
+        public void GivenThereWas60MinutesOfActivitiesAndThereWas60MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>();
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), SystemStateFactory.FocusOnApplicationState("Test application"));
+            }
+
             var endedBreaks = new List<EndedBreak>
             {
                 new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), "Test Break")
