@@ -57,6 +57,8 @@ namespace TrackYourDay.Core.Workdays
         /// </summary>
         public TimeSpan TimeLeftToWorkActively { get; init; }
 
+        private TimeSpan timeLeftToWorkActively { get; set; }
+
         /// <summary>
         /// Amount of Time which Employee already worked
         /// This time does not include Breaks
@@ -287,7 +289,14 @@ namespace TrackYourDay.Core.Workdays
             this.timeOfAllActivities += endedActivity.GetDuration();
             var timeOfAllActivities = this.TimeOfAllActivities + endedActivity.GetDuration();
             var timeOfAllBreaks = this.TimeOfAllBreaks;
-            var timeLeftToWorkActively = this.TimeLeftToWorkActively - endedActivity.GetDuration(); 
+
+            var timeLeftToWorkActively = 
+                this.WorkdayDefinition.WorkdayDuration 
+                - this.WorkdayDefinition.AllowedBreakDuration 
+                - this.TimeAlreadyActivelyWorkded
+                - endedActivity.GetDuration();
+            this.timeLeftToWorkActively = timeLeftToWorkActively;
+            
             var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded + endedActivity.GetDuration();
             var overhoursTime = this.WorkdayDefinition.WorkdayDuration - this.WorkdayDefinition.AllowedBreakDuration - timeAlreadyActivelyWorkded;
             var breakTimeLeft = this.BreakTimeLeft;
@@ -329,7 +338,7 @@ namespace TrackYourDay.Core.Workdays
             //var timeLeftToWorkActively = this.TimeLeftToWorkActively + endedBreak.BreakDuration; 
 
             // Approach to Working solution
-            var timeLeftToWorkActively = this.timeOfAllActivities - this.TimeOfAllBreaks; 
+            var timeLeftToWorkActively = this.TimeLeftToWorkActively; 
             var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded - endedBreak.BreakDuration;
             var overhoursTime = this.OverhoursTime;
             var breakTimeLeft = this.BreakTimeLeft - endedBreak.BreakDuration;
