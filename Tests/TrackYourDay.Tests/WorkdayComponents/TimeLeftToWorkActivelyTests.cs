@@ -48,10 +48,10 @@ namespace TrackYourDay.Tests.WorkdayComponents
         public void GivenThereWas60MinutesOfActivitiesAndThereWas60MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
             // Arrange
-            var endedActivities = new List<EndedActivity>();
+            var endedActivities = new List<EndedActivity>
             {
-                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), SystemStateFactory.FocusOnApplicationState("Test application"));
-            }
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), SystemStateFactory.FocusOnApplicationState("Test application"))
+            };
 
             var endedBreaks = new List<EndedBreak>
             {
