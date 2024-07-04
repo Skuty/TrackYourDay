@@ -310,7 +310,7 @@ namespace TrackYourDay.Core.Workdays
                 OverallTimeLeftToWork = overallTimeLeftToWork >= TimeSpan.Zero ? overallTimeLeftToWork : TimeSpan.Zero,
                 TimeLeftToWorkActively = timeLeftToWorkActively >= TimeSpan.Zero ? timeLeftToWorkActively : TimeSpan.Zero, 
                 TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded,
-                OverhoursTime = overhoursTime < TimeSpan.Zero ? OverhoursTime + (overhoursTime * -1) : OverhoursTime,
+                OverhoursTime = overhoursTime < TimeSpan.Zero ? overhoursTime * -1 : TimeSpan.Zero,
                 BreakTimeLeft = breakTimeLeft,
                 ValidBreakTimeUsed = validBreakTimeUsed
             };
@@ -341,7 +341,7 @@ namespace TrackYourDay.Core.Workdays
             var timeLeftToWorkActively = this.timeLeftToWorkActively + endedBreak.BreakDuration; 
 
             var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded - endedBreak.BreakDuration;
-            var overhoursTime = this.OverhoursTime;
+            var overhoursTime = this.WorkdayDefinition.WorkdayDuration - this.WorkdayDefinition.AllowedBreakDuration - timeAlreadyActivelyWorkded;
             var breakTimeLeft = this.BreakTimeLeft - endedBreak.BreakDuration;
             var validBreakTimeUsed = this.ValidBreakTimeUsed + endedBreak.BreakDuration;
             if (timeOfAllBreaks.TotalSeconds >= this.WorkdayDefinition.AllowedBreakDuration.TotalSeconds)
@@ -361,7 +361,7 @@ namespace TrackYourDay.Core.Workdays
                 OverallTimeLeftToWork = overallTimeLeftToWork,
                 TimeLeftToWorkActively = timeLeftToWorkActively >= TimeSpan.Zero ? timeLeftToWorkActively : TimeSpan.Zero,
                 TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded >= TimeSpan.Zero ? timeAlreadyActivelyWorkded : TimeSpan.Zero,
-                OverhoursTime = overhoursTime,
+                OverhoursTime = overhoursTime < TimeSpan.Zero ? overhoursTime * -1 : TimeSpan.Zero,
                 BreakTimeLeft = breakTimeLeft >= TimeSpan.Zero ? breakTimeLeft : TimeSpan.Zero,
                 ValidBreakTimeUsed = validBreakTimeUsed
             };
