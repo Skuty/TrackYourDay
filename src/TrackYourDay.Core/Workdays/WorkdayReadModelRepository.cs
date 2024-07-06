@@ -20,7 +20,7 @@ namespace TrackYourDay.Core.Workdays
                 return result;
             } else
             {
-                return Workday.Empty;
+                return Workday.CreateEmpty();
             }
             //TODO: This was hotfixefd but it shouldnt be like it throw new Exception("Result is null here on raw launch. This should be fixed, probably by reyturning here empty object.");
         }

@@ -12,10 +12,19 @@ namespace TrackYourDay.Core.Workdays
     {
         // TODO: this probably should not exists but somehow readmodel at app startup have to be created correctly
         // Maybe delayed notificaion startup? or explicit order of registration/creation?
-        public static Workday Empty = new()
+        public static Workday CreateEmpty()
         {
-            WorkdayDefinition = WorkdayDefinition.CreateDefaultDefinition()
-        };
+            var workdayDefinition = WorkdayDefinition.CreateDefaultDefinition();
+            var workday = new Workday()
+            {
+                WorkdayDefinition = workdayDefinition,
+                BreakTimeLeft = workdayDefinition.AllowedBreakDuration,
+                TimeLeftToWorkActively = workdayDefinition.WorkdayDuration - workdayDefinition.AllowedBreakDuration,
+                OverallTimeLeftToWork = workdayDefinition.WorkdayDuration,
+            };
+
+            return workday;
+        }
 
         public DateOnly Date { get; init; }
 
