@@ -19,8 +19,9 @@ namespace TrackYourDay.MAUI.UiNotifications
 
         public EndOfWorkDayNearNotification(
             TimeSpan timeLeftToWorkActivelyConfigValue,
-            WorkdayReadModelRepository workdayReadModelRepository)
+            WorkdayReadModelRepository workdayReadModelRepository) : base()
         {
+            this.IsEnabled = true;
             Name = "Powiadomienie o zbliżającym się końcu Dnia Pracy";
             this.timeLeftToWorkActivelyConfigValue = TimeSpan.FromMinutes(45);
             this.workdayReadModelRepository = workdayReadModelRepository;
@@ -28,9 +29,10 @@ namespace TrackYourDay.MAUI.UiNotifications
 
         public override bool ShouldBeExecuted()
         {
+            var shouldBeExecuted = base.ShouldBeExecuted();
+            var timeLeftToWorkActively = GetTimeLeftToWorkActively();
             return
-                base.ShouldBeExecuted()
-                && GetTimeLeftToWorkActively() < timeLeftToWorkActivelyConfigValue;
+                shouldBeExecuted && timeLeftToWorkActively < timeLeftToWorkActivelyConfigValue;
         }
 
         public override void Execute()

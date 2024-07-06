@@ -15,8 +15,14 @@ namespace TrackYourDay.Core.Workdays
         public Workday Get(DateOnly date)
         {
             var result = this.workdays.Find(wd => wd.Date.Equals(date));
-            throw new Exception("Result is null here on raw launch. This should be fixed, probably by reyturning here empty object.");
-            return result;
+            if (result is not null) 
+            {
+                return result;
+            } else
+            {
+                return Workday.Empty;
+            }
+            //TODO: This was hotfixefd but it shouldnt be like it throw new Exception("Result is null here on raw launch. This should be fixed, probably by reyturning here empty object.");
         }
 
         public void AddOrUpdate(Workday workday) 

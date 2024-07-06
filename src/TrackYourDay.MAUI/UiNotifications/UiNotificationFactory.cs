@@ -20,8 +20,16 @@ namespace TrackYourDay.MAUI.UiNotifications
 
         public ExecutableNotification GetNotificationByName(string name)
         {
-            //return new EndOfWorkDayNearNotification(TimeSpan.FromMinutes(45), workdayReadModelRepository);
-            //return new EndOfWorkDayNotification(workdayReadModelRepository);
+            if (name == "EndOfWorkdayNear")
+            {
+                return new EndOfWorkDayNearNotification(TimeSpan.FromMinutes(45), workdayReadModelRepository);
+            }
+
+            if (name == "EndOfWorkday")
+            {
+                return new EndOfWorkDayNotification(workdayReadModelRepository);
+            }
+
             throw new NotImplementedException();
         }
 

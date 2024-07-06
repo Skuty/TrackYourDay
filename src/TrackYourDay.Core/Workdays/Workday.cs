@@ -1,4 +1,5 @@
-﻿using TrackYourDay.Core.Activities;
+﻿using System.Reflection.Metadata.Ecma335;
+using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Core.Workdays
@@ -9,6 +10,13 @@ namespace TrackYourDay.Core.Workdays
     /// </summary>
     public record class Workday
     {
+        // TODO: this probably should not exists but somehow readmodel at app startup have to be created correctly
+        // Maybe delayed notificaion startup? or explicit order of registration/creation?
+        public static Workday Empty = new()
+        {
+            WorkdayDefinition = WorkdayDefinition.CreateDefaultDefinition()
+        };
+
         public DateOnly Date { get; init; }
 
         [Obsolete("Temporary. In future remove and initialize Workday withi inital values")]
@@ -278,14 +286,6 @@ namespace TrackYourDay.Core.Workdays
         /// Zaaplikować każdy event do dnia lub tylko składową eventu per metoda
         internal Workday Include(EndedActivity endedActivity)
         {
-            //var timeOfAllActivities = this.TimeOfAllActivities + endedActivity.GetDuration();
-            //var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded + endedActivity.GetDuration();
-            //var overallTimeLeftToWork = this.OverallTimeLeftToWork - endedActivity.GetDuration();
-            //var timeLeftToWorkActively = this.TimeLeftToWorkActively - endedActivity.GetDuration();
-            //var overhoursTime = timeLeftToWorkActively <= TimeSpan.Zero ? this.OverhoursTime + endedActivity.GetDuration() : this.OverhoursTime;
-
-            // Validate below to check GivenThereWas1HourOfActivitiesAnd50MinutesOfBreaks_WhenTimeAlreadyActivelyWorkdedIsBeingCalculated_ThenTimeAlreadyActivelyWorkdedIsEqualTo10Minutes
-
             this.timeOfAllActivities += endedActivity.GetDuration();
             var timeOfAllActivities = this.TimeOfAllActivities + endedActivity.GetDuration();
             var timeOfAllBreaks = this.TimeOfAllBreaks;
@@ -318,28 +318,10 @@ namespace TrackYourDay.Core.Workdays
 
         internal Workday Include(EndedBreak endedBreak)
         {
-            //var breakTimeLeft = this.BreakTimeLeft - endedBreak.BreakDuration;
-
             var timeOfAllActivities = this.TimeOfAllActivities;
             var timeOfAllBreaks = this.TimeOfAllBreaks + endedBreak.BreakDuration;
             this.timeOfAllBreaks = timeOfAllBreaks;
-            // Below: timelefttoworkactively in previous method would be minus, but we are cutting to zero so when we are adding here
-            // then its 50 more than expected in fact.
-
-            // Two approaches can be applied:
-            // 1. Add private members that will be serialized - ie. timeLeftToWorkActively that will be negative any while 
-            // getted by property will be non negative. More fields, a bit confusing persisted ones. Maybe could be done more clear?
-            // 2. While including, hold as private rest of fields and persist and/or calculate from scratch
-            // 3. One more private field, that would hold all activities duration and based on that other calculations would be done
-
-            // Solution 3 seems to be most appropiate
-
-            // Not working solution
-            //var timeLeftToWorkActively = this.TimeLeftToWorkActively + endedBreak.BreakDuration; 
-
-            // Approach to Working solution
             var timeLeftToWorkActively = this.timeLeftToWorkActively + endedBreak.BreakDuration; 
-
             var timeAlreadyActivelyWorkded = this.TimeAlreadyActivelyWorkded - endedBreak.BreakDuration;
             var overhoursTime = this.WorkdayDefinition.WorkdayDuration - this.WorkdayDefinition.AllowedBreakDuration - timeAlreadyActivelyWorkded;
             var breakTimeLeft = this.BreakTimeLeft - endedBreak.BreakDuration;

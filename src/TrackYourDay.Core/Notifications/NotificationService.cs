@@ -17,6 +17,8 @@ namespace TrackYourDay.Core.Notifications
             //this.scheduledNotifications = this.notificationRepository.GetAll().ToList();
             scheduledNotifications = new List<ExecutableNotification>();
             this.notitficationFactory = executableNotificationFactory;
+            this.ScheduleNotification(this.notitficationFactory.GetNotificationByName("EndOfWorkdayNear"));
+            this.ScheduleNotification(this.notitficationFactory.GetNotificationByName("EndOfWorkday"));
             this.ScheduleNotification(this.notitficationFactory.GetDefaultNotification());
         }
 
