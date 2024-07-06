@@ -4,8 +4,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using TrackYourDay.Tests.Old.Old.Activities;
 
-namespace TrackYourDay.Core.Old.Activities.RecognizingStrategies
+namespace TrackYourDay.Tests.Old.Old.Activities.RecognizingStrategies
 {
     public class WindowNameActivityRecognizingStrategy : IActivityRecognizingStrategy
     {
@@ -39,13 +40,13 @@ namespace TrackYourDay.Core.Old.Activities.RecognizingStrategies
         }
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern IntPtr GetForegroundWindow();
+        static extern nint GetForegroundWindow();
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+        static extern int GetWindowText(nint hWnd, StringBuilder text, int count);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern int GetWindowTextLength(IntPtr hWnd);
+        static extern int GetWindowTextLength(nint hWnd);
         #endregion
     }
 }

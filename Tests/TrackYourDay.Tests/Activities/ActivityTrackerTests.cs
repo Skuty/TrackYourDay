@@ -5,15 +5,15 @@ using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
-using TrackYourDay.Core.Activities.Notifications;
+using TrackYourDay.Core.Activities.Events;
 using TrackYourDay.Core.Activities.SystemStates;
 
-namespace TrackYourDay.Tests.ActivityTracking
+namespace TrackYourDay.Tests.Activities
 {
     [Trait("Category", "Unit")]
     public class ActivityTrackerTests
     {
-        private Core.IClock clock;
+        private IClock clock;
         private Mock<IPublisher> publisherMock;
         private Mock<ILogger<ActivityTracker>> loggerMock;
         private Mock<ISystemStateRecognizingStrategy> startedActivityRecognizingStrategy;
@@ -22,105 +22,105 @@ namespace TrackYourDay.Tests.ActivityTracking
 
         public ActivityTrackerTests()
         {
-            this.clock = new Clock();
-            this.loggerMock = new Mock<ILogger<ActivityTracker>>();
-            this.publisherMock = new Mock<IPublisher>();
-            this.startedActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
-            this.instantActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
+            clock = new Clock();
+            loggerMock = new Mock<ILogger<ActivityTracker>>();
+            publisherMock = new Mock<IPublisher>();
+            startedActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
+            instantActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
 
-            this.activityEventTracker = new ActivityTracker(
-                this.clock,
-                this.publisherMock.Object,
-                this.startedActivityRecognizingStrategy.Object,
-                this.instantActivityRecognizingStrategy.Object,
-                this.loggerMock.Object);
+            activityEventTracker = new ActivityTracker(
+                clock,
+                publisherMock.Object,
+                startedActivityRecognizingStrategy.Object,
+                instantActivityRecognizingStrategy.Object,
+                loggerMock.Object);
         }
 
         [Fact]
         public void WhenNewPeriodicActivityIsStarted_ThenPeriodicActivityStartedEventIsPublished()
         {
             // Arrange
-            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+            startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(SystemStateFactory.FocusOnApplicationState("Application"));
 
             // Act
             activityEventTracker.RecognizeActivity();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedNotification>(), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedEvent>(), CancellationToken.None), Times.Once);
         }
 
         [Fact]
         public void GivenThereIsPeriodActivityStarted_WhenNewPeriodicActivityIsStarted_ThenPeriodicActivityEndedEventIsPublished()
         {
             // Arrange
-            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+            startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(SystemStateFactory.FocusOnApplicationState("Another Application"));
 
             // Act
-            this.activityEventTracker.RecognizeActivity();
+            activityEventTracker.RecognizeActivity();
 
             // Assert
-            this.publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityEndedNotification >(), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityEndedEvent>(), CancellationToken.None), Times.Once);
         }
 
         [Fact]
         public void GivenThereIsPeriodActivityStarted_WhenNewPeriodicActivityIsStarted_ThenPeriodicActivityStartedEventIsPublished()
         {
             // Arrange
-            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+            startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(SystemStateFactory.FocusOnApplicationState("Application"));
 
             // Act
             activityEventTracker.RecognizeActivity();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedNotification>(), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedEvent>(), CancellationToken.None), Times.Once);
         }
 
         [Fact]
         public void GivenThereIsPeriodActivityStarted_WhenNothingChanges_ThenAnyEventIsNotPublished()
         {
             // Arrange
-            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+            startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(SystemStateFactory.FocusOnApplicationState("Application"));
-            this.activityEventTracker.RecognizeActivity();
-            var existingNotificationsCount = this.publisherMock.Invocations.Count;
+            activityEventTracker.RecognizeActivity();
+            var existingNotificationsCount = publisherMock.Invocations.Count;
 
             // Act
-            this.activityEventTracker.RecognizeActivity();
+            activityEventTracker.RecognizeActivity();
 
             // Assert
-            this.publisherMock.Invocations.Count.Should().Be(existingNotificationsCount);
+            publisherMock.Invocations.Count.Should().Be(existingNotificationsCount);
         }
 
         [Fact]
         public void WhenInstantPeriodicActivityIsRecognized_ThenInstantActivityOccuredEventIsPublished()
         {
             // Arrange
-            this.instantActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(SystemStateFactory.MouseMouvedEvent(0,0));
+            instantActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+                .Returns(SystemStateFactory.MouseMouvedEvent(0, 0));
 
             // Act
-            this.activityEventTracker.RecognizeActivity();
+            activityEventTracker.RecognizeActivity();
 
             // Assert
-            this.publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedNotification>(), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedEvent>(), CancellationToken.None), Times.Once);
         }
 
         [Fact]
-        public void WhenNewPeriodicActivityIsStarted_ThenItIsCurrentActivity() 
+        public void WhenNewPeriodicActivityIsStarted_ThenItIsCurrentActivity()
         {
             // Arrange
             var activity = SystemStateFactory.FocusOnApplicationState("Application");
-            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+            startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
 
             // Act
-            this.activityEventTracker.RecognizeActivity();
+            activityEventTracker.RecognizeActivity();
 
             // Assert
-            this.activityEventTracker.GetCurrentActivity().SystemState.Should().Be(activity);
+            activityEventTracker.GetCurrentActivity().SystemState.Should().Be(activity);
         }
 
         [Fact]
@@ -128,17 +128,17 @@ namespace TrackYourDay.Tests.ActivityTracking
         {
             // Arrange
             var activity = SystemStateFactory.FocusOnApplicationState("Application");
-            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+            startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(activity);
-            this.activityEventTracker.RecognizeActivity();
-            this.startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
+            activityEventTracker.RecognizeActivity();
+            startedActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(SystemStateFactory.FocusOnApplicationState("New Application"));
 
             // Act
-            this.activityEventTracker.RecognizeActivity();
+            activityEventTracker.RecognizeActivity();
 
             // Assert
-            this.activityEventTracker.GetEndedActivities().LastOrDefault().ActivityType.Should().Be(activity);
+            activityEventTracker.GetEndedActivities().LastOrDefault().ActivityType.Should().Be(activity);
         }
     }
 }

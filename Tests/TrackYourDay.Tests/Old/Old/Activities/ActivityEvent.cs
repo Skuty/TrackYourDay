@@ -1,4 +1,4 @@
-﻿namespace TrackYourDay.Core.Old.Activities
+﻿namespace TrackYourDay.Tests.Old.Old.Activities
 {
     public record class ActivityEvent(Guid Id, DateTime EventDate, Activity Activity)
     {

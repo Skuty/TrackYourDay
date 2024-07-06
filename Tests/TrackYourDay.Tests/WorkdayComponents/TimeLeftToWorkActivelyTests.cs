@@ -1,13 +1,14 @@
 ﻿using FluentAssertions;
-using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Activities.SystemStates;
 using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.Workdays;
 
 namespace TrackYourDay.Tests.WorkdayComponents
 {
     public class TimeLeftToWorkActivelyTests
     {
+        //Given Workday is 7h 10m of active work and 50 minutes of break which gives 8h
         [Fact]
         public void GivenThereWasNoActivitiesOrBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
@@ -23,10 +24,13 @@ namespace TrackYourDay.Tests.WorkdayComponents
         }
 
         [Fact]
-        public void GivenThereWasNoActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
+        public void GivenThereWas50MinutesOfActivitiesAndThereWas50MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
             // Arrange
-            var endedActivities = new List<EndedActivity>();
+            var endedActivities = new List<EndedActivity>()
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), SystemStateFactory.FocusOnApplicationState("Test application"))
+            };
             var endedBreaks = new List<EndedBreak>
             {
                 new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
@@ -39,11 +43,16 @@ namespace TrackYourDay.Tests.WorkdayComponents
             workday.TimeLeftToWorkActively.Should().Be(TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(10)));
         }
 
+        // Todo: Add somewhere BreakTime won't ever never be lesser than ActivitiesTime
         [Fact]
-        public void GivenThereWasNoActivitiesAndThereWas60MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
+        public void GivenThereWas60MinutesOfActivitiesAndThereWas60MinutesOfBreaks_WhenTimeLeftToWorkActivelyIsBeingCalculated_ThenTimeLeftToWorkIsEqualTo7HoursAnd10Minutes()
         {
             // Arrange
-            var endedActivities = new List<EndedActivity>();
+            var endedActivities = new List<EndedActivity>
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), SystemStateFactory.FocusOnApplicationState("Test application"))
+            };
+
             var endedBreaks = new List<EndedBreak>
             {
                 new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), "Test Break")

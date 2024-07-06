@@ -1,18 +1,18 @@
 ﻿using MediatR;
 using TrackYourDay.Core.Breaks;
-using TrackYourDay.Core.Old.Activities.Notifications;
+using TrackYourDay.Tests.Old.Old.Activities.Notifications;
 
-namespace TrackYourDay.Core.Old.Breaks.Notifications
+namespace TrackYourDay.Tests.Old.Old.Breaks.Notifications
 {
-    internal class ActivityEventNotificationHandler : INotificationHandler<ActivityEventRecognizedNotification>
+    internal class ActivityEventEventHandler : INotificationHandler<ActivityEventRecognizedEvent>
     {
         private readonly BreakTracker breakTracker;
 
-        public ActivityEventNotificationHandler(BreakTracker breakTracker)
+        public ActivityEventEventHandler(BreakTracker breakTracker)
         {
             this.breakTracker = breakTracker;
         }
-        public Task Handle(ActivityEventRecognizedNotification notification, CancellationToken cancellationToken)
+        public Task Handle(ActivityEventRecognizedEvent Event, CancellationToken cancellationToken)
         {
             //Inbox here?
             //breakTracker.AddActivityToProcess(notification.ActivityEvent);

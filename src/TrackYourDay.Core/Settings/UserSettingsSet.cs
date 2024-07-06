@@ -1,5 +1,6 @@
 ﻿using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.Workdays;
 
 namespace TrackYourDay.Core.Settings
 {

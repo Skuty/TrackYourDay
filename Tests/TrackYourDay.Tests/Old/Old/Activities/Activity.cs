@@ -1,4 +1,4 @@
-﻿namespace TrackYourDay.Core.Old.Activities
+﻿namespace TrackYourDay.Tests.Old.Old.Activities
 {
     public abstract record class Activity(string Name);
 
