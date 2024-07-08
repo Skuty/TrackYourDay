@@ -5,7 +5,6 @@
 @using TrackYourDay.Core;
 @using TrackYourDay.Core.Workdays
 
-
 <h1>
     <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
     Daily Overview
@@ -13,6 +12,9 @@
 
 <MudExpansionPanels>
     <MudExpansionPanel Text="Short overview" IsInitiallyExpanded="true">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Przewidywany koniec pracy o: @this.estimatedEndOfWorkDay.ToShortTimeString()</h2>
+        </div>
         <MudGrid Justify="Justify.Center">
             <MudItem>
                 <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
@@ -66,6 +68,8 @@
 
     private Workday workday;
 
+    private DateTime estimatedEndOfWorkDay;
+
     private double[] worktimeLeftDataChart = { 0, 0 };
     private string[] worktimeLeftLabelsChart = { "Time to Work", "Worked Time" };
 
@@ -83,6 +87,8 @@
     private void Refresh()
     {
         this.workday = Workday.CreateBasedOn(this.settingsSet.WorkdayDefinition, this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
+
+        this.estimatedEndOfWorkDay = DateTime.Now + workday.OverallTimeLeftToWork;
 
         worktimeLeftDataChart[0] = this.workday.TimeLeftToWorkActively.TotalMinutes;
         worktimeLeftDataChart[1] = this.workday.TimeAlreadyActivelyWorkded.TotalMinutes;

@@ -27,7 +27,7 @@ namespace TrackYourDay.MAUI.UiNotifications
 
             MauiPageFactory.OpenSimpleNotificationPageInNewWindow(new SimpleNotificationViewModel(
                     "Miłego dnia pracy!",
-                    $"Porada na dziś: Może zaproponuj jakąś? :)"));
+                    $"Porada na dziś: Zacznij kończyć, przestań zaczynać :)"));
         }
     }
 }
