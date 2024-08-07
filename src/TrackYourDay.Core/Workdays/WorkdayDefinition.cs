@@ -8,5 +8,18 @@
         {
             return new WorkdayDefinition(TimeSpan.FromHours(8), TimeSpan.FromMinutes(50));
         }
+
+        public static WorkdayDefinition CreateSampleCompanyDefinition()
+        {
+            var lawBasedDinnerBreak = TimeSpan.FromMinutes(15);
+            var companyAdditionalDinnerBreak = TimeSpan.FromMinutes(15);
+            var offscreenLawBasedBreak = TimeSpan.FromMinutes(35);
+
+
+            var workdayDuration = TimeSpan.FromHours(8);
+            var allowedBreakDuration = TimeSpan.FromMinutes(50);
+
+            return new WorkdayDefinition();
+        }
     }
 }
