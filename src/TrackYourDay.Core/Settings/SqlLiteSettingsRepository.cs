@@ -21,6 +21,16 @@ namespace TrackYourDay.Core.Settings
             this.databaseFileName = $"{appDataPath}\\TrackYourDay.db";
         }
 
+        public void Reset()
+        {
+            if (File.Exists(this.databaseFileName))
+            {
+                File.Delete(this.databaseFileName);
+            }
+
+            this.InitializeStructure();
+        }
+
         private void InitializeStructure()
         {
             using (var connection = new SqliteConnection($"Data Source={this.databaseFileName}"))

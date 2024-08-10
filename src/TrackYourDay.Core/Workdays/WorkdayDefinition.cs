@@ -30,5 +30,17 @@
 
             return new WorkdayDefinition(TimeSpan.FromHours(10), breaksDefinitions);
         }
+
+        public static WorkdayDefinition CreateSampleCompanyDefinition()
+        {
+            var breaksDefinitions = new List<BreakDefinition>
+            {
+                new BreakDefinition(TimeSpan.FromMinutes(15), "law based Dinner Break"),
+                new BreakDefinition(TimeSpan.FromMinutes(15), "Company additional Dinner Break"),
+                new BreakDefinition(TimeSpan.FromMinutes(35), "Law based Offscreen Break")
+            };
+
+            return new WorkdayDefinition(TimeSpan.FromHours(8), breaksDefinitions);
+        }
     }
 }
