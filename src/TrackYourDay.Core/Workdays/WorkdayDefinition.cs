@@ -23,9 +23,9 @@
         {
             var breaksDefinitions = new List<BreakDefinition>
             {
-                new BreakDefinition(TimeSpan.FromMinutes(15), "law based Dinner Break"),
-                new BreakDefinition(TimeSpan.FromMinutes(15), "Company additional Dinner Break"),
-                new BreakDefinition(TimeSpan.FromMinutes(35), "Law based Offscreen Break")
+                new BreakDefinition(TimeSpan.FromMinutes(35), "Law based Offscreen Break"),
+                new BreakDefinition(TimeSpan.FromMinutes(15), "Law based Dinner Break"),
+                new BreakDefinition(TimeSpan.FromMinutes(15), "Company additional Dinner Break")
             };
 
             return new WorkdayDefinition(TimeSpan.FromHours(10), breaksDefinitions);

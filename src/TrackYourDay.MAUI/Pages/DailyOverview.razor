@@ -50,7 +50,7 @@
 <MudStack Row="true">
     <MudCard>
         <MudCardContent>
-            <MudText>Your todays Workday progress:</MudText>
+            <MudText Typo="Typo.h5">Your todays Workday progress:</MudText>
             <MudText Typo="Typo.body2">Time Of All Activities: @workday.TimeOfAllActivities</MudText>
             <MudText Typo="Typo.body2">Time Of All Breaks: @workday.TimeOfAllBreaks</MudText>
             <MudText Typo="Typo.body2">Overall Time Left To Work: @workday.OverallTimeLeftToWork</MudText>
@@ -66,13 +66,13 @@
 
     <MudCard>
         <MudCardContent>
-            <MudText>Your todays Workday progress:</MudText>
+            <MudText Typo="Typo.h5">Your todays Workday progress:</MudText>
             <MudText Typo="Typo.body2">Workday Duration: @workdayDefinition.WorkdayDuration</MudText>
             <MudText Typo="Typo.body2">Allowed Break Duration: @workdayDefinition.AllowedBreakDuration</MudText>
             <MudText Typo="Typo.body2">Included Break Definitions: </MudText>
                 @foreach (var definition in @workdayDefinition.BreakDefinitions)
                 {
-                    <MudText Typo="Typo.body1">@definition.Duration - @definition.Description</MudText>
+                    <MudText Typo="Typo.body2">@definition.Duration - @definition.Description</MudText>
                 }
         </MudCardContent>
         <MudCardActions>
