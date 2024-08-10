@@ -1,9 +1,19 @@
 ﻿namespace TrackYourDay.Core.Workdays
 {
     /// <param name="WorkdayDuration">This time includes Time of Active working and Time of Breaks</param>
-    /// <param name="AllowedBreakDuration">Screen: 7x5 minutes = 35 minutes, Meal: 15 minutes</param>
+    /// <param name="AllowedBreakDuration">Time for breaks</param>
     public record class WorkdayDefinition(TimeSpan WorkdayDuration, TimeSpan AllowedBreakDuration)
     {
+        /// <summary>List of Break Definitions with their allowed time and description</summary>
+        public readonly IReadOnlyCollection<BreakDefinition> BreakDefinitions;
+
+        // TODO: Add missing tests that ensures that AllowedBreakDuration is equal to sum of breakDefinitions
+        private WorkdayDefinition(TimeSpan workdayDuration, IList<BreakDefinition> breakDefinitions)
+            : this(workdayDuration, new TimeSpan(breakDefinitions.Sum(b => b.Duration.Ticks))) 
+        {
+            this.BreakDefinitions = breakDefinitions.AsReadOnly();
+        }
+
         public static WorkdayDefinition CreateDefaultDefinition()
         {
             return new WorkdayDefinition(TimeSpan.FromHours(8), TimeSpan.FromMinutes(50));
@@ -11,15 +21,14 @@
 
         public static WorkdayDefinition CreateSampleCompanyDefinition()
         {
-            var lawBasedDinnerBreak = TimeSpan.FromMinutes(15);
-            var companyAdditionalDinnerBreak = TimeSpan.FromMinutes(15);
-            var offscreenLawBasedBreak = TimeSpan.FromMinutes(35);
+            var breaksDefinitions = new List<BreakDefinition>
+            {
+                new BreakDefinition(TimeSpan.FromMinutes(15), "law based Dinner Break"),
+                new BreakDefinition(TimeSpan.FromMinutes(15), "Company additional Dinner Break"),
+                new BreakDefinition(TimeSpan.FromMinutes(35), "Law based Offscreen Break")
+            };
 
-
-            var workdayDuration = TimeSpan.FromHours(8);
-            var allowedBreakDuration = TimeSpan.FromMinutes(50);
-
-            return new WorkdayDefinition();
+            return new WorkdayDefinition(TimeSpan.FromHours(8), breaksDefinitions);
         }
     }
 }
