@@ -8,6 +8,9 @@ using TrackYourDay.MAUI.BackgroundJobs.ActivityTracking;
 using TrackYourDay.MAUI.BackgroundJobs.BreakTracking;
 using TrackYourDay.MAUI.BackgroundJobs;
 using TrackYourDay.MAUI.ServiceRegistration;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using TrackYourDay.Core.Settings;
 
 namespace TrackYourDay.MAUI
 {
@@ -25,9 +28,6 @@ namespace TrackYourDay.MAUI
             builder.Services.AddMudServices();
             builder.Services.AddMauiBlazorWebView();
 
-#if DEBUG
-            builder.Services.AddBlazorWebViewDeveloperTools();
-#endif
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .Enrich.FromLogContext()
@@ -54,8 +54,14 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddQuartzHostedService();
 
+#if DEBUG
+            builder.Services.AddBlazorWebViewDeveloperTools();
+
+            // TODO: This deletes repository if needed, normally its not visible in file explorer on windws 10
+            new SqlLiteSettingsRepository().Reset();
+#endif
+
             // https://learn.microsoft.com/en-us/answers/questions/1336207/how-to-remove-close-and-maximize-button-for-a-maui?cid=kerryherger
-#if WINDOWS
             builder.ConfigureLifecycleEvents(events =>
             {
                 // Make sure to add "using Microsoft.Maui.LifecycleEvents;" in the top of the file
@@ -92,7 +98,6 @@ namespace TrackYourDay.MAUI
                     });
                 });
             });
-#endif
 
             return builder.Build();
         }
