@@ -5,5 +5,7 @@
         public ISettingsSet Get();
 
         public void Save(ISettingsSet settings);
+
+        public void Reset();
     }
 }

@@ -15,6 +15,6 @@ namespace TrackYourDay.Core.Settings
 
         public BreaksSettings BreaksSettings => BreaksSettings.CreateDefaultSettings();
 
-        public WorkdayDefinition WorkdayDefinition => WorkdayDefinition.CreateDefaultDefinition();
+        public WorkdayDefinition WorkdayDefinition => WorkdayDefinition.CreateSampleCompanyDefinition();
     }
 }
