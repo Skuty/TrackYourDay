@@ -4,7 +4,7 @@ using TrackYourDay.Core.Activities.SystemStates;
 
 namespace TrackYourDay.Core.Activities.ActivityRecognizing
 {
-    public class DefaultActivityRecognizingStategy : ISystemStateRecognizingStrategy
+    public class FocusedWindowRecognizingStategy : ISystemStateRecognizingStrategy
     {
         public SystemState RecognizeActivity()
         {
