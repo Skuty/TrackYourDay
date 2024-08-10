@@ -5,7 +5,7 @@
     public record class WorkdayDefinition(TimeSpan WorkdayDuration, TimeSpan AllowedBreakDuration)
     {
         /// <summary>List of Break Definitions with their allowed time and description</summary>
-        public readonly IReadOnlyCollection<BreakDefinition> BreakDefinitions;
+        public IReadOnlyCollection<BreakDefinition> BreakDefinitions { get; init; } = new List<BreakDefinition>();
 
         // TODO: Add missing tests that ensures that AllowedBreakDuration is equal to sum of breakDefinitions
         private WorkdayDefinition(TimeSpan workdayDuration, IList<BreakDefinition> breakDefinitions)
@@ -23,9 +23,9 @@
         {
             var breaksDefinitions = new List<BreakDefinition>
             {
-                new BreakDefinition(TimeSpan.FromMinutes(15), "law based Dinner Break"),
-                new BreakDefinition(TimeSpan.FromMinutes(15), "Company additional Dinner Break"),
-                new BreakDefinition(TimeSpan.FromMinutes(35), "Law based Offscreen Break")
+                new BreakDefinition(TimeSpan.FromMinutes(35), "Law based Offscreen Break"),
+                new BreakDefinition(TimeSpan.FromMinutes(15), "Law based Dinner Break"),
+                new BreakDefinition(TimeSpan.FromMinutes(15), "Company additional Dinner Break")
             };
 
             return new WorkdayDefinition(TimeSpan.FromHours(8), breaksDefinitions);
