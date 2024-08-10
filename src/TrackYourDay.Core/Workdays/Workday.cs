@@ -14,7 +14,8 @@ namespace TrackYourDay.Core.Workdays
         // Maybe delayed notificaion startup? or explicit order of registration/creation?
         public static Workday CreateEmpty()
         {
-            var workdayDefinition = WorkdayDefinition.CreateDefaultDefinition();
+            // This should be really empty, not just initialized
+            var workdayDefinition = WorkdayDefinition.CreateSampleCompanyDefinition();
             var workday = new Workday()
             {
                 WorkdayDefinition = workdayDefinition,

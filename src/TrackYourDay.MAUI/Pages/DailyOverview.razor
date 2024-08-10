@@ -10,10 +10,10 @@
     Daily Overview
 </h1>
 
-<MudExpansionPanels>
+<MudExpansionPanels MultiExpansion="true">
     <MudExpansionPanel Text="Short overview" IsInitiallyExpanded="true">
         <div style="text-align: center; margin-bottom: 20px;">
-            <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Przewidywany koniec pracy o: @this.estimatedEndOfWorkDay.ToShortTimeString()</h2>
+            <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Estimated end of Workday at: @this.estimatedEndOfWorkDay.ToShortTimeString()</h2>
         </div>
         <MudGrid Justify="Justify.Center">
             <MudItem>
@@ -45,18 +45,41 @@
             </MudItem>
         </MudGrid>
     </MudExpansionPanel>
-    <MudExpansionPanel Text="All details of Your Workday">
-        <p>
-            <MudText><b>TimeOfAllActivities:</b> @workday.TimeOfAllActivities</MudText>
-            <MudText><b>TimeOfAllBreaks:</b> @workday.TimeOfAllBreaks</MudText>
-            <MudText><b>OverallTimeLeftToWork:</b> @workday.OverallTimeLeftToWork</MudText>
-            <MudText><b>TimeLeftToWorkActively:</b> @workday.TimeLeftToWorkActively</MudText>
-            <MudText><b>BreakTimeLeft:</b> @workday.BreakTimeLeft</MudText>
-            <MudText><b>ValidBreakTimeUsed:</b> @workday.ValidBreakTimeUsed</MudText>
-            <MudText><b>OverhoursTime:</b> @workday.OverhoursTime</MudText>
-        </p>
-    </MudExpansionPanel>
 </MudExpansionPanels>
+
+<MudStack Row="true">
+    <MudCard>
+        <MudCardContent>
+            <MudText>Your todays Workday progress:</MudText>
+            <MudText Typo="Typo.body2">Time Of All Activities: @workday.TimeOfAllActivities</MudText>
+            <MudText Typo="Typo.body2">Time Of All Breaks: @workday.TimeOfAllBreaks</MudText>
+            <MudText Typo="Typo.body2">Overall Time Left To Work: @workday.OverallTimeLeftToWork</MudText>
+            <MudText Typo="Typo.body2">Time Left To Work Actively: @workday.TimeLeftToWorkActively</MudText>
+            <MudText Typo="Typo.body2">Break Time Left: @workday.BreakTimeLeft</MudText>
+            <MudText Typo="Typo.body2">Valid Break Time Used: @workday.ValidBreakTimeUsed</MudText>
+            <MudText Typo="Typo.body2">OverhoursTime: @workday.OverhoursTime</MudText>
+        </MudCardContent>
+        <MudCardActions>
+            @* <MudButton Variant="Variant.Text" Color="Color.Primary">Learn More</MudButton> *@
+        </MudCardActions>
+    </MudCard>
+
+    <MudCard>
+        <MudCardContent>
+            <MudText>Your todays Workday progress:</MudText>
+            <MudText Typo="Typo.body2">Workday Duration: @workdayDefinition.WorkdayDuration</MudText>
+            <MudText Typo="Typo.body2">Allowed Break Duration: @workdayDefinition.AllowedBreakDuration</MudText>
+            <MudText Typo="Typo.body2">Included Break Definitions: </MudText>
+                @foreach (var definition in @workdayDefinition.BreakDefinitions)
+                {
+                    <MudText Typo="Typo.body1">@definition.Duration - @definition.Description</MudText>
+                }
+        </MudCardContent>
+        <MudCardActions>
+            @* <MudButton Variant="Variant.Text" Color="Color.Primary">Learn More</MudButton> *@
+        </MudCardActions>
+    </MudCard>
+</MudStack>
 
     @code {
     [Inject]
@@ -67,6 +90,7 @@
     private BreakTracker breakTracker { get; set; }
 
     private Workday workday;
+    private WorkdayDefinition workdayDefinition;
 
     private DateTime estimatedEndOfWorkDay;
 
@@ -86,6 +110,7 @@
 
     private void Refresh()
     {
+        this.workdayDefinition = this.settingsSet.WorkdayDefinition;
         this.workday = Workday.CreateBasedOn(this.settingsSet.WorkdayDefinition, this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
 
         this.estimatedEndOfWorkDay = DateTime.Now + workday.OverallTimeLeftToWork;

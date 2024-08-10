@@ -67,6 +67,7 @@ namespace TrackYourDay.Core.Settings
                 var deserialedSettings = JsonSerializer.Deserialize<UserSettingsSet>(settingsSetContent);
                 if (deserialedSettings is not null)
                 {
+                    //Here are deserialized seetings that probably are overwritting new settings for today
                     return deserialedSettings;
                 } 
                 else
