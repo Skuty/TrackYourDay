@@ -17,23 +17,26 @@ namespace TrackYourDay.Tests.Activities
         private Mock<IPublisher> publisherMock;
         private Mock<ILogger<ActivityTracker>> loggerMock;
         private Mock<ISystemStateRecognizingStrategy> startedActivityRecognizingStrategy;
-        private Mock<ISystemStateRecognizingStrategy> instantActivityRecognizingStrategy;
+        private Mock<ISystemStateRecognizingStrategy> mousePositionRecognizingStrategy;
+        private Mock<ISystemStateRecognizingStrategy> lastInputRecognizingStrategy;
         private ActivityTracker activityEventTracker;
 
         public ActivityTrackerTests()
         {
-            clock = new Clock();
-            loggerMock = new Mock<ILogger<ActivityTracker>>();
-            publisherMock = new Mock<IPublisher>();
-            startedActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
-            instantActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
+            this.clock = new Clock();
+            this.loggerMock = new Mock<ILogger<ActivityTracker>>();
+            this.publisherMock = new Mock<IPublisher>();
+            this.startedActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
+            this.mousePositionRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
+            this.lastInputRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
 
-            activityEventTracker = new ActivityTracker(
-                clock,
-                publisherMock.Object,
-                startedActivityRecognizingStrategy.Object,
-                instantActivityRecognizingStrategy.Object,
-                loggerMock.Object);
+            this.activityEventTracker = new ActivityTracker(
+                this.clock,
+                this.publisherMock.Object,
+                this.startedActivityRecognizingStrategy.Object,
+                this.mousePositionRecognizingStrategy.Object,
+                this.lastInputRecognizingStrategy.Object,
+                this.loggerMock.Object);
         }
 
         [Fact]
@@ -94,19 +97,37 @@ namespace TrackYourDay.Tests.Activities
             publisherMock.Invocations.Count.Should().Be(existingNotificationsCount);
         }
 
+        //TODO Remove those two tests and adjust implementation - ActivityTracker should be generic and not aware of used activities
         [Fact]
-        public void WhenInstantPeriodicActivityIsRecognized_ThenInstantActivityOccuredEventIsPublished()
+        public void GivenMousePositionChanged_WhenInstantPeriodicActivityIsRecognized_ThenInstantActivityOccuredEventIsPublished()
         {
             // Arrange
-            instantActivityRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(SystemStateFactory.MouseMouvedEvent(0, 0));
+            var mouseMovedState = SystemStateFactory.MouseMouvedEvent(0, 0);
+            this.mousePositionRecognizingStrategy.Setup(s => s.RecognizeActivity())
+                .Returns(mouseMovedState);
 
             // Act
-            activityEventTracker.RecognizeActivity();
+            this.activityEventTracker.RecognizeActivity();
 
             // Assert
-            publisherMock.Verify(x => x.Publish(It.IsAny<PeriodicActivityStartedEvent>(), CancellationToken.None), Times.Once);
+            this.publisherMock.Verify(x => x.Publish(It.Is<InstantActivityOccuredEvent>(a => a.InstantActivity.SystemState == mouseMovedState), CancellationToken.None), Times.Once);
         }
+
+        [Fact]
+        public void GivenLastInputChanged_WhenInstantActivityIsRecognized_ThenInstantActivityOccuredEventIsPublished()
+        {
+            // Arrange
+            var lastInputSystemState = SystemStateFactory.LastInputState(new DateTime(2024, 01, 01));
+            this.lastInputRecognizingStrategy.Setup(s => s.RecognizeActivity())
+                .Returns(lastInputSystemState); 
+
+            // Act
+            this.activityEventTracker.RecognizeActivity();
+
+            // Assert
+            this.publisherMock.Verify(x => x.Publish(It.Is<InstantActivityOccuredEvent>(a => a.InstantActivity.SystemState == lastInputSystemState), CancellationToken.None), Times.Once);
+        }
+
 
         [Fact]
         public void WhenNewPeriodicActivityIsStarted_ThenItIsCurrentActivity()

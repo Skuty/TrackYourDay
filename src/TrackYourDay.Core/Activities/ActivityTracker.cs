@@ -4,7 +4,6 @@ using System.Collections.Immutable;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
 using TrackYourDay.Core.Activities.Events;
 using TrackYourDay.Core.Activities.SystemStates;
-using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Core.Activities
 {
@@ -16,6 +15,7 @@ namespace TrackYourDay.Core.Activities
         private readonly IPublisher publisher;
         private readonly ISystemStateRecognizingStrategy systemStateRecognizingStrategy;
         private readonly ISystemStateRecognizingStrategy mousePositionRecognizingStrategy;
+        private readonly ISystemStateRecognizingStrategy lastInputRecognizingStrategy;
         private StartedActivity currentStartedActivity;
         private InstantActivity lastInstantActivity;
         private readonly List<EndedActivity> endedActivities;
@@ -26,6 +26,7 @@ namespace TrackYourDay.Core.Activities
             IPublisher publisher,
             ISystemStateRecognizingStrategy startedActivityRecognizingStrategy,
             ISystemStateRecognizingStrategy mousePositionRecognizingStrategy,
+            ISystemStateRecognizingStrategy lastInputRecognizingStrategy,
             ILogger<ActivityTracker> logger)
         {
             this.logger = logger;
@@ -33,6 +34,7 @@ namespace TrackYourDay.Core.Activities
             this.publisher = publisher;
             this.systemStateRecognizingStrategy = startedActivityRecognizingStrategy;
             this.mousePositionRecognizingStrategy = mousePositionRecognizingStrategy;
+            this.lastInputRecognizingStrategy = lastInputRecognizingStrategy;
             this.endedActivities = new List<EndedActivity>();
             this.instantActivities = new List<InstantActivity>();
             this.currentStartedActivity = ActivityFactory.StartedActivity(

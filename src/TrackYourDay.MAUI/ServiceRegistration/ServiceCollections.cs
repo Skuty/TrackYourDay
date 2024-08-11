@@ -30,7 +30,13 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                 var lastInputRecognizingStrategy = new LastInputRecognizingStrategy();
                 var logger = container.GetRequiredService<ILogger<ActivityTracker>>();
 
-                return new ActivityTracker(clock, publisher, startedActivityRecognizingStrategy, mousePositionRecognizingStrategy, logger);
+                return new ActivityTracker(
+                    clock, 
+                    publisher, 
+                    startedActivityRecognizingStrategy, 
+                    mousePositionRecognizingStrategy, 
+                    lastInputRecognizingStrategy, 
+                    logger);
             });
 
             var activitiesSettings = ActivitiesSettings.CreateDefaultSettings();
