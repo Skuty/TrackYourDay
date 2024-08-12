@@ -13,11 +13,12 @@ namespace TrackYourDay.Core.Activities
 
         private readonly IClock clock;
         private readonly IPublisher publisher;
-        private readonly ISystemStateRecognizingStrategy systemStateRecognizingStrategy;
+        private readonly ISystemStateRecognizingStrategy focusedWindowRecognizingStategy;
         private readonly ISystemStateRecognizingStrategy mousePositionRecognizingStrategy;
         private readonly ISystemStateRecognizingStrategy lastInputRecognizingStrategy;
         private StartedActivity currentStartedActivity;
-        private InstantActivity lastInstantActivity;
+        private InstantActivity recognizedMousePositionActivity;
+        private InstantActivity lastInputActivity;
         private readonly List<EndedActivity> endedActivities;
         private readonly List<InstantActivity> instantActivities;
 
@@ -32,7 +33,7 @@ namespace TrackYourDay.Core.Activities
             this.logger = logger;
             this.clock = clock;
             this.publisher = publisher;
-            this.systemStateRecognizingStrategy = startedActivityRecognizingStrategy;
+            this.focusedWindowRecognizingStategy = startedActivityRecognizingStrategy;
             this.mousePositionRecognizingStrategy = mousePositionRecognizingStrategy;
             this.lastInputRecognizingStrategy = lastInputRecognizingStrategy;
             this.endedActivities = new List<EndedActivity>();
@@ -43,30 +44,39 @@ namespace TrackYourDay.Core.Activities
 
         public void RecognizeActivity()
         {
-            SystemState recognizedSystemState = this.systemStateRecognizingStrategy.RecognizeActivity();
+            SystemState recognizedFocusedWindow = this.focusedWindowRecognizingStategy.RecognizeActivity();
 
             if (this.currentStartedActivity is null)
             {
-                this.currentStartedActivity = ActivityFactory.StartedActivity(this.clock.Now, recognizedSystemState);
+                this.currentStartedActivity = ActivityFactory.StartedActivity(this.clock.Now, recognizedFocusedWindow);
                 this.publisher.Publish(new PeriodicActivityStartedEvent(Guid.NewGuid(), this.currentStartedActivity));
                 return;
             }
 
-            if (this.currentStartedActivity.SystemState != recognizedSystemState)
+            if (this.currentStartedActivity.SystemState != recognizedFocusedWindow)
             {
                 var endedActivity = this.currentStartedActivity.End(this.clock.Now);
                 this.endedActivities.Add(endedActivity);
-                this.currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedSystemState);
+                this.currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedFocusedWindow);
                 this.publisher.Publish(new PeriodicActivityEndedEvent(Guid.NewGuid(), endedActivity));
                 this.publisher.Publish(new PeriodicActivityStartedEvent(Guid.NewGuid(), this.currentStartedActivity));
             };
 
-            SystemState recognizedMousePosition = this.mousePositionRecognizingStrategy.RecognizeActivity();
-            if (this.lastInstantActivity is null || this.lastInstantActivity.SystemState != recognizedMousePosition)
+            // Remove in future as it is redundant due to LastInput recognition covering also mouse movement as input
+            //SystemState newlyRecognizedMousePosition = this.mousePositionRecognizingStrategy.RecognizeActivity();
+            //if (this.recognizedMousePositionActivity is null || this.recognizedMousePositionActivity.SystemState != newlyRecognizedMousePosition)
+            //{
+            //    this.recognizedMousePositionActivity = ActivityFactory.MouseMovedActivity(this.clock.Now, newlyRecognizedMousePosition);
+            //    this.publisher.Publish(new InstantActivityOccuredEvent(Guid.NewGuid(), this.recognizedMousePositionActivity));
+            //    this.instantActivities.Add(this.recognizedMousePositionActivity);
+            //}
+
+            SystemState newlyRecognizedLastInput = this.lastInputRecognizingStrategy.RecognizeActivity();
+            if (this.lastInputActivity is null || this.lastInputActivity.SystemState != newlyRecognizedLastInput)
             {
-                this.lastInstantActivity = ActivityFactory.MouseMovedActivity(this.clock.Now, recognizedMousePosition);
-                this.publisher.Publish(new InstantActivityOccuredEvent(Guid.NewGuid(), this.lastInstantActivity));
-                this.instantActivities.Add(this.lastInstantActivity);
+                this.lastInputActivity = ActivityFactory.LastInputActivity(this.clock.Now, newlyRecognizedLastInput);
+                this.publisher.Publish(new InstantActivityOccuredEvent(Guid.NewGuid(), this.lastInputActivity));
+                this.instantActivities.Add(this.lastInputActivity);
             }
         }
 

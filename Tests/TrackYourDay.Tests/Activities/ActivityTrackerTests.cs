@@ -98,20 +98,21 @@ namespace TrackYourDay.Tests.Activities
         }
 
         //TODO Remove those two tests and adjust implementation - ActivityTracker should be generic and not aware of used activities
-        [Fact]
-        public void GivenMousePositionChanged_WhenInstantPeriodicActivityIsRecognized_ThenInstantActivityOccuredEventIsPublished()
-        {
-            // Arrange
-            var mouseMovedState = SystemStateFactory.MouseMouvedEvent(0, 0);
-            this.mousePositionRecognizingStrategy.Setup(s => s.RecognizeActivity())
-                .Returns(mouseMovedState);
+        // This one can also be removed as its functionlity is covered by LastInput activity
+        //[Fact]
+        //public void GivenMousePositionChanged_WhenInstantPeriodicActivityIsRecognized_ThenInstantActivityOccuredEventIsPublished()
+        //{
+        //    // Arrange
+        //    var mouseMovedState = SystemStateFactory.MouseMouvedEvent(0, 0);
+        //    this.mousePositionRecognizingStrategy.Setup(s => s.RecognizeActivity())
+        //        .Returns(mouseMovedState);
 
-            // Act
-            this.activityEventTracker.RecognizeActivity();
+        //    // Act
+        //    this.activityEventTracker.RecognizeActivity();
 
-            // Assert
-            this.publisherMock.Verify(x => x.Publish(It.Is<InstantActivityOccuredEvent>(a => a.InstantActivity.SystemState == mouseMovedState), CancellationToken.None), Times.Once);
-        }
+        //    // Assert
+        //    this.publisherMock.Verify(x => x.Publish(It.Is<InstantActivityOccuredEvent>(a => a.InstantActivity.SystemState == mouseMovedState), CancellationToken.None), Times.Once);
+        //}
 
         [Fact]
         public void GivenLastInputChanged_WhenInstantActivityIsRecognized_ThenInstantActivityOccuredEventIsPublished()

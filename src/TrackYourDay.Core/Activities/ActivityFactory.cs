@@ -34,5 +34,10 @@ namespace TrackYourDay.Core.Activities
         {
             return new InstantActivity(Guid.NewGuid(), occuranceDate, systemState);
         }
+
+        public static InstantActivity LastInputActivity(DateTime occuranceDate, SystemState systemState)
+        {
+            return new InstantActivity(Guid.NewGuid(), occuranceDate, systemState);
+        }
     }
 }

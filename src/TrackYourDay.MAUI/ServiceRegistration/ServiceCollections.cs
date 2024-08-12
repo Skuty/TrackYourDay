@@ -25,7 +25,7 @@ namespace TrackYourDay.MAUI.ServiceRegistration
             {
                 var clock = container.GetRequiredService<IClock>();
                 var publisher = container.GetRequiredService<IPublisher>();
-                var startedActivityRecognizingStrategy = new FocusedWindowRecognizingStategy();
+                var focusedWindowRecognizingStategy = new FocusedWindowRecognizingStategy();
                 var mousePositionRecognizingStrategy = new MousePositionRecognizingStrategy();
                 var lastInputRecognizingStrategy = new LastInputRecognizingStrategy();
                 var logger = container.GetRequiredService<ILogger<ActivityTracker>>();
@@ -33,7 +33,7 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                 return new ActivityTracker(
                     clock, 
                     publisher, 
-                    startedActivityRecognizingStrategy, 
+                    focusedWindowRecognizingStategy, 
                     mousePositionRecognizingStrategy, 
                     lastInputRecognizingStrategy, 
                     logger);
