@@ -19,17 +19,24 @@ namespace TrackYourDay.MAUI.ServiceRegistration
     {
         public static IServiceCollection AddTrackers(this IServiceCollection services)
         {
-            services.AddScoped<ISystemStateRecognizingStrategy, DefaultActivityRecognizingStategy>();
+            services.AddScoped<ISystemStateRecognizingStrategy, FocusedWindowRecognizingStategy>();
             // Refactor to avoid this in future
             services.AddSingleton<ActivityTracker>(container =>
             {
                 var clock = container.GetRequiredService<IClock>();
                 var publisher = container.GetRequiredService<IPublisher>();
-                var startedActivityRecognizingStrategy = new DefaultActivityRecognizingStategy();
+                var focusedWindowRecognizingStategy = new FocusedWindowRecognizingStategy();
                 var mousePositionRecognizingStrategy = new MousePositionRecognizingStrategy();
+                var lastInputRecognizingStrategy = new LastInputRecognizingStrategy();
                 var logger = container.GetRequiredService<ILogger<ActivityTracker>>();
 
-                return new ActivityTracker(clock, publisher, startedActivityRecognizingStrategy, mousePositionRecognizingStrategy, logger);
+                return new ActivityTracker(
+                    clock, 
+                    publisher, 
+                    focusedWindowRecognizingStategy, 
+                    mousePositionRecognizingStrategy, 
+                    lastInputRecognizingStrategy, 
+                    logger);
             });
 
             var activitiesSettings = ActivitiesSettings.CreateDefaultSettings();

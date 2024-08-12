@@ -21,5 +21,10 @@
         {
             return new MousePositionState(xPosition, yPosition);
         }
+
+        public static LastInputState LastInputState(DateTime lastInputDate)
+        {
+            return new LastInputState(lastInputDate);
+        }
     }
 }
