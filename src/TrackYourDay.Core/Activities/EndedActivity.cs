@@ -6,7 +6,12 @@ namespace TrackYourDay.Core.Activities
     {
         public TimeSpan GetDuration()
         {
-            return EndDate - StartDate;
+            return this.EndDate - this.StartDate;
+        }
+
+        public string GetDescription()
+        {
+            return this.ActivityType.ActivityDescription;
         }
     }
 }

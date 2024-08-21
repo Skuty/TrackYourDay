@@ -2,7 +2,7 @@
 
 namespace TrackYourDay.Core.Analytics
 {
-    internal class GropuedActivity
+    public class GropuedActivity
     {
         private List<Guid> processedActivities { get; set; }
 
