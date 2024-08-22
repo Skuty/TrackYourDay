@@ -4,6 +4,8 @@ namespace TrackYourDay.Core.Activities
 {
     public record class EndedActivity(DateTime StartDate, DateTime EndDate, SystemState ActivityType)
     {
+        public Guid Guid { get; init; } = Guid.NewGuid();
+
         public TimeSpan GetDuration()
         {
             return this.EndDate - this.StartDate;

@@ -1,10 +1,13 @@
 ﻿using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Core.Analytics
 {
     public class GropuedActivity
     {
-        private List<Guid> processedActivities { get; set; }
+        // TODO probably have to be expanded to IncludedActivity with start / end date time
+        private List<Guid> processedActivities;
+        private List<Guid> processedBreaks;
 
         public DateOnly Date { get; }
 
@@ -12,12 +15,34 @@ namespace TrackYourDay.Core.Analytics
 
         public TimeSpan Duration { get; private set; }
 
-        public void Include(EndedActivity activity) 
+        public static GropuedActivity CreateForDate(DateOnly date)
         {
-            if (!this.processedActivities.Contains(null))
+            return new GropuedActivity(date);
+        }
+
+        public GropuedActivity(DateOnly date)
+        {
+            this.processedActivities = new List<Guid>();
+            this.processedBreaks = new List<Guid>();
+            this.Date = date;
+            this.Duration = TimeSpan.Zero;
+        }
+
+        internal void Include(EndedActivity activityToInclude) 
+        {
+            if (!this.processedActivities.Contains(activityToInclude.Guid))
             {
-                this.Duration += activity.GetDuration();
-                this.processedActivities.Add(null);
+                this.Duration += activityToInclude.GetDuration();
+                this.processedActivities.Add(activityToInclude.Guid); 
+            }
+        }
+
+        internal void ReduceBy(EndedBreak breakToReduce)
+        {
+            if (!this.processedActivities.Contains(breakToReduce..Guid))
+            {
+                this.Duration -= breakToReduce.BreakDuration;
+                this.processedActivities.Add(breakToReduce.Guid);
             }
         }
     }

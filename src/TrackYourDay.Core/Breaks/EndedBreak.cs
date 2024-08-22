@@ -8,5 +8,10 @@
         {
             return new RevokedBreak(this, breakRevokedDate);
         }
+
+        public static EndedBreak CreateSampleForDate(DateTime breakStartedAt, DateTime breakEndedAt)
+        {
+            return new EndedBreak(Guid.NewGuid(), breakStartedAt, breakEndedAt, "Sample Break");
+        }
     }
 }
