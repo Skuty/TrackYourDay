@@ -24,7 +24,7 @@ public partial class BreakRevokePage : ContentPage
         this.counterStep = 1 / (this.showPeriod.TotalSeconds * 4);
 
         // Todo publish Break with breakGuid instead of just guid or other kind of readmodel
-        var endedBreak = this.breakTracker.GetEndedBreaks().First(b => b.BreakGuid == breakGuid);
+        var endedBreak = this.breakTracker.GetEndedBreaks().First(b => b.Guid == breakGuid);
 
         // TODO: Move UI text to xaml as use only values from view model
         this.breakRevokeViewModel = new BreakRevokeViewModel()

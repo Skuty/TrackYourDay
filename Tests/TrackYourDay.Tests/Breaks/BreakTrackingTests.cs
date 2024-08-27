@@ -222,11 +222,11 @@ namespace TrackYourDay.Tests.Breaks
             var endedBreak = breakTracker.GetEndedBreaks().First();
 
             // Act
-            breakTracker.RevokeBreak(endedBreak.BreakGuid, DateTime.Now);
+            breakTracker.RevokeBreak(endedBreak.Guid, DateTime.Now);
 
             // Assert
             publisherMock.Verify(x => x.Publish(It.Is<BreakRevokedEvent>(
-                n => n.RevokedBreak.BreakGuid == endedBreak.BreakGuid
+                n => n.RevokedBreak.BreakGuid == endedBreak.Guid
                 ), CancellationToken.None), Times.Once);
         }
     }

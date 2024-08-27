@@ -17,7 +17,7 @@ namespace TrackYourDay.MAUI.Handlers
 
         public Task Handle(BreakEndedEvent _event, CancellationToken cancellationToken)
         {
-            this.OpenDialogPageInNewWindow(_event.EndedBreak.BreakGuid);
+            this.OpenDialogPageInNewWindow(_event.EndedBreak.Guid);
 
             return Task.CompletedTask;
         }

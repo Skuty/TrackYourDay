@@ -107,7 +107,7 @@ namespace TrackYourDay.Core.Breaks
                     {
                         var endedBreak = this.currentStartedBreak.EndBreak(activityToProcess.ActivityDate);
                         this.logger.LogInformation("End: {EndedBreak}", endedBreak);
-                        this.endedBreaks.TryAdd(endedBreak.BreakGuid, endedBreak);
+                        this.endedBreaks.TryAdd(endedBreak.Guid, endedBreak);
                         this.currentStartedBreak = null;
                         this.lastTimeOfActivity = activityToProcess.ActivityDate;
                         this.processedActivities.Add(activityToProcess);

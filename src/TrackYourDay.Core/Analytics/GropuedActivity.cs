@@ -5,9 +5,10 @@ namespace TrackYourDay.Core.Analytics
 {
     public class GropuedActivity
     {
-        // TODO probably have to be expanded to IncludedActivity with start / end date time
         private List<Guid> processedActivities;
         private List<Guid> processedBreaks;
+        private List<TimePeriod> includedPeriods;
+        private List<TimePeriod> excludedPeriods;
 
         public DateOnly Date { get; }
 
@@ -24,6 +25,8 @@ namespace TrackYourDay.Core.Analytics
         {
             this.processedActivities = new List<Guid>();
             this.processedBreaks = new List<Guid>();
+            this.includedPeriods = new List<TimePeriod>();
+            this.excludedPeriods = new List<TimePeriod>();
             this.Date = date;
             this.Duration = TimeSpan.Zero;
         }
@@ -32,17 +35,40 @@ namespace TrackYourDay.Core.Analytics
         {
             if (!this.processedActivities.Contains(activityToInclude.Guid))
             {
-                this.Duration += activityToInclude.GetDuration();
-                this.processedActivities.Add(activityToInclude.Guid); 
+                var periodToInclude = new TimePeriod(activityToInclude.StartDate, activityToInclude.EndDate);
+                this.includedPeriods.Add(periodToInclude);
+                this.processedActivities.Add(activityToInclude.Guid);
+
+                foreach (var excludedPeriod in this.excludedPeriods)
+                {
+                    if (periodToInclude.OverlapsWith(excludedPeriod))
+                    {
+                        this.Duration += periodToInclude.GetOverlapDuration(excludedPeriod);
+                    }
+                    else
+                    {
+                        this.Duration += periodToInclude.Duration;
+
+                    }
+                }
             }
         }
 
         internal void ReduceBy(EndedBreak breakToReduce)
         {
-            if (!this.processedActivities.Contains(breakToReduce..Guid))
+            if (!this.processedBreaks.Contains(breakToReduce.Guid))
             {
-                this.Duration -= breakToReduce.BreakDuration;
-                this.processedActivities.Add(breakToReduce.Guid);
+                var periodToExclude = new TimePeriod(breakToReduce.BreakStartedAt, breakToReduce.BreakEndedAt);
+                this.excludedPeriods.Add(periodToExclude);
+                this.processedBreaks.Add(breakToReduce.Guid);
+
+                foreach (var includedPeriod in this.includedPeriods)
+                {
+                    if (periodToExclude.OverlapsWith(includedPeriod))
+                    {
+                        this.Duration -= periodToExclude.GetOverlapDuration(includedPeriod);
+                    }
+                }
             }
         }
     }
