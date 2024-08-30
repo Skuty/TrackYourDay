@@ -1,6 +1,8 @@
-﻿namespace TrackYourDay.Core.Analytics
+﻿using System.Net.Http.Headers;
+
+namespace TrackYourDay.Core.Analytics
 {
-    public class GropuedActivity
+    public class GroupedActivity
     {
         private List<Guid> processedEvents;
         private List<TimePeriod> includedPeriods;
@@ -8,27 +10,39 @@
 
         public DateOnly Date { get; }
 
-        public string ActivityDescription { get; }
+        public string Description { get; }
 
         public TimeSpan Duration { get; private set; }
 
-        public static GropuedActivity CreateEmptyForDate(DateOnly date)
+        public static GroupedActivity CreateEmptyForDate(DateOnly date)
         {
-            return new GropuedActivity(date);
+            return new GroupedActivity(date);
         }
 
-        private static GropuedActivity CombineWith(GropuedActivity activityToCombine)
+        public static GroupedActivity CreateEmptyWithDescriptionForDate(DateOnly date, string description)
+        {
+            return new GroupedActivity(date, description);
+        }
+
+
+        private static GroupedActivity CombineWith(GroupedActivity activityToCombine)
         {
             throw new NotImplementedException("Just an idea how we can do cascaded grouping of different grouped activities to other grouped groups without implementing new type");
         }
 
-        public GropuedActivity(DateOnly date)
+        public GroupedActivity(DateOnly date)
         {
+            throw new Exception("Almost works. Grouped notifications are probably not grouped correctly as time is not growing.");
             this.processedEvents = new List<Guid>();
             this.includedPeriods = new List<TimePeriod>();
             this.excludedPeriods = new List<TimePeriod>();
             this.Date = date;
             this.Duration = TimeSpan.Zero;
+        }
+
+        public GroupedActivity(DateOnly date, string description) : this(date)
+        {
+            this.Description = description;
         }
 
         // TODO: We are using guid to identify was TimePeriod already exlucded,

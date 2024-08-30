@@ -6,11 +6,11 @@ using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.Handlers
 {
-    internal class BreakEndedEventHandler : INotificationHandler<BreakEndedEvent>
+    internal class ShowUINotificationWhenBreakEndedEventHandler : INotificationHandler<BreakEndedEvent>
     {
         private readonly BreakTracker breakTracker;
 
-        public BreakEndedEventHandler(BreakTracker breakTracker)
+        public ShowUINotificationWhenBreakEndedEventHandler(BreakTracker breakTracker)
         {
             this.breakTracker = breakTracker;
         }

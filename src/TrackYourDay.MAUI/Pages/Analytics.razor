@@ -1,30 +1,29 @@
 ﻿@page "/analytics"
 
-@using TrackYourDay.Core.Activities;
+@using TrackYourDay.Core.Analytics
 @using TrackYourDay.MAUI.Data;
-@inject ActivityTracker activityTracker;
+@inject ActivitiesAnalyser activitiesAnalyser;
 
-@if (this.periodicActivities == null)
+@if (this.groupedActivities == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
 <MudExpansionPanels>
-    <MudExpansionPanel Text="System States" IsInitiallyExpanded="true">
-            <MudDataGrid T="EndedActivity" Items="@periodicActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="true">
+    <MudExpansionPanel Text="Grouped Activities" IsInitiallyExpanded="true">
+            <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
             <ToolBarContent>
                 <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                               AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
             </ToolBarContent>
             <Columns>
-                <PropertyColumn Property="x => x.StartDate.ToLongTimeString()" Title="Activity Started" Filterable="false" />
-                <PropertyColumn Property="x => x.EndDate.ToLongTimeString()" Title="Activity Ended" Filterable="false" />
-                <PropertyColumn Property="x => x.GetDuration()" Title="Duration" SortBy="@_sortByDuration" />
-                <PropertyColumn Property="x => x.ActivityType.ActivityDescription" Title="Description" SortBy="@_sortByDescritpion" />
+                <PropertyColumn Property="x => x.Date.ToShortDateString()" Title="Date" Filterable="false" />
+                <PropertyColumn Property="x => x.Duration" Title="Duration" Filterable="true" SortBy="@_sortByDuration"/>
+                <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
             </Columns>
             <PagerContent>
-                <MudDataGridPager T="EndedActivity" />
+                    <MudDataGridPager T="GroupedActivity" />
             </PagerContent>
         </MudDataGrid>    
     </MudExpansionPanel>
@@ -32,35 +31,33 @@ else
 }
 
 @code {
-    private List<EndedActivity> periodicActivities;
-    private List<InstantActivity> instantActivities;
+    private List<GroupedActivity> groupedActivities;
 
     protected override async Task OnInitializedAsync()
     {
-        this.periodicActivities = this.activityTracker.GetEndedActivities().OrderByDescending(activity => activity.StartDate).ToList();
-        this.instantActivities = this.activityTracker.GetInstantActivities().OrderByDescending(activity => activity.OccuranceDate).Take(500).ToList();
+        this.groupedActivities = this.activitiesAnalyser.GetGroupedActivities().OrderByDescending(activity => activity.Duration).ToList();
     }
     
     private string _searchString;
 
     // custom sort by name length
-    private Func<EndedActivity, object> _sortByDuration => x =>
+    private Func<GroupedActivity, object> _sortByDuration => x =>
     {
-        return x.GetDuration();
+        return x.Duration;
     };
 
-    private Func<EndedActivity, object> _sortByDescritpion => x =>
+    private Func<GroupedActivity, object> _sortByDescritpion => x =>
     {
-        return x.ActivityType.ActivityDescription;
+        return x.Description;
     };
 
     // quick filter - filter globally across multiple columns with the same input
-    private Func<EndedActivity, bool> _quickFilter => x =>
+    private Func<GroupedActivity, bool> _quickFilter => x =>
     {
         if (string.IsNullOrWhiteSpace(_searchString))
             return true;
 
-        if (x.ActivityType.ActivityDescription.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        if (x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
         return false;

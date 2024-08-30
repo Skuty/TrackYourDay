@@ -4,6 +4,7 @@ using Quartz;
 using TrackYourDay.Core;
 using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Activities.ActivityRecognizing;
+using TrackYourDay.Core.Analytics;
 using TrackYourDay.Core.Breaks;
 using TrackYourDay.Core.Notifications;
 using TrackYourDay.Core.Settings;
@@ -47,6 +48,8 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                 serviceCollection.GetRequiredService<IClock>(),
                 breaksSettings.TimeOfNoActivityToStartBreak,
                 serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
+
+            services.AddSingleton<ActivitiesAnalyser>();
 
             return services;
         }
