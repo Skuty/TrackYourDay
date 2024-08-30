@@ -41,9 +41,9 @@ namespace TrackYourDay.Core.Analytics
 
                 foreach (var excludedPeriod in this.excludedPeriods)
                 {
-                    if (periodToInclude.OverlapsWith(excludedPeriod))
+                    if (periodToInclude.IsOverlappingWith(excludedPeriod))
                     {
-                        this.Duration += periodToInclude.GetOverlapDuration(excludedPeriod);
+                        this.Duration += periodToInclude.GetOverlappingDuration(excludedPeriod);
                     }
                     else
                     {
@@ -64,9 +64,9 @@ namespace TrackYourDay.Core.Analytics
 
                 foreach (var includedPeriod in this.includedPeriods)
                 {
-                    if (periodToExclude.OverlapsWith(includedPeriod))
+                    if (periodToExclude.IsOverlappingWith(includedPeriod))
                     {
-                        this.Duration -= periodToExclude.GetOverlapDuration(includedPeriod);
+                        this.Duration -= periodToExclude.GetOverlappingDuration(includedPeriod);
                     }
                 }
             }
