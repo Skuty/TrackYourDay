@@ -3,15 +3,13 @@ using TrackYourDay.Core.Analytics;
 
 namespace TrackYourDay.Tests.Analytics
 {
-    // TODO: We are using guid to identify was TimePeriod already exlucded,
-    // but we should compare to other excluded time period because guid can differ and we will substitute twice the same time
     public class GropuedActivityTests
     {
         [Fact]
         public void GivenDurationWasNotExtendedByTimePeriod_WhenDurationIsExtendedByTimePeriod_ThenDurrationIsExtendedByTimeOfPeriod()
         {
             // Given
-            var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
+            var groupedActivity = GropuedActivity.CreateEmptyForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
             var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);
@@ -27,7 +25,7 @@ namespace TrackYourDay.Tests.Analytics
         public void GivenDurationWasExtendedByTimePeriod_WhenDurationIsExtendedByThatSameTimePeriod_ThenDurrationIsNotChanged()
         {
             // Given
-            var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
+            var groupedActivity = GropuedActivity.CreateEmptyForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
             var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);
@@ -45,7 +43,7 @@ namespace TrackYourDay.Tests.Analytics
         public void GivenDurationWasNotReducedByTimePeriod_WhenDurationIsReducedByFullyOverlappingTimePeriod_ThenDurrationIsReducedByFullTimeOfTimePeriod()
         {
             // Given
-            var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
+            var groupedActivity = GropuedActivity.CreateEmptyForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
             var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);
@@ -63,7 +61,7 @@ namespace TrackYourDay.Tests.Analytics
         public void GivenDurationWasNotReducedByTimePeriod_WhenDurationIsReducedByPartiallyOverlappingTimePeriod_ThenDurrationIsReducedByTimeOfOverlappingTimePeriod()
         {
             // Given
-            var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
+            var groupedActivity = GropuedActivity.CreateEmptyForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
             var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);
@@ -81,7 +79,7 @@ namespace TrackYourDay.Tests.Analytics
         public void GivenDurationWasReducedByTimePeriod_WhenDurationIsReducedByThatSameTimePeriod_ThenDurrationIsNotChanged()
         {
             // Given
-            var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
+            var groupedActivity = GropuedActivity.CreateEmptyForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
             var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);

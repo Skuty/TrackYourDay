@@ -15,9 +15,14 @@ namespace TrackYourDay.Core.Analytics
 
         public TimeSpan Duration { get; private set; }
 
-        public static GropuedActivity CreateForDate(DateOnly date)
+        public static GropuedActivity CreateEmptyForDate(DateOnly date)
         {
             return new GropuedActivity(date);
+        }
+
+        private static GropuedActivity CombineWith(GropuedActivity activityToCombine)
+        {
+            throw new NotImplementedException("Just an idea how we can do cascaded grouping of different grouped activities to other grouped groups without implementing new type");
         }
 
         public GropuedActivity(DateOnly date)
@@ -29,6 +34,9 @@ namespace TrackYourDay.Core.Analytics
             this.Duration = TimeSpan.Zero;
         }
 
+        // TODO: We are using guid to identify was TimePeriod already exlucded,
+        // but we should compare to other excluded time period because guid can differ and we will substitute twice the same time
+        // Guid should not be interesting for us at all, or at least we shouldnt be considering it as condition
         internal void Include(Guid eventGuid, TimePeriod periodToInclude) 
         {
             if (!this.processedEvents.Contains(eventGuid))
