@@ -1,7 +1,4 @@
-﻿using TrackYourDay.Core.Activities;
-using TrackYourDay.Core.Breaks;
-
-namespace TrackYourDay.Core.Analytics
+﻿namespace TrackYourDay.Core.Analytics
 {
     public class GropuedActivity
     {
