@@ -1,95 +1,97 @@
 ﻿using FluentAssertions;
-using TrackYourDay.Core.Activities;
 using TrackYourDay.Core.Analytics;
-using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Tests.Analytics
 {
+    // TODO: We are using guid to identify was TimePeriod already exlucded,
+    // but we should compare to other excluded time period because guid can differ and we will substitute twice the same time
     public class GropuedActivityTests
     {
         [Fact]
-        public void GivenDurationWasNotExtendedByActivity_WhenDurationIsExtendedByActivityDuration_ThenDurrationIsExtendedByTimeOfActivity()
+        public void GivenDurationWasNotExtendedByTimePeriod_WhenDurationIsExtendedByTimePeriod_ThenDurrationIsExtendedByTimeOfPeriod()
         {
             // Given
             var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
-            var endedActivity = ActivityFactory.EndedFocusOnApplicationActivity(activityStartDate, activityEndDate);
+            var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);
 
             // When
-            groupedActivity.Include(endedActivity);
+            groupedActivity.Include(Guid.NewGuid(), periodToInclude);
 
             // Then
             groupedActivity.Duration.Should().Be(TimeSpan.FromHours(1));
         }
 
         [Fact]
-        public void GivenDurationWasExtendedByActivity_WhenDurationIsExtendedByActivityDuration_ThenDurrationIsNotChanged()
+        public void GivenDurationWasExtendedByTimePeriod_WhenDurationIsExtendedByThatSameTimePeriod_ThenDurrationIsNotChanged()
         {
             // Given
             var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
-            var endedActivity = ActivityFactory.EndedFocusOnApplicationActivity(activityStartDate, activityEndDate);
-            groupedActivity.Include(endedActivity);
+            var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);
+            var eventGuid = Guid.NewGuid();
+            groupedActivity.Include(eventGuid, periodToInclude);
 
             // When
-            groupedActivity.Include(endedActivity);
+            groupedActivity.Include(eventGuid, periodToInclude);
 
             // Then
             groupedActivity.Duration.Should().Be(TimeSpan.FromHours(1));
         }
 
         [Fact]
-        public void GivenDurationWasNotReducedByBreak_WhenDurationIsReducedByFullyOverlappingBreak_ThenDurrationIsReducedByFullTimeOfBreak()
+        public void GivenDurationWasNotReducedByTimePeriod_WhenDurationIsReducedByFullyOverlappingTimePeriod_ThenDurrationIsReducedByFullTimeOfTimePeriod()
         {
             // Given
             var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
-            var endedActivity = ActivityFactory.EndedFocusOnApplicationActivity(activityStartDate, activityEndDate);
-            var fullyOverlappingBreak = EndedBreak.CreateSampleForDate(activityStartDate, activityStartDate.AddMinutes(30));
-            groupedActivity.Include(endedActivity);
+            var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);
+            var periodToExclude = TimePeriod.CreateFrom(activityStartDate, activityStartDate.AddMinutes(30));
+            groupedActivity.Include(Guid.NewGuid(), periodToInclude);
 
             // When
-            groupedActivity.ReduceBy(fullyOverlappingBreak);
+            groupedActivity.ReduceBy(Guid.NewGuid(), periodToExclude);
 
             // Then
             groupedActivity.Duration.Should().Be(TimeSpan.FromMinutes(30));
         }
 
         [Fact]
-        public void GivenDurationWasNotReducedByBreak_WhenDurationIsReducedByPartiallyOverlappingBreak_ThenDurrationIsReducedByTimeOfPartiallyOverlappingBreak()
+        public void GivenDurationWasNotReducedByTimePeriod_WhenDurationIsReducedByPartiallyOverlappingTimePeriod_ThenDurrationIsReducedByTimeOfOverlappingTimePeriod()
         {
             // Given
             var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
-            var endedActivity = ActivityFactory.EndedFocusOnApplicationActivity(activityStartDate, activityEndDate);
-            var fullyOverlappingBreak = EndedBreak.CreateSampleForDate(activityStartDate.AddMinutes(45), activityStartDate.AddMinutes(75));
-            groupedActivity.Include(endedActivity);
+            var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);
+            var periodToExcelude = TimePeriod.CreateFrom(activityEndDate.AddMinutes(-15), activityEndDate.AddMinutes(15));
+            groupedActivity.Include(Guid.NewGuid(), periodToInclude);
 
             // When
-            groupedActivity.ReduceBy(fullyOverlappingBreak);
+            groupedActivity.ReduceBy(Guid.NewGuid(), periodToExcelude);
 
             // Then
-            groupedActivity.Duration.Should().Be(TimeSpan.FromMinutes(15));
+            groupedActivity.Duration.Should().Be(TimeSpan.FromMinutes(45));
         }
 
         [Fact]
-        public void GivenDurationWasReducedByBreak_WhenDurationIsReducedByBreak_ThenDurrationIsNotChanged()
+        public void GivenDurationWasReducedByTimePeriod_WhenDurationIsReducedByThatSameTimePeriod_ThenDurrationIsNotChanged()
         {
             // Given
             var groupedActivity = GropuedActivity.CreateForDate(new DateOnly(2000, 01, 01));
             var activityStartDate = new DateTime(2000, 01, 01, 00, 00, 00);
             var activityEndDate = new DateTime(2000, 01, 01, 01, 00, 00);
-            var endedActivity = ActivityFactory.EndedFocusOnApplicationActivity(activityStartDate, activityEndDate);
-            var endedBreak = EndedBreak.CreateSampleForDate(activityStartDate, activityStartDate.AddMinutes(30));
-            groupedActivity.Include(endedActivity);
-            groupedActivity.ReduceBy(endedBreak);
+            var periodToInclude = TimePeriod.CreateFrom(activityStartDate, activityEndDate);
+            var periodToExclude = TimePeriod.CreateFrom(activityEndDate.AddMinutes(-30), activityEndDate);
+            groupedActivity.Include(Guid.NewGuid(), periodToInclude);
+            var eventGuid = Guid.NewGuid();
+            groupedActivity.ReduceBy(eventGuid, periodToExclude);
 
             // When
-            groupedActivity.ReduceBy(endedBreak);
+            groupedActivity.ReduceBy(eventGuid, periodToExclude);
 
             // Then
             groupedActivity.Duration.Should().Be(TimeSpan.FromMinutes(30));

@@ -37,5 +37,10 @@
 
             return overlappingEndDate - overlappingStartDate;
         }
+
+        public static TimePeriod CreateFrom(DateTime startDate, DateTime endDate)
+        {
+            return new TimePeriod(startDate, endDate);
+        }
     }
 }
