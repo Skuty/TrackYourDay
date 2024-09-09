@@ -32,7 +32,6 @@ namespace TrackYourDay.Core.Analytics
 
         public GroupedActivity(DateOnly date)
         {
-            //throw new Exception("Almost works. Grouped notifications are probably not grouped correctly as time is not growing.");
             this.processedEvents = new List<Guid>();
             this.includedPeriods = new List<TimePeriod>();
             this.excludedPeriods = new List<TimePeriod>();
