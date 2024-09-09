@@ -1,0 +1,66 @@
+﻿@page "/analytics"
+
+@using TrackYourDay.Core.Analytics
+@using TrackYourDay.MAUI.Data;
+@inject ActivitiesAnalyser activitiesAnalyser;
+
+@if (this.groupedActivities == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+<MudExpansionPanels>
+    <MudExpansionPanel Text="Grouped Activities" IsInitiallyExpanded="true">
+            <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="x => x.Date.ToShortDateString()" Title="Date" Filterable="false" />
+                <PropertyColumn Property="x => x.Duration" Title="Duration" Filterable="true" SortBy="@_sortByDuration"/>
+                <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
+            </Columns>
+            <PagerContent>
+                    <MudDataGridPager T="GroupedActivity" />
+            </PagerContent>
+        </MudDataGrid>    
+    </MudExpansionPanel>
+    </MudExpansionPanels>
+}
+
+@code {
+    private List<GroupedActivity> groupedActivities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.groupedActivities = this.activitiesAnalyser.GetGroupedActivities().OrderByDescending(activity => activity.Duration).ToList();
+    }
+    
+    private string _searchString;
+
+    // custom sort by name length
+    private Func<GroupedActivity, object> _sortByDuration => x =>
+    {
+        return x.Duration;
+    };
+
+    private Func<GroupedActivity, object> _sortByDescritpion => x =>
+    {
+        return x.Description;
+    };
+
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<GroupedActivity, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+}

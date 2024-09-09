@@ -6,18 +6,18 @@ using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.Handlers
 {
-    internal class BreakEndedEventHandler : INotificationHandler<BreakEndedEvent>
+    internal class ShowUINotificationWhenBreakEndedEventHandler : INotificationHandler<BreakEndedEvent>
     {
         private readonly BreakTracker breakTracker;
 
-        public BreakEndedEventHandler(BreakTracker breakTracker)
+        public ShowUINotificationWhenBreakEndedEventHandler(BreakTracker breakTracker)
         {
             this.breakTracker = breakTracker;
         }
 
         public Task Handle(BreakEndedEvent _event, CancellationToken cancellationToken)
         {
-            this.OpenDialogPageInNewWindow(_event.EndedBreak.BreakGuid);
+            this.OpenDialogPageInNewWindow(_event.EndedBreak.Guid);
 
             return Task.CompletedTask;
         }
