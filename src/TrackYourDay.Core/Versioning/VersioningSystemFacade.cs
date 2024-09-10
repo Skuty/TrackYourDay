@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Net.Http.Headers;
 
 namespace TrackYourDay.Core.Versioning
@@ -38,6 +39,31 @@ namespace TrackYourDay.Core.Versioning
         public bool IsNewerVersionAvailable()
         {
             return this.GetNewestAvailableApplicationVersion().IsNewerThan(this.GetCurrentApplicationVersion());
+        }
+
+        public void UpdateApplication()
+        {
+            string appDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+            string batchFilePath = Path.Combine(appDirectory, "UpdateApplication.bat");
+
+            if (File.Exists(batchFilePath))
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = batchFilePath,
+                    UseShellExecute = false, // Set to true to allow batch script execution
+                    WorkingDirectory = appDirectory // Ensure it's executed in the app's directory
+                };
+
+                Process.Start(startInfo);
+
+                Process.GetCurrentProcess().Kill();
+            }
+            else
+            {
+                throw new ArgumentNullException("ApplicationUpdater", "Updater Applicatoin was not found.");
+            }
         }
 
         private string GetNewestReleaseNameFromGitHubRepositoryUsingRestApi()

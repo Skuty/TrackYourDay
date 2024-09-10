@@ -17,6 +17,7 @@
             {
                 <div class="alert alert-success" role="alert">
                     You are currently using version @this.currentVersion, but version <a href="https://github.com/Skuty/TrackYourDay/releases/" target="_blank">@this.newVersion</a> is available.
+                    <a @onclick="UpdateApplication">Click here to update</a>
                 </div>
             } else
             {
@@ -58,4 +59,20 @@
             this.newVersion = this.versioningSystemFacade.GetNewestAvailableApplicationVersion().ToString();
         }
     }
+
+    [Inject] private IDialogService DialogService { get; set; }
+    private async void UpdateApplication()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Updating Application",
+            "Do You really want to Close and Update Application?",
+            yesText: "Update!", cancelText: "Cancel");
+        string state = result == null ? "Canceled" : "Update!";
+
+        if (state == "Update!")
+        {
+            this.versioningSystemFacade.UpdateApplication();
+        }
+    }
+
 }
