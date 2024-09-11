@@ -46,23 +46,6 @@ echo TrackYourDay Updated.
 
 echo ----------------------------------------------------
 
-echo TrackYourDay will be added to Autostart.
-
-pause
-
-set startupFolder="%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
-set trackYourDayShortcut=%startupFolder%\TrackYourDay.lnk
-
-powershell -Command ^
-    "$WScriptShell = New-Object -ComObject WScript.Shell;" ^
-    "$Shortcut = $WScriptShell.CreateShortcut('%trackYourDayShortcut%');" ^
-    "$Shortcut.TargetPath = '%CD%\TrackYourDay.exe';" ^
-    "$Shortcut.Save();"
-
-echo TrackYourDay has been added to Autostart.
-
-echo ----------------------------------------------------
-
 echo Process completed successfully!
 
 echo ----------------------------------------------------
