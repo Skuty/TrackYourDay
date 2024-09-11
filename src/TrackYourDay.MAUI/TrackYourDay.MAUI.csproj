@@ -44,6 +44,14 @@
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="UpdateApplication.bat" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="UpdateApplication.bat">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="MediatR" Version="12.1.1" />
     <PackageReference Include="MudBlazor" Version="6.10.0" />
     <PackageReference Include="Quartz" Version="3.7.0" />
