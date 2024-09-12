@@ -12,12 +12,13 @@ namespace TrackYourDay.Core.Workdays
     {
         // TODO: this probably should not exists but somehow readmodel at app startup have to be created correctly
         // Maybe delayed notificaion startup? or explicit order of registration/creation?
-        public static Workday CreateEmpty()
+        public static Workday CreateEmpty(DateOnly date)
         {
             // This should be really empty, not just initialized
             var workdayDefinition = WorkdayDefinition.CreateSampleCompanyDefinition();
             var workday = new Workday()
             {
+                Date = date,
                 WorkdayDefinition = workdayDefinition,
                 BreakTimeLeft = workdayDefinition.AllowedBreakDuration,
                 TimeLeftToWorkActively = workdayDefinition.WorkdayDuration - workdayDefinition.AllowedBreakDuration,
@@ -313,17 +314,19 @@ namespace TrackYourDay.Core.Workdays
             var validBreakTimeUsed = this.ValidBreakTimeUsed;
             var overallTimeLeftToWork = this.WorkdayDefinition.WorkdayDuration - timeAlreadyActivelyWorkded - validBreakTimeUsed;
 
-            return new Workday(this)
+            var result = new Workday(this)
             {
                 TimeOfAllActivities = timeOfAllActivities,
                 TimeOfAllBreaks = timeOfAllBreaks,
                 OverallTimeLeftToWork = overallTimeLeftToWork >= TimeSpan.Zero ? overallTimeLeftToWork : TimeSpan.Zero,
-                TimeLeftToWorkActively = timeLeftToWorkActively >= TimeSpan.Zero ? timeLeftToWorkActively : TimeSpan.Zero, 
+                TimeLeftToWorkActively = timeLeftToWorkActively >= TimeSpan.Zero ? timeLeftToWorkActively : TimeSpan.Zero,
                 TimeAlreadyActivelyWorkded = timeAlreadyActivelyWorkded,
                 OverhoursTime = overhoursTime < TimeSpan.Zero ? overhoursTime * -1 : TimeSpan.Zero,
                 BreakTimeLeft = breakTimeLeft,
                 ValidBreakTimeUsed = validBreakTimeUsed
             };
+
+            return result;
         }
 
         internal Workday Include(EndedBreak endedBreak)

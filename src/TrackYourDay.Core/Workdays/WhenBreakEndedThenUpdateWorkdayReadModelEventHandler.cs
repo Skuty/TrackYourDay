@@ -16,8 +16,8 @@ namespace TrackYourDay.Core.Workdays
         public Task Handle(BreakEndedEvent notification, CancellationToken cancellationToken)
         {
             var workday = this.workdayReadModelRepository.Get(DateOnly.FromDateTime(DateTime.Today));
-            workday.Include(notification.EndedBreak);
-            this.workdayReadModelRepository.AddOrUpdate(workday);
+            var newWorkday = workday.Include(notification.EndedBreak);
+            this.workdayReadModelRepository.AddOrUpdate(newWorkday);
 
             return Task.CompletedTask;
         }

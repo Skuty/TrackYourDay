@@ -46,7 +46,8 @@ namespace TrackYourDay.MAUI.UiNotifications
 
         private TimeSpan GetTimeLeftToWorkActively()
         {
-            return workdayReadModelRepository.Get(DateOnly.FromDateTime(DateTime.Today)).TimeLeftToWorkActively;
+            var workday = workdayReadModelRepository.Get(DateOnly.FromDateTime(DateTime.Today));
+            return workday.TimeLeftToWorkActively;
         }
     }
 }
