@@ -17,7 +17,8 @@
             {
                 <div class="alert alert-success" role="alert">
                     You are currently using version @this.currentVersion, but version <a href="https://github.com/Skuty/TrackYourDay/releases/" target="_blank">@this.newVersion</a> is available.
-                    <a @onclick="UpdateApplication">Click here to update</a>
+                    <b><a @onclick="UpdateApplication" style="cursor:pointer">Click here to update!</a></b>
+                    <span> | Whats new: @this.whatsNewInNewestRelease</span>
                 </div>
             } else
             {
@@ -48,6 +49,7 @@
     bool isNewVersionAvailable;
     string currentVersion;
     string newVersion;
+    string whatsNewInNewestRelease;
 
     protected override void OnInitialized()
     {
@@ -57,6 +59,7 @@
         {
             this.isNewVersionAvailable = true;
             this.newVersion = this.versioningSystemFacade.GetNewestAvailableApplicationVersion().ToString();
+            this.whatsNewInNewestRelease = this.versioningSystemFacade.GetWhatsNewForNewestAvailableApplicationVersion();
         }
     }
 

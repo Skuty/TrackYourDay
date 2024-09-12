@@ -4,6 +4,8 @@
     {
         public string name { get; set; }
 
+        public string body { get; set; }
+
         public DateTime published_at { get; set; }
 
         public bool prerelease { get; set; }
