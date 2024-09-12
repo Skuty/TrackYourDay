@@ -16,6 +16,7 @@ namespace TrackYourDay.MAUI.UiNotifications
         public TipForDayNotification() : base()
         {
             this.IsEnabled = true;
+            this.advices = new List<string>();
             this.advices.Add("Porada na dziś: Zacznij kończyć, przestań zaczynać :)");
             this.advices.Add("Porada na dziś: Zaakceptuj niedoskonałe, nie wszystko musi być idealne :)");
             this.advices.Add("Porada na dziś: Szukaj okazji, a nie przeszkód :)");
