@@ -8,6 +8,7 @@ using TrackYourDay.Core.Analytics;
 using TrackYourDay.Core.Breaks;
 using TrackYourDay.Core.Notifications;
 using TrackYourDay.Core.Settings;
+using TrackYourDay.Core.UserTasks;
 using TrackYourDay.Core.Versioning;
 using TrackYourDay.Core.Workdays;
 using TrackYourDay.MAUI.BackgroundJobs;
@@ -50,6 +51,8 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                 serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
 
             services.AddSingleton<ActivitiesAnalyser>();
+
+            services.AddSingleton<UserTaskService>();
 
             return services;
         }

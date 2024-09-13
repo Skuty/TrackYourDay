@@ -1,0 +1,95 @@
+﻿@page "/userTasks"
+
+@using TrackYourDay.Core.UserTasks
+@using TrackYourDay.MAUI.Data;
+
+@if (this.endedUserTasks == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">User Task</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudText>Start Date: </MudText>
+            <MudDatePicker @bind-Date="newUserTaskStartDate" />
+            <MudTimePicker Label="Start time" Editable="true" @bind-Time="newUserTaskStartTime" />
+            <MudText>Description: </MudText>
+            <MudTextField @bind-Value="newUserTaskDescription" Label="Enter task description" />
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" OnClick="OpenStartTaskDialog">
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+
+    <MudExpansionPanels>
+        <MudExpansionPanel Text="Ended User Tasks" IsInitiallyExpanded="true">
+                <MudDataGrid T="UserTask" Items="@endedUserTasks" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
+                <ToolBarContent>
+                    <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <Columns>
+                    <PropertyColumn Property="x => x.StartDate.ToShortDateString()" Title="Start Date" Filterable="true" />
+                    <PropertyColumn Property="x => x.EndDate.Value.ToShortDateString()" Title="End Date" Filterable="false" />
+                    <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
+                </Columns>
+                <PagerContent>
+                        <MudDataGridPager T="UserTask" />
+                </PagerContent>
+            </MudDataGrid>    
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+}
+
+@code {
+    [Inject]
+    private UserTaskService userTaskService { get; set; }
+
+    private DateTime? newUserTaskStartDate { get; set; }
+    private TimeSpan? newUserTaskStartTime { get; set; }
+    private string newUserTaskDescription { get; set; }
+
+    private IEnumerable<UserTask> endedUserTasks;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        this.endedUserTasks  = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
+    }
+    
+    private string _searchString;
+
+    // custom sort by name length
+    private Func<UserTask, object> _sortByStartDate => x =>
+    {
+        return x.StartDate;
+    };
+
+    private Func<UserTask, object> _sortByDescritpion => x =>
+    {
+        return x.Description;
+    };
+
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<UserTask, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+    private void OpenStartTaskDialog(){}
+}
