@@ -1,6 +1,6 @@
 ﻿namespace TrackYourDay.Core.UserTasks
 {
-    internal class UserTask
+    public class UserTask
     {
         public Guid Guid { get; init; }
 
