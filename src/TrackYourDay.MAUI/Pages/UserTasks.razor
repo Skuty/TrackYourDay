@@ -9,28 +9,52 @@
 }
 else
 {
-    <MudCard>
-        <MudCardHeader>
-            <CardHeaderContent>
-                <MudText Typo="Typo.h6">User Task</MudText>
-            </CardHeaderContent>
-            <CardHeaderActions>
-                <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
-            </CardHeaderActions>
-        </MudCardHeader>
-        <MudCardContent>
-            <MudText>Start Date: </MudText>
-            <MudDatePicker @bind-Date="newUserTaskStartDate" />
-            <MudTimePicker Label="Start time" Editable="true" @bind-Time="newUserTaskStartTime" />
-            <MudText>Description: </MudText>
-            <MudTextField @bind-Value="newUserTaskDescription" Label="Enter task description" />
-        </MudCardContent>
-        <MudCardActions>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" OnClick="OpenStartTaskDialog">
-            </MudButton>
-        </MudCardActions>
-    </MudCard>
+    @if (this.activeUserTask is null)
+    {
+        <MudForm @ref="form" @bind-IsValid="@isValid">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Start User Task</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTimePicker Label="Start time" @bind-Time="newUserTaskStartTime" />
+                    <MudTextField @bind-Value="newUserTaskDescription" Label="Description" Required="true" RequiredError="Description is required!" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask">
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudForm>
+    }
+    else
+    {
+        <MudCard>
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6">Active User Task</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTextField @bind-Value="this.activeUserTaskStartTime" Label="Start time" ReadOnly="true" />
+                <MudTextField @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
+                <MudTextField @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask">
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
 
+    }
     <MudExpansionPanels>
         <MudExpansionPanel Text="Ended User Tasks" IsInitiallyExpanded="true">
                 <MudDataGrid T="UserTask" Items="@endedUserTasks" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
@@ -39,8 +63,9 @@ else
                                   AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
                 </ToolBarContent>
                 <Columns>
-                    <PropertyColumn Property="x => x.StartDate.ToShortDateString()" Title="Start Date" Filterable="true" />
-                    <PropertyColumn Property="x => x.EndDate.Value.ToShortDateString()" Title="End Date" Filterable="false" />
+                    <PropertyColumn Property="x => x.StartDate" Title="Start Date" Filterable="true" />
+                    <PropertyColumn Property="x => x.EndDate.Value" Title="End Date" Filterable="false" />
+                    <PropertyColumn Property="x => x.GetDuration()" Title="Duration" Filterable="true" SortBy="@_sortByDuration" />
                     <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
                 </Columns>
                 <PagerContent>
@@ -55,17 +80,32 @@ else
     [Inject]
     private UserTaskService userTaskService { get; set; }
 
-    private DateTime? newUserTaskStartDate { get; set; }
-    private TimeSpan? newUserTaskStartTime { get; set; }
+    private UserTask activeUserTask { get; set; }
+
+    private TimeSpan? newUserTaskStartTime { get; set; } = TimeSpan.FromMinutes((DateTime.Now.Hour * 60) + DateTime.Now.Minute);
     private string newUserTaskDescription { get; set; }
 
+    private string activeUserTaskStartTime { get; set; }
+    private string activeUserTaskDuration { get; set; }
+    private string activeUserTaskDescription { get; set; }
+
     private IEnumerable<UserTask> endedUserTasks;
-    
+
+    private MudForm form;
+    bool isValid;
+
+
+
     protected override async Task OnInitializedAsync()
     {
         this.endedUserTasks  = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
+        this.activeUserTask = this.userTaskService.GetActiveTask();
+        this.activeUserTaskStartTime = this.activeUserTask.StartDate.ToString();
+        this.activeUserTaskDuration = this.activeUserTask.GetDuration().ToString();
+        this.activeUserTaskDescription = this.activeUserTask.Description;
+
     }
-    
+
     private string _searchString;
 
     // custom sort by name length
@@ -79,6 +119,12 @@ else
         return x.Description;
     };
 
+    private Func<UserTask, object> _sortByDuration => x =>
+    {
+        return x.GetDuration();
+    };
+
+
     // quick filter - filter globally across multiple columns with the same input
     private Func<UserTask, bool> _quickFilter => x =>
     {
@@ -91,5 +137,25 @@ else
         return false;
     };
 
-    private void OpenStartTaskDialog(){}
+    private void StartUserTask()
+    {
+        this.activeUserTask = this.userTaskService.StartTask(DateTime.Today.AddMinutes(this.newUserTaskStartTime.Value.TotalMinutes), this.newUserTaskDescription);
+        this.newUserTaskStartTime = null;
+        this.newUserTaskDescription = string.Empty;
+        this.activeUserTaskStartTime = this.activeUserTask.StartDate.ToString();
+        this.activeUserTaskDuration = this.activeUserTask.GetDuration().ToString();
+        this.activeUserTaskDescription = this.activeUserTask.Description;
+    }
+
+    private void EndUserTask()
+    {
+        this.userTaskService.EndTask(this.activeUserTask.Guid, DateTime.Now);
+        this.activeUserTask = null;
+        this.activeUserTaskStartTime = null;
+        this.activeUserTaskDuration = string.Empty;
+        this.activeUserTaskDescription = string.Empty;
+        this.endedUserTasks = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
+        this.newUserTaskStartTime = TimeSpan.FromMinutes((DateTime.Now.Hour * 60) + DateTime.Now.Minute);
+        this.newUserTaskDescription = string.Empty;
+    }
 }

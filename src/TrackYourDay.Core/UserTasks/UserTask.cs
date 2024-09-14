@@ -47,5 +47,12 @@
 
             this.EndDate = endDate;
         }
+
+        public TimeSpan GetDuration()
+        {
+            return this.EndDate is not null 
+                ? TimeSpan.FromTicks(this.EndDate.Value.Ticks - this.StartDate.Ticks) 
+                : TimeSpan.FromTicks(DateTime.Now.Ticks - this.StartDate.Ticks);
+        }
     }
 }
