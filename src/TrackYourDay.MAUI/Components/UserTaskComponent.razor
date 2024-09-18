@@ -50,6 +50,9 @@ else
     [Inject]
     private UserTaskService userTaskService { get; set; }
 
+    [Parameter]
+    public EventCallback OnUserTaskEnded { get; set; }
+
     private UserTask activeUserTask { get; set; }
 
     private string activeUserTaskStartTime { get; set; }
@@ -92,6 +95,7 @@ else
         this.activeUserTaskDescription = string.Empty;
         this.newUserTaskStartTime = TimeSpan.FromMinutes((DateTime.Now.Hour * 60) + DateTime.Now.Minute);
         this.newUserTaskDescription = string.Empty;
-    }
 
+        this.OnUserTaskEnded.InvokeAsync();
+    }
 }

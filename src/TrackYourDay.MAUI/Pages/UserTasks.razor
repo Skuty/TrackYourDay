@@ -10,7 +10,7 @@
 }
 else
 {
-    <UserTaskComponent></UserTaskComponent>
+    <UserTaskComponent OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
 
     <MudExpansionPanels>
         <MudExpansionPanel Text="Ended User Tasks" IsInitiallyExpanded="true">
@@ -37,32 +37,20 @@ else
     [Inject]
     private UserTaskService userTaskService { get; set; }
 
-    private UserTask activeUserTask { get; set; }
-
-    private TimeSpan? newUserTaskStartTime { get; set; } = TimeSpan.FromMinutes((DateTime.Now.Hour * 60) + DateTime.Now.Minute);
-    private string newUserTaskDescription { get; set; }
-
-    private string activeUserTaskStartTime { get; set; }
-    private string activeUserTaskDuration { get; set; }
-    private string activeUserTaskDescription { get; set; }
-
     private IEnumerable<UserTask> endedUserTasks;
 
     private MudForm form;
     private bool isValid;
 
-
-
     protected override async Task OnInitializedAsync()
     {
         this.endedUserTasks  = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
-        this.activeUserTask = this.userTaskService.GetActiveTask();
-        if (this.activeUserTask != null) 
-        {
-            this.activeUserTaskStartTime = this.activeUserTask.StartDate.ToString();
-            this.activeUserTaskDuration = this.activeUserTask.GetDuration().ToString();
-            this.activeUserTaskDescription = this.activeUserTask.Description;
-        }
+    }
+
+    private void UserTaskEnded()
+    {
+        this.endedUserTasks = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
+
     }
 
     private string _searchString;
@@ -95,26 +83,4 @@ else
 
         return false;
     };
-
-    private void StartUserTask()
-    {
-        this.activeUserTask = this.userTaskService.StartTask(DateTime.Today.AddMinutes(this.newUserTaskStartTime.Value.TotalMinutes), this.newUserTaskDescription);
-        this.newUserTaskStartTime = null;
-        this.newUserTaskDescription = string.Empty;
-        this.activeUserTaskStartTime = this.activeUserTask.StartDate.ToString();
-        this.activeUserTaskDuration = this.activeUserTask.GetDuration().ToString();
-        this.activeUserTaskDescription = this.activeUserTask.Description;
-    }
-
-    private void EndUserTask()
-    {
-        this.userTaskService.EndTask(this.activeUserTask.Guid, DateTime.Now);
-        this.activeUserTask = null;
-        this.activeUserTaskStartTime = null;
-        this.activeUserTaskDuration = string.Empty;
-        this.activeUserTaskDescription = string.Empty;
-        this.endedUserTasks = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
-        this.newUserTaskStartTime = TimeSpan.FromMinutes((DateTime.Now.Hour * 60) + DateTime.Now.Minute);
-        this.newUserTaskDescription = string.Empty;
-    }
 }
