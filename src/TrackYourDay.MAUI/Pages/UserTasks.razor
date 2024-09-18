@@ -12,6 +12,8 @@ else
 {
     <UserTaskComponent OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
 
+    <hr />
+
     <MudExpansionPanels>
         <MudExpansionPanel Text="Ended User Tasks" IsInitiallyExpanded="true">
                 <MudDataGrid T="UserTask" Items="@endedUserTasks" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">

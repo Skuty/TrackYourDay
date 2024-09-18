@@ -1,4 +1,6 @@
 ﻿@using TrackYourDay.Core.UserTasks
+<div style="display:inline-block">
+
 
 @if (this.activeUserTask is null)
 {
@@ -45,6 +47,7 @@ else
         </MudCardActions>
     </MudCard>
 }
+</div>
 
 @code {
     [Inject]
