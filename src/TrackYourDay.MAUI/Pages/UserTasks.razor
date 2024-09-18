@@ -1,6 +1,7 @@
 ﻿@page "/userTasks"
 
 @using TrackYourDay.Core.UserTasks
+@using TrackYourDay.MAUI.Components
 @using TrackYourDay.MAUI.Data;
 
 @if (this.endedUserTasks == null)
@@ -9,52 +10,8 @@
 }
 else
 {
-    @if (this.activeUserTask is null)
-    {
-        <MudForm @ref="form" @bind-IsValid="@isValid">
-            <MudCard>
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Start User Task</MudText>
-                    </CardHeaderContent>
-                    <CardHeaderActions>
-                        <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
-                    </CardHeaderActions>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudTimePicker Label="Start time" @bind-Time="newUserTaskStartTime" />
-                    <MudTextField @bind-Value="newUserTaskDescription" Label="Description" in Required="true" RequiredError="Description is required!" />
-                </MudCardContent>
-                <MudCardActions>
-                    <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask">
-                    </MudButton>
-                </MudCardActions>
-            </MudCard>
-        </MudForm>
-    }
-    else
-    {
-        <MudCard>
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Active User Task</MudText>
-                </CardHeaderContent>
-                <CardHeaderActions>
-                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                </CardHeaderActions>
-            </MudCardHeader>
-            <MudCardContent>
-                <MudTextField @bind-Value="this.activeUserTaskStartTime" Label="Start time" ReadOnly="true" />
-                <MudTextField @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
-                <MudTextField @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask">
-                </MudButton>
-            </MudCardActions>
-        </MudCard>
+    <UserTaskComponent></UserTaskComponent>
 
-    }
     <MudExpansionPanels>
         <MudExpansionPanel Text="Ended User Tasks" IsInitiallyExpanded="true">
                 <MudDataGrid T="UserTask" Items="@endedUserTasks" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
@@ -92,7 +49,7 @@ else
     private IEnumerable<UserTask> endedUserTasks;
 
     private MudForm form;
-    bool isValid;
+    private bool isValid;
 
 
 
