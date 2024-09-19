@@ -1,0 +1,88 @@
+﻿@page "/userTasks"
+
+@using TrackYourDay.Core.UserTasks
+@using TrackYourDay.MAUI.Components
+@using TrackYourDay.MAUI.Data;
+
+@if (this.endedUserTasks == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <UserTaskComponent OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
+
+    <hr />
+
+    <MudExpansionPanels>
+        <MudExpansionPanel Text="Ended User Tasks" IsInitiallyExpanded="true">
+                <MudDataGrid T="UserTask" Items="@endedUserTasks" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
+                <ToolBarContent>
+                    <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <Columns>
+                    <PropertyColumn Property="x => x.StartDate" Title="Start Date" Filterable="true" />
+                    <PropertyColumn Property="x => x.EndDate.Value" Title="End Date" Filterable="false" />
+                    <PropertyColumn Property="x => x.GetDuration()" Title="Duration" Filterable="true" SortBy="@_sortByDuration" />
+                    <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
+                </Columns>
+                <PagerContent>
+                        <MudDataGridPager T="UserTask" />
+                </PagerContent>
+            </MudDataGrid>    
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+}
+
+@code {
+    [Inject]
+    private UserTaskService userTaskService { get; set; }
+
+    private IEnumerable<UserTask> endedUserTasks;
+
+    private MudForm form;
+    private bool isValid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.endedUserTasks  = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
+    }
+
+    private void UserTaskEnded()
+    {
+        this.endedUserTasks = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
+
+    }
+
+    private string _searchString;
+
+    // custom sort by name length
+    private Func<UserTask, object> _sortByStartDate => x =>
+    {
+        return x.StartDate;
+    };
+
+    private Func<UserTask, object> _sortByDescritpion => x =>
+    {
+        return x.Description;
+    };
+
+    private Func<UserTask, object> _sortByDuration => x =>
+    {
+        return x.GetDuration();
+    };
+
+
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<UserTask, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+}
