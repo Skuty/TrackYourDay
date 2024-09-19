@@ -5,9 +5,9 @@
              x:Class="TrackYourDay.MAUI.PopupBlazorPage"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
 
-    <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
+    <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/popupIndex.html">
         <BlazorWebView.RootComponents>
-            <RootComponent Selector="#app" ComponentType="{x:Type local:Main}" />
+            <RootComponent Selector="#app" ComponentType="{x:Type local:PopupBase}" />
         </BlazorWebView.RootComponents>
     </BlazorWebView>
 

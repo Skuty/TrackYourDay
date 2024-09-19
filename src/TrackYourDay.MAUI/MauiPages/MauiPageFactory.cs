@@ -15,7 +15,7 @@ namespace TrackYourDay.MAUI.MauiPages
             {
                 Window blazorPopUpPage = 
                 new Window(new PopupBlazorPage());
-                blazorPopUpPage.Title = $"Track Your Day - Web Page";
+                blazorPopUpPage.Title = $"Track Your Day - Pop Up";
                 blazorPopUpPage.Width = 600;
                 blazorPopUpPage.Height = 170;
                 Application.Current.OpenWindow(blazorPopUpPage);

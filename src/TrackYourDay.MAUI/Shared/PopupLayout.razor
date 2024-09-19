@@ -1,0 +1,69 @@
+﻿@using TrackYourDay.Core.Versioning;
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="page">
+    <div class="sidebar" style="@IconMenuCssClass">
+        <CollapsableNavMenu ShowIconMenu="ToggleIconMenu"/>
+    </div>
+
+
+    <main>
+        <div class="top-row px-4">
+        Popup base
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    private bool _iconMenuActive { get; set; } = true;
+    private string? IconMenuCssClass => _iconMenuActive ? "width: 80px;" : null;
+
+    protected void ToggleIconMenu(bool iconMenuActive)
+    {
+        _iconMenuActive = iconMenuActive;
+    }
+
+    [Inject]
+    private VersioningSystemFacade versioningSystemFacade { get; set; }
+
+    bool isNewVersionAvailable;
+    string currentVersion;
+    string newVersion;
+    string whatsNewInNewestRelease;
+
+    protected override void OnInitialized()
+    {
+        this.currentVersion = this.versioningSystemFacade.GetCurrentApplicationVersion().ToString();
+
+        if (this.versioningSystemFacade.IsNewerVersionAvailable())
+        {
+            this.isNewVersionAvailable = true;
+            this.newVersion = this.versioningSystemFacade.GetNewestAvailableApplicationVersion().ToString();
+            this.whatsNewInNewestRelease = this.versioningSystemFacade.GetWhatsNewForNewestAvailableApplicationVersion();
+        }
+    }
+
+    [Inject] private IDialogService DialogService { get; set; }
+    private async void UpdateApplication()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Updating Application",
+            "Do You really want to Close and Update Application?",
+            yesText: "Update!", cancelText: "Cancel");
+        string state = result == null ? "Canceled" : "Update!";
+
+        if (state == "Update!")
+        {
+            this.versioningSystemFacade.UpdateApplication();
+        }
+    }
+
+}
