@@ -9,6 +9,39 @@ namespace TrackYourDay.MAUI.MauiPages
         {
         }
 
+        public static void OpenWebPageInNewWindow() 
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                Window blazorPopUpPage = 
+                new Window(new PopupBlazorPage());
+                blazorPopUpPage.Title = $"Track Your Day - Web Page";
+                blazorPopUpPage.Width = 600;
+                blazorPopUpPage.Height = 170;
+                Application.Current.OpenWindow(blazorPopUpPage);
+
+                var localWindow = (blazorPopUpPage.Handler.PlatformView as Microsoft.UI.Xaml.Window);
+
+                localWindow.ExtendsContentIntoTitleBar = false;
+                var handle = WindowNative.GetWindowHandle(localWindow);
+                var id = Win32Interop.GetWindowIdFromWindow(handle);
+                var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(id);
+
+                switch (appWindow.Presenter)
+                {
+                    case Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter:
+                        overlappedPresenter.IsResizable = false;
+                        overlappedPresenter.IsMaximizable = false;
+                        overlappedPresenter.IsMinimizable = false;
+                        overlappedPresenter.IsAlwaysOnTop = true;
+
+                        //overlappedPresenter.SetBorderAndTitleBar(true, false);
+                        overlappedPresenter.Restore();
+                        break;
+                }
+            });
+        }
+
         public static void OpenSimpleNotificationPageInNewWindow(SimpleNotificationViewModel simpleNotificationViewModel)
         {
             // https://learn.microsoft.com/en-us/dotnet/maui/platform-integration/appmodel/main-thread?view=net-maui-8.0

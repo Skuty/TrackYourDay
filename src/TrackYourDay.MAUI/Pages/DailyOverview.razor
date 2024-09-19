@@ -4,6 +4,7 @@
 @using TrackYourDay.Core.Breaks;
 @using TrackYourDay.Core;
 @using TrackYourDay.Core.Workdays
+@using TrackYourDay.MAUI.MauiPages
 
 <h1>
     <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
@@ -81,7 +82,7 @@
     </MudCard>
 </MudStack>
 
-    @code {
+@code {
     [Inject]
     private ISettingsSet settingsSet { get; set; }
     [Inject]
@@ -122,5 +123,7 @@
 
         breaksLeftDataChart[0] = this.workday.BreakTimeLeft.TotalMinutes;
         breaksLeftDataChart[1] = this.workday.ValidBreakTimeUsed.TotalMinutes;
+
+        MauiPageFactory.OpenWebPageInNewWindow();
     }
 }
