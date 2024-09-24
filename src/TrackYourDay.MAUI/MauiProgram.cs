@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.Analytics;
+using Microsoft.Extensions.Logging;
 
 namespace TrackYourDay.MAUI
 {
@@ -38,6 +39,8 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
+
+            builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
