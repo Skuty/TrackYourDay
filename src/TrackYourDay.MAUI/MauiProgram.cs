@@ -40,8 +40,6 @@ namespace TrackYourDay.MAUI
             builder.Services.AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
 
-            builder.Logging.SetMinimumLevel(LogLevel.Warning);
-
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
             builder.Services.AddSettings();
