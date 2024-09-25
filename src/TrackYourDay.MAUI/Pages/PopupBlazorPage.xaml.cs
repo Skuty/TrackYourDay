@@ -5,6 +5,7 @@
         public PopupBlazorPage()
         {
             InitializeComponent();
+            this.blazorWebViewSecond.StartPath = "/popupUserTask";
         }
     }
 }
