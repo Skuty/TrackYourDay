@@ -9,12 +9,12 @@ namespace TrackYourDay.MAUI.MauiPages
         {
         }
 
-        public static void OpenWebPageInNewWindow() 
+        public static void OpenWebPageInNewWindow(string path) 
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 Window blazorPopUpPage = 
-                new Window(new PopupBlazorPage());
+                new Window(new PopupBlazorPage(path));
                 blazorPopUpPage.Title = $"Track Your Day - Pop Up";
                 blazorPopUpPage.Width = 600;
                 blazorPopUpPage.Height = 170;

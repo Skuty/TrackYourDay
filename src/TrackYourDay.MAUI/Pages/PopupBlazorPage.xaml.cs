@@ -2,10 +2,10 @@
 {
     public partial class PopupBlazorPage : ContentPage
     {
-        public PopupBlazorPage()
+        public PopupBlazorPage(string path)
         {
             InitializeComponent();
-            this.blazorWebViewSecond.StartPath = "/popupUserTask";
+            this.blazorWebViewSecond.StartPath = path;
         }
     }
 }
