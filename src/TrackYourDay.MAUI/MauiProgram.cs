@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.Analytics;
+using Microsoft.Extensions.Logging;
 
 namespace TrackYourDay.MAUI
 {

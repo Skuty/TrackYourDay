@@ -71,11 +71,17 @@
     <ProjectReference Include="..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Update="PopupBlazorPage.xaml.cs">
+      <DependentUpon>PopupBlazorPage.xaml</DependentUpon>
+    </Compile>
     <Compile Update="SimpleNotificationPage..xaml.cs">
       <DependentUpon>SimpleNotificationPage..xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <MauiXaml Update="PopupBlazorPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </MauiXaml>
     <MauiXaml Update="SimpleNotificationPage..xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
