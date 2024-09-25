@@ -71,7 +71,7 @@
     <ProjectReference Include="..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="Pages\PopupBlazorPage.xaml.cs">
+    <Compile Update="PopupBlazorPage.xaml.cs">
       <DependentUpon>PopupBlazorPage.xaml</DependentUpon>
     </Compile>
     <Compile Update="SimpleNotificationPage..xaml.cs">
