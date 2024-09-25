@@ -4,14 +4,11 @@
 @using TrackYourDay.MAUI.Components
 @using TrackYourDay.MAUI.Data;
 
-@if (true)
-{
-    <p><em>Active User Task is loading ...</em></p>
-}
-else
-{
-    <p>Active User Task</p>
-}
+<UserTaskComponent OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
 
 @code {
+    private void UserTaskEnded()
+    {
+        //Close window
+    }
 }

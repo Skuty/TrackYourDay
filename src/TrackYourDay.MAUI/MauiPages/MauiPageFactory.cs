@@ -16,8 +16,8 @@ namespace TrackYourDay.MAUI.MauiPages
                 Window blazorPopUpPage = 
                 new Window(new PopupBlazorPage(path));
                 blazorPopUpPage.Title = $"Track Your Day - Pop Up";
-                blazorPopUpPage.Width = 600;
-                blazorPopUpPage.Height = 170;
+                blazorPopUpPage.Width = 250;
+                blazorPopUpPage.Height = 420;
                 Application.Current.OpenWindow(blazorPopUpPage);
 
                 var localWindow = (blazorPopUpPage.Handler.PlatformView as Microsoft.UI.Xaml.Window);
