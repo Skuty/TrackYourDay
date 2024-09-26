@@ -4,48 +4,68 @@
 
 @if (this.activeUserTask is null)
 {
-    <MudForm @ref="form" @bind-IsValid="@isValid">
-        <MudCard>
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Start User Task</MudText>
-                </CardHeaderContent>
-                <CardHeaderActions>
-                    <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
-                </CardHeaderActions>
-            </MudCardHeader>
-            <MudCardContent>
-                <MudTimePicker Label="Start time" @bind-Time="newUserTaskStartTime" />
-                <MudTextField @bind-Value="newUserTaskDescription" Label="Description" in Required="true" RequiredError="Description is required!" />
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask">
-                </MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudForm>
+    @switch (this.Mode) 
+    {
+        case ViewMode.Compact:
+            <p>Compact mode ready for starting subtask</p>
+            break;
+
+        default:
+            <MudForm @ref="form" @bind-IsValid="@isValid">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Start User Task</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTimePicker Label="Start time" @bind-Time="newUserTaskStartTime" />
+                        <MudTextField @bind-Value="newUserTaskDescription" Label="Description" Required="true" RequiredError="Description is required!" />
+                        <MudCheckBox Checked="true" Label="Show popup" ReadOnly="true" Color="Color.Primary"></MudCheckBox>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask">
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudForm>
+            break;
+    }
 }
 else
 {
-    <MudCard>
-        <MudCardHeader>
-            <CardHeaderContent>
-                <MudText Typo="Typo.h6">Active User Task</MudText>
-            </CardHeaderContent>
-            <CardHeaderActions>
-                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-            </CardHeaderActions>
-        </MudCardHeader>
-        <MudCardContent>
-            <MudTextField @bind-Value="this.activeUserTaskStartTime" Label="Start time" ReadOnly="true" />
-            <MudTextField @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
-            <MudTextField @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
-        </MudCardContent>
-        <MudCardActions>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask">
-            </MudButton>
-        </MudCardActions>
-    </MudCard>
+    @switch (this.Mode)
+    {
+        case ViewMode.Compact:
+            <p>Compact mode ready for showing active subtask</p>
+            break;
+
+        default:
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Active User Task</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTextField @bind-Value="this.activeUserTaskStartTime" Label="Start time" ReadOnly="true" />
+                    <MudTextField @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
+                    <MudTextField @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
+                    <MudCheckBox Checked="true" ReadOnly="true"></MudCheckBox>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask">
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+            break;
+    }
 }
 </div>
 
@@ -55,6 +75,9 @@ else
 
     [Parameter]
     public EventCallback OnUserTaskEnded { get; set; }
+
+    [Parameter]
+    public ViewMode Mode { get; set; } = ViewMode.Normal;
 
     private UserTask activeUserTask { get; set; }
 
