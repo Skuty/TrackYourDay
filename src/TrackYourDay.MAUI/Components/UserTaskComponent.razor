@@ -8,19 +8,14 @@
     @switch (this.Mode) 
     {
         case ViewMode.Compact:
-                <MudForm @ref="form" @bind-IsValid="@isValid">
-                        <div class="d-inline pa-2 mud-theme-primary">
-                            Tekst
-                            <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
-                        </div>
-                        <div class="d-inline pa-2 mud-theme-primary">
-                            <MudTextField @bind-Value="newUserTaskDescription" Label="Description" Required="true" RequiredError="Description is required!" />
-                        </div>
-                        <div class="d-inline pa-2 mud-theme-primary">
-                            <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask" />
-                        </div>
+            <MudPaper Elevation="3">
+                <MudForm @ref="form" @bind-IsValid="@isValid" Class="d-flex align-items-center">
+                    <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
+                    <MudTextField Class="flex-grow-1" @bind-Value="newUserTaskDescription" Label="Description" Required="true" RequiredError="Description is required!" />
+                    <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask" />
                 </MudForm>
-                break;
+            </MudPaper>
+            break;
 
         default:
             <MudForm @ref="form" @bind-IsValid="@isValid">
@@ -52,8 +47,15 @@ else
     @switch (this.Mode)
     {
         case ViewMode.Compact:
-            <p>Compact mode ready for showing active subtask</p>
-            break;
+                <MudPaper Elevation="3">
+                    <MudForm @ref="form" @bind-IsValid="@isValid" Class="d-flex align-items-center">
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudTextField @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
+                        <MudTextField @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask" />
+                    </MudForm>
+                </MudPaper>
+                break;
 
         default:
             <MudCard>
@@ -122,8 +124,9 @@ else
         this.newUserTaskStartTime = null;
         this.newUserTaskDescription = string.Empty;
         this.activeUserTaskStartTime = this.activeUserTask.StartDate.ToString();
-        this.activeUserTaskDuration = this.activeUserTask.GetDuration().ToString();
-        this.activeUserTaskDescription = this.activeUserTask.Description;
+        var duration = this.activeUserTask.GetDuration();
+        this.activeUserTaskDuration = $"{(int)duration.TotalHours}:{duration.Minutes:00}";
+        this.activeUserTaskDescription = this.activeUserTask.Description    ;
 
         if (this.shouldShowPopup)
         {
