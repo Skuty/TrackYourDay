@@ -50,8 +50,8 @@ else
                 <MudPaper Elevation="3">
                     <MudForm @ref="form" @bind-IsValid="@isValid" Class="d-flex align-items-center">
                         <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                        <MudTextField @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
-                        <MudTextField @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
+                        <MudTextField Style="width: 60px;" @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
+                        <MudTextField Style="width: 170px;" @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
                         <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask" />
                     </MudForm>
                 </MudPaper>
