@@ -5,50 +5,82 @@
 
 @if (this.activeUserTask is null)
 {
-    <MudForm @ref="form" @bind-IsValid="@isValid">
-        <MudCard>
-            <MudCardHeader>
-                <CardHeaderContent>
-                    <MudText Typo="Typo.h6">Start User Task</MudText>
-                </CardHeaderContent>
-                <CardHeaderActions>
+    @switch (this.Mode) 
+    {
+        case ViewMode.Compact:
+            <MudPaper Elevation="3">
+                <MudForm @ref="form" @bind-IsValid="@isValid" Class="d-flex align-items-center">
                     <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
-                </CardHeaderActions>
-            </MudCardHeader>
-            <MudCardContent>
-                <MudTimePicker Label="Start time" @bind-Time="newUserTaskStartTime" />
-                <MudTextField @bind-Value="newUserTaskDescription" Label="Description" Required="true" RequiredError="Description is required!" />
-                <MudCheckBox Checked="true" Label="Show popup" ReadOnly="true" Color="Color.Primary"></MudCheckBox>
-            </MudCardContent>
-            <MudCardActions>
-                <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask">
-                </MudButton>
-            </MudCardActions>
-        </MudCard>
-    </MudForm>
+                    <MudTextField Class="flex-grow-1" @bind-Value="newUserTaskDescription" Label="Description" Required="true" RequiredError="Description is required!" />
+                    <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask" />
+                </MudForm>
+            </MudPaper>
+            break;
+
+        default:
+            <MudForm @ref="form" @bind-IsValid="@isValid">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Start User Task</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTimePicker Label="Start time" @bind-Time="newUserTaskStartTime" />
+                        <MudTextField @bind-Value="newUserTaskDescription" Label="Description" Required="true" RequiredError="Description is required!" />
+                        <MudCheckBox Checked="true" Label="Show popup" ReadOnly="true" Color="Color.Primary"></MudCheckBox>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask">
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudForm>
+            break;
+    }
 }
 else
 {
-    <MudCard>
-        <MudCardHeader>
-            <CardHeaderContent>
-                <MudText Typo="Typo.h6">Active User Task</MudText>
-            </CardHeaderContent>
-            <CardHeaderActions>
-                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-            </CardHeaderActions>
-        </MudCardHeader>
-        <MudCardContent>
-            <MudTextField @bind-Value="this.activeUserTaskStartTime" Label="Start time" ReadOnly="true" />
-            <MudTextField @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
-            <MudTextField @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
-            <MudCheckBox Checked="true" ReadOnly="true"></MudCheckBox>
-        </MudCardContent>
-        <MudCardActions>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask">
-            </MudButton>
-        </MudCardActions>
-    </MudCard>
+    @switch (this.Mode)
+    {
+        case ViewMode.Compact:
+                <MudPaper Elevation="3">
+                    <MudForm @ref="form" @bind-IsValid="@isValid" Class="d-flex align-items-center">
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudTextField Style="width: 60px;" @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
+                        <MudTextField Style="width: 170px;" @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
+                        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask" />
+                        <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
+                    </MudForm>
+                </MudPaper>
+                break;
+
+        default:
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Active User Task</MudText>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudTextField @bind-Value="this.activeUserTaskStartTime" Label="Start time" ReadOnly="true" />
+                    <MudTextField @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
+                    <MudTextField @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
+                    <MudCheckBox Checked="true" ReadOnly="true"></MudCheckBox>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask">
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+            break;
+    }
 }
 </div>
 
@@ -58,6 +90,9 @@ else
 
     [Parameter]
     public EventCallback OnUserTaskEnded { get; set; }
+
+    [Parameter]
+    public ViewMode Mode { get; set; } = ViewMode.Normal;
 
     private UserTask activeUserTask { get; set; }
 
@@ -79,9 +114,15 @@ else
         if (this.activeUserTask != null)
         {
             this.activeUserTaskStartTime = this.activeUserTask.StartDate.ToString();
-            this.activeUserTaskDuration = this.activeUserTask.GetDuration().ToString();
+            var duration = this.activeUserTask.GetDuration();
+            this.activeUserTaskDuration = $"{(int)duration.TotalHours}:{duration.Minutes:00}";
             this.activeUserTaskDescription = this.activeUserTask.Description;
         }
+    }
+
+    private async Task Refresh()
+    {
+        await this.OnInitializedAsync();
     }
 
     private void StartUserTask()
@@ -90,12 +131,13 @@ else
         this.newUserTaskStartTime = null;
         this.newUserTaskDescription = string.Empty;
         this.activeUserTaskStartTime = this.activeUserTask.StartDate.ToString();
-        this.activeUserTaskDuration = this.activeUserTask.GetDuration().ToString();
-        this.activeUserTaskDescription = this.activeUserTask.Description;
+        var duration = this.activeUserTask.GetDuration();
+        this.activeUserTaskDuration = $"{(int)duration.TotalHours}:{duration.Minutes:00}";
+        this.activeUserTaskDescription = this.activeUserTask.Description    ;
 
         if (this.shouldShowPopup)
         {
-            MauiPageFactory.OpenWebPageInNewWindow("/ActiveUserTask");
+            MauiPageFactory.OpenWebPageInNewWindow("/CompactUserTask");
         }
     }
 

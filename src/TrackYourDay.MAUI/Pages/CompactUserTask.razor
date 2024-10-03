@@ -1,0 +1,14 @@
+﻿@page "/CompactUserTask"
+
+@using TrackYourDay.Core.UserTasks
+@using TrackYourDay.MAUI.Components
+@using TrackYourDay.MAUI.Data;
+
+<UserTaskComponent Mode="ViewMode.Compact" OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
+
+@code {
+    private void UserTaskEnded()
+    {
+        //Close window
+    }
+}
