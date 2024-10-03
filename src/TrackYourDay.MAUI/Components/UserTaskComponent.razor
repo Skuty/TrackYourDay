@@ -49,11 +49,11 @@ else
         case ViewMode.Compact:
                 <MudPaper Elevation="3">
                     <MudForm @ref="form" @bind-IsValid="@isValid" Class="d-flex align-items-center">
-                        <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
                         <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
                         <MudTextField Style="width: 60px;" @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
                         <MudTextField Style="width: 170px;" @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
                         <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask" />
+                        <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
                     </MudForm>
                 </MudPaper>
                 break;
