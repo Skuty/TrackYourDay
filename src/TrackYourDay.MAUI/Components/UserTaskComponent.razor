@@ -110,6 +110,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        this.shouldShowPopup = this.Mode == ViewMode.Normal;
         this.activeUserTask = this.userTaskService.GetActiveTask();
         if (this.activeUserTask != null)
         {
