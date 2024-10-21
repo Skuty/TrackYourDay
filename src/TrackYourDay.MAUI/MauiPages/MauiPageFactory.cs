@@ -48,13 +48,13 @@ namespace TrackYourDay.MAUI.MauiPages
             // Needed to show notification on main thread otherwise it will throw exception
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                Window breakRevokingPopupWindow = new Window(new SimpleNotificationPage(simpleNotificationViewModel));
-                breakRevokingPopupWindow.Title = $"Track Your Day - {simpleNotificationViewModel.Title}";
-                breakRevokingPopupWindow.Width = 600;
-                breakRevokingPopupWindow.Height = 170;
-                Application.Current.OpenWindow(breakRevokingPopupWindow);
+                Window simpleNotificationPage = new Window(new SimpleNotificationPage(simpleNotificationViewModel));
+                simpleNotificationPage.Title = $"Track Your Day - {simpleNotificationViewModel.Title}";
+                simpleNotificationPage.Width = 600;
+                simpleNotificationPage.Height = 170;
+                Application.Current.OpenWindow(simpleNotificationPage);
 
-                var localWindow = (breakRevokingPopupWindow.Handler.PlatformView as Microsoft.UI.Xaml.Window);
+                var localWindow = (simpleNotificationPage.Handler.PlatformView as Microsoft.UI.Xaml.Window);
 
                 localWindow.ExtendsContentIntoTitleBar = false;
                 var handle = WindowNative.GetWindowHandle(localWindow);

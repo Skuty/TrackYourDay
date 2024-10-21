@@ -44,7 +44,7 @@ public partial class SimpleNotificationPage : ContentPage
 
     private void CloseThisWindow()
     {
-        var currentWindow = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault(w => w.Page is SimpleNotificationPage);
+        var currentWindow = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault(w => w.Page is SimpleNotificationPage && w.Page.GetHashCode() == this.GetHashCode());
         Microsoft.Maui.Controls.Application.Current?.CloseWindow(currentWindow);
     }
 }
