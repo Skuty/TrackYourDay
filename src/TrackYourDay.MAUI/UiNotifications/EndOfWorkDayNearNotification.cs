@@ -15,16 +15,19 @@ namespace TrackYourDay.MAUI.UiNotifications
     public class EndOfWorkDayNearNotification : ExecutableNotification
     {
         private readonly WorkdayReadModelRepository workdayReadModelRepository;
+        private readonly MauiPageFactory mauiPageFactory;
         private readonly TimeSpan timeLeftToWorkActivelyConfigValue;
 
         public EndOfWorkDayNearNotification(
             TimeSpan timeLeftToWorkActivelyConfigValue,
-            WorkdayReadModelRepository workdayReadModelRepository) : base()
+            WorkdayReadModelRepository workdayReadModelRepository,
+            MauiPageFactory mauiPageFactory) : base()
         {
             this.IsEnabled = true;
             Name = "Powiadomienie o zbliżającym się końcu Dnia Pracy";
             this.timeLeftToWorkActivelyConfigValue = TimeSpan.FromMinutes(45);
             this.workdayReadModelRepository = workdayReadModelRepository;
+            this.mauiPageFactory = mauiPageFactory;
         }
 
         public override bool ShouldBeExecuted()
@@ -39,7 +42,7 @@ namespace TrackYourDay.MAUI.UiNotifications
         {
             base.Execute();
 
-            MauiPageFactory.OpenSimpleNotificationPageInNewWindow(new SimpleNotificationViewModel(
+            this.mauiPageFactory.OpenSimpleNotificationPageInNewWindow(new SimpleNotificationViewModel(
                 "Zbliża się koniec Twojego Dnia Pracy",
                 $"Pozostało Ci {(int)GetTimeLeftToWorkActively().TotalMinutes} minut Aktywnej Pracy"));
         }

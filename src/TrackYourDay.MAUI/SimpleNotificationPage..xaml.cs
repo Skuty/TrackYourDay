@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.UI.Xaml;
 using TrackYourDay.MAUI.MauiPages;
 
@@ -7,11 +8,14 @@ public partial class SimpleNotificationPage : ContentPage
 {
     private readonly DispatcherTimer timer = new DispatcherTimer();
     private readonly TimeSpan showPeriod;
+    private readonly IMediator mediator;
     private double counterStep;
 
-    public SimpleNotificationPage(SimpleNotificationViewModel simpleNotificationViewModel)
+    public SimpleNotificationPage(SimpleNotificationViewModel simpleNotificationViewModel, IMediator mediator)
     {
         InitializeComponent();
+
+        this.mediator = mediator;
 
         this.showPeriod = TimeSpan.FromSeconds(120);
         this.counterStep = 1 / (this.showPeriod.TotalSeconds * 4);
@@ -39,7 +43,13 @@ public partial class SimpleNotificationPage : ContentPage
 
 	public void OnOkButtonClicked(object sender, EventArgs args)
 	{
-        this.CloseThisWindow();
+        //this.CloseThisWindow();
+        this.DelegateClosingThisWindow();
+    }
+
+    private void DelegateClosingThisWindow()
+    {
+        this.mediator.Send(new CloseWindowCommand(this.GetType(), this.GetHashCode()));
     }
 
     private void CloseThisWindow()

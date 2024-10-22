@@ -1,12 +1,16 @@
-﻿using Microsoft.UI;
+﻿using MediatR;
+using Microsoft.UI;
 using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.MauiPages
 {
     internal class MauiPageFactory
     {
-        private MauiPageFactory()
+        private readonly IMediator mediator;
+
+        internal MauiPageFactory(IMediator mediator)
         {
+            this.mediator = mediator;
         }
 
         public static void OpenWebPageInNewWindow(string path) 
@@ -42,13 +46,13 @@ namespace TrackYourDay.MAUI.MauiPages
             });
         }
 
-        public static void OpenSimpleNotificationPageInNewWindow(SimpleNotificationViewModel simpleNotificationViewModel)
+        public void OpenSimpleNotificationPageInNewWindow(SimpleNotificationViewModel simpleNotificationViewModel)
         {
             // https://learn.microsoft.com/en-us/dotnet/maui/platform-integration/appmodel/main-thread?view=net-maui-8.0
             // Needed to show notification on main thread otherwise it will throw exception
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                Window simpleNotificationPage = new Window(new SimpleNotificationPage(simpleNotificationViewModel));
+                Window simpleNotificationPage = new Window(new SimpleNotificationPage(simpleNotificationViewModel, this.mediator));
                 simpleNotificationPage.Title = $"Track Your Day - {simpleNotificationViewModel.Title}";
                 simpleNotificationPage.Width = 600;
                 simpleNotificationPage.Height = 170;

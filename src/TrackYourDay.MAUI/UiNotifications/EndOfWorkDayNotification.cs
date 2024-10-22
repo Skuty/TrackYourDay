@@ -1,4 +1,5 @@
-﻿using TrackYourDay.Core.Notifications;
+﻿using MediatR;
+using TrackYourDay.Core.Notifications;
 using TrackYourDay.Core.Workdays;
 using TrackYourDay.MAUI.MauiPages;
 
@@ -13,11 +14,15 @@ namespace TrackYourDay.MAUI.UiNotifications
     public class EndOfWorkDayNotification : ExecutableNotification
     {
         private readonly WorkdayReadModelRepository workdayReadModelRepository;
+        private readonly MauiPageFactory mauiPageFactory;
 
-        public EndOfWorkDayNotification(WorkdayReadModelRepository workdayReadModelRepository)
+        public EndOfWorkDayNotification(
+            WorkdayReadModelRepository workdayReadModelRepository,
+            MauiPageFactory mauiPageFactory)
         {
             Name = "Powiadomienie o końcu Dnia Pracy";
             this.workdayReadModelRepository = workdayReadModelRepository;
+            this.mauiPageFactory = mauiPageFactory;
         }
 
         public override bool ShouldBeExecuted()
@@ -31,7 +36,7 @@ namespace TrackYourDay.MAUI.UiNotifications
         {
             base.Execute();
 
-            MauiPageFactory.OpenSimpleNotificationPageInNewWindow(new SimpleNotificationViewModel(
+            this.mauiPageFactory.OpenSimpleNotificationPageInNewWindow(new SimpleNotificationViewModel(
                     "Twój Dzień Pracy się zakończył",
                     $"Zapisz pracę i kończ na dziś :)"));
         }
