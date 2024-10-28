@@ -19,7 +19,9 @@ namespace TrackYourDay.MAUI.MauiPages
     {
         public Task Handle(CloseWindowCommand request, CancellationToken cancellationToken)
         {
-            var windowToClose = Application.Current?.Windows.FirstOrDefault(w => w.Page is request.PageType && w.Page.GetHashCode() == request.PageHashCode);
+            var windowToClose = Application.Current?.Windows.FirstOrDefault(w => 
+                w.Page.GetType() == request.PageType
+                && w.Page.GetHashCode() == request.PageHashCode);
             Application.Current?.CloseWindow(windowToClose);
 
             return Task.CompletedTask;

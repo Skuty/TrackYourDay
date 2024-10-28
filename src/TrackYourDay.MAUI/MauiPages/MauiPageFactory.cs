@@ -4,7 +4,7 @@ using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.MauiPages
 {
-    internal class MauiPageFactory
+    public class MauiPageFactory
     {
         private readonly IMediator mediator;
 

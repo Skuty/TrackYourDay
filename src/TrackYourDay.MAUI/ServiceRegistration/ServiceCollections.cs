@@ -13,6 +13,7 @@ using TrackYourDay.Core.Versioning;
 using TrackYourDay.Core.Workdays;
 using TrackYourDay.MAUI.BackgroundJobs;
 using TrackYourDay.MAUI.BackgroundJobs.ActivityTracking;
+using TrackYourDay.MAUI.MauiPages;
 using TrackYourDay.MAUI.UiNotifications;
 
 namespace TrackYourDay.MAUI.ServiceRegistration
@@ -59,6 +60,7 @@ namespace TrackYourDay.MAUI.ServiceRegistration
 
         public static IServiceCollection AddNotifications(this IServiceCollection services)
         {
+            services.AddSingleton<MauiPageFactory>();
             services.AddSingleton<WorkdayReadModelRepository>();
             services.AddSingleton<INotificationFactory, UiNotificationFactory>();
             services.AddSingleton<NotificationRepository>();
