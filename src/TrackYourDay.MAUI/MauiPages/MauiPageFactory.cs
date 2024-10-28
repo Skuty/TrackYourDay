@@ -13,15 +13,15 @@ namespace TrackYourDay.MAUI.MauiPages
             this.mediator = mediator;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         public static void OpenWebPageInNewWindow(string path) 
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                Window blazorPopUpPage = 
-                new Window(new PopupBlazorPage(path));
+                Window blazorPopUpPage = new Window(new PopupBlazorPage(path));
                 blazorPopUpPage.Title = $"Track Your Day - Pop Up";
                 blazorPopUpPage.Width = 385;
-                blazorPopUpPage.Height = 115;
+                blazorPopUpPage.Height = 215;
                 Application.Current.OpenWindow(blazorPopUpPage);
 
                 var localWindow = (blazorPopUpPage.Handler.PlatformView as Microsoft.UI.Xaml.Window);

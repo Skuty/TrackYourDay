@@ -1,14 +1,44 @@
 ﻿@page "/CompactUserTask"
 
+@using MediatR;
 @using TrackYourDay.Core.UserTasks
 @using TrackYourDay.MAUI.Components
 @using TrackYourDay.MAUI.Data;
+@using TrackYourDay.MAUI.MauiPages;
+
+
+<MudPaper Class="d-flex flex-row-reverse flex-grow-1 gap-0" Elevation="0">
+    <MudIconButton Icon="@Icons.Material.Filled.Close" class="pa-0" @onclick="CloseWindow"/>
+    <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0" />
+    <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0" />
+</MudPaper>
 
 <UserTaskComponent Mode="ViewMode.Compact" OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
-
 @code {
+    [Inject]
+    public IMediator mediator { get; set; }
+
+    [CascadingParameter(Name = "ParentMauiWindowId")]
+    public Guid ParentMauiWindowId { get; set; }
+
     private void UserTaskEnded()
     {
         //Close window
+    }
+
+    private async Task CloseWindow() 
+    {
+        var result = this.ParentMauiWindowId;
+        // TODO: Change CloseWindowCommand to accept Id which is guid of MAUI WINDOW generic property
+        // var command = new CloseWindowCommand(null, null);
+        // this.mediator.Send();
+    }
+
+    private void ShowWindowTitleBar() 
+    { 
+    }
+
+    private void MinimizeWindow() 
+    { 
     }
 }
