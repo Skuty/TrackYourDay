@@ -49,7 +49,7 @@ public partial class SimpleNotificationPage : ContentPage
 
     private void DelegateClosingThisWindow()
     {
-        this.mediator.Send(new CloseWindowCommand(this.GetType(), this.GetHashCode()));
+        this.mediator.Send(new CloseWindowCommand(this.Id));
     }
 
     private void CloseThisWindow()

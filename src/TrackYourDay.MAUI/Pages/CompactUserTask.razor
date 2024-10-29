@@ -28,10 +28,8 @@
 
     private async Task CloseWindow() 
     {
-        var result = this.ParentMauiWindowId;
-        // TODO: Change CloseWindowCommand to accept Id which is guid of MAUI WINDOW generic property
-        // var command = new CloseWindowCommand(null, null);
-        // this.mediator.Send();
+        var command = new CloseWindowCommand(this.ParentMauiWindowId);
+        this.mediator.Send(command);
     }
 
     private void ShowWindowTitleBar() 

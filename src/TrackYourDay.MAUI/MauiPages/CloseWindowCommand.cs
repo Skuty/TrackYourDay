@@ -4,14 +4,11 @@ namespace TrackYourDay.MAUI.MauiPages
 {
     internal class CloseWindowCommand : IRequest
     {
-        public Type PageType { get; }
+        public Guid MauiWindowId { get; }
 
-        public int PageHashCode { get; }
-
-        public CloseWindowCommand(Type pageType, int pageHashCode)
+        public CloseWindowCommand(Guid mauiWindowId)
         {
-            PageType = pageType;
-            PageHashCode = pageHashCode;
+            this.MauiWindowId = mauiWindowId;
         }
     }
 
@@ -19,10 +16,15 @@ namespace TrackYourDay.MAUI.MauiPages
     {
         public Task Handle(CloseWindowCommand request, CancellationToken cancellationToken)
         {
-            var windowToClose = Application.Current?.Windows.FirstOrDefault(w => 
-                w.Page.GetType() == request.PageType
-                && w.Page.GetHashCode() == request.PageHashCode);
-            Application.Current?.CloseWindow(windowToClose);
+            MainThread.BeginInvokeOnMainThread(() =>
+            { 
+                try
+                {
+                    var windowToClose = Application.Current?.Windows.FirstOrDefault(w =>
+                        w.Id == request.MauiWindowId || w.Page.Id == request.MauiWindowId);
+                    Application.Current?.CloseWindow(windowToClose);
+                } catch (Exception ex) { };
+            });
 
             return Task.CompletedTask;
         }
