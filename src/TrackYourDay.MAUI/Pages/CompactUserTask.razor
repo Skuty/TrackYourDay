@@ -1,14 +1,39 @@
 ﻿@page "/CompactUserTask"
 
+@using MediatR;
+@using Microsoft.UI
 @using TrackYourDay.Core.UserTasks
 @using TrackYourDay.MAUI.Components
 @using TrackYourDay.MAUI.Data;
+@using TrackYourDay.MAUI.MauiPages;
+@using WinRT.Interop
+
+
+<MudPaper Class="d-flex flex-row-reverse flex-grow-1 gap-0" Elevation="0">
+    <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0" @onclick="ToggleTitleBarVisibility" />
+    <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0" @onclick="MinimizeWindow" />
+</MudPaper>
 
 <UserTaskComponent Mode="ViewMode.Compact" OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
-
 @code {
+    [Inject]
+    public IMediator mediator { get; set; }
+
+    [CascadingParameter(Name = "ParentMauiWindowId")]
+    public Guid ParentMauiWindowId { get; set; }
+
     private void UserTaskEnded()
     {
         //Close window
+    }
+
+    private void MinimizeWindow() 
+    { 
+        this.mediator.Send(new MinimizeWindowCommand(this.ParentMauiWindowId));
+    }
+
+    private void ToggleTitleBarVisibility()
+    {
+        this.mediator.Send(new ToggleWindowHeaderVisibilityCommand(this.ParentMauiWindowId));
     }
 }

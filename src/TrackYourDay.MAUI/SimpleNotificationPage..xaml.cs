@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.UI.Xaml;
 using TrackYourDay.MAUI.MauiPages;
 
@@ -7,11 +8,14 @@ public partial class SimpleNotificationPage : ContentPage
 {
     private readonly DispatcherTimer timer = new DispatcherTimer();
     private readonly TimeSpan showPeriod;
+    private readonly IMediator mediator;
     private double counterStep;
 
-    public SimpleNotificationPage(SimpleNotificationViewModel simpleNotificationViewModel)
+    public SimpleNotificationPage(SimpleNotificationViewModel simpleNotificationViewModel, IMediator mediator)
     {
         InitializeComponent();
+
+        this.mediator = mediator;
 
         this.showPeriod = TimeSpan.FromSeconds(120);
         this.counterStep = 1 / (this.showPeriod.TotalSeconds * 4);
@@ -33,18 +37,12 @@ public partial class SimpleNotificationPage : ContentPage
         if (this.progressBar.Progress >= 1)
         {
             this.timer.Stop();
-            this.CloseThisWindow();
+            this.mediator.Send(new CloseWindowCommand(this.Id));
         }
     }
 
 	public void OnOkButtonClicked(object sender, EventArgs args)
 	{
-        this.CloseThisWindow();
-    }
-
-    private void CloseThisWindow()
-    {
-        var currentWindow = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault(w => w.Page is SimpleNotificationPage);
-        Microsoft.Maui.Controls.Application.Current?.CloseWindow(currentWindow);
+        this.mediator.Send(new CloseWindowCommand(this.Id));
     }
 }

@@ -1,20 +1,24 @@
-﻿using Microsoft.UI;
+﻿using MediatR;
+using Microsoft.UI;
 using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.MauiPages
 {
-    internal class MauiPageFactory
+    public class MauiPageFactory
     {
-        private MauiPageFactory()
+        private readonly IMediator mediator;
+
+        internal MauiPageFactory(IMediator mediator)
         {
+            this.mediator = mediator;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
         public static void OpenWebPageInNewWindow(string path) 
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                Window blazorPopUpPage = 
-                new Window(new PopupBlazorPage(path));
+                Window blazorPopUpPage = new Window(new PopupBlazorPage(path));
                 blazorPopUpPage.Title = $"Track Your Day - Pop Up";
                 blazorPopUpPage.Width = 385;
                 blazorPopUpPage.Height = 115;
@@ -35,26 +39,26 @@ namespace TrackYourDay.MAUI.MauiPages
                         overlappedPresenter.IsMinimizable = false;
                         overlappedPresenter.IsAlwaysOnTop = true;
 
-                        //overlappedPresenter.SetBorderAndTitleBar(true, false);
+                        overlappedPresenter.SetBorderAndTitleBar(false, false);
                         overlappedPresenter.Restore();
                         break;
                 }
             });
         }
 
-        public static void OpenSimpleNotificationPageInNewWindow(SimpleNotificationViewModel simpleNotificationViewModel)
+        public void OpenSimpleNotificationPageInNewWindow(SimpleNotificationViewModel simpleNotificationViewModel)
         {
             // https://learn.microsoft.com/en-us/dotnet/maui/platform-integration/appmodel/main-thread?view=net-maui-8.0
             // Needed to show notification on main thread otherwise it will throw exception
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                Window breakRevokingPopupWindow = new Window(new SimpleNotificationPage(simpleNotificationViewModel));
-                breakRevokingPopupWindow.Title = $"Track Your Day - {simpleNotificationViewModel.Title}";
-                breakRevokingPopupWindow.Width = 600;
-                breakRevokingPopupWindow.Height = 170;
-                Application.Current.OpenWindow(breakRevokingPopupWindow);
+                Window simpleNotificationPage = new Window(new SimpleNotificationPage(simpleNotificationViewModel, this.mediator));
+                simpleNotificationPage.Title = $"Track Your Day - {simpleNotificationViewModel.Title}";
+                simpleNotificationPage.Width = 600;
+                simpleNotificationPage.Height = 170;
+                Application.Current.OpenWindow(simpleNotificationPage);
 
-                var localWindow = (breakRevokingPopupWindow.Handler.PlatformView as Microsoft.UI.Xaml.Window);
+                var localWindow = (simpleNotificationPage.Handler.PlatformView as Microsoft.UI.Xaml.Window);
 
                 localWindow.ExtendsContentIntoTitleBar = false;
                 var handle = WindowNative.GetWindowHandle(localWindow);

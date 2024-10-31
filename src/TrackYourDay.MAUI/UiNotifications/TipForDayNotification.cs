@@ -12,9 +12,11 @@ namespace TrackYourDay.MAUI.UiNotifications
     public class TipForDayNotification : ExecutableNotification
     {
         private readonly List<string> advices;
+        private readonly MauiPageFactory mauiPageFactory;
 
-        public TipForDayNotification() : base()
+        public TipForDayNotification(MauiPageFactory mauiPageFactory) : base()
         {
+            this.mauiPageFactory = mauiPageFactory;
             this.IsEnabled = true;
             this.advices = new List<string>();
             this.advices.Add("Porada na dziś: Zacznij kończyć, przestań zaczynać :)");
@@ -38,9 +40,8 @@ namespace TrackYourDay.MAUI.UiNotifications
 
             var advice = this.advices[Random.Shared.Next(this.advices.Count)];
 
-            MauiPageFactory.OpenSimpleNotificationPageInNewWindow(new SimpleNotificationViewModel(
-                    "Miłego dnia pracy!",
-                    advice));
+            this.mauiPageFactory.OpenSimpleNotificationPageInNewWindow(
+                new SimpleNotificationViewModel("Miłego dnia pracy!", advice));
         }
     }
 }

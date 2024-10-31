@@ -7,7 +7,7 @@
 
     <BlazorWebView x:Name="blazorWebViewSecond" HostPage="wwwroot/popupIndex.html">
         <BlazorWebView.RootComponents>
-            <RootComponent Selector="#secondapp" ComponentType="{x:Type local:PopupBase}" />
+            <RootComponent Selector="#secondapp" x:Name="root" ComponentType="{x:Type local:PopupBase}" />
         </BlazorWebView.RootComponents>
     </BlazorWebView>
 

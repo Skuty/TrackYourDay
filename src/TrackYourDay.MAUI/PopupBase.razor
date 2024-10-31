@@ -1,11 +1,21 @@
 ﻿<Router AppAssembly="@typeof(PopupBase).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(PopupLayout)" />
-        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        <Found Context="routeData">
+    <CascadingValue Value="@ParentMauiWindowId" Name="ParentMauiWindowId">
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(PopupLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </CascadingValue>
     </Found>
+
     <NotFound>
         <LayoutView Layout="@typeof(PopupLayout)">
             <p role="alert">Sorry, there's nothing at this address.</p>
         </LayoutView>
     </NotFound>
 </Router>
+
+@code
+{
+    [Parameter]
+    public Guid ParentMauiWindowId { get; set; }
+
+}
