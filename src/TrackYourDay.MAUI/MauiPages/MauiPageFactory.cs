@@ -39,7 +39,7 @@ namespace TrackYourDay.MAUI.MauiPages
                         overlappedPresenter.IsMinimizable = false;
                         overlappedPresenter.IsAlwaysOnTop = true;
 
-                        //overlappedPresenter.SetBorderAndTitleBar(true, false);
+                        overlappedPresenter.SetBorderAndTitleBar(false, false);
                         overlappedPresenter.Restore();
                         break;
                 }
