@@ -1,15 +1,17 @@
 ﻿@page "/CompactUserTask"
 
 @using MediatR;
+@using Microsoft.UI
 @using TrackYourDay.Core.UserTasks
 @using TrackYourDay.MAUI.Components
 @using TrackYourDay.MAUI.Data;
 @using TrackYourDay.MAUI.MauiPages;
+@using WinRT.Interop
 
 
 <MudPaper Class="d-flex flex-row-reverse flex-grow-1 gap-0" Elevation="0">
-    <MudIconButton Icon="@Icons.Material.Filled.Close" class="pa-0" @onclick="CloseWindow"/>
-    <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0" />
+    <MudIconButton Icon="@Icons.Material.Filled.Close" class="pa-0" @onclick="CloseWindow" />
+    <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0" @onclick="ToggleTitleBarVisibility" />
     <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0" />
 </MudPaper>
 
@@ -38,5 +40,37 @@
 
     private void MinimizeWindow() 
     { 
+        // TODO minimize window
+    }
+
+    private void ToggleTitleBarVisibility()
+    {
+        var windowToClose = Application.Current?.Windows.FirstOrDefault(w =>
+            w.Id == this.ParentMauiWindowId || w.Page.Id == this.ParentMauiWindowId);
+
+        var localWindow = (windowToClose.GetVisualElementWindow().Handler.PlatformView as Microsoft.UI.Xaml.Window);
+
+        localWindow.ExtendsContentIntoTitleBar = false;
+        var handle = WindowNative.GetWindowHandle(localWindow);
+        var id = Win32Interop.GetWindowIdFromWindow(handle);
+        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(id);
+
+        switch (appWindow.Presenter)
+        {
+            case Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter:
+                overlappedPresenter.IsAlwaysOnTop = true;
+
+                if (overlappedPresenter.HasBorder)
+                {
+                    overlappedPresenter.SetBorderAndTitleBar(false, false);
+                }
+                else
+                {
+                    overlappedPresenter.SetBorderAndTitleBar(true, true);
+                }
+                overlappedPresenter.Restore();
+                break;
+        }
+
     }
 }
