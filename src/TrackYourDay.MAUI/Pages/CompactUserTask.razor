@@ -10,9 +10,8 @@
 
 
 <MudPaper Class="d-flex flex-row-reverse flex-grow-1 gap-0" Elevation="0">
-    <MudIconButton Icon="@Icons.Material.Filled.Close" class="pa-0" @onclick="CloseWindow" />
     <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0" @onclick="ToggleTitleBarVisibility" />
-    <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0" />
+    <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0" @onclick="MinimizeWindow" />
 </MudPaper>
 
 <UserTaskComponent Mode="ViewMode.Compact" OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
@@ -28,18 +27,9 @@
         //Close window
     }
 
-    private async Task CloseWindow() 
-    {
-        this.mediator.Send(new CloseWindowCommand(this.ParentMauiWindowId));
-    }
-
-    private void ShowWindowTitleBar() 
-    { 
-    }
-
     private void MinimizeWindow() 
     { 
-        // TODO minimize window
+        this.mediator.Send(new MinimizeWindowCommand(this.ParentMauiWindowId));
     }
 
     private void ToggleTitleBarVisibility()
