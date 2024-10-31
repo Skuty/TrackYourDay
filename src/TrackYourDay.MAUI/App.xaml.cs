@@ -22,9 +22,13 @@ namespace TrackYourDay.MAUI
             var sched = this.schedulerFactory.GetScheduler().Result;
             sched.Start();
 
-            var windowToClose = Application.Current?.Windows.FirstOrDefault();
+            this.MinimizeWindowOnCloseInsteadOfClosing();
+        }
 
-            var window = (windowToClose.GetVisualElementWindow().Handler.PlatformView as Microsoft.UI.Xaml.Window);
+        private void MinimizeWindowOnCloseInsteadOfClosing()
+        {
+            var window = Application.Current?.Windows.FirstOrDefault()
+                .GetVisualElementWindow().Handler.PlatformView as Microsoft.UI.Xaml.Window;
 
             window.ExtendsContentIntoTitleBar = false;
             var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
@@ -41,7 +45,6 @@ namespace TrackYourDay.MAUI
             }
 
             //When user execute the closing method, we can make the window do not close by   e.Cancel = true;.
-
             appWindow.Closing += async (s, e) =>
             {
                 e.Cancel = true;
@@ -51,7 +54,6 @@ namespace TrackYourDay.MAUI
                         overlappedPresenter.Minimize();
                         break;
                 }
-
             };
         }
     }

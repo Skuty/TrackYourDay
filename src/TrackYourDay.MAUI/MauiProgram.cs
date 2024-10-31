@@ -62,19 +62,6 @@ namespace TrackYourDay.MAUI
             // TODO: This deletes repository if needed, normally its not visible in file explorer on windws 10
             new SqlLiteSettingsRepository().Reset();
 #endif
-
-            // https://learn.microsoft.com/en-us/answers/questions/1336207/how-to-remove-close-and-maximize-button-for-a-maui?cid=kerryherger
-            builder.ConfigureLifecycleEvents(events =>
-            {
-                // Make sure to add "using Microsoft.Maui.LifecycleEvents;" in the top of the file
-                events.AddWindows(windowsLifecycleBuilder =>
-                {
-                    windowsLifecycleBuilder.OnWindowCreated(window =>
-                    {
-                    });
-                });
-            });
-
             return builder.Build();
         }
     }

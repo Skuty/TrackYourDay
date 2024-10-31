@@ -30,8 +30,7 @@
 
     private async Task CloseWindow() 
     {
-        var command = new CloseWindowCommand(this.ParentMauiWindowId);
-        this.mediator.Send(command);
+        this.mediator.Send(new CloseWindowCommand(this.ParentMauiWindowId));
     }
 
     private void ShowWindowTitleBar() 
@@ -45,32 +44,6 @@
 
     private void ToggleTitleBarVisibility()
     {
-        var windowToClose = Application.Current?.Windows.FirstOrDefault(w =>
-            w.Id == this.ParentMauiWindowId || w.Page.Id == this.ParentMauiWindowId);
-
-        var localWindow = (windowToClose.GetVisualElementWindow().Handler.PlatformView as Microsoft.UI.Xaml.Window);
-
-        localWindow.ExtendsContentIntoTitleBar = false;
-        var handle = WindowNative.GetWindowHandle(localWindow);
-        var id = Win32Interop.GetWindowIdFromWindow(handle);
-        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(id);
-
-        switch (appWindow.Presenter)
-        {
-            case Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter:
-                overlappedPresenter.IsAlwaysOnTop = true;
-
-                if (overlappedPresenter.HasBorder)
-                {
-                    overlappedPresenter.SetBorderAndTitleBar(false, false);
-                }
-                else
-                {
-                    overlappedPresenter.SetBorderAndTitleBar(true, true);
-                }
-                overlappedPresenter.Restore();
-                break;
-        }
-
+        this.mediator.Send(new ToggleWindowHeaderVisibilityCommand(this.ParentMauiWindowId));
     }
 }
