@@ -37,24 +37,12 @@ public partial class SimpleNotificationPage : ContentPage
         if (this.progressBar.Progress >= 1)
         {
             this.timer.Stop();
-            this.CloseThisWindow();
+            this.mediator.Send(new CloseWindowCommand(this.Id));
         }
     }
 
 	public void OnOkButtonClicked(object sender, EventArgs args)
 	{
-        //this.CloseThisWindow();
-        this.DelegateClosingThisWindow();
-    }
-
-    private void DelegateClosingThisWindow()
-    {
         this.mediator.Send(new CloseWindowCommand(this.Id));
-    }
-
-    private void CloseThisWindow()
-    {
-        var currentWindow = Microsoft.Maui.Controls.Application.Current?.Windows.FirstOrDefault(w => w.Page is SimpleNotificationPage && w.Page.GetHashCode() == this.GetHashCode());
-        Microsoft.Maui.Controls.Application.Current?.CloseWindow(currentWindow);
     }
 }
