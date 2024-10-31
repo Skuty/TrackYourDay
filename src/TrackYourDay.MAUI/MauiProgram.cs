@@ -71,32 +71,6 @@ namespace TrackYourDay.MAUI
                 {
                     windowsLifecycleBuilder.OnWindowCreated(window =>
                     {
-                        window.ExtendsContentIntoTitleBar = false;
-                        var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                        var id = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle);
-                        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(id);
-
-                        switch (appWindow.Presenter)
-                        {
-                            case Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter:
-                                //disable the max button
-                                overlappedPresenter.IsMaximizable = true;
-                                overlappedPresenter.Maximize();
-                                break;
-                        }
-
-                        //When user execute the closing method, we can make the window do not close by   e.Cancel = true;.
-                        appWindow.Closing += async (s, e) =>
-                        {
-                            e.Cancel = true;
-                            switch (appWindow.Presenter)
-                            {
-                                case Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter:
-                                    overlappedPresenter.Minimize();
-                                    break;
-                            }
-
-                        };
                     });
                 });
             });

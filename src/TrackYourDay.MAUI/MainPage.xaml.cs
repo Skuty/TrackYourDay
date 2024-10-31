@@ -6,6 +6,8 @@ namespace TrackYourDay.MAUI
     {
         public MainPage()
         {
-            InitializeComponent();        }
+            InitializeComponent();
+            this.Title = "Track Your Day";
+        }
     }
 }
