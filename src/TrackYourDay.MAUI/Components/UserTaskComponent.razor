@@ -12,7 +12,7 @@
                 <MudForm @ref="form" @bind-IsValid="@isValid" Class="d-flex align-items-center">
                     <MudIconButton Icon="@Icons.Material.Filled.Task" Color="Color.Default" />
                     <MudTextField Class="flex-grow-1" @bind-Value="newUserTaskDescription" Label="Description" Required="true" RequiredError="Description is required!" />
-                    <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask" />
+                    <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask" />
                 </MudForm>
             </MudPaper>
             break;
@@ -34,7 +34,7 @@
                         <MudCheckBox Checked="true" Label="Show popup" ReadOnly="true" Color="Color.Primary"></MudCheckBox>
                     </MudCardContent>
                     <MudCardActions>
-                        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask">
+                        <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!this.isValid)" OnClick="StartUserTask">
                         </MudButton>
                     </MudCardActions>
                 </MudCard>
@@ -47,16 +47,21 @@ else
     @switch (this.Mode)
     {
         case ViewMode.Compact:
-                <MudPaper Elevation="3">
-                    <MudForm @ref="form" @bind-IsValid="@isValid" Class="d-flex align-items-center">
-                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                        <MudTextField Style="width: 60px;" @bind-Value="this.activeUserTaskDuration" Label="Duratoin" ReadOnly="true" />
-                        <MudTextField Style="width: 170px;" @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
-                        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask" />
-                        <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
-                    </MudForm>
-                </MudPaper>
-                break;
+            <MudPaper Elevation="3">
+                <MudForm @ref="form" @bind-IsValid="@isValid" Class="d-flex align-items-center">
+                    <!-- Wrapper for Refresh Button and Progress Circular -->
+                    <div class="d-flex flex-column align-items-center me-2">
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="25px" height="25px" @onclick="Refresh" />
+                        </div>
+
+                    <!-- Other form elements -->
+                    <MudTextField Style="width: 60px;" @bind-Value="this.activeUserTaskDuration" Label="Duration" ReadOnly="true" />
+                    <MudTextField Style="width: 170px;" @bind-Value="this.activeUserTaskDescription" Label="Description" ReadOnly="true" />
+                    <MudButton Color="Color.Secondary" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask" />
+                </MudForm>
+            </MudPaper>
+            break;
 
         default:
             <MudCard>
@@ -75,7 +80,7 @@ else
                     <MudCheckBox Checked="true" ReadOnly="true"></MudCheckBox>
                 </MudCardContent>
                 <MudCardActions>
-                    <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask">
+                    <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.StopCircle" OnClick="EndUserTask">
                     </MudButton>
                 </MudCardActions>
             </MudCard>
