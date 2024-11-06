@@ -6,15 +6,22 @@
 @using TrackYourDay.MAUI.Components
 @using TrackYourDay.MAUI.Data;
 @using TrackYourDay.MAUI.MauiPages;
-@using WinRT.Interop
+@using WinRT.Interop;
 
-
-<MudPaper Class="d-flex flex-row-reverse flex-grow-1 gap-0" Elevation="0">
-    <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0" @onclick="ToggleTitleBarVisibility" />
-    <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0" @onclick="MinimizeWindow" />
+<MudPaper Class="d-flex flex-grow-1 gap-0" Elevation="0">
+    <MudGrid Class="w-100">
+        <MudItem xs="10"> 
+            <!-- First column for UserTaskComponent -->
+            <UserTaskComponent Mode="ViewMode.Compact" OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
+        </MudItem>
+        <MudItem xs="2" Class="d-flex flex-column align-items-center"> 
+            <!-- Second column for buttons -->
+            <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0 mb-1" @onclick="ToggleTitleBarVisibility" />
+            <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0" @onclick="MinimizeWindow" />
+        </MudItem>
+    </MudGrid>
 </MudPaper>
 
-<UserTaskComponent Mode="ViewMode.Compact" OnUserTaskEnded="@UserTaskEnded"></UserTaskComponent>
 @code {
     [Inject]
     public IMediator mediator { get; set; }
