@@ -1,8 +1,9 @@
 ﻿@using TrackYourDay.Core.UserTasks
 @using TrackYourDay.MAUI.MauiPages
+@using System.Timers
+@implements IDisposable
+
 <div style="display:inline-block">
-
-
 @if (this.activeUserTask is null)
 {
     @switch (this.Mode) 
@@ -52,7 +53,7 @@ else
                     <!-- Wrapper for Refresh Button and Progress Circular -->
                     <div class="d-flex flex-column align-items-center me-2">
                         <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                            <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="25px" height="25px" @onclick="Refresh" />
+                            <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="25px" height="25px" @onclick="ReloadActiveTask" />
                         </div>
 
                     <!-- Other form elements -->
@@ -113,9 +114,23 @@ else
     private MudForm form;
     private bool isValid;
 
+    private Timer timer;
+    private TimeSpan reloadDelay = TimeSpan.FromMinutes(1);
+
     protected override async Task OnInitializedAsync()
-    {
+    {        
         this.shouldShowPopup = this.Mode == ViewMode.Normal;
+
+        this.ReloadActiveTask();
+
+        this.timer = new Timer(this.reloadDelay);
+        timer.Enabled = true;
+        timer.AutoReset = true;
+        timer.Elapsed += (sender, e) => ReloadActiveTask();
+    }
+
+    private void ReloadActiveTask()
+    {
         this.activeUserTask = this.userTaskService.GetActiveTask();
         if (this.activeUserTask != null)
         {
@@ -123,17 +138,24 @@ else
             var duration = this.activeUserTask.GetDuration();
             this.activeUserTaskDuration = $"{(int)duration.TotalHours}:{duration.Minutes:00}";
             this.activeUserTaskDescription = this.activeUserTask.Description;
-        }
-    }
 
-    private async Task Refresh()
-    {
-        await this.OnInitializedAsync();
+            this.InvokeAsync(StateHasChanged);
+        }
     }
 
     private void StartUserTask()
     {
-        this.activeUserTask = this.userTaskService.StartTask(DateTime.Today.AddMinutes(this.newUserTaskStartTime.Value.TotalMinutes), this.newUserTaskDescription);
+        DateTime startTime;
+        if (this.Mode == ViewMode.Compact)
+        {
+            startTime = DateTime.Now;
+        } 
+        else
+        {
+            startTime = DateTime.Today.AddMinutes(this.newUserTaskStartTime.Value.TotalMinutes);
+        }
+
+        this.activeUserTask = this.userTaskService.StartTask(startTime, this.newUserTaskDescription);
         this.newUserTaskStartTime = null;
         this.newUserTaskDescription = string.Empty;
         this.activeUserTaskStartTime = this.activeUserTask.StartDate.ToString();
@@ -158,5 +180,10 @@ else
         this.newUserTaskDescription = string.Empty;
 
         this.OnUserTaskEnded.InvokeAsync();
+    }
+    
+    public void Dispose()
+    {
+        timer?.Dispose();
     }
 }
