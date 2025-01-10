@@ -8,6 +8,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackYourDay.MAUI", "src\Tr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrackYourDay.Core", "src\TrackYourDay.Core\TrackYourDay.Core.csproj", "{4E176B76-F190-481B-9AF8-70F41A8299B5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackYourDay.Web", "src\Nowy folder\TrackYourDay.Web\TrackYourDay.Web.csproj", "{7FF282CB-88BE-4E4B-9E9A-18B921E37689}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,12 +30,16 @@ Global
 		{4E176B76-F190-481B-9AF8-70F41A8299B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E176B76-F190-481B-9AF8-70F41A8299B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E176B76-F190-481B-9AF8-70F41A8299B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7FF282CB-88BE-4E4B-9E9A-18B921E37689}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7FF282CB-88BE-4E4B-9E9A-18B921E37689}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7FF282CB-88BE-4E4B-9E9A-18B921E37689}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7FF282CB-88BE-4E4B-9E9A-18B921E37689}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {67D615D5-394B-4346-A26E-558AF9E3E0D1}
 		        SolutionGuid = {61F7FB11-1E47-470C-91E2-47F8143E1572}
+		SolutionGuid = {67D615D5-394B-4346-A26E-558AF9E3E0D1}
 	EndGlobalSection
 EndGlobal
