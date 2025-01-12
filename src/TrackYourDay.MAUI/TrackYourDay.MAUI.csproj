@@ -69,7 +69,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
-    <ProjectReference Include="..\TrackYourDay.Web\TrackYourDay.Web.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="PopupBlazorPage.xaml.cs">
