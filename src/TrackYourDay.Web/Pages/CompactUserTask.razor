@@ -3,7 +3,6 @@
 @using MediatR;
 @using TrackYourDay.Core.UserTasks
 @using TrackYourDay.Web.Components
-@using WinRT.Interop;
 
 <MudPaper Class="d-flex flex-grow-1 gap-0" Elevation="0">
     <MudGrid Class="w-100">
@@ -32,12 +31,14 @@
     }
 
     private void MinimizeWindow() 
-    { 
-        this.mediator.Send(new MinimizeWindowCommand(this.ParentMauiWindowId));
+    {
+        throw new Exception("Fix this");
+        // this.mediator.Send(new MinimizeWindowCommand(this.ParentMauiWindowId));
     }
 
     private void ToggleTitleBarVisibility()
     {
-        this.mediator.Send(new ToggleWindowHeaderVisibilityCommand(this.ParentMauiWindowId));
+        throw new Exception("Fix this");
+        // this.mediator.Send(new ToggleWindowHeaderVisibilityCommand(this.ParentMauiWindowId));
     }
 }
