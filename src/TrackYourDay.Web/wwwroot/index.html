@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>TrackYourDay.MAUI</title>
-    <base href="/" />
+    <base href="./" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="TrackYourDay.Web.styles.css" rel="stylesheet" />
@@ -24,7 +24,19 @@
         <a class="dismiss">🗙</a>
     </div>
 
-    <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script>
+        if (window.location.hostname === 'localhost') {
+            // Running in development mode
+            var script = document.createElement('script');
+            script.src = '_framework/blazor.webassembly.js';
+            document.head.appendChild(script);
+        } else {
+            // Running in MAUI
+            var script = document.createElement('script');
+            script.src = '_framework/blazor.webview.js';
+            document.head.appendChild(script);
+        }
+    </script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>
 
