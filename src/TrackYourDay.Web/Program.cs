@@ -19,6 +19,7 @@ namespace TrackYourDay.Web
 
             builder.Services.AddMudServices();
 
+#if DEBUG
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
             builder.Services.AddSettings();
@@ -28,6 +29,9 @@ namespace TrackYourDay.Web
             builder.Services.AddCoreNotifications();
 
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
+
+
+#endif
 
             await builder.Build().RunAsync();
         }
