@@ -69,7 +69,6 @@ namespace TrackYourDay.Core.ServiceRegistration
         {
             services.AddSingleton<IClock, Clock>();
             services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
-            services.AddSingleton<ISettingsRepository, SqlLiteSettingsRepository>();
             services.AddSingleton<SettingsService>();
             services.AddSingleton<ISettingsSet>(serviceProvider =>
                 serviceProvider.GetService<SettingsService>().GetCurrentSettingSet());

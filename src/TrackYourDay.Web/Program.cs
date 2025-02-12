@@ -5,6 +5,7 @@ using System.Reflection;
 using TrackYourDay.Core.ServiceRegistration;
 using TrackYourDay.Core.Activities;
 using static MudBlazor.CategoryTypes;
+using TrackYourDay.Core.Settings;
 
 namespace TrackYourDay.Web
 {
@@ -21,6 +22,8 @@ namespace TrackYourDay.Web
 
 #if DEBUG
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
+
+            builder.Services.AddSingleton<ISettingsRepository, InMemorySettingsRepository>();
 
             builder.Services.AddSettings();
 

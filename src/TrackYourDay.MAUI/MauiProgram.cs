@@ -43,6 +43,8 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
+            // Merge this later into Settings
+            builder.Services.AddSingleton<ISettingsRepository, SqlLiteSettingsRepository>();
             builder.Services.AddSettings();
 
             builder.Services.AddTrackers();

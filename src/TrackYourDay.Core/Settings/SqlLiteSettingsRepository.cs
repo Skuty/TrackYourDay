@@ -107,5 +107,30 @@ namespace TrackYourDay.Core.Settings
                 command.ExecuteNonQuery();
             }
         }
+
+        public class InMemorySettingsRepository : ISettingsRepository
+        {
+            private ISettingsSet settings;
+
+            public InMemorySettingsRepository()
+            {
+                this.settings = new DefaultSettingsSet();
+            }
+
+            public ISettingsSet Get()
+            {
+                return this.settings;
+            }
+
+            public void Reset()
+            {
+                this.settings = new DefaultSettingsSet();
+            }
+
+            public void Save(ISettingsSet settings)
+            {
+                this.settings = settings;
+            }
+        }
     }
 }
