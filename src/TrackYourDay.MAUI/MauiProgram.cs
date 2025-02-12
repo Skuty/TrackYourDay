@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.Analytics;
 using Microsoft.Extensions.Logging;
+using TrackYourDay.Core.ServiceRegistration;
 
 namespace TrackYourDay.MAUI
 {
@@ -42,11 +43,7 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
-            builder.Services.AddSettings();
-
-            builder.Services.AddTrackers();
-
-            builder.Services.AddNotifications();
+            builder.Services.AddMauiNotifications();
 
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
 
