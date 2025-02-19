@@ -1,5 +1,6 @@
 ﻿namespace TrackYourDay.Core.Settings
 {
+    [Obsolete("Used only for testing purposes on WEB project")]
     public class InMemorySettingsRepository : ISettingsRepository
     {
         private ISettingsSet settingsSet;
