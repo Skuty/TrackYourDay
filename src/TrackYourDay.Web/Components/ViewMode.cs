@@ -1,4 +1,4 @@
-﻿namespace TrackYourDay.MAUI.Components
+﻿namespace TrackYourDay.Web.Components
 {
     public enum ViewMode
     {

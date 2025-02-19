@@ -10,6 +10,7 @@ using TrackYourDay.MAUI.BackgroundJobs;
 using TrackYourDay.MAUI.ServiceRegistration;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using TrackYourDay.Core.ServiceRegistration;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.Analytics;
 using Microsoft.Extensions.Logging;
@@ -33,7 +34,7 @@ namespace TrackYourDay.MAUI
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .Enrich.FromLogContext()
-                .WriteTo.File("C:\\Logs\\TrackYourDay\\TrackYourDay_.log", 
+                .WriteTo.File("C:\\Logs\\TrackYourDay\\TrackYourDay_.log",
                     rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
@@ -42,11 +43,14 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
+            // Merge this later into Settings
+            builder.Services.AddSingleton<ISettingsRepository, SqlLiteSettingsRepository>();
             builder.Services.AddSettings();
 
             builder.Services.AddTrackers();
 
-            builder.Services.AddNotifications();
+            builder.Services.AddCoreNotifications();
+            builder.Services.AddMauiNotifications();
 
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
 

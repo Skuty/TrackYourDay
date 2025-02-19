@@ -1,9 +1,12 @@
-﻿namespace TrackYourDay.MAUI
+﻿using TrackYourDay.Web;
+
+namespace TrackYourDay.MAUI
 {
     public partial class PopupBlazorPage : ContentPage
     {
         public PopupBlazorPage(string path)
         {
+            var temp = new ReferencyClass();
             InitializeComponent();
             this.blazorWebViewSecond.StartPath = path;
 

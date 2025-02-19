@@ -1,12 +1,8 @@
 ﻿@page "/CompactUserTask"
 
 @using MediatR;
-@using Microsoft.UI
 @using TrackYourDay.Core.UserTasks
-@using TrackYourDay.MAUI.Components
-@using TrackYourDay.MAUI.Data;
-@using TrackYourDay.MAUI.MauiPages;
-@using WinRT.Interop;
+@using TrackYourDay.Web.Components
 
 <MudPaper Class="d-flex flex-grow-1 gap-0" Elevation="0">
     <MudGrid Class="w-100">
@@ -35,12 +31,14 @@
     }
 
     private void MinimizeWindow() 
-    { 
-        this.mediator.Send(new MinimizeWindowCommand(this.ParentMauiWindowId));
+    {
+        throw new Exception("Fix this");
+        // this.mediator.Send(new MinimizeWindowCommand(this.ParentMauiWindowId));
     }
 
     private void ToggleTitleBarVisibility()
     {
-        this.mediator.Send(new ToggleWindowHeaderVisibilityCommand(this.ParentMauiWindowId));
+        throw new Exception("Fix this");
+        // this.mediator.Send(new ToggleWindowHeaderVisibilityCommand(this.ParentMauiWindowId));
     }
 }
