@@ -6,7 +6,7 @@
             <a class="navbar-brand" href="">Track Your Day</a>
         }
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
+            <MudIcon Icon="@Icons.Material.Filled.Menu" />
         </button>
     </div>
 </div>
@@ -15,7 +15,7 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span>
+                <MudIcon Icon="@Icons.Material.Filled.Home" />
                 @if (!@IconMenuActive)
                 {
                     <label>Home</label>
@@ -24,7 +24,7 @@
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="userTasks">
-                <span class="oi oi-task" aria-hidden="true"></span>
+                <MudIcon Icon="@Icons.Material.Filled.Task" />
                 @if (!@IconMenuActive)
                 {
                     <label>User Tasks</label>
@@ -33,7 +33,7 @@
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="activities">
-                <span class="oi oi-clipboard" aria-hidden="true"></span>
+                <MudIcon Icon="@Icons.Material.Filled.WorkOutline" />
                 @if (!@IconMenuActive)
                 {
                     <label>Activities</label>
@@ -42,65 +42,76 @@
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="breaks">
-                <span class="oi oi-media-pause" aria-hidden="true"></span>
+                <MudIcon Icon="@Icons.Material.Filled.FreeBreakfast" />
                 @if (!@IconMenuActive)
                 {
                     <label>Breaks</label>
                 }
             </NavLink>
         </div>
+
+        @*         <div class="nav-item px-3">
+            <NavLink class="nav-link" href="timelogging">
+                <MudIcon Icon="@Icons.Material.Filled.ManageHistory" />
+                @if (!@IconMenuActive)
+                {
+                    <label>Time Logging</label>
+                }
+            </NavLink>
+        </div>
+ *@
+
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="analytics">
-                <span class="oi oi-pie-chart" aria-hidden="true"></span>
+                <MudIcon Icon="@Icons.Material.Filled.PieChart" />
                 @if (!@IconMenuActive)
                 {
                     <label>Analytics</label>
                 }
             </NavLink>
         </div>
-
     </nav>
 </div>
 
 <div class="bottom-row">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="https://github.com/Skuty/TrackYourDay/issues/new/choose">
-                <span class="oi oi-bug" aria-hidden="true"></span>
-                @if (!@IconMenuActive)
-                {
-                    <label>Bug or Feature</label>
-                }
-            </NavLink>
-        </div>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="https://github.com/Skuty/TrackYourDay/issues/new/choose">
+            <MudIcon Icon="@Icons.Material.Filled.BugReport" />
+            @if (!@IconMenuActive)
+            {
+                <label>Bug or Feature</label>
+            }
+        </NavLink>
+    </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="settings">
-            <span class="oi oi-cog" aria-hidden="true"></span>
-                @if (!@IconMenuActive)
-                {
-                    <label>Settings</label>
-                }
-            </NavLink>
-        </div>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="settings">
+            <MudIcon Icon="@Icons.Material.Filled.Settings" />
+            @if (!@IconMenuActive)
+            {
+                <label>Settings</label>
+            }
+        </NavLink>
+    </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" @onclick="CloseApplication" style="cursor: pointer">
-                <span class="oi oi-power-standby" aria-hidden="true"></span>
-                @if (!@IconMenuActive)
-                {
-                    <label>Exit</label>
-                }
-            </NavLink>
-        </div>
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" @onclick="CloseApplication" style="cursor: pointer">
+            <MudIcon Icon="@Icons.Material.Filled.PowerSettingsNew" />
+            @if (!@IconMenuActive)
+            {
+                <label>Exit</label>
+            }
+        </NavLink>
+    </div>
 
     <div class="icon-menu-arrow">
         @if (!@IconMenuActive)
         {
-            <span class="oi oi-arrow-left" style="color: white;" @onclick="ToggleIconMenu"></span>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowBack" style="color: white;" @onclick="ToggleIconMenu" />
         }
         else
         {
-            <span class="oi oi-arrow-right" style="color: white;" @onclick="ToggleIconMenu"></span>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" style="color: white;" @onclick="ToggleIconMenu" />
         }
     </div>
 </div>
