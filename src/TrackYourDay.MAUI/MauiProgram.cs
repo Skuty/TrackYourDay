@@ -14,6 +14,9 @@ using TrackYourDay.Core.ServiceRegistration;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.Analytics;
 using Microsoft.Extensions.Logging;
+using TrackYourDay.Web;
+using MediatR;
+using TrackYourDay.Core.Workdays.Events;
 
 namespace TrackYourDay.MAUI
 {
@@ -51,6 +54,10 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddCoreNotifications();
             builder.Services.AddMauiNotifications();
+
+            // Move to some extension method in the end of the day
+            builder.Services.AddScoped<Web.EventWrapper>();
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Web.EventWrapper>());
 
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
 

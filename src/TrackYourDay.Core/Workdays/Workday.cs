@@ -1,5 +1,6 @@
 ﻿using System.Reflection.Metadata.Ecma335;
 using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.Activities.SystemStates;
 using TrackYourDay.Core.Breaks;
 
 namespace TrackYourDay.Core.Workdays
@@ -387,6 +388,24 @@ namespace TrackYourDay.Core.Workdays
                 BreakTimeLeft = breakTimeLeft > TimeSpan.Zero ? breakTimeLeft : TimeSpan.Zero,
                 ValidBreakTimeUsed = validBreakTimeUsed
             };
+        }
+
+        [Obsolete("Used just for mocks")]
+        public static Workday CreateSample()
+        {
+            var sampleDate = DateOnly.FromDateTime(DateTime.Today);
+            var sampleWorkdayDefinition = WorkdayDefinition.CreateSampleCompanyDefinition();
+            var sampleEndedActivities = new List<EndedActivity>
+            {
+                new EndedActivity(DateTime.Now.AddHours(-8), DateTime.Now.AddHours(-4), SystemStateFactory.ApplicationStartedEvent("Sample")),
+                new EndedActivity(DateTime.Now.AddHours(-3), DateTime.Now.AddHours(-1), SystemStateFactory.FocusOnApplicationState("Sample"))
+            };
+            var sampleEndedBreaks = new List<EndedBreak>
+            {
+                new EndedBreak(Guid.NewGuid(), DateTime.Now.AddHours(-4), DateTime.Now.AddHours(-3), "Lunch Break")
+            };
+
+            return CreateBasedOn(sampleWorkdayDefinition, sampleEndedActivities, sampleEndedBreaks);
         }
     }
 }

@@ -1,17 +1,16 @@
 ﻿@using MudBlazor
+@using MediatR
+@using TrackYourDay.Core.Workdays
+@using TrackYourDay.Core.Workdays.Events
+@implements IDisposable
 
 <div class="d-flex align-items-center border" style="width: fit-content;">
     <div>
-        <MudTextField style="margin-top: 0px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.WorkOutline" Format="hh\:mm" ReadOnly="true" />
+        <MudTextField @bind-Value="WorkTime" style="margin-top: 0px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.WorkOutline" Format="hh\:mm" ReadOnly="true" />
     </div>
     <div>
-        <MudTextField style="margin-top: 0px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.FreeBreakfast" Format="hh\:mm" ReadOnly="true" />
+        <MudTextField @bind-Value="BreakTime" style="margin-top: 0px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.FreeBreakfast" Format="hh\:mm" ReadOnly="true" />
     </div>
-    @*    
-    <div>
-        <MudTextField style="margin-top: 0px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.ManageHistory" Format="hh\:mm" ReadOnly="true" />
-    </div>
-    *@
     <div>
         <MudIcon Icon="@Icons.Material.Filled.Task" />
     </div>
@@ -22,18 +21,39 @@
         <MudIconButton style="margin-top: 0px;" Icon="@Icons.Material.Filled.Stop" Size="Size.Small" />
     </div>
     <div>
-        <MudTextField style="margin-top: 0px; width: 50px;" T="TimeSpan" Format="hh\:mm" ReadOnly="true" />
+        <MudTextField @bind-Value="UserTaskTime" style="margin-top: 0px; width: 50px;" T="TimeSpan" Format="hh\:mm" ReadOnly="true" />
     </div>
     <div>
-        <MudTextField style="margin-top: 0px;" T="string" Placeholder="User Task" />
+        <MudTextField @bind-Value="UserTaskDescription" style="margin-top: 0px;" T="string" Placeholder="User Task" />
     </div>
-    @*     
-    <div>
-        <MudIconButton style="margin-top: 0px;" Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Small" Disabled="true" />
-    </div> 
-    *@
 </div>
 
 @code {
+    [Inject]
+    public required IMediator Mediator { get; set; }
 
+    [Inject]
+    public required EventWrapper EventWrapper { get; set; }
+
+    private TimeSpan WorkTime { get; set; }
+    private TimeSpan BreakTime { get; set; }
+    private TimeSpan UserTaskTime { get; set; }
+    private string UserTaskDescription { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        EventWrapper.OnWorkdayUpdated += UpdateWorkdayProperties;
+    }
+
+    private void UpdateWorkdayProperties(WorkdayUpdatedEvent notification)
+    {
+        WorkTime = notification.Workday.TimeAlreadyActivelyWorkded;
+        BreakTime = notification.Workday.ValidBreakTimeUsed;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        EventWrapper.OnWorkdayUpdated -= UpdateWorkdayProperties;
+    }
 }

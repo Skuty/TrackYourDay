@@ -30,6 +30,8 @@ namespace TrackYourDay.Web
             builder.Services.AddTrackers();
 
             builder.Services.AddCoreNotifications();
+            builder.Services.AddSingleton<Web.EventWrapper>();
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Web.EventWrapper>());
 
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
 
