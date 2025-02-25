@@ -4,16 +4,6 @@ using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.MauiPages
 {
-    internal class MinimizeWindowCommand : IRequest
-    {
-        public Guid WindowId { get; }
-
-        public MinimizeWindowCommand(Guid windowId)
-        {
-            this.WindowId = windowId;
-        }
-    }
-
     internal class MinimizeWindowCommandHandler : IRequestHandler<MinimizeWindowCommand>
     {
         public Task Handle(MinimizeWindowCommand request, CancellationToken cancellationToken)

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Quartz;
+using TrackYourDay.MAUI.MauiPages;
 
 namespace TrackYourDay.MAUI
 {
@@ -23,6 +24,8 @@ namespace TrackYourDay.MAUI
             sched.Start();
 
             this.MinimizeWindowOnCloseInsteadOfClosing();
+
+            MauiPageFactory.OpenWebPageInNewWindow("/OperationalBar");
         }
 
         private void MinimizeWindowOnCloseInsteadOfClosing()

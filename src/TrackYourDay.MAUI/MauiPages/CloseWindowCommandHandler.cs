@@ -2,16 +2,6 @@
 
 namespace TrackYourDay.MAUI.MauiPages
 {
-    internal class CloseWindowCommand : IRequest
-    {
-        public Guid MauiWindowId { get; }
-
-        public CloseWindowCommand(Guid mauiWindowId)
-        {
-            this.MauiWindowId = mauiWindowId;
-        }
-    }
-
     internal class CloseWindowCommandHandler : IRequestHandler<CloseWindowCommand>
     {
         public Task Handle(CloseWindowCommand request, CancellationToken cancellationToken)

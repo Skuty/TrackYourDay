@@ -4,16 +4,6 @@ using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.MauiPages
 {
-    internal class ToggleWindowHeaderVisibilityCommand : IRequest
-    {
-        public Guid WindowId { get; }
-
-        public ToggleWindowHeaderVisibilityCommand(Guid windowId)
-        {
-            this.WindowId = windowId;
-        }
-    }
-
     internal class ToggleWindowHeaderVisibilityCommandHandler : IRequestHandler<ToggleWindowHeaderVisibilityCommand>
     {
         private const int HeaderHeightInPx = 40;

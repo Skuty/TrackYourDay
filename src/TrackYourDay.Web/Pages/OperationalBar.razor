@@ -1,0 +1,36 @@
+﻿@page "/OperationalBar"
+
+@using MediatR;
+@using TrackYourDay.Core.MAUIProxy
+@using TrackYourDay.Core.UserTasks
+@using TrackYourDay.Web.Components
+
+<MudPaper Class="d-flex flex-grow-1 gap-0" Elevation="0">
+    <MudGrid Class="w-100">
+        <MudItem xs="10"> 
+            <OperationalBarComponent></OperationalBarComponent>
+        </MudItem>
+        <MudItem xs="2" Class="d-flex flex-column align-items-center"> 
+            <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0 mb-1" @onclick="ToggleTitleBarVisibility" />
+            <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0" @onclick="MinimizeWindow" />
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@code {
+    [Inject]
+    public IMediator mediator { get; set; }
+
+    [CascadingParameter(Name = "ParentMauiWindowId")]
+    public Guid ParentMauiWindowId { get; set; }
+
+    private void MinimizeWindow() 
+    {
+        this.mediator.Send(new MinimizeWindowCommand(this.ParentMauiWindowId));
+    }
+
+    private void ToggleTitleBarVisibility()
+    {
+        this.mediator.Send(new ToggleWindowHeaderVisibilityCommand(this.ParentMauiWindowId));
+    }
+}

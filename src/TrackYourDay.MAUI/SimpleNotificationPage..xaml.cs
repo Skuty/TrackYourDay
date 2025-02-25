@@ -37,12 +37,12 @@ public partial class SimpleNotificationPage : ContentPage
         if (this.progressBar.Progress >= 1)
         {
             this.timer.Stop();
-            this.mediator.Send(new CloseWindowCommand(this.Id));
+            this.mediator.Send(new CloseWindowCommandHandler(this.Id));
         }
     }
 
 	public void OnOkButtonClicked(object sender, EventArgs args)
 	{
-        this.mediator.Send(new CloseWindowCommand(this.Id));
+        this.mediator.Send(new CloseWindowCommandHandler(this.Id));
     }
 }
