@@ -12,6 +12,8 @@ namespace TrackYourDay.MAUI.MauiPages
         {
             var window = Application.Current?.Windows.FirstOrDefault(w =>
                 w.Id == request.WindowId || w.Page.Id == request.WindowId);
+            var currentWidth = window.Width;
+            var currentHeight = window.Height;
 
             var visualElement = (window.GetVisualElementWindow().Handler.PlatformView as Microsoft.UI.Xaml.Window);
 
@@ -27,13 +29,16 @@ namespace TrackYourDay.MAUI.MauiPages
 
                     if (overlappedPresenter.HasBorder)
                     {
-                        overlappedPresenter.SetBorderAndTitleBar(false, false);
+                        overlappedPresenter.SetBorderAndTitleBar(true, false);
                         window.Height -= HeaderHeightInPx;
+                        //window.Width = currentWidth;
                     }
                     else
                     {
                         overlappedPresenter.SetBorderAndTitleBar(true, true);
                         window.Height += HeaderHeightInPx;
+                        //window.Width = currentWidth;
+
                     }
                     overlappedPresenter.Restore();
                     break;

@@ -5,14 +5,14 @@
 @using TrackYourDay.Core.UserTasks
 @using TrackYourDay.Web.Components
 
-<MudPaper Class="d-flex flex-grow-1 gap-0" Elevation="0">
-    <MudGrid Class="w-100">
-        <MudItem xs="10"> 
+<MudPaper Class="d-flex flex-grow-1 gap-0 border" Elevation="0">
+    <MudGrid>
+        <MudItem Class="pr-0"> 
             <OperationalBarComponent></OperationalBarComponent>
         </MudItem>
-        <MudItem xs="2" Class="d-flex flex-column align-items-center"> 
-            <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0 mb-1" @onclick="ToggleTitleBarVisibility" />
-            <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0" @onclick="MinimizeWindow" />
+        <MudItem Class="d-flex flex-column align-items-center pl-0"> 
+            <MudIconButton Icon="@Icons.Material.Filled.Maximize" class="pa-0 mb-0" Size="Size.Small" @onclick="ToggleTitleBarVisibility" />
+            <MudIconButton Icon="@Icons.Material.Filled.Minimize" class="pa-0 mb-0" Size="Size.Small" @onclick="MinimizeWindow" />
         </MudItem>
     </MudGrid>
 </MudPaper>

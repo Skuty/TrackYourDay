@@ -5,7 +5,7 @@
 @using TrackYourDay.Web.Events
 @implements IDisposable
 
-<div class="d-flex align-items-center border" style="width: fit-content;">
+<div class="d-flex align-items-center" style="width: fit-content;">
     <div>
         <MudTextField @bind-Value="WorkTime" style="margin-top: 0px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.WorkOutline" Format="hh\:mm" ReadOnly="true" />
     </div>
@@ -25,7 +25,7 @@
         <MudTextField @bind-Value="UserTaskTime" style="margin-top: 0px; width: 50px;" T="TimeSpan" Format="hh\:mm" ReadOnly="true" />
     </div>
     <div>
-        <MudTextField @bind-Value="UserTaskDescription" style="margin-top: 0px;" T="string" Placeholder="User Task" />
+        <MudTextField @bind-Value="UserTaskDescription" style="margin-top: 0px; width: 200px;" T="string" Placeholder="User Task" />
     </div>
 </div>
 
