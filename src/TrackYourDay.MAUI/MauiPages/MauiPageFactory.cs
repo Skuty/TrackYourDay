@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.MauiPages
@@ -14,7 +15,7 @@ namespace TrackYourDay.MAUI.MauiPages
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
-        public static void OpenWebPageInNewWindow(string path, int width, int height) 
+        public static void OpenWebPageInNewWindow(string path, int width, int height)
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -22,6 +23,7 @@ namespace TrackYourDay.MAUI.MauiPages
                 blazorPopUpPage.Title = $"Track Your Day - Pop Up";
                 blazorPopUpPage.Width = width;
                 blazorPopUpPage.Height = height;
+
                 Application.Current.OpenWindow(blazorPopUpPage);
 
                 var localWindow = (blazorPopUpPage.Handler.PlatformView as Microsoft.UI.Xaml.Window);
