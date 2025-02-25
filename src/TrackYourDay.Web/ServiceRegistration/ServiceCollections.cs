@@ -6,7 +6,7 @@ namespace TrackYourDay.Web.ServiceRegistration
     {
         public static IServiceCollection AddEventHandlingForBlazorUIComponents(this IServiceCollection services)
         {
-            services.AddScoped<EventWrapperForComponents>();
+            services.AddSingleton<EventWrapperForComponents>();
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<EventWrapperForComponents>());
 
             return services;

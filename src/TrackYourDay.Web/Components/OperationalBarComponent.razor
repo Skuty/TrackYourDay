@@ -50,7 +50,7 @@
     {
         this.WorkTime = notification.Workday.TimeOfAllActivities;
         this.BreakTime = notification.Workday.TimeOfAllBreaks;
-        this.StateHasChanged();
+        InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
