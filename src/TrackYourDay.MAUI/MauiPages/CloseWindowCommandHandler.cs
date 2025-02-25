@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using TrackYourDay.Core.MAUIProxy;
 
 namespace TrackYourDay.MAUI.MauiPages
 {
