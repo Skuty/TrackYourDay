@@ -1,5 +1,6 @@
 ﻿@using MediatR
 @using MudBlazor
+@using TrackYourDay.Core.UserTasks
 @using TrackYourDay.Core.Workdays
 @using TrackYourDay.Core.Workdays.Events
 @using TrackYourDay.Web.Events
@@ -12,21 +13,7 @@
     <div>
         <MudTextField @bind-Value="BreakTime" style="margin-top: 0px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.FreeBreakfast" Format="hh\:mm" ReadOnly="true" />
     </div>
-    <div>
-        <MudIcon Icon="@Icons.Material.Filled.Task" style="margin-top: 8px;" />
-    </div>
-    <div>
-        <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Size="Size.Small" style="margin-top: 8px;" />
-    </div>
-    <div>
-        <MudIconButton Icon="@Icons.Material.Filled.Stop" Size="Size.Small" style="margin-top: 8px;"  />
-    </div>
-    <div>
-        <MudTextField @bind-Value="UserTaskTime" style="margin-top: 0px; width: 50px;" T="TimeSpan" Format="hh\:mm" ReadOnly="true" />
-    </div>
-    <div>
-        <MudTextField @bind-Value="UserTaskDescription" style="margin-top: 0px; width: 200px;" T="string" Placeholder="User Task" />
-    </div>
+    <UserTaskComponent></UserTaskComponent>
 </div>
 
 @code {
@@ -35,6 +22,10 @@
 
     [Inject]
     public required EventWrapperForComponents EventWrapper { get; set; }
+
+    [Inject]
+    private UserTaskService userTaskService { get; set; }
+
 
     private TimeSpan WorkTime { get; set; }
     private TimeSpan BreakTime { get; set; }
