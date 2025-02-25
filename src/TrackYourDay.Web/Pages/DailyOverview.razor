@@ -133,8 +133,5 @@
 
         breaksLeftDataChart[0] = this.workday.BreakTimeLeft.TotalMinutes;
         breaksLeftDataChart[1] = this.workday.ValidBreakTimeUsed.TotalMinutes;
-
-        this.Mediator.Publish(new WorkdayUpdatedEvent(Guid.Empty, Workday.CreateSample()));
-
     }
 }

@@ -1,7 +1,8 @@
-﻿@using MudBlazor
-@using MediatR
+﻿@using MediatR
+@using MudBlazor
 @using TrackYourDay.Core.Workdays
 @using TrackYourDay.Core.Workdays.Events
+@using TrackYourDay.Web.Events
 @implements IDisposable
 
 <div class="d-flex align-items-center border" style="width: fit-content;">
@@ -33,7 +34,7 @@
     public required IMediator Mediator { get; set; }
 
     [Inject]
-    public required EventWrapper EventWrapper { get; set; }
+    public required EventWrapperForComponents EventWrapper { get; set; }
 
     private TimeSpan WorkTime { get; set; }
     private TimeSpan BreakTime { get; set; }
@@ -42,18 +43,18 @@
 
     protected override void OnInitialized()
     {
-        EventWrapper.OnWorkdayUpdated += UpdateWorkdayProperties;
+        EventWrapper.OperationalBarOnWorkdayUpdatedAction += UpdateWorkdayProperties;
     }
 
     private void UpdateWorkdayProperties(WorkdayUpdatedEvent notification)
     {
-        WorkTime = notification.Workday.TimeAlreadyActivelyWorkded;
-        BreakTime = notification.Workday.ValidBreakTimeUsed;
-        StateHasChanged();
+        this.WorkTime = notification.Workday.TimeOfAllActivities;
+        this.BreakTime = notification.Workday.TimeOfAllBreaks;
+        this.StateHasChanged();
     }
 
     public void Dispose()
     {
-        EventWrapper.OnWorkdayUpdated -= UpdateWorkdayProperties;
+        EventWrapper.OperationalBarOnWorkdayUpdatedAction -= UpdateWorkdayProperties;
     }
 }
