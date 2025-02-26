@@ -1,19 +1,10 @@
 ﻿using MediatR;
 using Microsoft.UI;
+using TrackYourDay.Core.MAUIProxy;
 using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.MauiPages
 {
-    internal class ToggleWindowHeaderVisibilityCommand : IRequest
-    {
-        public Guid WindowId { get; }
-
-        public ToggleWindowHeaderVisibilityCommand(Guid windowId)
-        {
-            this.WindowId = windowId;
-        }
-    }
-
     internal class ToggleWindowHeaderVisibilityCommandHandler : IRequestHandler<ToggleWindowHeaderVisibilityCommand>
     {
         private const int HeaderHeightInPx = 40;
@@ -21,6 +12,8 @@ namespace TrackYourDay.MAUI.MauiPages
         {
             var window = Application.Current?.Windows.FirstOrDefault(w =>
                 w.Id == request.WindowId || w.Page.Id == request.WindowId);
+            var currentWidth = window.Width;
+            var currentHeight = window.Height;
 
             var visualElement = (window.GetVisualElementWindow().Handler.PlatformView as Microsoft.UI.Xaml.Window);
 
@@ -36,13 +29,16 @@ namespace TrackYourDay.MAUI.MauiPages
 
                     if (overlappedPresenter.HasBorder)
                     {
-                        overlappedPresenter.SetBorderAndTitleBar(false, false);
+                        overlappedPresenter.SetBorderAndTitleBar(true, false);
                         window.Height -= HeaderHeightInPx;
+                        //window.Width = currentWidth;
                     }
                     else
                     {
                         overlappedPresenter.SetBorderAndTitleBar(true, true);
                         window.Height += HeaderHeightInPx;
+                        //window.Width = currentWidth;
+
                     }
                     overlappedPresenter.Restore();
                     break;

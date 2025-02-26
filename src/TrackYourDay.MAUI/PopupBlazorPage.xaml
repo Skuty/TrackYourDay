@@ -4,12 +4,22 @@
              xmlns:local="clr-namespace:TrackYourDay.MAUI"
              xmlns:webUi="clr-namespace:TrackYourDay.Web;assembly=TrackYourDay.Web"
              x:Class="TrackYourDay.MAUI.PopupBlazorPage"
-             BackgroundColor="{DynamicResource PageBackgroundColor}">
+             BackgroundColor="LightGray"
+             Shell.BackgroundColor="Transparent"
+             Shell.PresentationMode="ModalAnimated">
 
-    <BlazorWebView x:Name="blazorWebViewSecond" HostPage="wwwroot/popupIndex.html">
-        <BlazorWebView.RootComponents>
-            <RootComponent Selector="#secondapp" x:Name="root" ComponentType="{x:Type webUi:PopupBase}" />
-        </BlazorWebView.RootComponents>
-    </BlazorWebView>
+    <ContentPage.Resources>
+        <Style TargetType="Frame">
+            <Setter Property="CornerRadius" Value="15" />
+        </Style>
+    </ContentPage.Resources>
+
+    <Frame Padding="0" HasShadow="True" BackgroundColor="White">
+        <BlazorWebView x:Name="blazorWebViewSecond" HostPage="wwwroot/popupIndex.html">
+            <BlazorWebView.RootComponents>
+                <RootComponent Selector="#secondapp" x:Name="root" ComponentType="{x:Type webUi:PopupBase}" />
+            </BlazorWebView.RootComponents>
+        </BlazorWebView>
+    </Frame>
 
 </ContentPage>

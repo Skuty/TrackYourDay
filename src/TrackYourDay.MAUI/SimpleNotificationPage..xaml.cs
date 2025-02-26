@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.UI.Xaml;
+using TrackYourDay.Core.MAUIProxy;
 using TrackYourDay.MAUI.MauiPages;
 
 namespace TrackYourDay.MAUI;

@@ -1,17 +1,17 @@
 ﻿@page "/"
+@using MediatR
 @using TrackYourDay.Core.Settings
 @using TrackYourDay.Core.Activities;
 @using TrackYourDay.Core.Breaks;
 @using TrackYourDay.Core;
 @using TrackYourDay.Core.Workdays
+@using TrackYourDay.Core.Workdays.Events
 @using TrackYourDay.Web.Components
 
-<h1>
-    <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
-    Daily Overview
-</h1>
-
-<UserTaskComponent></UserTaskComponent>
+    <div style="display: flex; align-items: center;">
+        <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
+        <OperationalBarComponent></OperationalBarComponent>
+    </div>
 
 <hr />
 
@@ -71,7 +71,7 @@
 
     <MudCard>
         <MudCardContent>
-            <MudText Typo="Typo.h5">Your todays Workday progress:</MudText>
+            <MudText Typo="Typo.h5">Workday definition:</MudText>
             <MudText Typo="Typo.body2">Workday Duration: @workdayDefinition.WorkdayDuration</MudText>
             <MudText Typo="Typo.body2">Allowed Break Duration: @workdayDefinition.AllowedBreakDuration</MudText>
             <MudText Typo="Typo.body2">Included Break Definitions: </MudText>
@@ -93,6 +93,8 @@
     private ActivityTracker activityTracker { get; set; }
     [Inject]
     private BreakTracker breakTracker { get; set; }
+    [Inject]
+    public required IMediator Mediator { get; set; }
 
     private Workday workday;
     private WorkdayDefinition workdayDefinition;

@@ -14,6 +14,10 @@ using TrackYourDay.Core.ServiceRegistration;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.Analytics;
 using Microsoft.Extensions.Logging;
+using MediatR;
+using TrackYourDay.Core.Workdays.Events;
+using TrackYourDay.Web.Events;
+using TrackYourDay.Web.ServiceRegistration;
 
 namespace TrackYourDay.MAUI
 {
@@ -51,6 +55,8 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddCoreNotifications();
             builder.Services.AddMauiNotifications();
+
+            builder.Services.AddEventHandlingForBlazorUIComponents();
 
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
 

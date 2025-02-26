@@ -6,6 +6,8 @@ using TrackYourDay.Core.ServiceRegistration;
 using TrackYourDay.Core.Activities;
 using static MudBlazor.CategoryTypes;
 using TrackYourDay.Core.Settings;
+using TrackYourDay.Web.Events;
+using TrackYourDay.Web.ServiceRegistration;
 
 namespace TrackYourDay.Web
 {
@@ -30,6 +32,7 @@ namespace TrackYourDay.Web
             builder.Services.AddTrackers();
 
             builder.Services.AddCoreNotifications();
+            builder.Services.AddEventHandlingForBlazorUIComponents();
 
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
 
