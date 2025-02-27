@@ -23,8 +23,6 @@ namespace TrackYourDay.MAUI.MauiPages
                 blazorPopUpPage.Y = 0;
                 blazorPopUpPage.X = 0;
                 blazorPopUpPage.Title = $"Track Your Day - Pop Up";
-                blazorPopUpPage.Width = width;
-                blazorPopUpPage.Height = height;
 
                 Application.Current.OpenWindow(blazorPopUpPage);
 
@@ -47,6 +45,11 @@ namespace TrackYourDay.MAUI.MauiPages
                         overlappedPresenter.Restore();
                         break;
                 }
+                
+                // Have to be setted last otherwise Window Header will set its height always to its defualt height
+                // There won't be possibility to change height lower than height of top border
+                blazorPopUpPage.Width = width;
+                blazorPopUpPage.Height = height;
             });
         }
 
