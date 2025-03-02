@@ -27,8 +27,14 @@ To Run on Windows Startup:
 4. Create Shortcut to TrackYourDay executsble file
 5. Copy Shortcut to File Location
 
-Tips:
-1. As long as application won't have Tray Icon, You can pin it to Task Bar to have it always in the same place
+## Architecture
+
+Track Your Day is based on Trackers and Analysers embedded on 3 main levels:
+1. The System Level - Events like Application started, Focus On Application, Mouse Moved are discovered here.
+2. The Application Level - Events like Teams Meeting Started, GitLab commit done, Jira Activity, User Manuall Tasks are discovered here.
+3. The Insights Level - Interpreted, Aggregated, Summarized Events from System and Application Level presented as User Activity
+
+On Top of those Levels outgoing Integrations are based like Logging Time to Jira or Exporting Time Sheets.
 
 ## Contribution
 
