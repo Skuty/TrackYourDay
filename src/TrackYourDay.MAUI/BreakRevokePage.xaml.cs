@@ -1,5 +1,5 @@
 using Microsoft.UI.Xaml;
-using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.MAUI.MauiPages;
 
 namespace TrackYourDay.MAUI;

@@ -1,8 +1,8 @@
 ﻿using FluentAssertions;
-using TrackYourDay.Core.Activities;
-using TrackYourDay.Core.Activities.SystemStates;
-using TrackYourDay.Core.Breaks;
-using TrackYourDay.Core.Workdays;
+using TrackYourDay.Core.ApplicationTrackers.Breaks;
+using TrackYourDay.Core.Insights.Workdays;
+using TrackYourDay.Core.SystemTrackers;
+using TrackYourDay.Core.SystemTrackers.SystemStates;
 
 namespace TrackYourDay.Tests.WorkdayComponents
 {

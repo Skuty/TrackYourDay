@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using TrackYourDay.Core.Analytics;
+using TrackYourDay.Core.Insights.Analytics;
 
 namespace TrackYourDay.Tests.Analytics
 {

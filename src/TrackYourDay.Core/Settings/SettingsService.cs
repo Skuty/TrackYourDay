@@ -24,7 +24,7 @@
         {
             this.currentSettings = new UserSettingsSet(
                 this.currentSettings.ActivitiesSettings, 
-                new Breaks.BreaksSettings(timeOfNoActivityToStartBreak), 
+                new ApplicationTrackers.Breaks.BreaksSettings(timeOfNoActivityToStartBreak), 
                 this.currentSettings.WorkdayDefinition);
 
             // TODO: Publish notification SettingsChanged

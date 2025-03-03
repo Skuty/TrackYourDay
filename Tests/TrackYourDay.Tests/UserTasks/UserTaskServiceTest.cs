@@ -1,4 +1,4 @@
-﻿using TrackYourDay.Core.UserTasks;
+﻿using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 
 namespace TrackYourDay.Tests.UserTasks
 {

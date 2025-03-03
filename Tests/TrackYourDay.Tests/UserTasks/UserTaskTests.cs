@@ -1,7 +1,8 @@
 ﻿using System;
+using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using Xunit;
 
-namespace TrackYourDay.Core.UserTasks.Tests
+namespace TrackYourDay.Tests.UserTasks
 {
     public class UserTaskTests
     {

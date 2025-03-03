@@ -1,6 +1,6 @@
 ﻿using MediatR;
-using TrackYourDay.Core.Activities.Events;
-using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.Breaks;
+using TrackYourDay.Core.SystemTrackers.Events;
 
 namespace TrackYourDay.MAUI.BackgroundJobs.BreakTracking
 {

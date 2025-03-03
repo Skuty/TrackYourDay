@@ -1,5 +1,5 @@
 ﻿using MediatR;
-using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Tests.Old.Old.Activities.Notifications;
 
 namespace TrackYourDay.Tests.Old.Old.Breaks.Notifications

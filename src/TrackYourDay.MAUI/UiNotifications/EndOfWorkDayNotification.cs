@@ -1,6 +1,6 @@
 ﻿using MediatR;
+using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.Notifications;
-using TrackYourDay.Core.Workdays;
 using TrackYourDay.MAUI.MauiPages;
 
 /// <summary>

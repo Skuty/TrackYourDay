@@ -1,12 +1,11 @@
-using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core;
-using TrackYourDay.Core.Activities;
-using TrackYourDay.Core.Activities.SystemStates;
-using TrackYourDay.Core.Breaks;
-using TrackYourDay.Core.Breaks.Events;
+using TrackYourDay.Core.ApplicationTrackers.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.Breaks.Events;
+using TrackYourDay.Core.SystemTrackers;
+using TrackYourDay.Core.SystemTrackers.SystemStates;
 
 namespace TrackYourDay.Tests.Breaks
 {

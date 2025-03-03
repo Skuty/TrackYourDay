@@ -1,5 +1,5 @@
-﻿using TrackYourDay.Core.Notifications;
-using TrackYourDay.Core.Workdays;
+﻿using TrackYourDay.Core.Insights.Workdays;
+using TrackYourDay.Core.Notifications;
 using TrackYourDay.MAUI.BackgroundJobs;
 using TrackYourDay.MAUI.MauiPages;
 

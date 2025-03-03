@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.Breaks;
 
 namespace TrackYourDay.Tests.Breaks
 {
