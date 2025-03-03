@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using TrackYourDay.Core.Insights.Analytics;
 
-namespace TrackYourDay.Tests.Analytics
+namespace TrackYourDay.Tests.Insights
 {
     public class TimePeriodTests
     {

@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using TrackYourDay.Core.SystemTrackers;
 
-namespace TrackYourDay.Tests.Activities
+namespace TrackYourDay.Tests.SystemTrackers
 {
     [Trait("Category", "Unit")]
     public class ActivityTests

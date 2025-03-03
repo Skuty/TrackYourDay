@@ -2,13 +2,14 @@
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.SystemTrackers;
+using TrackYourDay.Core.SystemTrackers.SystemStates;
 
-namespace TrackYourDay.Tests.WorkdayComponents
+namespace TrackYourDay.Tests.Insights.WorkdayComponents
 {
-    public class BreakTests
+    public class TimeAlreadyActivelyWorkdedTests
     {
         [Fact]
-        public void GivenThereWasNoBreaks_WhenBreakTimeLeftIsBeingCalculated_ThenBreakTimeLeftIsEqualTo50Minutes()
+        public void GivenThereWasNoActivitiesOrBreaks_WhenTimeAlreadyActivelyWorkdedIsBeingCalculated_ThenTimeAlreadyActivelyWorkdedIsEqualTo0Hours()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>();
@@ -18,30 +19,11 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
-            workday.BreakTimeLeft.Should().Be(TimeSpan.FromMinutes(50));
-            workday.ValidBreakTimeUsed.Should().Be(TimeSpan.FromMinutes(0));
+            workday.TimeAlreadyActivelyWorkded.Should().Be(TimeSpan.FromHours(0));
         }
 
         [Fact]
-        public void GivenThereWas15MinutesOfBreaks_WhenBreakTimeLeftIsBeingCalculated_ThenBreakTimeLeftIsEqualTo35Minutes()
-        {
-            // Arrange
-            var endedActivities = new List<EndedActivity>();
-            var endedBreaks = new List<EndedBreak>
-            {
-                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:15"), "Test Break")
-            };
-
-            // Act
-            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
-
-            // Assert
-            workday.BreakTimeLeft.Should().Be(TimeSpan.FromMinutes(35));
-            workday.ValidBreakTimeUsed.Should().Be(TimeSpan.FromMinutes(15));
-        }
-
-        [Fact]
-        public void GivenThereWas50MinutesOfBreaks_WhenBreakTimeLeftIsBeingCalculated_ThenBreakTimeLeftIsEqualTo0Minutes()
+        public void GivenThereWasNoActivitiesAnd50MinutesOfBreaks_WhenTimeAlreadyActivelyWorkdedIsBeingCalculated_ThenTimeAlreadyActivelyWorkdedIsEqualTo0Hours()
         {
             // Arrange
             var endedActivities = new List<EndedActivity>();
@@ -54,11 +36,27 @@ namespace TrackYourDay.Tests.WorkdayComponents
             var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
 
             // Assert
-            workday.BreakTimeLeft.Should().Be(TimeSpan.FromMinutes(0));
-            workday.ValidBreakTimeUsed.Should().Be(TimeSpan.FromMinutes(50));
+            workday.TimeAlreadyActivelyWorkded.Should().Be(TimeSpan.FromHours(0));
         }
 
-        // TODO: split in summary activities and breaks to avoid problems with properly calculating break time
-        // due to lack of possibility to fully autorecognize breaks - temporarily
+        [Fact]
+        public void GivenThereWas1HourOfActivitiesAnd50MinutesOfBreaks_WhenTimeAlreadyActivelyWorkdedIsBeingCalculated_ThenTimeAlreadyActivelyWorkdedIsEqualTo10Minutes()
+        {
+            // Arrange
+            var endedActivities = new List<EndedActivity>
+            {
+                new EndedActivity(DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 01:00"), SystemStateFactory.FocusOnApplicationState("Test application"))
+            };
+            var endedBreaks = new List<EndedBreak>
+            {
+                new EndedBreak(Guid.Empty, DateTime.Parse("2000-01-01 00:00"), DateTime.Parse("2000-01-01 00:50"), "Test Break")
+            };
+
+            // Act
+            var workday = Workday.CreateBasedOn(TestSettingsSet.WorkdayDefinition, endedActivities, endedBreaks);
+
+            // Assert
+            workday.TimeAlreadyActivelyWorkded.Should().Be(TimeSpan.FromMinutes(10));
+        }
     }
 }

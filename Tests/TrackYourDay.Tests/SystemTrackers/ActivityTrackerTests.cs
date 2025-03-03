@@ -8,7 +8,7 @@ using TrackYourDay.Core.SystemTrackers.ActivityRecognizing;
 using TrackYourDay.Core.SystemTrackers.Events;
 using TrackYourDay.Core.SystemTrackers.SystemStates;
 
-namespace TrackYourDay.Tests.Activities
+namespace TrackYourDay.Tests.SystemTrackers
 {
     [Trait("Category", "Unit")]
     public class ActivityTrackerTests
@@ -23,20 +23,20 @@ namespace TrackYourDay.Tests.Activities
 
         public ActivityTrackerTests()
         {
-            this.clock = new Clock();
-            this.loggerMock = new Mock<ILogger<ActivityTracker>>();
-            this.publisherMock = new Mock<IPublisher>();
-            this.startedActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
-            this.mousePositionRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
-            this.lastInputRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
+            clock = new Clock();
+            loggerMock = new Mock<ILogger<ActivityTracker>>();
+            publisherMock = new Mock<IPublisher>();
+            startedActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
+            mousePositionRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
+            lastInputRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
 
-            this.activityEventTracker = new ActivityTracker(
-                this.clock,
-                this.publisherMock.Object,
-                this.startedActivityRecognizingStrategy.Object,
-                this.mousePositionRecognizingStrategy.Object,
-                this.lastInputRecognizingStrategy.Object,
-                this.loggerMock.Object);
+            activityEventTracker = new ActivityTracker(
+                clock,
+                publisherMock.Object,
+                startedActivityRecognizingStrategy.Object,
+                mousePositionRecognizingStrategy.Object,
+                lastInputRecognizingStrategy.Object,
+                loggerMock.Object);
         }
 
         [Fact]
@@ -119,14 +119,14 @@ namespace TrackYourDay.Tests.Activities
         {
             // Arrange
             var lastInputSystemState = SystemStateFactory.LastInputState(new DateTime(2024, 01, 01));
-            this.lastInputRecognizingStrategy.Setup(s => s.RecognizeActivity())
+            lastInputRecognizingStrategy.Setup(s => s.RecognizeActivity())
                 .Returns(lastInputSystemState); 
 
             // Act
-            this.activityEventTracker.RecognizeActivity();
+            activityEventTracker.RecognizeActivity();
 
             // Assert
-            this.publisherMock.Verify(x => x.Publish(It.Is<InstantActivityOccuredEvent>(a => a.InstantActivity.SystemState == lastInputSystemState), CancellationToken.None), Times.Once);
+            publisherMock.Verify(x => x.Publish(It.Is<InstantActivityOccuredEvent>(a => a.InstantActivity.SystemState == lastInputSystemState), CancellationToken.None), Times.Once);
         }
 
 

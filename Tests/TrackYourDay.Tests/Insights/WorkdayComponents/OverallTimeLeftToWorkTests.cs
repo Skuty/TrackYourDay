@@ -4,7 +4,7 @@ using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.SystemStates;
 
-namespace TrackYourDay.Tests.WorkdayComponents
+namespace TrackYourDay.Tests.Insights.WorkdayComponents
 {
     public class OverallTimeLeftToWorkTests
     {

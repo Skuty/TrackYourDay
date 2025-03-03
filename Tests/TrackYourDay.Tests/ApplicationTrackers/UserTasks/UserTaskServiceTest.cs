@@ -1,6 +1,6 @@
 ﻿using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 
-namespace TrackYourDay.Tests.UserTasks
+namespace TrackYourDay.Tests.ApplicationTrackers.UserTasks
 {
     public class UserTaskServiceTests
     {

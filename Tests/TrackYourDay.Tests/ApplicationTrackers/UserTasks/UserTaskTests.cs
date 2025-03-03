@@ -2,7 +2,7 @@
 using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using Xunit;
 
-namespace TrackYourDay.Tests.UserTasks
+namespace TrackYourDay.Tests.ApplicationTrackers.UserTasks
 {
     public class UserTaskTests
     {
