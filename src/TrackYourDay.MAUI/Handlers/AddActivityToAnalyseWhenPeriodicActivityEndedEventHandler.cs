@@ -1,6 +1,6 @@
 ﻿using MediatR;
-using TrackYourDay.Core.Activities.Events;
-using TrackYourDay.Core.Analytics;
+using TrackYourDay.Core.Insights.Analytics;
+using TrackYourDay.Core.SystemTrackers.Events;
 
 namespace TrackYourDay.MAUI.Handlers
 {

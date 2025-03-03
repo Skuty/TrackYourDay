@@ -1,4 +1,4 @@
-﻿using TrackYourDay.Core.Workdays.Events;
+﻿using TrackYourDay.Core.Insights.Workdays.Events;
 
 namespace TrackYourDay.Web.Events
 {

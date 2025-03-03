@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Microsoft.UI;
-using TrackYourDay.Core.Breaks;
-using TrackYourDay.Core.Breaks.Events;
+using TrackYourDay.Core.ApplicationTrackers.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.Breaks.Events;
 using WinRT.Interop;
 
 namespace TrackYourDay.MAUI.Handlers

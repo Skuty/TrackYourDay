@@ -1,15 +1,15 @@
 ﻿using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using TrackYourDay.Core.Activities;
-using TrackYourDay.Core.Activities.ActivityRecognizing;
-using TrackYourDay.Core.Analytics;
-using TrackYourDay.Core.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.UserTasks;
+using TrackYourDay.Core.Insights.Analytics;
+using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.Notifications;
 using TrackYourDay.Core.Settings;
-using TrackYourDay.Core.UserTasks;
+using TrackYourDay.Core.SystemTrackers;
+using TrackYourDay.Core.SystemTrackers.ActivityRecognizing;
 using TrackYourDay.Core.Versioning;
-using TrackYourDay.Core.Workdays;
 
 namespace TrackYourDay.Core.ServiceRegistration
 {

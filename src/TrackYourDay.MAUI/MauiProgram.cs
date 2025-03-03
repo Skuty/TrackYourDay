@@ -1,23 +1,14 @@
-﻿using TrackYourDay.Core.Activities;
-using Quartz;
+﻿using Quartz;
 using Microsoft.Maui.LifecycleEvents;
 using Serilog;
 using MudBlazor.Services;
 using System.Reflection;
-using TrackYourDay.MAUI.BackgroundJobs.ActivityTracking;
 using TrackYourDay.MAUI.BackgroundJobs.BreakTracking;
-using TrackYourDay.MAUI.BackgroundJobs;
 using TrackYourDay.MAUI.ServiceRegistration;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using TrackYourDay.Core.ServiceRegistration;
 using TrackYourDay.Core.Settings;
-using TrackYourDay.Core.Analytics;
-using Microsoft.Extensions.Logging;
-using MediatR;
-using TrackYourDay.Core.Workdays.Events;
-using TrackYourDay.Web.Events;
 using TrackYourDay.Web.ServiceRegistration;
+using TrackYourDay.Core.SystemTrackers;
 
 namespace TrackYourDay.MAUI
 {

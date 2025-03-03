@@ -1,5 +1,5 @@
 ﻿using Quartz;
-using TrackYourDay.Core.Activities;
+using TrackYourDay.Core.SystemTrackers;
 
 namespace TrackYourDay.MAUI.BackgroundJobs.ActivityTracking
 {
