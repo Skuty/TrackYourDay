@@ -26,10 +26,10 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
         }
 
         [Fact]
-        public void WhenMeetingStartIsRecognized_ThenMeetingStartedEventIsPublished()
+        public void GivenMeetingIsNotStarted_WhenMeetingIsStarted_ThenMeetingStartedEventIsPublished()
         {
             // Given
-
+            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
 
             // When
             this.msTeamsMeetingsTracker.RecognizeActivity();
@@ -39,15 +39,34 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
         }
 
         [Fact]
-        public void WhenMeetingEndIsRecognized_ThenMeetingEndedEventIsPublished()
+        public void GivenMeetingIsNotStarted_WhenMeetingIsStarted_ThenMeetingStartedEventIsNotPublished()
         {
             // Given
+            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
+            this.msTeamsMeetingsTracker.RecognizeActivity();
+            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
+            this.publisherMock.Invocations.Clear();
 
             // When
             this.msTeamsMeetingsTracker.RecognizeActivity();
 
             // Then
-            this.publisherMock.Verify(x => x.Publish(It.IsAny<MeetingStartedEvent>(), CancellationToken.None), Times.Once);
+            this.publisherMock.Verify(x => x.Publish(It.IsAny<MeetingStartedEvent>(), CancellationToken.None), Times.Never);
+        }
+
+        [Fact]
+        public void GivenMeetingIsStarted_WhenMeetingEnds_ThenMeetingEndedEventIsPublished()
+        {
+            // Given
+            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
+            this.msTeamsMeetingsTracker.RecognizeActivity();
+            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns((StartedMeeting)null);
+
+            // When
+            this.msTeamsMeetingsTracker.RecognizeActivity();
+
+            // Then
+            this.publisherMock.Verify(x => x.Publish(It.IsAny<MeetingEndedEvent>(), CancellationToken.None), Times.Once);
         }
     }
 }
