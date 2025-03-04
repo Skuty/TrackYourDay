@@ -14,20 +14,22 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
         private IClock clock;
         private Mock<IPublisher> publisherMock;
         private Mock<IMeetingDiscoveryStrategy> meetingDiscoveryStrategy;
-        private Mock<ILogger<ActivityTracker>> loggerMock;
+        private Mock<ILogger<MsTeamsMeetingTracker>> loggerMock;
         private MsTeamsMeetingTracker msTeamsMeetingsTracker;
 
         public MsTeamsMeetingsTrackerTests()
         {
             this.clock = new Clock();
-            this.loggerMock = new Mock<ILogger<ActivityTracker>>();
+            this.loggerMock = new Mock<ILogger<MsTeamsMeetingTracker>>();
             this.publisherMock = new Mock<IPublisher>();
             this.meetingDiscoveryStrategy = new Mock<IMeetingDiscoveryStrategy>();
+            this.msTeamsMeetingsTracker = new MsTeamsMeetingTracker(this.clock, this.publisherMock.Object, this.meetingDiscoveryStrategy.Object, this.loggerMock.Object);
         }
 
         [Fact]
         public void GivenMeetingIsNotStarted_WhenMeetingIsStarted_ThenMeetingStartedEventIsPublished()
         {
+            new ProcessBasedMeetingRecognizingStrategy(nullof i).RecognizeMeeting();
             // Given
             this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
 

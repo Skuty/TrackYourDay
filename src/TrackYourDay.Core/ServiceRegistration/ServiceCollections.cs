@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using TrackYourDay.Core.Insights.Analytics;
 using TrackYourDay.Core.Insights.Workdays;
@@ -38,6 +39,16 @@ namespace TrackYourDay.Core.ServiceRegistration
                     mousePositionRecognizingStrategy, 
                     lastInputRecognizingStrategy, 
                     logger);
+            });
+
+            services.AddSingleton<MsTeamsMeetingTracker>(container =>
+            {
+                var clock = container.GetRequiredService<IClock>();
+                var publisher = container.GetRequiredService<IPublisher>();
+                var loggerForStrategy = container.GetRequiredService<ILogger<ProcessBasedMeetingRecognizingStrategy>>();
+                var meetingDiscoveryStrategy = new ProcessBasedMeetingRecognizingStrategy(loggerForStrategy);
+                var loggerForMs = container.GetRequiredService<ILogger<MsTeamsMeetingTracker>>();
+                return new MsTeamsMeetingTracker(clock, publisher, meetingDiscoveryStrategy, loggerForMs);
             });
 
             var activitiesSettings = ActivitiesSettings.CreateDefaultSettings();
