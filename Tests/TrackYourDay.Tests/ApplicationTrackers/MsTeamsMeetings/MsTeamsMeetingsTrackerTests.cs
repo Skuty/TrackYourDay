@@ -29,7 +29,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
         [Fact]
         public void GivenMeetingIsNotStarted_WhenMeetingIsStarted_ThenMeetingStartedEventIsPublished()
         {
-            new ProcessBasedMeetingRecognizingStrategy(nullof i).RecognizeMeeting();
+            new ProcessBasedMeetingRecognizingStrategy(null).RecognizeMeeting();
             // Given
             this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
 
