@@ -16,7 +16,25 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
         {
             var teamsProcess = Process.GetProcesses()
                 .Where(p => p.ProcessName.Contains("teams", StringComparison.InvariantCulture));
-            this.logger.LogInformation("Found {0} Teams processes: {1}", teamsProcess.Count(), string.Join(", ", teamsProcess.Select(p => p.ProcessName)));
+
+            foreach (var process in teamsProcess)
+            {
+                this.logger.LogInformation("Found Teams process! Name: {0}, Title: {1}", process.ProcessName, process.MainWindowTitle);
+            }
+
+            foreach (var process in teamsProcess)
+            {
+                var processTitle = process.MainWindowTitle;
+                if (processTitle.Contains("spotkanie", StringComparison.InvariantCultureIgnoreCase)
+                    || processTitle.Contains("Widok kompaktowy spotkania", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    if (!processTitle.Contains("Czat", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        // This should only return meeting, guid should be applied above that based on other comparisions
+                        return new StartedMeeting(Guid.NewGuid(), DateTime.Now, process.MainWindowTitle);
+                    }
+                }
+            }
 
             return null;
         }

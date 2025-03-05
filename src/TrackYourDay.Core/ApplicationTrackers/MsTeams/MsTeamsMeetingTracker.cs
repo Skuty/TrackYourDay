@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.PublicEvents;
 
 namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
@@ -31,10 +32,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
             {
                 this.ongoingMeeting = newMeeting;
                 this.publisher.Publish(new MeetingStartedEvent(Guid.NewGuid(), newMeeting), CancellationToken.None);
-                
+                this.logger.LogInformation("Meeting started: {0}", newMeeting);
                 return;
             }
-
             if (this.ongoingMeeting is not null
                 && recognizedMeeting is StartedMeeting ongoingMeeting
                 && recognizedMeeting.Title == ongoingMeeting.Title)
@@ -50,6 +50,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 
                 this.endedMeetings.Add(endedMeeting);
                 this.publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), CancellationToken.None);
+                this.logger.LogInformation("Meeting ended: {0}", endedMeeting);
 
                 return;
             }
