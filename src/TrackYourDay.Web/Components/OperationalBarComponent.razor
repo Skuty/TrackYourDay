@@ -12,6 +12,10 @@
     <div>
         <MudTextField @bind-Value="BreakTime" style="margin-top: -9px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.FreeBreakfast" Format="hh\:mm" ReadOnly="true" />
     </div>
+    <div>
+        <MudIconButton Icon="@Icons.Material.Filled.VideoCameraFront" Size="Size.Small" Disabled="true" Color="@Color.Info" style="margin-top: 0px;" />
+    </div>
+
     <UserTaskComponent></UserTaskComponent>
 </div>
 
@@ -30,10 +34,12 @@
     private TimeSpan BreakTime { get; set; }
     private TimeSpan UserTaskTime { get; set; }
     private string UserTaskDescription { get; set; } = string.Empty;
+    private bool IsOngoingMeeting { get; set; } = false;
 
     protected override void OnInitialized()
     {
         EventWrapper.OperationalBarOnWorkdayUpdatedAction += UpdateWorkdayProperties;
+        // TODO Update here for meetings and set IsOngoingMeeting
     }
 
     private void UpdateWorkdayProperties(WorkdayUpdatedEvent notification)
