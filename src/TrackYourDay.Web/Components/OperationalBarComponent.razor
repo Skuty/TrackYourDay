@@ -55,11 +55,13 @@
     private void UpdateOngoingMeetingToActive(MeetingStartedEvent meetingStartedEvent)
     {
         this.MeetingIconColor = Color.Success;
+        InvokeAsync(StateHasChanged);
     }
 
     private void UpdateOngoingMeetingToInactive(MeetingEndedEvent meetingEndedEvent)
     {
         this.MeetingIconColor = Color.Default;
+        InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
