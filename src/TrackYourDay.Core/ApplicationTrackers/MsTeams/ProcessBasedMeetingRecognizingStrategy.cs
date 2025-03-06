@@ -5,38 +5,54 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 {
     public class ProcessBasedMeetingRecognizingStrategy : IMeetingDiscoveryStrategy
     {
-        private ILogger<ProcessBasedMeetingRecognizingStrategy> logger;
+        private readonly ILogger<ProcessBasedMeetingRecognizingStrategy> logger;
+        private readonly IProcessService processService;
 
-        public ProcessBasedMeetingRecognizingStrategy(ILogger<ProcessBasedMeetingRecognizingStrategy> logger)
+        public ProcessBasedMeetingRecognizingStrategy(
+            ILogger<ProcessBasedMeetingRecognizingStrategy> logger,
+            IProcessService processService)
         {
             this.logger = logger;
+            this.processService = processService;
         }
 
         public StartedMeeting RecognizeMeeting()
         {
-            var teamsProcess = Process.GetProcesses()
-                .Where(p => p.ProcessName.Contains("teams", StringComparison.InvariantCulture));
+            var teamsProcesses = processService.GetProcesses()
+                .Where(p => p.ProcessName.Contains("ms-teams", StringComparison.InvariantCulture));
 
-            foreach (var process in teamsProcess)
+            foreach (var process in teamsProcesses)
             {
-                this.logger.LogInformation("Found Teams process! Name: {0}, Title: {1}", process.ProcessName, process.MainWindowTitle);
+                logger.LogInformation("Found Teams process! Name: {0}, Title: {1}",
+                    process.ProcessName, process.MainWindowTitle);
             }
 
-            foreach (var process in teamsProcess)
+            foreach (var process in teamsProcesses)
             {
-                var processTitle = process.MainWindowTitle;
-                if (processTitle.Contains("spotkanie", StringComparison.InvariantCultureIgnoreCase)
-                    || processTitle.Contains("Widok kompaktowy spotkania", StringComparison.InvariantCultureIgnoreCase))
+                if (this.IsWindowTitleMatchingTeamsMeeting(process.MainWindowTitle))
                 {
-                    if (!processTitle.Contains("Czat", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        // This should only return meeting, guid should be applied above that based on other comparisions
-                        return new StartedMeeting(Guid.NewGuid(), DateTime.Now, process.MainWindowTitle);
-                    }
+                    return new StartedMeeting(Guid.NewGuid(), DateTime.Now, process.MainWindowTitle);
                 }
             }
 
             return null;
+        }
+
+        private bool IsWindowTitleMatchingTeamsMeeting(string windowTitle)
+        {
+            if (string.IsNullOrEmpty(windowTitle))
+                return false;
+
+            if (!windowTitle.Contains("Microsoft Teams", StringComparison.InvariantCultureIgnoreCase))
+                return false;
+
+            // Exclude known non-meeting windows
+            if (windowTitle.StartsWith("Czat |", StringComparison.InvariantCultureIgnoreCase) ||
+                windowTitle.StartsWith("Aktywność |", StringComparison.InvariantCultureIgnoreCase) ||
+                windowTitle == "Microsoft Teams")
+                return false;
+
+            return true;
         }
     }
 }

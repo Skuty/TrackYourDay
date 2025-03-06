@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.UserTasks;
@@ -46,7 +47,7 @@ namespace TrackYourDay.Core.ServiceRegistration
                 var clock = container.GetRequiredService<IClock>();
                 var publisher = container.GetRequiredService<IPublisher>();
                 var loggerForStrategy = container.GetRequiredService<ILogger<ProcessBasedMeetingRecognizingStrategy>>();
-                var meetingDiscoveryStrategy = new ProcessBasedMeetingRecognizingStrategy(loggerForStrategy);
+                var meetingDiscoveryStrategy = new ProcessBasedMeetingRecognizingStrategy(loggerForStrategy, new WindowsProcessService());
                 var loggerForMs = container.GetRequiredService<ILogger<MsTeamsMeetingTracker>>();
                 return new MsTeamsMeetingTracker(clock, publisher, meetingDiscoveryStrategy, loggerForMs);
             });
