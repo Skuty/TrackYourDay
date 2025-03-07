@@ -1,4 +1,5 @@
-﻿using TrackYourDay.Core.Insights.Workdays.Events;
+﻿using TrackYourDay.Core.ApplicationTrackers.MsTeams.PublicEvents;
+using TrackYourDay.Core.Insights.Workdays.Events;
 
 namespace TrackYourDay.Web.Events
 {
@@ -14,10 +15,21 @@ namespace TrackYourDay.Web.Events
     public class EventWrapperForComponents 
     {
         public event Action<WorkdayUpdatedEvent>? OperationalBarOnWorkdayUpdatedAction;
-
         public void OperationalBarOnWorkdayUpdated(WorkdayUpdatedEvent workdayUpdatedEvent)
         {
             OperationalBarOnWorkdayUpdatedAction?.Invoke(workdayUpdatedEvent);
+        }
+
+        public event Action<MeetingStartedEvent>? OperationalBarOnMeetingStartedAction;
+        public void OperationalBarOnMeetingStarted(MeetingStartedEvent meetingStartedEvent)
+        {
+            OperationalBarOnMeetingStartedAction?.Invoke(meetingStartedEvent);
+        }
+
+        public event Action<MeetingEndedEvent>? OperationalBarOnMeetingEndedAction;
+        public void OperationalBarOnMeetingEnded(MeetingEndedEvent meetingEndedEvent)
+        {
+            OperationalBarOnMeetingEndedAction?.Invoke(meetingEndedEvent);
         }
     }
 }

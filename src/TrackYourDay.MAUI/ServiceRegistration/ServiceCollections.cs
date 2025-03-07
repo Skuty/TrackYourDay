@@ -33,7 +33,7 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                 q.ScheduleJob<MsTeamsMeetingsTrackerJob>(trigger => trigger
                     .WithIdentity("MS Teams Meetings Recognizing Job")
                     .WithDescription("Job that periodically recognizes Meetings in MS Teams")
-                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(60, IntervalUnit.Second))
+                    .WithDailyTimeIntervalSchedule(x => x.WithInterval(30, IntervalUnit.Second))
                     .StartNow());
 
                 q.ScheduleJob<NotificationsProcessorJob>(trigger => trigger

@@ -1,5 +1,6 @@
 ﻿@using MediatR
 @using MudBlazor
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams.PublicEvents
 @using TrackYourDay.Core.ApplicationTrackers.UserTasks
 @using TrackYourDay.Core.Insights.Workdays.Events
 @using TrackYourDay.Web.Events
@@ -13,7 +14,7 @@
         <MudTextField @bind-Value="BreakTime" style="margin-top: -9px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.FreeBreakfast" Format="hh\:mm" ReadOnly="true" />
     </div>
     <div>
-        <MudIconButton Icon="@Icons.Material.Filled.VideoCameraFront" Size="Size.Small" Disabled="true" Color="@Color.Info" style="margin-top: 0px;" />
+        <MudIcon Icon="@Icons.Material.Filled.VideoCameraFront" Color="this.MeetingIconColor" Size="Size.Medium" style="margin-top: 0px;" />
     </div>
 
     <UserTaskComponent></UserTaskComponent>
@@ -35,17 +36,31 @@
     private TimeSpan UserTaskTime { get; set; }
     private string UserTaskDescription { get; set; } = string.Empty;
     private bool IsOngoingMeeting { get; set; } = false;
+    private Color MeetingIconColor { get; set; } = Color.Default;
 
     protected override void OnInitialized()
     {
         EventWrapper.OperationalBarOnWorkdayUpdatedAction += UpdateWorkdayProperties;
-        // TODO Update here for meetings and set IsOngoingMeeting
+        EventWrapper.OperationalBarOnMeetingStartedAction += UpdateOngoingMeetingToActive;
+        EventWrapper.OperationalBarOnMeetingEndedAction += UpdateOngoingMeetingToInactive;
     }
 
     private void UpdateWorkdayProperties(WorkdayUpdatedEvent notification)
     {
         this.WorkTime = notification.Workday.TimeOfAllActivities;
         this.BreakTime = notification.Workday.TimeOfAllBreaks;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateOngoingMeetingToActive(MeetingStartedEvent meetingStartedEvent)
+    {
+        this.MeetingIconColor = Color.Success;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateOngoingMeetingToInactive(MeetingEndedEvent meetingEndedEvent)
+    {
+        this.MeetingIconColor = Color.Default;
         InvokeAsync(StateHasChanged);
     }
 
