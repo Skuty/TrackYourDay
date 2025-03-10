@@ -25,7 +25,7 @@ namespace TrackYourDay.MAUI
 
             this.MinimizeWindowOnCloseInsteadOfClosing();
 
-            MauiPageFactory.OpenWebPageInNewWindow("/OperationalBar", 540, 30);
+            MauiPageFactory.OpenWebPageInNewWindow("/OperationalBar", 550, 30);
         }
 
         private void MinimizeWindowOnCloseInsteadOfClosing()
