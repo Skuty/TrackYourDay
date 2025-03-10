@@ -1,0 +1,52 @@
+﻿@typeparam TItem
+@using System.Linq.Expressions
+
+<MudExpansionPanels>
+    <MudExpansionPanel Text="@Title" IsInitiallyExpanded="true">
+        <MudDataGrid T="TItem" Items="@Items" SortMode="SortMode.Multiple" 
+                     Filterable="true" QuickFilter="@QuickFilter" Hideable="true">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" 
+                            Adornment="Adornment.Start" Immediate="true"
+                            AdornmentIcon="@Icons.Material.Filled.Search" 
+                            IconSize="Size.Medium" Class="mt-0"/>
+            </ToolBarContent>
+            <Columns>
+                @foreach (var column in Columns)
+                {
+                    <PropertyColumn T="TItem" Property="@column.PropertyExpression"
+                                  Title="@column.Title" 
+                                  Filterable="@column.Filterable"/>
+                }
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="TItem" />
+            </PagerContent>
+        </MudDataGrid>    
+    </MudExpansionPanel>
+</MudExpansionPanels>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Results";
+
+    [Parameter]
+    public IEnumerable<TItem> Items { get; set; }
+
+    [Parameter]
+    public List<TrackerColumn<TItem>> Columns { get; set; } = new();
+
+    private string _searchString;
+
+    private Func<TItem, bool> QuickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        return Columns.Any(column => 
+        {
+            var value = column.PropertyExpression.Compile()(x)?.ToString();
+            return value?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false;
+        });
+    };
+}
