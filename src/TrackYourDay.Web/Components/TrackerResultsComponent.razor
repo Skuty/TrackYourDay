@@ -1,30 +1,27 @@
 ﻿@typeparam TItem
 @using System.Linq.Expressions
 
-<MudExpansionPanels>
-    <MudExpansionPanel Text="@Title" IsInitiallyExpanded="true">
-        <MudDataGrid T="TItem" Items="@Items" SortMode="SortMode.Multiple" 
-                     Filterable="true" QuickFilter="@QuickFilter" Hideable="true">
-            <ToolBarContent>
-                <MudTextField @bind-Value="_searchString" Placeholder="Search" 
-                            Adornment="Adornment.Start" Immediate="true"
-                            AdornmentIcon="@Icons.Material.Filled.Search" 
-                            IconSize="Size.Medium" Class="mt-0"/>
-            </ToolBarContent>
-            <Columns>
-                @foreach (var column in Columns)
-                {
-                    <PropertyColumn T="TItem" Property="@column.PropertyExpression"
-                                  Title="@column.Title" 
-                                  Filterable="@column.Filterable"/>
-                }
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="TItem" />
-            </PagerContent>
-        </MudDataGrid>    
-    </MudExpansionPanel>
-</MudExpansionPanels>
+<MudDataGrid T="TItem" Items="@Items" SortMode="SortMode.Multiple" 
+                Filterable="true" QuickFilter="@QuickFilter" Hideable="true">
+    <ToolBarContent>
+        <MudTextField @bind-Value="_searchString" Placeholder="Search" 
+                    Adornment="Adornment.Start" Immediate="true"
+                    AdornmentIcon="@Icons.Material.Filled.Search" 
+                    IconSize="Size.Medium" Class="mt-0"/>
+    </ToolBarContent>
+    <Columns>
+        @foreach (var column in Columns)
+        {
+            <PropertyColumn T="TItem" TProperty="object"
+                            Property="@column.PropertyExpression"
+                            Title="@column.Title"
+                            Filterable="@column.Filterable" />
+        }
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="TItem" />
+    </PagerContent>
+</MudDataGrid>    
 
 @code {
     [Parameter]
@@ -34,7 +31,7 @@
     public IEnumerable<TItem> Items { get; set; }
 
     [Parameter]
-    public List<TrackerColumn<TItem>> Columns { get; set; } = new();
+    public List<TableColumn<TItem>> Columns { get; set; } = new();
 
     private string _searchString;
 

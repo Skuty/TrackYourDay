@@ -1,6 +1,8 @@
-﻿namespace TrackYourDay.Web.Components
+﻿using System.Linq.Expressions;
+
+namespace TrackYourDay.Web.Components
 {
-    public class TrackerColumn<T>
+    public class TableColumn<T>
     {
         public string Title { get; set; }
         public Expression<Func<T, object>> PropertyExpression { get; set; }
