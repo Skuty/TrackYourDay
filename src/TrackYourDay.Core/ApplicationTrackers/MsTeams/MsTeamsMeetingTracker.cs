@@ -1,6 +1,5 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.PublicEvents;
 
 namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
@@ -56,6 +55,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
             }
 
             return;
+        }
+
+        public IReadOnlyCollection<EndedMeeting> GetEndedMeetings()
+        {
+            return this.endedMeetings.AsReadOnly();
         }
     }
 }

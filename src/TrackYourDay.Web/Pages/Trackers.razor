@@ -1,0 +1,114 @@
+﻿@page "/trackers"
+
+@using System.Linq.Expressions
+@using TrackYourDay.Core.ApplicationTrackers.UserTasks
+@using TrackYourDay.Core.Insights.Analytics
+@using TrackYourDay.Core.ApplicationTrackers.Breaks
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams
+@using TrackYourDay.Core.SystemTrackers
+@using TrackYourDay.Web.Components
+
+@inject BreakTracker breakTracker
+@inject UserTaskService userTaskService
+@inject ActivitiesAnalyser activitiesAnalyser
+@inject MsTeamsMeetingTracker meetingTracker
+@inject ActivityTracker activityTracker
+
+<MudTabs Elevation="2" Rounded="true" Centered="false" Class="my-6">
+    <MudTabPanel Icon="@Icons.Material.Filled.FreeBreakfast" Text="Breaks" BadgeData="@(breakTracker.GetEndedBreaks().Count)">
+        <TrackerResultsComponent TItem="EndedBreak" 
+        Items="@breakTracker.GetEndedBreaks()"
+        Title="Breaks"
+        Columns="@breakColumns"/>
+    </MudTabPanel>
+    <MudTabPanel Icon="@Icons.Material.Filled.Task" Text="Tasks" BadgeData="@(userTaskService.GetAllTasks().Count())">
+        <TrackerResultsComponent TItem="UserTask"
+        Items="@userTaskService.GetAllTasks()"
+        Title="User Tasks"
+        Columns="@userTasksColumns" />
+    </MudTabPanel>
+    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="System" BadgeData="@(activityTracker.GetEndedActivities().Count)">
+        <TrackerResultsComponent TItem="EndedActivity"
+        Items="@activityTracker.GetEndedActivities()"
+        Title="System Activities"
+        Columns="@activityColumns"/>
+    </MudTabPanel>
+    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="Inputs" BadgeData="@(activityTracker.GetInstantActivities().Count)">
+        <TrackerResultsComponent TItem="InstantActivity"
+        Items="@activityTracker.GetInstantActivities()"
+        Title="Instant Activities"
+        Columns="@instantActivityColumns" />
+    </MudTabPanel>
+    <MudTabPanel Icon="@Icons.Material.Filled.VideoCameraFront" Text="Teams Meetings" BadgeData="@(meetingTracker.GetEndedMeetings().Count)">
+        <TrackerResultsComponent TItem="EndedMeeting"
+        Items="@meetingTracker.GetEndedMeetings()"
+        Title="Teams Meetings"
+        Columns="@meetingColumns" />
+    </MudTabPanel>
+    <MudTabPanel Icon="@Icons.Material.Filled.PieChart" Text="Analytics" BadgeData="@(activitiesAnalyser.GetGroupedActivities().Count)">
+        <TrackerResultsComponent TItem="GroupedActivity"
+        Items="@activitiesAnalyser.GetGroupedActivities()"
+        Title="Grouped Activities"
+        Columns="@groupedActivityColumns" />
+    </MudTabPanel>
+
+</MudTabs>
+
+@code {
+    private List<TableColumn<EndedBreak>> breakColumns;
+    private List<TableColumn<UserTask>> userTasksColumns;
+    private List<TableColumn<EndedActivity>> activityColumns;
+    private List<TableColumn<InstantActivity>> instantActivityColumns;
+    private List<TableColumn<EndedMeeting>> meetingColumns;
+    private List<TableColumn<GroupedActivity>> groupedActivityColumns;
+
+    protected override void OnInitialized()
+    {
+        breakColumns = new()
+        {
+            new() { Title = "Start", PropertyExpression = x => x.BreakStartedAt },
+            new() { Title = "End", PropertyExpression = x => x.BreakEndedAt },
+            new() { Title = "Duration", PropertyExpression = x => x.BreakDuration },
+            new() { Title = "Description", PropertyExpression = x => x.BreakDescription }
+        };
+
+        userTasksColumns = new()
+        {
+            new() { Title = "Start", PropertyExpression = x => x.StartDate },
+            new() { Title = "End", PropertyExpression = x => x.EndDate },
+            new() { Title = "Duration", PropertyExpression = x => x.GetDuration() },
+            new() { Title = "Description", PropertyExpression = x => x.Description }
+        };
+
+        activityColumns = new()
+        {
+            new() { Title = "Start", PropertyExpression = x => x.StartDate },
+            new() { Title = "End", PropertyExpression = x => x.EndDate },
+            new() { Title = "Duration", PropertyExpression = x => x.GetDuration() },
+            new() { Title = "Description", PropertyExpression = x => x.GetDescription() }
+        };
+
+        instantActivityColumns = new()
+        {
+            new() { Title = "Occurance", PropertyExpression = x => x.OccuranceDate },
+            new() { Title = "Description", PropertyExpression = x => x.SystemState.ActivityDescription }
+
+        };
+
+        meetingColumns = new()
+        {
+            new() { Title = "Start", PropertyExpression = x => x.StartDate },
+            new() { Title = "End", PropertyExpression = x => x.EndDate },
+            new() { Title = "Duration", PropertyExpression = x => x.GetDuration() },
+            new() { Title = "Title", PropertyExpression = x => x.Title }
+        };
+
+        groupedActivityColumns = new()
+        {
+            new() { Title = "Date", PropertyExpression = x => x.Date},
+            new() { Title = "Duration", PropertyExpression = x => x.Duration },
+            new() { Title = "Description", PropertyExpression = x => x.Description }
+
+        };
+    }
+}
