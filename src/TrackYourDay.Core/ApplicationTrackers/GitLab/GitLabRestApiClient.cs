@@ -3,9 +3,16 @@ using System.Text.Json.Serialization;
 
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
-    internal class GitLabRestApiClient
+    public interface IGitLabRestApiClient
+    {
+        GitLabUser GetCurrentUser();
+        List<GitLabEvent> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate);
+    }
+
+    public class GitLabRestApiClient : IGitLabRestApiClient
     {
         private readonly HttpClient httpClient;
+        private const int PAGE_LIMIT = 100; // GitLab API supports up to 100 items per page
 
         public GitLabRestApiClient(string url, string apiKey)
         {
@@ -24,18 +31,38 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             return JsonSerializer.Deserialize<GitLabUser>(content);
         }
 
-        //TODO: implement stream reading approach with last readed event, use Id property, top 100 is supported
-        public List<GitLabEvent> GetUserEvents(int userId, DateOnly startingFrom)
+        //TODO: implement stream reading approach with last readed event, use Id property
+        public List<GitLabEvent> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate)
         {
-            var response = httpClient.GetAsync($"/api/v4/users/{userId}/events?per_page=100").Result;
-            response.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
-            
-            return JsonSerializer.Deserialize<List<GitLabEvent>>(content) ?? new List<GitLabEvent>();
+            var allEvents = new List<GitLabEvent>();
+            int page = 1;
+            bool hasMoreEvents;
+
+            do
+            {
+                var response = httpClient.GetAsync($"/api/v4/users/{userId.Id}/events?per_page={PAGE_LIMIT}&page={page}&after={startingFromDate.ToString("YYYY-MM-DD")}").Result;
+                response.EnsureSuccessStatusCode();
+                var content = response.Content.ReadAsStringAsync().Result;
+                var events = JsonSerializer.Deserialize<List<GitLabEvent>>(content) ?? new List<GitLabEvent>();
+
+                allEvents.AddRange(events);
+                hasMoreEvents = events.Count == PAGE_LIMIT;
+                page++;
+            } while (hasMoreEvents);
+
+            return allEvents;
         }
     }
+
+    public record GitLabUserId(long Id);
+
+    public record GitLabEventId(long Id)
+    {
+        public static GitLabEventId None => new GitLabEventId(0);
+    }
+
     public record GitLabUser(
-        [property: JsonPropertyName("id")] int Id,
+        [property: JsonPropertyName("id")] long Id,
         [property: JsonPropertyName("username")] string Username,
         [property: JsonPropertyName("email")] string Email,
         [property: JsonPropertyName("name")] string Name,
@@ -70,14 +97,14 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         [property: JsonPropertyName("extern_uid")] string ExternUid);
 
     public record GitLabEventAuthor(
-        [property: JsonPropertyName("id")] int Id,
+        [property: JsonPropertyName("id")] long Id,
         [property: JsonPropertyName("name")] string Name,
         [property: JsonPropertyName("username")] string Username,
         [property: JsonPropertyName("avatar_url")] string? AvatarUrl);
 
     public record GitLabEvent(
-        [property: JsonPropertyName("id")] int Id,
-        [property: JsonPropertyName("project_id")] int ProjectId,
+        [property: JsonPropertyName("id")] long Id,
+        [property: JsonPropertyName("project_id")] long ProjectId,
         [property: JsonPropertyName("action_name")] string Action,
         [property: JsonPropertyName("target_type")] string TargetType,
         [property: JsonPropertyName("author")] GitLabEventAuthor Author,
@@ -95,8 +122,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         [property: JsonPropertyName("ref")] string Ref);
 
     public record GitLabNote(
-        [property: JsonPropertyName("id")] int Id,
+        [property: JsonPropertyName("id")] long Id,
         [property: JsonPropertyName("body")] string Body,
         [property: JsonPropertyName("noteable_type")] string NoteableType,
-        [property: JsonPropertyName("noteable_id")] int NoteableId);
+        [property: JsonPropertyName("noteable_id")] long NoteableId);
 }

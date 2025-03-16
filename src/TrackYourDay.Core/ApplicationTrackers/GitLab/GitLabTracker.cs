@@ -4,9 +4,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
     public class GitLabTracker
     {
+        private readonly GitLabActivityService gitLabActivityService;
 
-        public GitLabTracker()
+        public GitLabTracker(GitLabActivityService gitLabActivityService)
         {
+            this.gitLabActivityService = gitLabActivityService;
         }
 
         public async Task RecognizeActivity()
@@ -19,6 +21,4 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             // Process activities
         }
     }
-
-    public record class GitLabActivity(Guid Guid, DateTime OccuranceDate, string Description); 
 }
