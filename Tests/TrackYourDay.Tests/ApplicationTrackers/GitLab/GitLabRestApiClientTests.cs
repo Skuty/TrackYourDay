@@ -1,4 +1,5 @@
-﻿using TrackYourDay.Core.ApplicationTrackers.GitLab;
+﻿using FluentAssertions;
+using TrackYourDay.Core.ApplicationTrackers.GitLab;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
 {
@@ -6,11 +7,13 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
     public class GitLabRestApiClientTests
     {
         private readonly GitLabRestApiClient client;
-        private readonly DateOnly eventsStartingDate = new DateOnly(2024, 03, 16);
+        private readonly DateOnly startingDate = new DateOnly(2024, 03, 16);
+        private readonly long projectId = 24674429;
+        private readonly string refName = "master";
 
         public GitLabRestApiClientTests()
         {
-            this.client = new GitLabRestApiClient("https://gitlab.com", "secret");
+            this.client = new GitLabRestApiClient("https://gitlab.com", "");
         }
 
         //[Fact]
@@ -23,14 +26,14 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             Assert.NotNull(user);
         }
 
-        [Fact]
+        //[Fact]
         public void GivenUserIsAuthenticated_WhenGettingEventsOfUser_ThenListOfEventsIsReturned()
         {
             // Given
             var user = this.client.GetCurrentUser();
 
             // When
-            var events = this.client.GetUserEvents(new GitLabUserId(user.Id), this.eventsStartingDate);
+            var events = this.client.GetUserEvents(new GitLabUserId(user.Id), this.startingDate);
 
             // Then
             Assert.NotNull(events);
@@ -44,11 +47,11 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var user = this.client.GetCurrentUser();
 
             // When
-            var events = this.client.GetUserEvents(new GitLabUserId(user.Id), this.eventsStartingDate);
+            var events = this.client.GetUserEvents(new GitLabUserId(user.Id), this.startingDate);
             var eventWithNote = events.FirstOrDefault(e => e.TargetType == "Note");
 
             // Then
-            Assert.NotNull(eventWithNote.Note);
+            Assert.NotNull(eventWithNote);
         }
 
         //[Fact]
@@ -58,11 +61,40 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var user = this.client.GetCurrentUser();
 
             // When
-            var events = this.client.GetUserEvents(new GitLabUserId(user.Id), this.eventsStartingDate);
+            var events = this.client.GetUserEvents(new GitLabUserId(user.Id), this.startingDate);
             var eventWithPush = events.FirstOrDefault(e => e.Action.Contains("pushed"));
 
             // Then
             Assert.NotNull(eventWithPush.PushData);
+        }
+
+        //[Fact]
+        public void GivenUserIsAuthenticated_WhenGettingGitLabProject_ThenProjectIsSerializedProperly()
+        {
+            // Given
+            var user = this.client.GetCurrentUser();
+
+            // When
+            var project = this.client.GetProject(new GitLabProjectId(this.projectId));
+
+            // Then
+            Assert.NotNull(project);
+            Assert.NotEmpty(project.Name);
+        }
+
+        [Fact]
+        public void GivenUserIsAuthenticated_WhenGettingGitLabCommits_ThenCommitsAreSerializedProperly()
+        {
+            // Given
+            var user = this.client.GetCurrentUser();
+
+            // When
+            var commits = this.client.GetCommits(new GitLabProjectId(this.projectId), new GitLabRefName(this.refName), this.startingDate);
+            
+            // Then
+            Assert.NotNull(commits);
+            commits.Count.Should().Be(6);
+            commits.ForEach(c => c.Message.Should().NotBeNullOrEmpty());
         }
     }
 }

@@ -7,6 +7,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
     {
         GitLabUser GetCurrentUser();
         List<GitLabEvent> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate);
+        GitLabProject GetProject(GitLabProjectId projectId);
+        List<GitLabCommit> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate);
     }
 
     public class GitLabRestApiClient : IGitLabRestApiClient
@@ -40,7 +42,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             do
             {
-                var response = httpClient.GetAsync($"/api/v4/users/{userId.Id}/events?per_page={PAGE_LIMIT}&page={page}&after={startingFromDate.ToString("YYYY-MM-DD")}").Result;
+                var response = httpClient.GetAsync($"/api/v4/users/{userId.Id}/events?per_page={PAGE_LIMIT}&page={page}&after={startingFromDate.ToString("yyyy-MM-dd")}").Result;
                 response.EnsureSuccessStatusCode();
                 var content = response.Content.ReadAsStringAsync().Result;
                 var events = JsonSerializer.Deserialize<List<GitLabEvent>>(content) ?? new List<GitLabEvent>();
@@ -51,6 +53,23 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             } while (hasMoreEvents);
 
             return allEvents;
+        }
+
+        public GitLabProject GetProject(GitLabProjectId projectId)
+        {
+            var response = httpClient.GetAsync($"/api/v4/projects/{projectId.Id}").Result;
+            response.EnsureSuccessStatusCode();
+            var content = response.Content.ReadAsStringAsync().Result;
+
+            return JsonSerializer.Deserialize<GitLabProject>(content);
+        }
+
+        public List<GitLabCommit> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
+        {
+            var response = httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/commits?ref_name={refName.Name}&since={startingFromDate.ToString("yyyy-MM-dd")}").Result;
+            response.EnsureSuccessStatusCode();
+            var content = response.Content.ReadAsStringAsync().Result;
+            return JsonSerializer.Deserialize<List<GitLabCommit>>(content) ?? new List<GitLabCommit>();
         }
     }
 
@@ -126,4 +145,58 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         [property: JsonPropertyName("body")] string Body,
         [property: JsonPropertyName("noteable_type")] string NoteableType,
         [property: JsonPropertyName("noteable_id")] long NoteableId);
+
+    public record GitLabProjectId(long Id);
+
+    public record GitLabProject(
+        [property: JsonPropertyName("id")] long Id,
+        [property: JsonPropertyName("description")] string Description,
+        [property: JsonPropertyName("default_branch")] string DefaultBranch,
+        [property: JsonPropertyName("visibility")] string Visibility,
+        [property: JsonPropertyName("ssh_url_to_repo")] string SshUrlToRepo,
+        [property: JsonPropertyName("http_url_to_repo")] string HttpUrlToRepo,
+        [property: JsonPropertyName("web_url")] string WebUrl,
+        [property: JsonPropertyName("readme_url")] string? ReadmeUrl,
+        [property: JsonPropertyName("tag_list")] List<string> TagList,
+        [property: JsonPropertyName("owner")] GitLabUser Owner,
+        [property: JsonPropertyName("name")] string Name,
+        [property: JsonPropertyName("name_with_namespace")] string NameWithNamespace,
+        [property: JsonPropertyName("path")] string Path,
+        [property: JsonPropertyName("path_with_namespace")] string PathWithNamespace,
+        [property: JsonPropertyName("issues_enabled")] bool IssuesEnabled,
+        [property: JsonPropertyName("open_issues_count")] int OpenIssuesCount,
+        [property: JsonPropertyName("merge_requests_enabled")] bool MergeRequestsEnabled,
+        [property: JsonPropertyName("jobs_enabled")] bool JobsEnabled,
+        [property: JsonPropertyName("wiki_enabled")] bool WikiEnabled,
+        [property: JsonPropertyName("snippets_enabled")] bool SnippetsEnabled,
+        [property: JsonPropertyName("resolve_outdated_diff_discussions")] bool ResolveOutdatedDiffDiscussions,
+        [property: JsonPropertyName("container_registry_enabled")] bool ContainerRegistryEnabled,
+        [property: JsonPropertyName("created_at")] DateTimeOffset CreatedAt,
+        [property: JsonPropertyName("last_activity_at")] DateTimeOffset LastActivityAt,
+        [property: JsonPropertyName("creator_id")] long CreatorId,
+        //[property: JsonPropertyName("namespace")] GitLabNameSpace Namespace,
+        [property: JsonPropertyName("import_status")] string ImportStatus,
+        [property: JsonPropertyName("archived")] bool Archived,
+        [property: JsonPropertyName("avatar_url")] string? AvatarUrl,
+        [property: JsonPropertyName("shared_runners_enabled")] bool SharedRunnersEnabled,
+        [property: JsonPropertyName("forks_count")] int ForksCount,
+        [property: JsonPropertyName("star_count")] int StarCount,
+        [property: JsonPropertyName("runners_token")] string RunnersToken);
+
+        public record GitLabRefName(string Name);
+
+        public record GitLabCommit(
+            [property: JsonPropertyName("id")] string Id,
+            [property: JsonPropertyName("short_id")] string ShortId,
+            [property: JsonPropertyName("title")] string Title,
+            [property: JsonPropertyName("author_name")] string AuthorName,
+            [property: JsonPropertyName("author_email")] string AuthorEmail,
+            [property: JsonPropertyName("authored_date")] DateTimeOffset AuthoredDate,
+            [property: JsonPropertyName("committer_name")] string CommitterName,
+            [property: JsonPropertyName("committer_email")] string CommitterEmail,
+            [property: JsonPropertyName("committed_date")] DateTimeOffset CommittedDate,
+            [property: JsonPropertyName("created_at")] DateTimeOffset CreatedAt,
+            [property: JsonPropertyName("message")] string Message,
+            [property: JsonPropertyName("parent_ids")] List<string> ParentIds,
+            [property: JsonPropertyName("web_url")] string WebUrl);
 }

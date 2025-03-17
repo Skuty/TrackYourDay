@@ -59,6 +59,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             activities[1].Description.Should().Be("Commit done to Repository: REPOSITORY_NAME, to branch: master, with Title: Merge branch 'BranchPushedOnCreation' into 'master'");
         }
 
+        // Below are just raw responses from gitlab, not to be dependent on gitlab api but just to instantiate objects as they were real
         private string GetResponseForDeleted()
         {
             return @"
@@ -341,6 +342,23 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 },
                 ""author_username"": ""ss.skuty""
             }";
+        }
+
+        private string GetResponseForProject()
+        {
+            return @"{GitLabProject { Id = 24674429, Description = , DefaultBranch = master, Visibility = private, SshUrlToRepo = git@gitlab.com:ss.skuty1/test.git, HttpUrlToRepo = https://gitlab.com/ss.skuty1/test.git, WebUrl = https://gitlab.com/ss.skuty1/test, ReadmeUrl = https://gitlab.com/ss.skuty1/test/-/blob/master/README.md, TagList = System.Collections.Generic.List`1[System.String], Owner = , Name = test, NameWithNamespace = ss.skuty / test, Path = test, PathWithNamespace = ss.skuty1/test, IssuesEnabled = True, OpenIssuesCount = 29, MergeRequestsEnabled = True, JobsEnabled = False, WikiEnabled = False, SnippetsEnabled = False, ResolveOutdatedDiffDiscussions = False, ContainerRegistryEnabled = True, CreatedAt = 24.02.2021 20:07:24 +00:00, LastActivityAt = 17.03.2025 21:48:33 +00:00, CreatorId = 8272154, ImportStatus = finished, Archived = False, AvatarUrl = , SharedRunnersEnabled = True, ForksCount = 0, StarCount = 0, RunnersToken =  }}";
+        }
+        private string GetResponseWith2CommitsRelatedToMergeRequest()
+        {
+            var firstCommit = @"{GitLabCommit { Id = d4727b4c86ebee7dbf290ec55fac5490ca1b8bc4, ShortId = d4727b4c, Title = Merge branch 'BranchPushedOnCreation' into 'master', AuthorName = Adam Kuba, AuthorEmail = ss.skuty@gmail.com, AuthoredDate = 16.03.2025 21:06:53 +00:00, CommitterName = Adam Kuba, CommitterEmail = ss.skuty@gmail.com, CommittedDate = 16.03.2025 21:06:53 +00:00, CreatedAt = 16.03.2025 21:06:53 +00:00, Message = Merge branch 'BranchPushedOnCreation' into 'master'
+
+Merge request from branch with 2 commits to master with squashing
+
+See merge request ss.skuty1/test!31, ParentIds = System.Collections.Generic.List`1[System.String], WebUrl = https://gitlab.com/ss.skuty1/test/-/commit/d4727b4c86ebee7dbf290ec55fac5490ca1b8bc4 }}";
+
+            var secondCommit = @"{GitLabCommit { Id = 1e217f79538e47e5c15606f641027e827b6a49fc, ShortId = 1e217f79, Title = Merge request from branch with 2 commits to master with squashing, AuthorName = Adam Kuba, AuthorEmail = ss.skuty@gmail.com, AuthoredDate = 16.03.2025 21:06:53 +00:00, CommitterName = Adam Kuba, CommitterEmail = ss.skuty@gmail.com, CommittedDate = 16.03.2025 21:06:53 +00:00, CreatedAt = 16.03.2025 21:06:53 +00:00, Message = Merge request from branch with 2 commits to master with squashing
+, ParentIds = System.Collections.Generic.List`1[System.String], WebUrl = https://gitlab.com/ss.skuty1/test/-/commit/1e217f79538e47e5c15606f641027e827b6a49fc }}";
+            return @"";
         }
     }
 }
