@@ -16,7 +16,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             this.client = new GitLabRestApiClient("https://gitlab.com", "");
         }
 
-        //[Fact]
+        [Fact]
         public void WhenGettingUserForSuppliedCredentials_ThenAuthenticatedUserDetailsAreReturned()
         {
             // When
@@ -26,7 +26,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             Assert.NotNull(user);
         }
 
-        //[Fact]
+        [Fact]
         public void GivenUserIsAuthenticated_WhenGettingEventsOfUser_ThenListOfEventsIsReturned()
         {
             // Given
@@ -40,7 +40,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             Assert.IsAssignableFrom<DateTime>(events.First().CreatedAt.DateTime);
         }
 
-        //[Fact]
+        [Fact]
         public void GivenUserIsAuthenticated_WhenGettingEventsContaningNote_ThenNoteDetailsAreSerializedProperly()
         {
             // Given
@@ -54,7 +54,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             Assert.NotNull(eventWithNote);
         }
 
-        //[Fact]
+        [Fact]
         public void GivenUserIsAuthenticated_WhenGettingEventsContaningPush_ThenPushDetailsAreSerializedProperly()
         {
             // Given
@@ -68,7 +68,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             Assert.NotNull(eventWithPush.PushData);
         }
 
-        //[Fact]
+        [Fact]
         public void GivenUserIsAuthenticated_WhenGettingGitLabProject_ThenProjectIsSerializedProperly()
         {
             // Given
