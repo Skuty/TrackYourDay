@@ -16,9 +16,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             // Process activities
         }
 
-        public async Task GetGitLabActivities()
+        public IReadOnlyCollection<GitLabActivity> GetGitLabActivities()
         {
-            // Process activities
+            return this.gitLabActivityService.GetTodayActivities();
         }
     }
 }

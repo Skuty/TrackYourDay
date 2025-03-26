@@ -12,8 +12,9 @@
             @this.minutesOfNoActivityToStartBreak.ToString() minutes
         </MudSlider>
     </MudTabPanel>
-    <MudTabPanel Text="Activities" Disabled="true">
-        <MudText>Planned</MudText>
+    <MudTabPanel Text="GitLab Integration">
+        <MudTextField @bind-Value="gitLabApiUrl" Label="GitLab API URL" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="gitLabApiKey" Label="GitLab API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
     </MudTabPanel>
 </MudTabs>
 
@@ -39,6 +40,8 @@
 
     private int minutesOfNoActivityToStartBreak = 5;
     private bool isSettingsSavedDialogVisible;
+    private string gitLabApiUrl = string.Empty;
+    private string gitLabApiKey = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -54,11 +57,22 @@
             .GetCurrentSettingSet()
             .BreaksSettings
             .TimeOfNoActivityToStartBreak.TotalMinutes;
+
+        this.gitLabApiUrl = this.settingsService
+            .GetCurrentSettingSet()
+            .GitLabSettings
+            .ApiUrl;
+
+        this.gitLabApiKey = this.settingsService
+            .GetCurrentSettingSet()
+            .GitLabSettings
+            .ApiKey;
     }
 
     private void SaveSettings()
     {
         this.settingsService.SetTimeOfNoActivityToStartBreak(TimeSpan.FromMinutes(this.minutesOfNoActivityToStartBreak));
+        this.settingsService.SetGitLabApiUrlAndKey(this.gitLabApiUrl, this.gitLabApiKey);
         this.settingsService.PersistSettings();
 
         this.ShowSettingsSavedDialog();

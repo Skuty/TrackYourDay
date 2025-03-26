@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.GitLab;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using TrackYourDay.Core.Insights.Analytics;
@@ -34,11 +35,11 @@ namespace TrackYourDay.Core.ServiceRegistration
                 var logger = container.GetRequiredService<ILogger<ActivityTracker>>();
 
                 return new ActivityTracker(
-                    clock, 
-                    publisher, 
-                    focusedWindowRecognizingStategy, 
-                    mousePositionRecognizingStrategy, 
-                    lastInputRecognizingStrategy, 
+                    clock,
+                    publisher,
+                    focusedWindowRecognizingStategy,
+                    mousePositionRecognizingStrategy,
+                    lastInputRecognizingStrategy,
                     logger);
             });
 
@@ -64,6 +65,15 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<ActivitiesAnalyser>();
 
             services.AddSingleton<UserTaskService>();
+
+            services.AddScoped<IGitLabRestApiClient, GitLabRestApiClient>(serviceCollection => {
+                var settingSet = serviceCollection.GetRequiredService<ISettingsSet>();
+
+                return new GitLabRestApiClient(settingSet.GitLabSettings.ApiUrl, settingSet.GitLabSettings.ApiKey);
+            });
+
+            services.AddSingleton<GitLabActivityService>();
+            services.AddSingleton<GitLabTracker>();
 
             return services;
         }

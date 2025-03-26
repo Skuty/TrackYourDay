@@ -1,4 +1,5 @@
 ﻿using TrackYourDay.Core.ApplicationTrackers.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.GitLab;
 using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.SystemTrackers;
 
@@ -16,5 +17,7 @@ namespace TrackYourDay.Core.Settings
         public BreaksSettings BreaksSettings => BreaksSettings.CreateDefaultSettings();
 
         public WorkdayDefinition WorkdayDefinition => WorkdayDefinition.CreateSampleCompanyDefinition();
+
+        public GitLabSettings GitLabSettings => GitLabSettings.CreateDefaultSettings();
     }
 }

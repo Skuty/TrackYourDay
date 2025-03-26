@@ -77,5 +77,7 @@
                 new GitLabActivity(gitlabEvent.CreatedAt.DateTime, $"{gitlabEvent.Action} {gitlabEvent.TargetType} {gitlabEvent.TargetTitle}")
             };
         }
+
+        //TODO: Add tests for duplicated events
     }
 }
