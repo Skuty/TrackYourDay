@@ -61,7 +61,7 @@ namespace TrackYourDay.MAUI
             builder.Services.AddBlazorWebViewDeveloperTools();
 
             // TODO: This deletes repository if needed, normally its not visible in file explorer on windws 10
-            new SqlLiteSettingsRepository().Reset();
+            //new SqlLiteSettingsRepository().Reset();
 #endif
             return builder.Build();
         }

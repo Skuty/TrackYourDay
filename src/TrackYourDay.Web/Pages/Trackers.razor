@@ -1,6 +1,7 @@
 ﻿@page "/trackers"
 
 @using System.Linq.Expressions
+@using TrackYourDay.Core.ApplicationTrackers.GitLab
 @using TrackYourDay.Core.ApplicationTrackers.UserTasks
 @using TrackYourDay.Core.Insights.Analytics
 @using TrackYourDay.Core.ApplicationTrackers.Breaks
@@ -13,6 +14,7 @@
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject MsTeamsMeetingTracker meetingTracker
 @inject ActivityTracker activityTracker
+@inject GitLabTracker gitlabTracker
 
 <MudTabs Elevation="2" Rounded="true" Centered="false" Class="my-6">
     <MudTabPanel Icon="@Icons.Material.Filled.FreeBreakfast" Text="Breaks" BadgeData="@(breakTracker.GetEndedBreaks().Count)">
@@ -45,6 +47,12 @@
         Title="Teams Meetings"
         Columns="@meetingColumns" />
     </MudTabPanel>
+    <MudTabPanel Icon="@Icons.Material.Filled.CallSplit" Text="GitLab" BadgeData="@(gitlabTracker.GetGitLabActivities().Count)">
+        <TrackerResultsComponent TItem="GitLabActivity"
+                                 Items="@gitlabTracker.GetGitLabActivities()"
+                                 Title="GitLab Activities"
+                                 Columns="@gitlabActivityColumns" />
+    </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.PieChart" Text="Analytics" BadgeData="@(activitiesAnalyser.GetGroupedActivities().Count)">
         <TrackerResultsComponent TItem="GroupedActivity"
         Items="@activitiesAnalyser.GetGroupedActivities()"
@@ -61,6 +69,7 @@
     private List<TableColumn<InstantActivity>> instantActivityColumns;
     private List<TableColumn<EndedMeeting>> meetingColumns;
     private List<TableColumn<GroupedActivity>> groupedActivityColumns;
+    private List<TableColumn<GitLabActivity>> gitlabActivityColumns;
 
     protected override void OnInitialized()
     {
@@ -109,6 +118,12 @@
             new() { Title = "Duration", PropertyExpression = x => x.Duration },
             new() { Title = "Description", PropertyExpression = x => x.Description }
 
+        };
+
+        gitlabActivityColumns = new()
+        {
+            new() { Title = "Date", PropertyExpression = x => x.OccuranceDate },
+            new() { Title = "Description", PropertyExpression = x => x.Description }
         };
     }
 }
