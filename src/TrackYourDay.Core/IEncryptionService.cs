@@ -7,26 +7,31 @@ namespace TrackYourDay.Core
     public interface IEncryptionService
     {
         string Encrypt(string text);
+
+        string Decrypt(string text);
     }
 
     public class EncryptionService : IEncryptionService
     {
         private readonly string salt;
 
+        public EncryptionService()
+        {
+            this.salt = this.GetWindowsUserAccountId();
+        }
+
         public EncryptionService(string salt)
         {
-            if (!string.IsNullOrEmpty(salt))
-            {
                 this.salt = salt;
-            } 
-            else
-            {
-                this.salt = this.GetWindowsUserAccountId();
-            }
         }
 
         public string Encrypt(string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
+
             using (Aes aesAlg = Aes.Create())
             {
                 var key = new Rfc2898DeriveBytes(salt, Encoding.UTF8.GetBytes(salt)).GetBytes(32);
@@ -53,6 +58,11 @@ namespace TrackYourDay.Core
 
         public string Decrypt(string text)
         {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
+
             using (Aes aesAlg = Aes.Create())
             {
                 var key = new Rfc2898DeriveBytes(salt, Encoding.UTF8.GetBytes(salt)).GetBytes(32);

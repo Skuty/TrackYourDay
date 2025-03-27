@@ -3,18 +3,30 @@
     public class SettingsService
     {
         private readonly ISettingsRepository settingsRepository;
+        private readonly IEncryptionService encryptionService;
         private ISettingsSet currentSettings = null;
 
-        public SettingsService(ISettingsRepository settingsRepository)
+        public SettingsService(ISettingsRepository settingsRepository, IEncryptionService encryptionService)
         {
             this.settingsRepository = settingsRepository;
+            this.encryptionService = encryptionService;
         }
 
         public ISettingsSet GetCurrentSettingSet()
         {
             if (this.currentSettings is null)
             {
-                this.currentSettings = this.settingsRepository.Get();
+                var settingsSet = this.settingsRepository.Get();
+                var settingsSetWithDecrypterValues = new UserSettingsSet(
+                    settingsSet.ActivitiesSettings,
+                    settingsSet.BreaksSettings,
+                    settingsSet.WorkdayDefinition,
+                    new ApplicationTrackers.GitLab.GitLabSettings(
+                        this.encryptionService.Decrypt(settingsSet.GitLabSettings.ApiUrl),
+                        this.encryptionService.Decrypt(settingsSet.GitLabSettings.ApiKey)
+                        ));
+
+                this.currentSettings = settingsSetWithDecrypterValues;
             }
 
             return this.currentSettings;
@@ -44,7 +56,15 @@
         {
             if (this.currentSettings is not null)
             {
-                this.settingsRepository.Save(this.currentSettings);
+                var encryptedSettingsSet = new UserSettingsSet(
+                    this.currentSettings.ActivitiesSettings,
+                    this.currentSettings.BreaksSettings,
+                    this.currentSettings.WorkdayDefinition,
+                    new ApplicationTrackers.GitLab.GitLabSettings(
+                        this.encryptionService.Encrypt(this.currentSettings.GitLabSettings.ApiUrl),
+                        this.encryptionService.Encrypt(this.currentSettings.GitLabSettings.ApiKey)
+                        ));
+                this.settingsRepository.Save(encryptedSettingsSet);
             }
         }
 

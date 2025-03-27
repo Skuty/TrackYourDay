@@ -1,4 +1,6 @@
-﻿namespace TrackYourDay.Core.ApplicationTrackers.GitLab
+﻿using Microsoft.Extensions.Logging;
+
+namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
     public record class GitLabActivity(DateTime OccuranceDate, string Description);
 
@@ -7,36 +9,51 @@
     public class GitLabActivityService
     {
         private readonly IGitLabRestApiClient gitLabRestApiClient;
+        private readonly ILogger<GitLabActivityService> logger;
         private GitLabUserId userId;
         private string userEmail;
         private List<GitLabActivity> gitlabActivities;
+        private bool stopFetchingDueToFailedRequests = false;
 
-        public GitLabActivityService(IGitLabRestApiClient gitLabRestApiClient)
+        public GitLabActivityService(IGitLabRestApiClient gitLabRestApiClient, ILogger<GitLabActivityService> logger)
         {
             this.gitLabRestApiClient = gitLabRestApiClient;
+            this.logger = logger;
             this.gitlabActivities = new List<GitLabActivity>();
         }
 
         public List<GitLabActivity> GetTodayActivities()
         {
+            if (this.stopFetchingDueToFailedRequests)
+            {
+                return this.gitlabActivities;
+            }
+
             this.gitlabActivities.Clear();
-
-            if (this.userId == null)
+            try
             {
-                var user = this.gitLabRestApiClient.GetCurrentUser();
-                this.userId = new GitLabUserId(user.Id);
-                this.userEmail = user.Email;
+                if (this.userId == null)
+                {
+                    var user = this.gitLabRestApiClient.GetCurrentUser();
+                    this.userId = new GitLabUserId(user.Id);
+                    this.userEmail = user.Email;
+                }
+
+                var events = this.gitLabRestApiClient.GetUserEvents(new GitLabUserId(this.userId.Id), DateOnly.FromDateTime(DateTime.Today));
+
+                foreach (var gitlabEvent in events)
+                {
+                    // TODO: store GitLabData and only add new items to it instead of repulling everything from scratch
+                    var gitLabActivity = this.MapGitLabEventToGitLabActivity(gitlabEvent);
+
+                    this.gitlabActivities.AddRange(gitLabActivity);
+                }
+            } catch (Exception e)
+            {
+                this.logger.LogError(e, "Error while fetching GitLab activities");
+                this.stopFetchingDueToFailedRequests = true;
             }
 
-            var events = this.gitLabRestApiClient.GetUserEvents(new GitLabUserId(this.userId.Id), DateOnly.FromDateTime(DateTime.Today));
-
-            foreach(var gitlabEvent in events)
-            {
-                // TODO: store GitLabData and only add new items to it instead of repulling everything from scratch
-                var gitLabActivity = this.MapGitLabEventToGitLabActivity(gitlabEvent);
-
-                this.gitlabActivities.AddRange(gitLabActivity);
-            }
 
             return this.gitlabActivities;
         }

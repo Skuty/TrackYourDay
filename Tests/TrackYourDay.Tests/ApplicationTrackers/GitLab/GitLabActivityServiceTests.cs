@@ -14,7 +14,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         public GitLabActivityServiceTests()
         {
             this.gitLabApiClient = new Mock<IGitLabRestApiClient>();
-            this.gitLabActivityService = new GitLabActivityService(this.gitLabApiClient.Object);
+            this.gitLabActivityService = new GitLabActivityService(this.gitLabApiClient.Object, null);
             var gitlabUser = JsonSerializer.Deserialize<GitLabUser>(this.GetResponseFor_GetCurrentUser());
             this.gitLabApiClient.Setup(x => x.GetCurrentUser()).Returns(gitlabUser);
         }

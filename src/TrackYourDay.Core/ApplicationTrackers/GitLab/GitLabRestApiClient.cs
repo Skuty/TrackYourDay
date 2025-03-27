@@ -42,7 +42,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             do
             {
-                var response = httpClient.GetAsync($"/api/v4/users/{userId.Id}/events?per_page={PAGE_LIMIT}&page={page}&after={startingFromDate.ToString("yyyy-MM-dd")}").Result;
+                var response = httpClient.GetAsync($"/api/v4/users/{userId.Id}/events?per_page={PAGE_LIMIT}&page={page}&after={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}").Result;
                 response.EnsureSuccessStatusCode();
                 var content = response.Content.ReadAsStringAsync().Result;
                 var events = JsonSerializer.Deserialize<List<GitLabEvent>>(content) ?? new List<GitLabEvent>();
@@ -66,7 +66,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
         public List<GitLabCommit> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
         {
-            var response = httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/commits?ref_name={refName.Name}&since={startingFromDate.ToString("yyyy-MM-dd")}").Result;
+            var response = httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/commits?ref_name={refName.Name}&since={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}").Result;
             response.EnsureSuccessStatusCode();
             var content = response.Content.ReadAsStringAsync().Result;
             return JsonSerializer.Deserialize<List<GitLabCommit>>(content) ?? new List<GitLabCommit>();
