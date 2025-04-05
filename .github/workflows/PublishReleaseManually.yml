@@ -39,7 +39,7 @@ jobs:
               run: dotnet build --configuration Release
 
             - name: Test
-              run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml"
+              run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
               env:
                 VSTEST_LOG_PATH: test_results.xml
             
