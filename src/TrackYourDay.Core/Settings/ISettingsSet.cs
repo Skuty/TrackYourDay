@@ -14,5 +14,13 @@ namespace TrackYourDay.Core.Settings
         WorkdayDefinition WorkdayDefinition { get; }
 
         GitLabSettings GitLabSettings { get; }
+
+        JiraSettings JiraSettings { get; }
+    }
+
+    public class JiraSettings
+    {
+        public string ApiUrl { get; set; }
+        public string ApiKey { get; set; }
     }
 }

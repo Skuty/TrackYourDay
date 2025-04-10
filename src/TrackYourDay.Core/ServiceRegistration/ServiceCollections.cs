@@ -13,6 +13,7 @@ using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.ActivityRecognizing;
 using TrackYourDay.Core.Versioning;
+using TrackYourDay.Core.ApplicationTrackers.Jira;
 
 namespace TrackYourDay.Core.ServiceRegistration
 {
@@ -74,6 +75,15 @@ namespace TrackYourDay.Core.ServiceRegistration
 
             services.AddSingleton<GitLabActivityService>();
             services.AddSingleton<GitLabTracker>();
+
+            services.AddScoped<IJiraRestApiClient, JiraRestApiClient>(serviceCollection => {
+                var settingSet = serviceCollection.GetRequiredService<ISettingsSet>();
+
+                return new JiraRestApiClient(settingSet.JiraSettings.ApiUrl, settingSet.JiraSettings.ApiKey);
+            });
+
+            services.AddSingleton<JiraActivityService>();
+            services.AddSingleton<JiraTracker>();
 
             return services;
         }
