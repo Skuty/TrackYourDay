@@ -4,6 +4,7 @@ using TrackYourDay.Core.ApplicationTrackers.Jira;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 {
+    [Trait("Category", "Integration")]
     public class JiraRestApiClientTests
     {
         private readonly Mock<HttpMessageHandler> httpMessageHandlerMock;
