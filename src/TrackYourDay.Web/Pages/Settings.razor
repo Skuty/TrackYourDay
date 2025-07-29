@@ -19,6 +19,13 @@
         <MudTextField @bind-Value="gitLabApiUrl" Label="GitLab API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="gitLabApiKey" Label="GitLab API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
     </MudTabPanel>
+    <MudTabPanel Text="Jira Integration">
+        <MudText>
+            Jira credentials are encrypted at rest using AES with your Windows Account SID as salt.
+        </MudText>
+        <MudTextField @bind-Value="jiraApiUrl" Label="Jira API URL" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="jiraApiKey" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+    </MudTabPanel>
 </MudTabs>
 
 <MudDialog @bind-IsVisible="isSettingsSavedDialogVisible">
@@ -45,6 +52,8 @@
     private bool isSettingsSavedDialogVisible;
     private string gitLabApiUrl = string.Empty;
     private string gitLabApiKey = string.Empty;
+    private string jiraApiUrl = string.Empty;
+    private string jiraApiKey = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -70,12 +79,23 @@
             .GetCurrentSettingSet()
             .GitLabSettings
             .ApiKey;
+
+        this.jiraApiUrl = this.settingsService
+            .GetCurrentSettingSet()
+            .JiraSettings
+            .ApiUrl;
+
+        this.jiraApiKey = this.settingsService
+            .GetCurrentSettingSet()
+            .JiraSettings
+            .ApiKey;
     }
 
     private void SaveSettings()
     {
         this.settingsService.SetTimeOfNoActivityToStartBreak(TimeSpan.FromMinutes(this.minutesOfNoActivityToStartBreak));
         this.settingsService.SetGitLabApiUrlAndKey(this.gitLabApiUrl, this.gitLabApiKey);
+        this.settingsService.SetJiraApiUrlAndKey(this.jiraApiUrl, this.jiraApiKey);
         this.settingsService.PersistSettings();
 
         this.ShowSettingsSavedDialog();

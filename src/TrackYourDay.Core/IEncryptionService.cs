@@ -88,10 +88,12 @@ namespace TrackYourDay.Core
         private string? GetWindowsUserAccountId()
         {
             var sid = WindowsIdentity.GetCurrent().User;
+
             if (sid == null)
             {
                 return null;
             }
+
             return sid.Value;
         }
 

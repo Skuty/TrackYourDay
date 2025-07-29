@@ -23,6 +23,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         public List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate)
         {
+            //TODO: Add check for API response and disable calling if not authenticated or lack of credentials
             try
             {
                 if (this.currentUser == null)

@@ -54,6 +54,16 @@
                 this.currentSettings.BreaksSettings,
                 this.currentSettings.WorkdayDefinition,
                 new ApplicationTrackers.GitLab.GitLabSettings(url, key),
+                this.currentSettings.JiraSettings); // Fixed: Keep existing Jira settings
+        }
+
+        public void SetJiraApiUrlAndKey(string url, string key)
+        {
+            this.currentSettings = new UserSettingsSet(
+                this.currentSettings.ActivitiesSettings,
+                this.currentSettings.BreaksSettings,
+                this.currentSettings.WorkdayDefinition,
+                this.currentSettings.GitLabSettings,
                 new ApplicationTrackers.Jira.JiraSettings(url, key));
         }
 
@@ -69,8 +79,8 @@
                         this.encryptionService.Encrypt(this.currentSettings.GitLabSettings.ApiUrl),
                         this.encryptionService.Encrypt(this.currentSettings.GitLabSettings.ApiKey)),
                     new ApplicationTrackers.Jira.JiraSettings(
-                        this.encryptionService.Decrypt(currentSettings.JiraSettings.ApiUrl),
-                        this.encryptionService.Decrypt(currentSettings.JiraSettings.ApiKey)));
+                        this.encryptionService.Encrypt(this.currentSettings.JiraSettings.ApiUrl),
+                        this.encryptionService.Encrypt(this.currentSettings.JiraSettings.ApiKey))); 
                 this.settingsRepository.Save(encryptedSettingsSet);
             }
         }
