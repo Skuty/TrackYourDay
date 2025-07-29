@@ -16,7 +16,6 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
         public JiraRestApiClientTests()
         {
-            this.httpMessageHandlerMock = new Mock<HttpMessageHandler>();
             var httpClient = new HttpClient(this.httpMessageHandlerMock.Object)
             {
                 BaseAddress = new Uri("https://example.atlassian.net")
@@ -28,9 +27,6 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         public void GetCurrentUser_ShouldReturnUserDetails()
         {
             // Arrange
-            var responseContent = JsonSerializer.Serialize(new JiraUser("12345", "Test User"));
-            this.httpMessageHandlerMock.SetupRequest(HttpMethod.Get, "/rest/api/3/myself")
-                .ReturnsResponse(responseContent);
 
             // Act
             var user = this.jiraRestApiClient.GetCurrentUser();
@@ -50,8 +46,6 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 new JiraIssue("ISSUE-1", "Test Issue 1", DateTime.Now),
                 new JiraIssue("ISSUE-2", "Test Issue 2", DateTime.Now)
             });
-            this.httpMessageHandlerMock.SetupRequest(HttpMethod.Get, "/rest/api/3/search")
-                .ReturnsResponse(responseContent);
 
             // Act
             var issues = this.jiraRestApiClient.GetUserIssues("12345", DateTime.Today);

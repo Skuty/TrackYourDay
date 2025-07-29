@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
+using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.SystemTrackers;
@@ -25,7 +26,8 @@ namespace TrackYourDay.Tests
                 new ActivitiesSettings(TimeSpan.FromSeconds(1)),
                 new BreaksSettings(TimeSpan.FromSeconds(2)),
                 WorkdayDefinition.CreateDefaultDefinition(),
-                GitLabSettings.CreateDefaultSettings());
+                GitLabSettings.CreateDefaultSettings(),
+                JiraSettings.CreateDefaultSettings());
 
             // Act
             this.sqlLiteSettingsRepository.Save(settingsToSave);
