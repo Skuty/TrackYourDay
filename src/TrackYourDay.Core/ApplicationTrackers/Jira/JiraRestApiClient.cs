@@ -1,5 +1,3 @@
-using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Globalization;
@@ -10,7 +8,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     {
         JiraUser GetCurrentUser();
 
-        List<JiraIssue> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate);
+        List<JiraIssueResponse> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate);
     }
 
     public class JiraRestApiClient : IJiraRestApiClient
@@ -34,10 +32,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             return JsonSerializer.Deserialize<JiraUser>(content);
         }
 
-        public List<JiraIssue> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
+        public List<JiraIssueResponse> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
         {
-            var response = httpClient.GetAsync($"/rest/api/2/search?jql=assignee=alalak&startAt=2&maxResults=2").Result;
-            //var response = httpClient.GetAsync($"/rest/api/2/search?jql=assignee={jiraUser.Name} AND updated>={startingFromDate:yyyy-MM-dd}").Result;
+            var response = httpClient.GetAsync($"/rest/api/2/search?jql=assignee=alalak AND updated>={startingFromDate:yyyy-MM-dd}").Result;
             response.EnsureSuccessStatusCode();
             var content = response.Content.ReadAsStringAsync().Result;
                         
@@ -49,10 +46,26 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             options.Converters.Add(new JiraDateTimeOffsetConverter());
             
             var searchResult = JsonSerializer.Deserialize<JiraSearchResponse>(content, options);
-            var mappedIssues = searchResult?.Issues?.Select(issue => issue.MapToJiraIssue()).ToList() ?? new List<JiraIssue>();
-            return mappedIssues;
+            return searchResult?.Issues ?? new List<JiraIssueResponse>();
         }
     }
+
+    public record JiraSearchResponse(
+        [property: JsonPropertyName("issues")] List<JiraIssueResponse>? Issues,
+        [property: JsonPropertyName("total")] int Total,
+        [property: JsonPropertyName("startAt")] int StartAt,
+        [property: JsonPropertyName("maxResults")] int MaxResults
+    );
+
+    public record JiraIssueResponse(
+        [property: JsonPropertyName("key")] string Key,
+        [property: JsonPropertyName("id")] string Id,
+        [property: JsonPropertyName("fields")] JiraIssueFieldsResponse Fields);
+
+    public record JiraIssueFieldsResponse(
+        [property: JsonPropertyName("summary")] string? Summary,
+        [property: JsonPropertyName("updated")] DateTimeOffset Updated
+    );
 
     public class JiraDateTimeOffsetConverter : JsonConverter<DateTimeOffset>
     {
@@ -65,7 +78,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
 
             // Try to parse the Jira format: 2025-02-19T17:29:40.000+0100
-            if (DateTimeOffset.TryParseExact(dateString, "yyyy-MM-ddTHH:mm:ss.fffzzz", 
+            if (DateTimeOffset.TryParseExact(dateString, "yyyy-MM-ddTHH:mm:ss.fffzzz",
                 CultureInfo.InvariantCulture, DateTimeStyles.None, out var result))
             {
                 return result;
@@ -85,39 +98,4 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz"));
         }
     }
-
-    public record JiraUser(string Name, string DisplayName);
-
-    public record JiraIssue(
-        string Key,
-        string Summary,
-        DateTime Updated
-    );
-
-    public record JiraSearchResponse(
-        [property: JsonPropertyName("issues")] List<JiraIssueResponse>? Issues,
-        [property: JsonPropertyName("total")] int Total,
-        [property: JsonPropertyName("startAt")] int StartAt,
-        [property: JsonPropertyName("maxResults")] int MaxResults
-    );
-
-    public record JiraIssueResponse(
-        [property: JsonPropertyName("key")] string Key,
-        [property: JsonPropertyName("id")] string Id,
-        [property: JsonPropertyName("fields")] JiraIssueFieldsResponse Fields)
-    {
-        public JiraIssue MapToJiraIssue()
-        {
-            return new JiraIssue(
-                this.Key,
-                this.Fields.Summary ?? string.Empty,
-                this.Fields.Updated.DateTime
-            );
-        }
-    }
-
-    public record JiraIssueFieldsResponse(
-        [property: JsonPropertyName("summary")] string? Summary,
-        [property: JsonPropertyName("updated")] DateTimeOffset Updated
-    );
 }

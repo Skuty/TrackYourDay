@@ -7,28 +7,36 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     public class JiraTracker
     {
         private readonly JiraActivityService jiraActivityService;
+        private readonly IClock clock;
         private DateTime? lastFetchedDate;
         private List<JiraActivity> jiraActivities;
 
-        public JiraTracker(JiraActivityService jiraActivityService)
+        public JiraTracker(JiraActivityService jiraActivityService, IClock clock)
         {
             this.jiraActivityService = jiraActivityService;
+            this.clock = clock;
             this.jiraActivities = new List<JiraActivity>();
         }
 
-        public async Task RecognizeActivity()
+        public void RecognizeActivity()
         {
-            // Process activities (if needed for real-time tracking)
+            if (this.lastFetchedDate == null)
+            {
+                var todayActivities = this.jiraActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
+                this.jiraActivities.AddRange(todayActivities);
+                this.lastFetchedDate = this.clock.Now; this.lastFetchedDate = this.clock.Now;
+            }
+
+            if (lastFetchedDate.Value < this.clock.Now.AddMinutes(-5))
+            {
+                var newActivities = this.jiraActivityService.GetActivitiesUpdatedAfter(this.lastFetchedDate.Value);
+                this.jiraActivities.AddRange(newActivities);
+                this.lastFetchedDate = this.clock.Now;
+            }
         }
 
         public IReadOnlyCollection<JiraActivity> GetJiraActivities()
         {
-            if (this.lastFetchedDate == null || this.lastFetchedDate.Value < DateTime.Now.AddMinutes(-5))
-            {
-                this.lastFetchedDate = DateTime.Now;
-                this.jiraActivities = this.jiraActivityService.GetTodayActivities();
-            }
-
             return this.jiraActivities;
         }
     }

@@ -1,11 +1,6 @@
 using FluentAssertions;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Text.Json;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
-using Xunit;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 {
@@ -16,7 +11,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
         public JiraRestApiClientTests()
         {
-            this.jiraRestApiClient = new JiraRestApiClient("https://sampleinstance", "samplekey");
+            this.jiraRestApiClient = new JiraRestApiClient("https://sampleUrl", "sampleKey");
         }
 
         [Fact]
@@ -40,11 +35,14 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             var user = this.jiraRestApiClient.GetCurrentUser();
 
             // Act
-            var issues = this.jiraRestApiClient.GetUserIssues(user, DateTime.Today);
+            var issues = this.jiraRestApiClient.GetUserIssues(user, DateTime.Today.AddDays(-30));
 
             // Assert
             issues.Should().NotBeNull();
-            issues.Should().HaveCount(2);
+            issues.Should().NotBeEmpty();
+            issues.First().Key.Should().NotBeEmpty();
+            issues.First().Fields.Summary.Should().NotBeEmpty();
+            issues.First().Fields.Updated.Should().BeBefore(DateTime.Now);
         }
     }
 }

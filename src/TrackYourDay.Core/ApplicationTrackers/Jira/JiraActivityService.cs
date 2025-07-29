@@ -4,7 +4,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
     public record class JiraActivity(DateTime OccurrenceDate, string Description);
 
-    public class JiraActivityService
+    public interface IJiraActivityService
+    {
+        List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate);
+    }
+
+    public class JiraActivityService : IJiraActivityService
     {
         private readonly IJiraRestApiClient jiraRestApiClient;
         private readonly ILogger<JiraActivityService> logger;
@@ -16,7 +21,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             this.logger = logger;
         }
 
-        public List<JiraActivity> GetTodayActivities()
+        public List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate)
         {
             try
             {
@@ -25,9 +30,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                     this.currentUser = this.jiraRestApiClient.GetCurrentUser();
                 }
 
-                var issues = this.jiraRestApiClient.GetUserIssues(this.currentUser, DateTime.Today);
+                var issues = this.jiraRestApiClient.GetUserIssues(this.currentUser, updateDate);
 
-                return issues.Select(issue => new JiraActivity(issue.Updated, $"Issue {issue.Key}: {issue.Summary}")).ToList();
+                return issues.Select(issue => new JiraActivity(issue.Fields.Updated.LocalDateTime, $"Issue {issue.Key}: {issue.Fields.Summary}")).ToList();
             }
             catch (Exception e)
             {
