@@ -25,7 +25,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                     this.currentUser = this.jiraRestApiClient.GetCurrentUser();
                 }
 
-                var issues = this.jiraRestApiClient.GetUserIssues(this.currentUser.AccountId, DateTime.Today);
+                var issues = this.jiraRestApiClient.GetUserIssues(this.currentUser, DateTime.Today);
 
                 return issues.Select(issue => new JiraActivity(issue.Updated, $"Issue {issue.Key}: {issue.Summary}")).ToList();
             }

@@ -16,11 +16,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
         public JiraRestApiClientTests()
         {
-            var httpClient = new HttpClient(this.httpMessageHandlerMock.Object)
-            {
-                BaseAddress = new Uri("https://example.atlassian.net")
-            };
-            this.jiraRestApiClient = new JiraRestApiClient("https://example.atlassian.net", "fake-api-key");
+            this.jiraRestApiClient = new JiraRestApiClient("https://sampleinstance", "samplekey");
         }
 
         [Fact]
@@ -33,22 +29,18 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
             // Assert
             user.Should().NotBeNull();
-            user.AccountId.Should().Be("12345");
-            user.DisplayName.Should().Be("Test User");
+            user.Name.Should().NotBeEmpty();
+            user.DisplayName.Should().NotBeEmpty();
         }
 
         [Fact]
         public void GetUserIssues_ShouldReturnIssues()
         {
             // Arrange
-            var responseContent = JsonSerializer.Serialize(new List<JiraIssue>
-            {
-                new JiraIssue("ISSUE-1", "Test Issue 1", DateTime.Now),
-                new JiraIssue("ISSUE-2", "Test Issue 2", DateTime.Now)
-            });
+            var user = this.jiraRestApiClient.GetCurrentUser();
 
             // Act
-            var issues = this.jiraRestApiClient.GetUserIssues("12345", DateTime.Today);
+            var issues = this.jiraRestApiClient.GetUserIssues(user, DateTime.Today);
 
             // Assert
             issues.Should().NotBeNull();

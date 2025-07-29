@@ -29,7 +29,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 new JiraIssue("ISSUE-1", "Test Issue 1", DateTime.Today),
                 new JiraIssue("ISSUE-2", "Test Issue 2", DateTime.Today)
             };
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(It.IsAny<string>(), It.IsAny<DateTime>()))
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(It.IsAny<JiraUser>(), It.IsAny<DateTime>()))
                 .Returns(issues);
 
             // Act
