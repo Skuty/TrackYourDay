@@ -32,7 +32,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
                 var issues = this.jiraRestApiClient.GetUserIssues(this.currentUser, updateDate);
 
-                return issues.Select(issue => new JiraActivity(issue.Fields.Updated.LocalDateTime, $"Issue {issue.Key}: {issue.Fields.Summary}")).ToList();
+                //TODO Important: Expand history of issues and get real Jira Activities for issue
+
+                return issues.Select(issue => new JiraActivity(issue.Fields.Updated.LocalDateTime, $"Following issue was updated {issue.Key}: {issue.Fields.Summary}")).ToList();
             }
             catch (Exception e)
             {
