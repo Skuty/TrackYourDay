@@ -123,8 +123,6 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<ISettingsSet>(serviceProvider =>
                 serviceProvider.GetService<SettingsService>().GetCurrentSettingSet());
             
-            // Settings migration service
-            services.AddSingleton<SettingsMigrationService>();
 
             return services;
         }
