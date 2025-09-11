@@ -1,4 +1,4 @@
-﻿using Quartz;
+using Quartz;
 using Microsoft.Maui.LifecycleEvents;
 using Serilog;
 using MudBlazor.Services;
@@ -38,13 +38,12 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
-            // Merge this later into Settings
-            builder.Services.AddSingleton<ISettingsRepository, SqlLiteSettingsRepository>();
             builder.Services.AddSettings();
 
             builder.Services.AddTrackers();
 
             builder.Services.AddCoreNotifications();
+
             builder.Services.AddMauiNotifications();
 
             builder.Services.AddEventHandlingForBlazorUIComponents();
@@ -60,8 +59,6 @@ namespace TrackYourDay.MAUI
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
 
-            // TODO: This deletes repository if needed, normally its not visible in file explorer on windws 10
-            //new SqlLiteSettingsRepository().Reset();
 #endif
             return builder.Build();
         }

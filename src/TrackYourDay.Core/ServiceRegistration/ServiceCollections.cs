@@ -116,13 +116,6 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IBreaksSettingsService, BreaksSettingsService>();
             services.AddSingleton<IActivitiesSettingsService, ActivitiesSettingsService>();
             services.AddSingleton<IWorkdaySettingsService, WorkdaySettingsService>();
-            
-            // Legacy settings service (for backward compatibility during transition)
-            services.AddSingleton<ISettingsRepository, SqlLiteSettingsRepository>();
-            services.AddSingleton<SettingsService>();
-            services.AddSingleton<ISettingsSet>(serviceProvider =>
-                serviceProvider.GetService<SettingsService>().GetCurrentSettingSet());
-            
 
             return services;
         }
