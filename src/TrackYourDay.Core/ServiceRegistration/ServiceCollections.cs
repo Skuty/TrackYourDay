@@ -67,19 +67,19 @@ namespace TrackYourDay.Core.ServiceRegistration
 
             services.AddSingleton<UserTaskService>();
 
-            services.AddSingleton<IGitLabRestApiClient, GitLabRestApiClient>(serviceCollection => {
+            services.AddSingleton<IGitLabRestApiClient>(serviceCollection =>
+            {
                 var settingSet = serviceCollection.GetRequiredService<ISettingsSet>();
-
-                return new GitLabRestApiClient(settingSet.GitLabSettings.ApiUrl, settingSet.GitLabSettings.ApiKey);
+                return GitLabRestApiClientFactory.Create(settingSet.GitLabSettings);
             });
-           
+
             services.AddSingleton<GitLabActivityService>();
             services.AddSingleton<GitLabTracker>();
 
-            services.AddSingleton<IJiraRestApiClient, JiraRestApiClient>(serviceCollection => {
+            services.AddSingleton<IJiraRestApiClient>(serviceCollection =>
+            {
                 var settingSet = serviceCollection.GetRequiredService<ISettingsSet>();
-
-                return new JiraRestApiClient(settingSet.JiraSettings.ApiUrl, settingSet.JiraSettings.ApiKey);
+                return JiraRestApiClientFactory.Create(settingSet.JiraSettings);
             });
 
             services.AddSingleton<JiraActivityService>();

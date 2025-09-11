@@ -14,6 +14,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         private readonly IJiraRestApiClient jiraRestApiClient;
         private readonly ILogger<JiraActivityService> logger;
         private JiraUser currentUser;
+        private bool stopFetchingDueToFailedRequests = false;
 
         public JiraActivityService(IJiraRestApiClient jiraRestApiClient, ILogger<JiraActivityService> logger)
         {
@@ -23,7 +24,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         public List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate)
         {
-            //TODO: Add check for API response and disable calling if not authenticated or lack of credentials
+            if (this.stopFetchingDueToFailedRequests)
+            {
+                return new List<JiraActivity>();
+            }
+
             try
             {
                 if (this.currentUser == null)
@@ -40,6 +45,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             catch (Exception e)
             {
                 this.logger.LogError(e, "Error while fetching Jira activities");
+                this.stopFetchingDueToFailedRequests = true;
                 return new List<JiraActivity>();
             }
         }

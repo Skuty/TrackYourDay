@@ -98,4 +98,24 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss.fffzzz"));
         }
     }
+    public class JiraRestApiClientFactory
+    {
+        public static IJiraRestApiClient Create(JiraSettings settings)
+        {
+            if (string.IsNullOrEmpty(settings.ApiUrl))
+            {
+                return new NullJiraRestApiClient();
+            }
+
+            return new JiraRestApiClient(settings.ApiUrl, settings.ApiKey);
+        }
+    }
+
+    public class NullJiraRestApiClient : IJiraRestApiClient
+    {
+        public JiraUser GetCurrentUser() => new JiraUser("Not recognized", "Not recognized");
+
+        public List<JiraIssueResponse> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
+            => new List<JiraIssueResponse>();
+    }
 }

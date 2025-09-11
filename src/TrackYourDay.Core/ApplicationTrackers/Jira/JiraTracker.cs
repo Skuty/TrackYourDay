@@ -37,6 +37,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         public IReadOnlyCollection<JiraActivity> GetJiraActivities()
         {
+            this.RecognizeActivity();
             return this.jiraActivities;
         }
     }

@@ -72,6 +72,61 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             return JsonSerializer.Deserialize<List<GitLabCommit>>(content) ?? new List<GitLabCommit>();
         }
     }
+    public class NullGitLabRestApiClient : IGitLabRestApiClient
+    {
+        public GitLabUser GetCurrentUser() => new(
+            Id: 0,
+            Username: "Not recognized",
+            Email: string.Empty,
+            Name: string.Empty,
+            State: "inactive",
+            AvatarUrl: null,
+            WebUrl: string.Empty,
+            CreatedAt: DateTimeOffset.MinValue,
+            Bio: null,
+            Location: null,
+            PublicEmail: null,
+            Skype: null,
+            LinkedIn: null,
+            Twitter: null,
+            WebsiteUrl: null,
+            Organization: null,
+            LastSignInAt: null,
+            ConfirmedAt: null,
+            LastActivityOn: null,
+            EmailVerified: null,
+            ThemeId: null,
+            ColorSchemeId: null,
+            ProjectsLimit: null,
+            CurrentSignInAt: null,
+            Identities: null,
+            CanCreateGroup: null,
+            CanCreateProject: null,
+            TwoFactorEnabled: null,
+            External: null);
+
+        public List<GitLabEvent> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate)
+            => new();
+
+        public GitLabProject GetProject(GitLabProjectId projectId)
+            => throw new NotSupportedException("GitLab is not configured");
+
+        public List<GitLabCommit> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
+            => new();
+    }
+
+    public class GitLabRestApiClientFactory
+    {
+        public static IGitLabRestApiClient Create(GitLabSettings settings)
+        {
+            if (string.IsNullOrEmpty(settings.ApiUrl))
+            {
+                return new NullGitLabRestApiClient();
+            }
+
+            return new GitLabRestApiClient(settings.ApiUrl, settings.ApiKey);
+        }
+    }
 
     public record GitLabUserId(long Id);
 
