@@ -2,6 +2,7 @@
 
 @using System.Linq.Expressions
 @using TrackYourDay.Core.ApplicationTrackers.GitLab
+@using TrackYourDay.Core.ApplicationTrackers.Jira
 @using TrackYourDay.Core.ApplicationTrackers.UserTasks
 @using TrackYourDay.Core.Insights.Analytics
 @using TrackYourDay.Core.ApplicationTrackers.Breaks
@@ -15,6 +16,7 @@
 @inject MsTeamsMeetingTracker meetingTracker
 @inject ActivityTracker activityTracker
 @inject GitLabTracker gitlabTracker
+@inject JiraTracker jiraTracker
 
 <MudTabs Elevation="2" Rounded="true" Centered="false" Class="my-6">
     <MudTabPanel Icon="@Icons.Material.Filled.FreeBreakfast" Text="Breaks" BadgeData="@(breakTracker.GetEndedBreaks().Count)">
@@ -59,7 +61,12 @@
         Title="Grouped Activities"
         Columns="@groupedActivityColumns" />
     </MudTabPanel>
-
+    <MudTabPanel Icon="@Icons.Material.Filled.BugReport" Text="Jira" BadgeData="@(jiraTracker.GetJiraActivities().Count)">
+        <TrackerResultsComponent TItem="JiraActivity"
+                                 Items="@jiraTracker.GetJiraActivities()"
+                                 Title="Jira Activities"
+                                 Columns="@jiraActivityColumns" />
+    </MudTabPanel>
 </MudTabs>
 
 @code {
@@ -70,6 +77,7 @@
     private List<TableColumn<EndedMeeting>> meetingColumns;
     private List<TableColumn<GroupedActivity>> groupedActivityColumns;
     private List<TableColumn<GitLabActivity>> gitlabActivityColumns;
+    private List<TableColumn<JiraActivity>> jiraActivityColumns;
 
     protected override void OnInitialized()
     {
@@ -123,6 +131,12 @@
         gitlabActivityColumns = new()
         {
             new() { Title = "Date", PropertyExpression = x => x.OccuranceDate },
+            new() { Title = "Description", PropertyExpression = x => x.Description }
+        };
+
+        jiraActivityColumns = new()
+        {
+            new() { Title = "Date", PropertyExpression = x => x.OccurrenceDate },
             new() { Title = "Description", PropertyExpression = x => x.Description }
         };
     }

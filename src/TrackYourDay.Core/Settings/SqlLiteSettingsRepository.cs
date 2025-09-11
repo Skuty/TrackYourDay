@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
 using System.IO;
 using System.Text.Json;
+using TrackYourDay.Core.ApplicationTrackers.Jira;
 
 namespace TrackYourDay.Core.Settings
 {
@@ -78,6 +79,13 @@ namespace TrackYourDay.Core.Settings
                 if (deserialedSettings is not null)
                 {
                     //Here are deserialized seetings that probably are overwritting new settings for today
+                    if (deserialedSettings.JiraSettings is null)
+                    {
+                        // While adding new settings, then in db those settings are null, so above check passes but we have empty values later
+                        deserialedSettings = deserialedSettings with { JiraSettings = JiraSettings.CreateDefaultSettings() };
+                        return deserialedSettings;
+
+                    }
                     return deserialedSettings;
                 } 
                 else
