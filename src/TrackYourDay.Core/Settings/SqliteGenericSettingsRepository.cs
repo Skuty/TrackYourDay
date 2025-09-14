@@ -88,8 +88,8 @@ namespace TrackYourDay.Core.Settings
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
-                var key = reader.GetString("SettingKey");
-                var value = reader.GetString("SettingValue");
+                var key = reader.GetString(0);
+                var value = reader.GetString(1);
                 cache[key] = value;
             }
 

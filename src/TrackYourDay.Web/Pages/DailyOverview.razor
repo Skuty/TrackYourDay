@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @using MediatR
 @using TrackYourDay.Core;
 @using TrackYourDay.Core.ApplicationTrackers.Breaks
@@ -87,7 +87,7 @@
 
 @code {
     [Inject]
-    private ISettingsSet settingsSet { get; set; }
+    private IWorkdaySettingsService workdaySettingsService { get; set; }
     [Inject]
     private ActivityTracker activityTracker { get; set; }
     [Inject]
@@ -116,8 +116,8 @@
 
     private void Refresh()
     {
-        this.workdayDefinition = this.settingsSet.WorkdayDefinition;
-        this.workday = Workday.CreateBasedOn(this.settingsSet.WorkdayDefinition, this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
+        this.workdayDefinition = this.workdaySettingsService.GetWorkdayDefinition();
+        this.workday = Workday.CreateBasedOn(this.workdayDefinition, this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
 
         this.estimatedEndOfWorkDay = DateTime.Now + workday.OverallTimeLeftToWork;
 
