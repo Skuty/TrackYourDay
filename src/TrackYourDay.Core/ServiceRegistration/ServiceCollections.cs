@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -54,14 +54,17 @@ namespace TrackYourDay.Core.ServiceRegistration
                 return new MsTeamsMeetingTracker(clock, publisher, meetingDiscoveryStrategy, loggerForMs);
             });
 
-            var activitiesSettings = ActivitiesSettings.CreateDefaultSettings();
-            var breaksSettings = BreaksSettings.CreateDefaultSettings();
-
-            services.AddSingleton<BreakTracker>(serviceCollection => new BreakTracker(
-                serviceCollection.GetRequiredService<IPublisher>(),
-                serviceCollection.GetRequiredService<IClock>(),
-                breaksSettings.TimeOfNoActivityToStartBreak,
-                serviceCollection.GetRequiredService<ILogger<BreakTracker>>()));
+            services.AddSingleton<BreakTracker>(serviceCollection => 
+            {
+                var breaksSettingsService = serviceCollection.GetRequiredService<IBreaksSettingsService>();
+                var breaksSettings = breaksSettingsService.GetSettings();
+                
+                return new BreakTracker(
+                    serviceCollection.GetRequiredService<IPublisher>(),
+                    serviceCollection.GetRequiredService<IClock>(),
+                    breaksSettings.TimeOfNoActivityToStartBreak,
+                    serviceCollection.GetRequiredService<ILogger<BreakTracker>>());
+            });
 
             services.AddSingleton<ActivitiesAnalyser>();
 
@@ -69,8 +72,8 @@ namespace TrackYourDay.Core.ServiceRegistration
 
             services.AddSingleton<IGitLabRestApiClient>(serviceCollection =>
             {
-                var settingSet = serviceCollection.GetRequiredService<ISettingsSet>();
-                return GitLabRestApiClientFactory.Create(settingSet.GitLabSettings);
+                var gitLabSettingsService = serviceCollection.GetRequiredService<IGitLabSettingsService>();
+                return GitLabRestApiClientFactory.Create(gitLabSettingsService.GetSettings());
             });
 
             services.AddSingleton<GitLabActivityService>();
@@ -78,8 +81,8 @@ namespace TrackYourDay.Core.ServiceRegistration
 
             services.AddSingleton<IJiraRestApiClient>(serviceCollection =>
             {
-                var settingSet = serviceCollection.GetRequiredService<ISettingsSet>();
-                return JiraRestApiClientFactory.Create(settingSet.JiraSettings);
+                var jiraSettingsService = serviceCollection.GetRequiredService<IJiraSettingsService>();
+                return JiraRestApiClientFactory.Create(jiraSettingsService.GetSettings());
             });
 
             services.AddSingleton<JiraActivityService>();
@@ -102,9 +105,17 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IEncryptionService, EncryptionService>();
             services.AddSingleton<IClock, Clock>();
             services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
-            services.AddSingleton<SettingsService>();
-            services.AddSingleton<ISettingsSet>(serviceProvider =>
-                serviceProvider.GetService<SettingsService>().GetCurrentSettingSet());
+            
+            // Generic settings infrastructure
+            services.AddSingleton<IGenericSettingsRepository, SqliteGenericSettingsRepository>();
+            services.AddSingleton<IGenericSettingsService, GenericSettingsService>();
+            
+            // Specific settings services
+            services.AddSingleton<IGitLabSettingsService, GitLabSettingsService>();
+            services.AddSingleton<IJiraSettingsService, JiraSettingsService>();
+            services.AddSingleton<IBreaksSettingsService, BreaksSettingsService>();
+            services.AddSingleton<IActivitiesSettingsService, ActivitiesSettingsService>();
+            services.AddSingleton<IWorkdaySettingsService, WorkdaySettingsService>();
 
             return services;
         }

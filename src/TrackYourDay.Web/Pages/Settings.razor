@@ -1,5 +1,8 @@
-﻿@page "/settings"
+@page "/settings"
 @using TrackYourDay.Core.Settings
+@using TrackYourDay.Core.ApplicationTrackers.Breaks
+@using TrackYourDay.Core.ApplicationTrackers.GitLab
+@using TrackYourDay.Core.ApplicationTrackers.Jira
 
 <h1>Settings</h1>
 
@@ -46,7 +49,13 @@
 
 @code {
     [Inject]
-    private SettingsService settingsService { get; init; }
+    private IBreaksSettingsService breaksSettingsService { get; init; }
+    
+    [Inject]
+    private IGitLabSettingsService gitLabSettingsService { get; init; }
+    
+    [Inject]
+    private IJiraSettingsService jiraSettingsService { get; init; }
 
     private int minutesOfNoActivityToStartBreak = 5;
     private bool isSettingsSavedDialogVisible;
@@ -65,38 +74,28 @@
 
     private void LoadSettings()
     {
-        this.minutesOfNoActivityToStartBreak = (int)this.settingsService
-            .GetCurrentSettingSet()
-            .BreaksSettings
-            .TimeOfNoActivityToStartBreak.TotalMinutes;
+        var breaksSettings = this.breaksSettingsService.GetSettings();
+        this.minutesOfNoActivityToStartBreak = (int)breaksSettings.TimeOfNoActivityToStartBreak.TotalMinutes;
 
-        this.gitLabApiUrl = this.settingsService
-            .GetCurrentSettingSet()
-            .GitLabSettings
-            .ApiUrl;
+        var gitLabSettings = this.gitLabSettingsService.GetSettings();
+        this.gitLabApiUrl = gitLabSettings.ApiUrl;
+        this.gitLabApiKey = gitLabSettings.ApiKey;
 
-        this.gitLabApiKey = this.settingsService
-            .GetCurrentSettingSet()
-            .GitLabSettings
-            .ApiKey;
-
-        this.jiraApiUrl = this.settingsService
-            .GetCurrentSettingSet()
-            .JiraSettings
-            .ApiUrl;
-
-        this.jiraApiKey = this.settingsService
-            .GetCurrentSettingSet()
-            .JiraSettings
-            .ApiKey;
+        var jiraSettings = this.jiraSettingsService.GetSettings();
+        this.jiraApiUrl = jiraSettings.ApiUrl;
+        this.jiraApiKey = jiraSettings.ApiKey;
     }
 
     private void SaveSettings()
     {
-        this.settingsService.SetTimeOfNoActivityToStartBreak(TimeSpan.FromMinutes(this.minutesOfNoActivityToStartBreak));
-        this.settingsService.SetGitLabApiUrlAndKey(this.gitLabApiUrl, this.gitLabApiKey);
-        this.settingsService.SetJiraApiUrlAndKey(this.jiraApiUrl, this.jiraApiKey);
-        this.settingsService.PersistSettings();
+        this.breaksSettingsService.UpdateTimeOfNoActivityToStartBreak(TimeSpan.FromMinutes(this.minutesOfNoActivityToStartBreak));
+        this.breaksSettingsService.PersistSettings();
+        
+        this.gitLabSettingsService.UpdateSettings(this.gitLabApiUrl, this.gitLabApiKey);
+        this.gitLabSettingsService.PersistSettings();
+        
+        this.jiraSettingsService.UpdateSettings(this.jiraApiUrl, this.jiraApiKey);
+        this.jiraSettingsService.PersistSettings();
 
         this.ShowSettingsSavedDialog();
     }

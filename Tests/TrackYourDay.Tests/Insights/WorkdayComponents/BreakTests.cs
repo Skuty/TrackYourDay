@@ -1,7 +1,9 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.SystemTrackers;
+using TrackYourDay.Core.SystemTrackers.SystemStates;
+using TrackYourDay.Tests.TestHelpers;
 
 namespace TrackYourDay.Tests.Insights.WorkdayComponents
 {

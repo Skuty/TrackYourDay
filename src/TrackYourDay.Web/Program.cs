@@ -25,7 +25,6 @@ namespace TrackYourDay.Web
 #if DEBUG
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
-            builder.Services.AddSingleton<ISettingsRepository, InMemorySettingsRepository>();
 
             builder.Services.AddSettings();
 
