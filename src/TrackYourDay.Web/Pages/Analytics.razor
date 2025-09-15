@@ -1,7 +1,11 @@
-﻿@page "/analytics"
+@page "/analytics"
 
 @using TrackYourDay.Core.Insights.Analytics
+@using TrackYourDay.Core.Insights.DailySummary
+@using TrackYourDay.Core.SystemTrackers
 @inject ActivitiesAnalyser activitiesAnalyser;
+@inject IDailySummaryService dailySummaryService;
+@inject ActivityTracker activityTracker;
 
 @if (this.groupedActivities == null)
 {
@@ -9,9 +13,9 @@
 }
 else
 {
-<MudExpansionPanels>
-    <MudExpansionPanel Text="Grouped Activities" IsInitiallyExpanded="true">
-            <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+    <MudTabPanel Text="Grouped Activities">
+        <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
             <ToolBarContent>
                 <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                               AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -22,19 +26,163 @@ else
                 <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
             </Columns>
             <PagerContent>
-                    <MudDataGridPager T="GroupedActivity" />
+                <MudDataGridPager T="GroupedActivity" />
             </PagerContent>
-        </MudDataGrid>    
-    </MudExpansionPanel>
-    </MudExpansionPanels>
+        </MudDataGrid>
+    </MudTabPanel>
+    
+    <MudTabPanel Text="Daily Summary">
+        <MudContainer MaxWidth="MaxWidth.Large">
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudDatePicker Label="Select Date" @bind-Date="selectedDate" />
+                </MudItem>
+                <MudItem xs="12" sm="6" md="4">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateDailySummary" 
+                               StartIcon="@Icons.Material.Filled.Analytics" Class="mt-4">
+                        Generate Summary
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+            
+            @if (isLoadingSummary)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-7" />
+            }
+            else if (dailySummaryReport != null)
+            {
+                <MudPaper Class="pa-4 mt-4" Elevation="2">
+                    <MudText Typo="Typo.h5" Class="mb-4">📊 Daily Summary - @dailySummaryReport.Date.ToString("yyyy-MM-dd")</MudText>
+                    
+                    <MudGrid>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCard>
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6">Total Work Time</MudText>
+                                    <MudText Typo="Typo.h4" Color="Color.Primary">@dailySummaryReport.FormattedTotalWorkTime</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCard>
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6">Jira Time</MudText>
+                                    <MudText Typo="Typo.h4" Color="Color.Success">@dailySummaryReport.FormattedTotalJiraTime</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCard>
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6">Issues Worked On</MudText>
+                                    <MudText Typo="Typo.h4" Color="Color.Info">@dailySummaryReport.TotalJiraIssuesWorkedOn</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                        <MudItem xs="12" sm="6" md="3">
+                            <MudCard>
+                                <MudCardContent>
+                                    <MudText Typo="Typo.h6">Productivity</MudText>
+                                    <MudText Typo="Typo.h4" Color="Color.Warning">@GetProductivityPercentage()%</MudText>
+                                </MudCardContent>
+                            </MudCard>
+                        </MudItem>
+                    </MudGrid>
+                    
+                    @if (dailySummaryReport.JiraIssues.Any())
+                    {
+                        <MudText Typo="Typo.h6" Class="mt-6 mb-3">🎯 Jira Issues</MudText>
+                        <MudDataGrid T="JiraIssueTimeSummary" Items="@dailySummaryReport.JiraIssues" Filterable="false" SortMode="SortMode.None">
+                            <Columns>
+                                <PropertyColumn Property="x => x.IssueKey" Title="Issue Key" />
+                                <PropertyColumn Property="x => x.IssueSummary" Title="Summary" />
+                                <PropertyColumn Property="x => x.FormattedTimeSpent" Title="Time Spent" />
+                                <PropertyColumn Property="x => x.ActivityPeriods.Count" Title="Activities" />
+                            </Columns>
+                        </MudDataGrid>
+                        
+                        @if (selectedJiraIssue != null)
+                        {
+                            <MudExpansionPanels Class="mt-4">
+                                <MudExpansionPanel Text="@($"Activity Details for {selectedJiraIssue.IssueKey}")">
+                                    <MudDataGrid T="ActivityPeriod" Items="@selectedJiraIssue.ActivityPeriods" Filterable="false" SortMode="SortMode.None">
+                                        <Columns>
+                                            <PropertyColumn Property="x => x.StartTime.ToString(\"HH:mm\")" Title="Start" />
+                                            <PropertyColumn Property="x => x.EndTime.ToString(\"HH:mm\")" Title="End" />
+                                            <PropertyColumn Property="x => x.FormattedDuration" Title="Duration" />
+                                            <PropertyColumn Property="x => x.ActivityDescription" Title="Activity" />
+                                        </Columns>
+                                    </MudDataGrid>
+                                </MudExpansionPanel>
+                            </MudExpansionPanels>
+                        }
+                    }
+                    
+                    @if (dailySummaryReport.UnassignedActivities.Any())
+                    {
+                        <MudText Typo="Typo.h6" Class="mt-6 mb-3">🔍 Other Activities</MudText>
+                        <MudDataGrid T="ActivityPeriod" Items="@dailySummaryReport.UnassignedActivities.Take(10)" Filterable="false" SortMode="SortMode.None">
+                            <Columns>
+                                <PropertyColumn Property="x => x.StartTime.ToString(\"HH:mm\")" Title="Start" />
+                                <PropertyColumn Property="x => x.EndTime.ToString(\"HH:mm\")" Title="End" />
+                                <PropertyColumn Property="x => x.FormattedDuration" Title="Duration" />
+                                <PropertyColumn Property="x => x.ActivityDescription" Title="Activity" />
+                            </Columns>
+                        </MudDataGrid>
+                        @if (dailySummaryReport.UnassignedActivities.Count > 10)
+                        {
+                            <MudText Typo="Typo.caption" Class="mt-2">... and @(dailySummaryReport.UnassignedActivities.Count - 10) more activities</MudText>
+                        }
+                    }
+                </MudPaper>
+            }
+        </MudContainer>
+    </MudTabPanel>
+</MudTabs>
 }
 
 @code {
     private List<GroupedActivity> groupedActivities;
+    private DateTime? selectedDate = DateTime.Today;
+    private DailySummaryReport? dailySummaryReport;
+    private JiraIssueTimeSummary? selectedJiraIssue;
+    private bool isLoadingSummary = false;
 
     protected override async Task OnInitializedAsync()
     {
         this.groupedActivities = this.activitiesAnalyser.GetGroupedActivities().OrderByDescending(activity => activity.Duration).ToList();
+    }
+
+    private async Task GenerateDailySummary()
+    {
+        if (selectedDate == null) return;
+
+        isLoadingSummary = true;
+        try
+        {
+            var date = DateOnly.FromDateTime(selectedDate.Value);
+            var activities = activityTracker.GetActivitiesForDate(date);
+            dailySummaryReport = await dailySummaryService.GenerateDailySummaryAsync(date, activities);
+            selectedJiraIssue = dailySummaryReport.JiraIssues.FirstOrDefault();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show a snackbar or error message
+            Console.WriteLine($"Error generating daily summary: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingSummary = false;
+        }
+    }
+
+    private string GetProductivityPercentage()
+    {
+        if (dailySummaryReport == null || dailySummaryReport.TotalWorkTime.TotalMinutes == 0)
+            return "0";
+
+        var percentage = (dailySummaryReport.TotalJiraTime.TotalMinutes / dailySummaryReport.TotalWorkTime.TotalMinutes) * 100;
+        return percentage.ToString("F1");
     }
     
     private string _searchString;

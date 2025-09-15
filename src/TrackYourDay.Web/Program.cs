@@ -29,6 +29,7 @@ namespace TrackYourDay.Web
             builder.Services.AddSettings();
 
             builder.Services.AddTrackers();
+            builder.Services.AddDailySummary();
 
             builder.Services.AddCoreNotifications();
             builder.Services.AddEventHandlingForBlazorUIComponents();

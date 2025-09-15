@@ -14,6 +14,7 @@ using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.ActivityRecognizing;
 using TrackYourDay.Core.Versioning;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
+using TrackYourDay.Core.Insights.DailySummary;
 
 namespace TrackYourDay.Core.ServiceRegistration
 {
@@ -87,6 +88,14 @@ namespace TrackYourDay.Core.ServiceRegistration
 
             services.AddSingleton<JiraActivityService>();
             services.AddSingleton<JiraTracker>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddDailySummary(this IServiceCollection services)
+        {
+            services.AddSingleton<IJiraActivityCorrelationService, JiraActivityCorrelationService>();
+            services.AddSingleton<IDailySummaryService, DailySummaryService>();
 
             return services;
         }
