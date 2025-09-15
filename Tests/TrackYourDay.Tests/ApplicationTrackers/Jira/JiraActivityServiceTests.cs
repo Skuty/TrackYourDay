@@ -21,9 +21,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GetActivitiesUpdatedAfter_ShouldReturnBasicActivityDescription()
+        public void GivenJiraIssueWithBasicData_WhenGettingActivities_ThenShouldReturnDetailedActivityDescription()
         {
-            // Arrange
+            // Given
             var testDate = DateTime.Now.AddDays(-1);
             var testUser = new JiraUser("testuser", "Test User");
             
@@ -50,18 +50,15 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             mockJiraClient.Setup(x => x.GetUserIssues(testUser, testDate))
                          .Returns(new List<JiraIssueResponse> { testIssue });
 
-            // Act
+            // When
             var activities = jiraActivityService.GetActivitiesUpdatedAfter(testDate);
 
-            // Assert
+            // Then
             Assert.Single(activities);
             var activity = activities[0];
             
-            // Verify basic structure
             Assert.NotNull(activity.Description);
             Assert.NotEmpty(activity.Description);
-            
-            // Test that basic information is included
             Assert.Contains("TEST-123", activity.Description);
             Assert.Contains("Fix critical bug", activity.Description);
             Assert.Contains("Issue ID: 12345", activity.Description);
@@ -70,9 +67,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GetActivitiesUpdatedAfter_ShouldHandleMinimalIssueData()
+        public void GivenJiraIssueWithMinimalData_WhenGettingActivities_ThenShouldHandleNullFieldsGracefully()
         {
-            // Arrange
+            // Given
             var testDate = DateTime.Now.AddDays(-1);
             var testUser = new JiraUser("testuser", "Test User");
             
@@ -99,14 +96,13 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             mockJiraClient.Setup(x => x.GetUserIssues(testUser, testDate))
                          .Returns(new List<JiraIssueResponse> { minimalIssue });
 
-            // Act
+            // When
             var activities = jiraActivityService.GetActivitiesUpdatedAfter(testDate);
 
-            // Assert
+            // Then
             Assert.Single(activities);
             var activity = activities[0];
             
-            // Verify the description handles null/missing data gracefully
             Assert.Contains("MIN-001: No Summary", activity.Description);
             Assert.Contains("Assignee: Unassigned", activity.Description);
             Assert.Contains("Issue ID: 67890", activity.Description);
