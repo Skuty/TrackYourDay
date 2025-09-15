@@ -64,7 +64,53 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
     public record JiraIssueFieldsResponse(
         [property: JsonPropertyName("summary")] string? Summary,
-        [property: JsonPropertyName("updated")] DateTimeOffset Updated
+        [property: JsonPropertyName("updated")] DateTimeOffset Updated,
+        [property: JsonPropertyName("status")] JiraStatusResponse? Status,
+        [property: JsonPropertyName("priority")] JiraPriorityResponse? Priority,
+        [property: JsonPropertyName("assignee")] JiraUserResponse? Assignee,
+        [property: JsonPropertyName("reporter")] JiraUserResponse? Reporter,
+        [property: JsonPropertyName("issuetype")] JiraIssueTypeResponse? IssueType,
+        [property: JsonPropertyName("project")] JiraProjectResponse? Project,
+        [property: JsonPropertyName("created")] DateTimeOffset? Created,
+        [property: JsonPropertyName("description")] string? Description,
+        [property: JsonPropertyName("labels")] List<string>? Labels,
+        [property: JsonPropertyName("components")] List<JiraComponentResponse>? Components
+    );
+
+    public record JiraStatusResponse(
+        [property: JsonPropertyName("name")] string? Name,
+        [property: JsonPropertyName("statusCategory")] JiraStatusCategoryResponse? StatusCategory
+    );
+
+    public record JiraStatusCategoryResponse(
+        [property: JsonPropertyName("name")] string? Name,
+        [property: JsonPropertyName("colorName")] string? ColorName
+    );
+
+    public record JiraPriorityResponse(
+        [property: JsonPropertyName("name")] string? Name,
+        [property: JsonPropertyName("iconUrl")] string? IconUrl
+    );
+
+    public record JiraUserResponse(
+        [property: JsonPropertyName("displayName")] string? DisplayName,
+        [property: JsonPropertyName("emailAddress")] string? EmailAddress,
+        [property: JsonPropertyName("accountId")] string? AccountId
+    );
+
+    public record JiraIssueTypeResponse(
+        [property: JsonPropertyName("name")] string? Name,
+        [property: JsonPropertyName("iconUrl")] string? IconUrl,
+        [property: JsonPropertyName("subtask")] bool Subtask
+    );
+
+    public record JiraProjectResponse(
+        [property: JsonPropertyName("key")] string? Key,
+        [property: JsonPropertyName("name")] string? Name
+    );
+
+    public record JiraComponentResponse(
+        [property: JsonPropertyName("name")] string? Name
     );
 
     public class JiraDateTimeOffsetConverter : JsonConverter<DateTimeOffset>
