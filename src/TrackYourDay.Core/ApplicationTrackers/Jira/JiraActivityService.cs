@@ -40,7 +40,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
                 //TODO Important: Expand history of issues and get real Jira Activities for issue
 
-                return issues.Select(issue => new JiraActivity(issue.Fields.Updated.LocalDateTime, $"Following issue was updated {issue.Key}: {issue.Fields.Summary}")).ToList();
+                return issues.Select(issue => new JiraActivity(
+                    issue.Fields.Updated.LocalDateTime, 
+                    $"Jira Issue Updated - {issue.Key}: {issue.Fields.Summary} | Updated: {issue.Fields.Updated.LocalDateTime:yyyy-MM-dd HH:mm} | Issue ID: {issue.Id}"
+                )).ToList();
             }
             catch (Exception e)
             {
