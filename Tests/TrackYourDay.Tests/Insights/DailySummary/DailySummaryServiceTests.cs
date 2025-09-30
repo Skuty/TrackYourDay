@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.Insights.DailySummary;
 using TrackYourDay.Core.Insights.Workdays;
@@ -31,7 +32,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
                 mockLogger.Object);
         }
 
-        [Test]
+        [Fact]
         public async Task Given_ActivitiesWithJiraCorrelations_When_GenerateDailySummary_Then_ReturnsReportWithCorrectJiraIssues()
         {
             // Given
@@ -80,7 +81,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             jiraIssue.ActivityPeriods.Should().HaveCount(2);
         }
 
-        [Test]
+        [Fact]
         public async Task Given_ActivitiesWithoutJiraCorrelations_When_GenerateDailySummary_Then_ReturnsReportWithUnassignedActivities()
         {
             // Given
@@ -122,7 +123,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             report.TotalWorkTime.Should().Be(TimeSpan.FromHours(2));
         }
 
-        [Test]
+        [Fact]
         public async Task Given_MultipleActivitiesForSameJiraIssue_When_GenerateDailySummary_Then_GroupsActivitiesCorrectly()
         {
             // Given
@@ -178,7 +179,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             proj456Issue.IssueSummary.Should().Be("Add new feature");
         }
 
-        [Test]
+        [Fact]
         public async Task Given_JiraActivityWithoutIssueSummary_When_GenerateDailySummary_Then_UsesFallbackSummary()
         {
             // Given
@@ -221,7 +222,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             jiraIssue.IssueSummary.Should().Be("Issue PROJ-999"); // Fallback summary
         }
 
-        [Test]
+        [Fact]
         public async Task Given_EmptyActivitiesList_When_GenerateDailySummary_Then_ReturnsEmptyReport()
         {
             // Given
@@ -251,7 +252,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             report.TotalJiraTime.Should().Be(TimeSpan.Zero);
         }
 
-        [Test]
+        [Fact]
         public async Task Given_JiraServiceThrowsException_When_GenerateDailySummary_Then_ThrowsException()
         {
             // Given
@@ -269,7 +270,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
                 .WithMessage("Jira service error");
         }
 
-        [Test]
+        [Fact]
         public async Task Given_ActivitiesOrderedByTime_When_GenerateDailySummary_Then_JiraIssuesOrderedByTotalTimeDescending()
         {
             // Given

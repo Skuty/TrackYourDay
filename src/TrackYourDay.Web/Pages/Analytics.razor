@@ -107,8 +107,8 @@ else
                                 <MudExpansionPanel Text="@($"Activity Details for {selectedJiraIssue.IssueKey}")">
                                     <MudDataGrid T="ActivityPeriod" Items="@selectedJiraIssue.ActivityPeriods" Filterable="false" SortMode="SortMode.None">
                                         <Columns>
-                                            <PropertyColumn Property="x => x.StartTime.ToString(\"HH:mm\")" Title="Start" />
-                                            <PropertyColumn Property="x => x.EndTime.ToString(\"HH:mm\")" Title="End" />
+                                            <PropertyColumn Property="x => FormatTime(x.StartTime)" Title="Start" />
+                                            <PropertyColumn Property="x => FormatTime(x.EndTime)" Title="End" />
                                             <PropertyColumn Property="x => x.FormattedDuration" Title="Duration" />
                                             <PropertyColumn Property="x => x.ActivityDescription" Title="Activity" />
                                         </Columns>
@@ -123,8 +123,8 @@ else
                         <MudText Typo="Typo.h6" Class="mt-6 mb-3">🔍 Other Activities</MudText>
                         <MudDataGrid T="ActivityPeriod" Items="@dailySummaryReport.UnassignedActivities.Take(10)" Filterable="false" SortMode="SortMode.None">
                             <Columns>
-                                <PropertyColumn Property="x => x.StartTime.ToString(\"HH:mm\")" Title="Start" />
-                                <PropertyColumn Property="x => x.EndTime.ToString(\"HH:mm\")" Title="End" />
+                                <PropertyColumn Property="x => FormatTime(x.StartTime)" Title="Start" />
+                                <PropertyColumn Property="x => FormatTime(x.EndTime)" Title="End" />
                                 <PropertyColumn Property="x => x.FormattedDuration" Title="Duration" />
                                 <PropertyColumn Property="x => x.ActivityDescription" Title="Activity" />
                             </Columns>
@@ -183,6 +183,11 @@ else
 
         var percentage = (dailySummaryReport.TotalJiraTime.TotalMinutes / dailySummaryReport.TotalWorkTime.TotalMinutes) * 100;
         return percentage.ToString("F1");
+    }
+
+    private string FormatTime(DateTime dateTime)
+    {
+        return $"{dateTime:HH:mm}";
     }
     
     private string _searchString;

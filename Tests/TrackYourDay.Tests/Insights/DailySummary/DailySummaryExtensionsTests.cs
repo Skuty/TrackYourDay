@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Moq;
+using Xunit;
 using TrackYourDay.Core.Insights.DailySummary;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.SystemStates;
@@ -7,7 +9,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
 {
     public class DailySummaryExtensionsTests
     {
-        [Test]
+        [Fact]
         public void Given_ActivityTrackerWithActivitiesForSpecificDate_When_GetActivitiesForDate_Then_ReturnsOnlyActivitiesFromThatDate()
         {
             // Given
@@ -43,7 +45,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             result.All(a => DateOnly.FromDateTime(a.StartDate) == targetDate).Should().BeTrue();
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReportWithJiraIssues_When_ToFormattedSummary_Then_ReturnsWellFormattedText()
         {
             // Given
@@ -80,7 +82,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             formattedSummary.Should().Contain("IntelliJ - debugging");
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReportWithNoJiraIssues_When_ToFormattedSummary_Then_ShowsNoIssuesMessage()
         {
             // Given
@@ -106,7 +108,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             formattedSummary.Should().Contain("Notepad");
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReportWithManyUnassignedActivities_When_ToFormattedSummary_Then_LimitsToFirst10Activities()
         {
             // Given
@@ -140,7 +142,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             formattedSummary.Should().Contain("... and 5 more activities");
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReportWithJiraIssues_When_ToCsv_Then_ReturnsCorrectCsvFormat()
         {
             // Given
@@ -172,7 +174,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             csv.Should().Contain($"{date:yyyy-MM-dd},PROJ-456,\"Add new feature\",120,1");
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReportWithProductiveDay_When_GetProductivityInsights_Then_ReturnsCorrectInsights()
         {
             // Given
@@ -212,7 +214,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             insights.UnassignedActivitiesCount.Should().Be(1);
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReportWithNoJiraTime_When_GetProductivityInsights_Then_ReturnsZeroPercentage()
         {
             // Given
@@ -234,7 +236,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             insights.TotalIssuesWorkedOn.Should().Be(0);
         }
 
-        [Test]
+        [Fact]
         public void Given_ProductivityInsights_When_AccessingSummary_Then_ReturnsFormattedInsightText()
         {
             // Given
@@ -261,7 +263,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             summary.Should().Contain("2 activities not linked to Jira");
         }
 
-        [Test]
+        [Fact]
         public void Given_EmptyActivityTracker_When_GetActivitiesForDate_Then_ReturnsEmptyCollection()
         {
             // Given
@@ -276,7 +278,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             result.Should().BeEmpty();
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityPeriodWithZeroDuration_When_FormattedDuration_Then_ReturnsZeroMinutes()
         {
             // Given
@@ -293,7 +295,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             formattedDuration.Should().Be("0m");
         }
 
-        [Test]
+        [Fact]
         public void Given_JiraIssueTimeSummaryWithZeroTime_When_FormattedTimeSpent_Then_ReturnsZeroMinutes()
         {
             // Given

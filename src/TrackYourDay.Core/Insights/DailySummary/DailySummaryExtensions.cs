@@ -63,7 +63,7 @@ namespace TrackYourDay.Core.Insights.DailySummary
                 summary += $"""
                     
                     
-                    🔍 Other Activities ({report.UnassignedActivities.Sum(a => a.Duration).TotalMinutes:F0}m total):
+                    🔍 Other Activities ({report.UnassignedActivities.Sum(a => a.Duration.TotalMinutes):F0}m total):
                     """;
 
                 foreach (var activity in report.UnassignedActivities.Take(10)) // Limit to first 10

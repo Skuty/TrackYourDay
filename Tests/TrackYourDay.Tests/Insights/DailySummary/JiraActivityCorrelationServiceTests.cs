@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.Insights.DailySummary;
 using TrackYourDay.Core.SystemTrackers;
@@ -19,7 +20,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             correlationService = new JiraActivityCorrelationService(mockLogger.Object);
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityWithJiraIssueKeyInDescription_When_CorrelatingActivities_Then_ReturnsWindowTitleCorrelation()
         {
             // Given
@@ -40,7 +41,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             correlation.HasJiraIssue.Should().BeTrue();
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityWithJiraUrlInDescription_When_CorrelatingActivities_Then_ReturnsJiraWebInterfaceCorrelation()
         {
             // Given
@@ -61,7 +62,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             correlation.HasJiraIssue.Should().BeTrue();
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityWithNoJiraReference_When_CorrelatingActivities_Then_ReturnsManualCorrelationWithNoIssue()
         {
             // Given
@@ -82,7 +83,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             correlation.HasJiraIssue.Should().BeFalse();
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityNearJiraActivityInTime_When_CorrelatingActivities_Then_ReturnsTimeProximityCorrelation()
         {
             // Given
@@ -107,7 +108,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             correlation.HasJiraIssue.Should().BeTrue();
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityWithGitReference_When_CorrelatingActivities_Then_ReturnsBranchNameCorrelation()
         {
             // Given
@@ -128,7 +129,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             correlation.HasJiraIssue.Should().BeTrue();
         }
 
-        [Test]
+        [Fact]
         public void Given_MultipleActivitiesWithDifferentCorrelationMethods_When_CorrelatingActivities_Then_ReturnsCorrectCorrelationsForEach()
         {
             // Given
@@ -163,7 +164,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             thirdCorrelation.Method.Should().Be(CorrelationMethod.Manual);
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityTooFarFromJiraActivity_When_CorrelatingActivities_Then_DoesNotUseTimeProximity()
         {
             // Given
@@ -187,7 +188,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             correlation.ConfidenceScore.Should().Be(0.0);
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityWithVisualStudioAndJiraKey_When_CorrelatingActivities_Then_ReturnsBranchNameCorrelation()
         {
             // Given
@@ -207,7 +208,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             correlation.ConfidenceScore.Should().Be(0.8);
         }
 
-        [Test]
+        [Fact]
         public void Given_EmptyActivitiesList_When_CorrelatingActivities_Then_ReturnsEmptyCorrelationsList()
         {
             // Given
@@ -221,7 +222,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             correlations.Should().BeEmpty();
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityWithMultipleJiraKeysInDescription_When_CorrelatingActivities_Then_ReturnsFirstFoundKey()
         {
             // Given

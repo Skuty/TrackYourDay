@@ -62,7 +62,7 @@ namespace TrackYourDay.Core.Insights.DailySummary
                 var totalWorkTime = activities.Aggregate(TimeSpan.Zero, (sum, activity) => sum + activity.GetDuration());
 
                 // Calculate total Jira-related time
-                var totalJiraTime = jiraIssueGroups.Sum(x => x.TotalTimeSpent);
+                var totalJiraTime = TimeSpan.FromMinutes(jiraIssueGroups.Sum(x => x.TotalTimeSpent.TotalMinutes));
 
                 // Get unassigned activities (those not correlated to any Jira issue)
                 var unassignedActivities = correlations
@@ -93,41 +93,25 @@ namespace TrackYourDay.Core.Insights.DailySummary
             List<JiraActivityCorrelation> correlations, 
             List<JiraActivity> jiraActivities)
         {
-            var jiraGroups = correlations
+            return correlations
                 .Where(c => c.HasJiraIssue)
                 .GroupBy(c => c.DetectedIssueKey)
+                .Select(g => {
+                    var jiraIssue = jiraActivities.FirstOrDefault(j => j.Description.Contains(g.Key!));
+                    var totalTicks = g.Sum(c => c.SystemActivity.GetDuration().Ticks);
+                    var activityPeriods = g.Select(c => ActivityPeriod.FromEndedActivity(c.SystemActivity)).ToList();
+                    
+                    var issueSummary = jiraIssue?.Description ?? GetIssueSummaryFromJiraActivities(g.Key!, jiraActivities);
+                    var totalTime = TimeSpan.FromTicks(totalTicks);
+                    
+                    return new JiraIssueTimeSummary(
+                        g.Key!,
+                        issueSummary,
+                        totalTime,
+                        activityPeriods);
+                })
+                .OrderByDescending(x => x.TotalTimeSpent)
                 .ToList();
-
-            var jiraIssueSummaries = new List<JiraIssueTimeSummary>();
-
-            foreach (var group in jiraGroups)
-            {
-                var issueKey = group.Key!;
-                var activitiesForIssue = group.ToList();
-                
-                // Calculate total time spent on this issue
-                var totalTime = activitiesForIssue
-                    .Sum(c => c.SystemActivity.GetDuration().TotalMilliseconds);
-
-                // Create activity periods for this issue
-                var activityPeriods = activitiesForIssue
-                    .Select(c => ActivityPeriod.FromEndedActivity(c.SystemActivity))
-                    .OrderBy(ap => ap.StartTime)
-                    .ToList();
-
-                // Get issue summary from Jira activities
-                var issueSummary = GetIssueSummaryFromJiraActivities(issueKey, jiraActivities);
-
-                var issueTimeSummary = new JiraIssueTimeSummary(
-                    issueKey,
-                    issueSummary,
-                    TimeSpan.FromMilliseconds(totalTime),
-                    activityPeriods);
-
-                jiraIssueSummaries.Add(issueTimeSummary);
-            }
-
-            return jiraIssueSummaries.OrderByDescending(x => x.TotalTimeSpent).ToList();
         }
 
         private string GetIssueSummaryFromJiraActivities(string issueKey, List<JiraActivity> jiraActivities)

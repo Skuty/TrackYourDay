@@ -10,7 +10,7 @@ namespace TrackYourDay.Core.Insights.DailySummary
     {
         public string FormattedTimeSpent => FormatTimeSpan(TotalTimeSpent);
 
-        private static string FormatTimeSpan(TimeSpan timeSpan)
+        public static string FormatTimeSpan(TimeSpan timeSpan)
         {
             if (timeSpan.TotalHours >= 1)
                 return $"{timeSpan.Hours}h {timeSpan.Minutes}m";

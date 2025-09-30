@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Xunit;
 using TrackYourDay.Core.Insights.DailySummary;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.SystemStates;
@@ -7,7 +8,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
 {
     public class DailySummaryModelsTests
     {
-        [Test]
+        [Fact]
         public void Given_JiraIssueTimeSummary_When_TotalTimeSpentIsHours_Then_FormattedTimeSpentShowsHoursAndMinutes()
         {
             // Given
@@ -25,7 +26,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             formattedTime.Should().Be("2h 5m");
         }
 
-        [Test]
+        [Fact]
         public void Given_JiraIssueTimeSummary_When_TotalTimeSpentIsMinutesOnly_Then_FormattedTimeSpentShowsMinutesOnly()
         {
             // Given
@@ -43,7 +44,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             formattedTime.Should().Be("45m");
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityPeriod_When_CreatedFromEndedActivity_Then_PropertiesAreCorrectlyMapped()
         {
             // Given
@@ -62,7 +63,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             activityPeriod.ActivityDescription.Should().Be(systemState.ActivityDescription);
         }
 
-        [Test]
+        [Fact]
         public void Given_ActivityPeriod_When_DurationIsFormatted_Then_ReturnsCorrectFormat()
         {
             // Given
@@ -79,7 +80,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             formattedDuration.Should().Be("1h 15m");
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReport_When_HasJiraIssues_Then_TotalJiraIssuesWorkedOnReturnsCorrectCount()
         {
             // Given
@@ -104,7 +105,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             totalIssues.Should().Be(3);
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReport_When_HasJiraIssues_Then_MostWorkedOnIssueReturnsIssueWithLongestTime()
         {
             // Given
@@ -130,7 +131,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             mostWorkedOnIssue.TotalTimeSpent.Should().Be(TimeSpan.FromHours(3));
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReport_When_NoJiraIssues_Then_MostWorkedOnIssueReturnsNull()
         {
             // Given
@@ -148,7 +149,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             mostWorkedOnIssue.Should().BeNull();
         }
 
-        [Test]
+        [Fact]
         public void Given_JiraActivityCorrelation_When_DetectedIssueKeyIsNotEmpty_Then_HasJiraIssueReturnsTrue()
         {
             // Given
@@ -167,7 +168,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             hasJiraIssue.Should().BeTrue();
         }
 
-        [Test]
+        [Fact]
         public void Given_JiraActivityCorrelation_When_DetectedIssueKeyIsNull_Then_HasJiraIssueReturnsFalse()
         {
             // Given
@@ -186,7 +187,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             hasJiraIssue.Should().BeFalse();
         }
 
-        [Test]
+        [Fact]
         public void Given_JiraActivityCorrelation_When_DetectedIssueKeyIsEmpty_Then_HasJiraIssueReturnsFalse()
         {
             // Given
@@ -205,7 +206,7 @@ namespace TrackYourDay.Tests.Insights.DailySummary
             hasJiraIssue.Should().BeFalse();
         }
 
-        [Test]
+        [Fact]
         public void Given_DailySummaryReport_When_FormattedTimes_Then_ReturnsCorrectlyFormattedStrings()
         {
             // Given
