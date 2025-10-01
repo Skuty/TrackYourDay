@@ -62,15 +62,15 @@ namespace TrackYourDay.Core.Insights.Analytics
             if (notification == null) throw new ArgumentNullException(nameof(notification));
             
             // Remove the break from our collection if it exists
-            var breakToRemove = _breaks.FirstOrDefault(b => b.Guid == notification.BreakId);
+            var breakToRemove = _breaks.FirstOrDefault(b => b.Guid == notification.RevokedBreak.BreakGuid);
             if (breakToRemove != null)
             {
                 _breaks.TryTake(out _);
-                logger.LogInformation($"Break {notification.BreakId} was revoked and removed from analysis.");
+                logger.LogInformation($"Break {notification.RevokedBreak.BreakGuid} was revoked and removed from analysis.");
             }
             else
             {
-                logger.LogWarning($"Attempted to revoke break {notification.BreakId} which was not found in the collection.");
+                logger.LogWarning($"Attempted to revoke break {notification.RevokedBreak.BreakGuid} which was not found in the collection.");
             }
             
             return Task.CompletedTask;

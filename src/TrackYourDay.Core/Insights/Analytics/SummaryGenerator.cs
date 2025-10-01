@@ -1,8 +1,11 @@
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Transforms.Text;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
-using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.SystemStates;
 
@@ -250,7 +253,10 @@ namespace TrackYourDay.Core.Insights.Analytics
                 if (disposing)
                 {
                     // Dispose managed resources
-                    _textFeaturizer?.Dispose();
+                    if (_textFeaturizer is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
                 }
 
                 _disposed = true;
