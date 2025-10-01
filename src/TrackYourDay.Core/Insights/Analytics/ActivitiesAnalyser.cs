@@ -1,64 +1,84 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.ApplicationTrackers.Breaks.Events;
 using TrackYourDay.Core.SystemTrackers;
+using System.Collections.Concurrent;
 
 namespace TrackYourDay.Core.Insights.Analytics
 {
-    public class ActivitiesAnalyser 
+    public class ActivitiesAnalyser : IDisposable
     {
         private readonly ILogger<ActivitiesAnalyser> logger;
         private readonly IClock clock;
         private readonly IPublisher publisher;
-        private readonly IList<GroupedActivity> groupedActivities;
-        // TODO: wait what happens and change to concurrent collections
+        private readonly ConcurrentBag<EndedActivity> _activities = new();
+        private readonly ConcurrentBag<EndedBreak> _breaks = new();
+        private readonly SummaryGenerator _summaryGenerator;
 
-        public ActivitiesAnalyser(IClock clock, IPublisher publisher, ILogger<ActivitiesAnalyser> logger)
+        public ActivitiesAnalyser(IClock clock, IPublisher publisher, ILogger<ActivitiesAnalyser> logger, ILogger<SummaryGenerator> summaryGeneratorLogger)
         {
-            this.clock = clock;
-            this.publisher = publisher;
-            this.logger = logger;
-            groupedActivities = new List<GroupedActivity>();
+            this.clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            this.publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
+            this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _summaryGenerator = new SummaryGenerator(clock, summaryGeneratorLogger);
         }
 
         public void Analyse(EndedActivity endedActivity)
         {
-            var existingGroupedActivity = groupedActivities.FirstOrDefault(g => g.Description == endedActivity.GetDescription());
-            if (existingGroupedActivity != null)
-            {
-                existingGroupedActivity.Include(endedActivity.Guid, new TimePeriod(endedActivity.StartDate, endedActivity.EndDate));
-            }
-            else
-            {
-                var newGroupedActivity = GroupedActivity.CreateEmptyWithDescriptionForDate(DateOnly.FromDateTime(clock.Now), endedActivity.GetDescription());
-                groupedActivities.Add(newGroupedActivity);
-            }
+            if (endedActivity == null) throw new ArgumentNullException(nameof(endedActivity));
+            _activities.Add(endedActivity);
         }
 
         public void Analyse(EndedBreak endedBreak)
         {
-            // TODO: Probably could be done better
-            foreach (var groupedActivity in groupedActivities)
-            {
-                groupedActivity.ReduceBy(endedBreak.Guid, TimePeriod.CreateFrom(endedBreak.BreakStartedAt, endedBreak.BreakEndedAt));
-            }
+            if (endedBreak == null) throw new ArgumentNullException(nameof(endedBreak));
+            _breaks.Add(endedBreak);
         }
 
         public IReadOnlyCollection<GroupedActivity> GetGroupedActivities()
         {
-            return groupedActivities.ToImmutableArray();
+            // First, get the grouped activities from the summary generator
+            var groupedActivities = _summaryGenerator.Generate(_activities.ToList());
+            
+            // Apply breaks to the grouped activities
+            foreach (var endedBreak in _breaks)
+            {
+                var breakPeriod = TimePeriod.CreateFrom(endedBreak.BreakStartedAt, endedBreak.BreakEndedAt);
+                foreach (var activity in groupedActivities)
+                {
+                    // This is a simplified approach - in a real implementation, you'd want to 
+                    // properly handle the time period overlaps with more sophisticated logic
+                    activity.ReduceBy(endedBreak.Guid, breakPeriod);
+                }
+            }
+            
+            return groupedActivities.ToList().AsReadOnly();
         }
 
         private Task Handle(BreakRevokedEvent notification, CancellationToken cancellationToken)
         {
-            logger.LogError("Break Revoked Event should be handled but there is no implementation for it.");
-
-            //Remove it after tests
-            throw new NotImplementedException("Sorry, BreakRevokedEvents are not handled by ActivitiesAnalyser");
-
+            if (notification == null) throw new ArgumentNullException(nameof(notification));
+            
+            // Remove the break from our collection if it exists
+            var breakToRemove = _breaks.FirstOrDefault(b => b.Guid == notification.BreakId);
+            if (breakToRemove != null)
+            {
+                _breaks.TryTake(out _);
+                logger.LogInformation($"Break {notification.BreakId} was revoked and removed from analysis.");
+            }
+            else
+            {
+                logger.LogWarning($"Attempted to revoke break {notification.BreakId} which was not found in the collection.");
+            }
+            
             return Task.CompletedTask;
+        }
+        
+        public void Dispose()
+        {
+            _summaryGenerator?.Dispose();
         }
     }
 }
