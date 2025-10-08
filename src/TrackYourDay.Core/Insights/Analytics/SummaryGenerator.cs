@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.SystemStates;
+using TrackYourDay.Core.Insights.Analytics;
 
 // Helper class for ML.NET pipeline
 public class TextData
@@ -24,7 +25,7 @@ public class TextFeatures
 
 namespace TrackYourDay.Core.Insights.Analytics
 {
-    public class SummaryGenerator : IDisposable
+    public class SummaryGenerator : ISummaryStrategy, IDisposable
     {
         private readonly ILogger<SummaryGenerator> _logger;
         private readonly MLContext _mlContext;
@@ -57,7 +58,7 @@ namespace TrackYourDay.Core.Insights.Analytics
             _textFeaturizer = textPipeline.Fit(emptyData);
         }
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<EndedActivity> activities)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackYourDay.Core.SystemTrackers.EndedActivity> activities)
         {
             if (activities == null) throw new ArgumentNullException(nameof(activities));
 

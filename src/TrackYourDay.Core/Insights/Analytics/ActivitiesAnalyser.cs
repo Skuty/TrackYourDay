@@ -15,14 +15,19 @@ namespace TrackYourDay.Core.Insights.Analytics
         private readonly IPublisher publisher;
         private readonly ConcurrentBag<EndedActivity> _activities = new();
         private readonly ConcurrentBag<EndedBreak> _breaks = new();
-        private readonly SummaryGenerator _summaryGenerator;
+        private ISummaryStrategy _summaryStrategy;
 
-        public ActivitiesAnalyser(IClock clock, IPublisher publisher, ILogger<ActivitiesAnalyser> logger, ILogger<SummaryGenerator> summaryGeneratorLogger)
+        public ActivitiesAnalyser(IClock clock, IPublisher publisher, ILogger<ActivitiesAnalyser> logger, ISummaryStrategy summaryStrategy)
         {
             this.clock = clock ?? throw new ArgumentNullException(nameof(clock));
             this.publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _summaryGenerator = new SummaryGenerator(clock, summaryGeneratorLogger);
+            _summaryStrategy = summaryStrategy ?? throw new ArgumentNullException(nameof(summaryStrategy));
+        }
+
+        public void SetSummaryStrategy(ISummaryStrategy strategy)
+        {
+            _summaryStrategy = strategy ?? throw new ArgumentNullException(nameof(strategy));
         }
 
         public void Analyse(EndedActivity endedActivity)
@@ -39,29 +44,21 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public IReadOnlyCollection<GroupedActivity> GetGroupedActivities()
         {
-            // First, get the grouped activities from the summary generator
-            var groupedActivities = _summaryGenerator.Generate(_activities.ToList());
-            
-            // Apply breaks to the grouped activities
+            var groupedActivities = _summaryStrategy.Generate(_activities.ToList());
             foreach (var endedBreak in _breaks)
             {
                 var breakPeriod = TimePeriod.CreateFrom(endedBreak.BreakStartedAt, endedBreak.BreakEndedAt);
                 foreach (var activity in groupedActivities)
                 {
-                    // This is a simplified approach - in a real implementation, you'd want to 
-                    // properly handle the time period overlaps with more sophisticated logic
                     activity.ReduceBy(endedBreak.Guid, breakPeriod);
                 }
             }
-            
             return groupedActivities.ToList().AsReadOnly();
         }
 
         private Task Handle(BreakRevokedEvent notification, CancellationToken cancellationToken)
         {
             if (notification == null) throw new ArgumentNullException(nameof(notification));
-            
-            // Remove the break from our collection if it exists
             var breakToRemove = _breaks.FirstOrDefault(b => b.Guid == notification.RevokedBreak.BreakGuid);
             if (breakToRemove != null)
             {
@@ -72,13 +69,12 @@ namespace TrackYourDay.Core.Insights.Analytics
             {
                 logger.LogWarning($"Attempted to revoke break {notification.RevokedBreak.BreakGuid} which was not found in the collection.");
             }
-            
             return Task.CompletedTask;
         }
         
         public void Dispose()
         {
-            _summaryGenerator?.Dispose();
+            _summaryStrategy?.Dispose();
         }
     }
 }
