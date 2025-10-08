@@ -3,6 +3,9 @@
 @using TrackYourDay.Core.ApplicationTrackers.Breaks
 @using TrackYourDay.Core.ApplicationTrackers.GitLab
 @using TrackYourDay.Core.ApplicationTrackers.Jira
+@using TrackYourDay.Core.Insights.Analytics
+@inject ActivitiesAnalyser activitiesAnalyser
+@inject IServiceProvider serviceProvider
 
 <h1>Settings</h1>
 
@@ -28,6 +31,17 @@
         </MudText>
         <MudTextField @bind-Value="jiraApiUrl" Label="Jira API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="jiraApiKey" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+    </MudTabPanel>
+    <MudTabPanel Text="Summary Strategy">
+        <MudText>
+            Select summary generation strategy:
+        </MudText>
+        <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined" Style="min-width: 250px">
+            @foreach (var strategy in availableStrategies)
+            {
+                <MudSelectItem Value="@strategy.Key">@strategy.Value</MudSelectItem>
+            }
+        </MudSelect>
     </MudTabPanel>
 </MudTabs>
 
@@ -64,9 +78,18 @@
     private string jiraApiUrl = string.Empty;
     private string jiraApiKey = string.Empty;
 
+    // Summary strategy selection
+    private string selectedStrategy = "SummaryGenerator";
+    private Dictionary<string, string> availableStrategies = new()
+    {
+        { "SummaryGenerator", "ML.NET Semantic Summary" }
+        // Add more strategies here as needed
+    };
+
     protected override void OnInitialized()
     {
         this.LoadSettings();
+        selectedStrategy = "SummaryGenerator"; // Default
     }
 
     private void ShowSettingsSavedDialog() => isSettingsSavedDialogVisible = true;
@@ -98,5 +121,23 @@
         this.jiraSettingsService.PersistSettings();
 
         this.ShowSettingsSavedDialog();
+    }
+
+    private async Task OnStrategyChanged(string newStrategy)
+    {
+        selectedStrategy = newStrategy;
+        ISummaryStrategy strategyInstance = null;
+        switch (newStrategy)
+        {
+            case "SummaryGenerator":
+                strategyInstance = serviceProvider.GetRequiredService<ISummaryStrategy>();
+                break;
+            // Add more cases for other strategies here
+        }
+        if (strategyInstance != null)
+        {
+            activitiesAnalyser.SetSummaryStrategy(strategyInstance);
+        }
+        await InvokeAsync(StateHasChanged);
     }
 }
