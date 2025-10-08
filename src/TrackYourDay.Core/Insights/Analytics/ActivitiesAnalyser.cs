@@ -76,5 +76,10 @@ namespace TrackYourDay.Core.Insights.Analytics
         {
             _summaryStrategy?.Dispose();
         }
+
+        public string GetCurrentStrategyName()
+        {
+            return _summaryStrategy?.GetType().Name ?? "Unknown";
+        }
     }
 }
