@@ -102,6 +102,12 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<JiraActivityService>();
             services.AddSingleton<JiraTracker>();
 
+            services.AddSingleton<JiraKeySummaryStrategy>(serviceProvider =>
+                new JiraKeySummaryStrategy(
+                    serviceProvider.GetRequiredService<ILogger<JiraKeySummaryStrategy>>()
+                )
+            );
+
             return services;
         }
 

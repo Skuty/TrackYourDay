@@ -82,8 +82,8 @@
     private string selectedStrategy = "SummaryGenerator";
     private Dictionary<string, string> availableStrategies = new()
     {
-        { "SummaryGenerator", "ML.NET Semantic Summary" }
-        // Add more strategies here as needed
+        { "SummaryGenerator", "ML.NET Semantic Summary" },
+        { "JiraKeySummaryStrategy", "Jira Key Grouping" }
     };
 
     protected override void OnInitialized()
@@ -132,7 +132,9 @@
             case "SummaryGenerator":
                 strategyInstance = serviceProvider.GetRequiredService<ISummaryStrategy>();
                 break;
-            // Add more cases for other strategies here
+            case "JiraKeySummaryStrategy":
+                strategyInstance = serviceProvider.GetRequiredService<JiraKeySummaryStrategy>();
+                break;
         }
         if (strategyInstance != null)
         {
