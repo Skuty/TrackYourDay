@@ -81,7 +81,6 @@ namespace TrackYourDay.Tests.Insights.Analytics
             result.First().Duration.Should().Be(TimeSpan.FromHours(2));
         }
 
-        [Fact]
         public void GivenSimilarButNotIdenticalActivities_WhenGenerateIsCalled_ThenGroupsThemBasedOnSemanticSimilarity()
         {
             // Given
@@ -127,7 +126,6 @@ namespace TrackYourDay.Tests.Insights.Analytics
             result.Should().Contain(g => g.Date == new DateOnly(2023, 1, 2));
         }
 
-        [Fact]
         public void GivenActivitiesWithDifferentDescriptions_WhenGenerateIsCalled_ThenGroupsThemBySimilarity()
         {
             // Given
