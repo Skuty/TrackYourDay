@@ -3,45 +3,38 @@
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject IServiceProvider serviceProvider
 
-@if (this.groupedActivities == null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <MudStack Spacing="2">
-        <MudGrid>
-            <MudItem xs="6">
-                <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
-                    @foreach (var strategy in availableStrategies)
-                    {
-                        <MudSelectItem Value="@strategy.Key">@strategy.Value.StrategyName</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="2">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateSummary">Generate</MudButton>
-            </MudItem>
-        </MudGrid>
-        <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
-            <ToolBarContent>
-                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            </ToolBarContent>
-            <Columns>
-                <PropertyColumn Property="x => x.Date.ToShortDateString()" Title="Date" Filterable="false" />
-                <PropertyColumn Property="x => x.Duration" Title="Duration" Filterable="true" SortBy="@_sortByDuration"/>
-                <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="GroupedActivity" />
-            </PagerContent>
-        </MudDataGrid>    
-    </MudStack>
-}
+<MudStack Spacing="2">
+    <MudGrid>
+        <MudItem xs="6">
+            <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
+                @foreach (var strategy in availableStrategies)
+                {
+                    <MudSelectItem Value="@strategy.Key">@strategy.Value.StrategyName</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateSummary">Generate</MudButton>
+        </MudItem>
+    </MudGrid>
+    <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
+        <ToolBarContent>
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Date.ToShortDateString()" Title="Date" Filterable="false" />
+            <PropertyColumn Property="x => x.Duration" Title="Duration" Filterable="true" SortBy="@_sortByDuration"/>
+            <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="GroupedActivity" />
+        </PagerContent>
+    </MudDataGrid>    
+</MudStack>
 
 @code {
-    private List<GroupedActivity> groupedActivities;
+    private List<GroupedActivity>? groupedActivities = null;
     private string selectedStrategy = "SummaryGenerator";
     private Dictionary<string, ISummaryStrategy> availableStrategies;
 
@@ -49,7 +42,7 @@ else
     {
         var strategies = ActivitiesAnalyser.GetAvailableStrategies(serviceProvider);
         availableStrategies = strategies.ToDictionary(s => s.GetType().Name, s => s);
-        await GenerateSummary();
+        // Do not generate summary on load
     }
 
     private async Task GenerateSummary()
