@@ -11,15 +11,15 @@ namespace TrackYourDay.Tests.Insights.Analytics
 {
     public class SummaryGeneratorTests : IDisposable
     {
-        private readonly Mock<ILogger<SummaryGenerator>> _loggerMock;
+        private readonly Mock<ILogger<MLNetSummaryStrategy>> _loggerMock;
         private readonly Mock<IClock> _clockMock;
-        private SummaryGenerator _sut;
+        private MLNetSummaryStrategy _sut;
 
         public SummaryGeneratorTests()
         {
-            _loggerMock = new Mock<ILogger<SummaryGenerator>>();
+            _loggerMock = new Mock<ILogger<MLNetSummaryStrategy>>();
             _clockMock = new Mock<IClock>();
-            _sut = new SummaryGenerator(_clockMock.Object, _loggerMock.Object);
+            _sut = new MLNetSummaryStrategy(_clockMock.Object, _loggerMock.Object);
         }
 
         public void Dispose()

@@ -25,16 +25,16 @@ public class TextFeatures
 
 namespace TrackYourDay.Core.Insights.Analytics
 {
-    public class SummaryGenerator : ISummaryStrategy, IDisposable
+    public class MLNetSummaryStrategy : ISummaryStrategy, IDisposable
     {
-        private readonly ILogger<SummaryGenerator> _logger;
+        private readonly ILogger<MLNetSummaryStrategy> _logger;
         private readonly MLContext _mlContext;
         private readonly ITransformer _textFeaturizer;
         private readonly ConcurrentDictionary<string, GroupedActivity> _activityGroups;
         private readonly IClock _clock;
         private bool _disposed = false;
 
-        public SummaryGenerator(IClock clock, ILogger<SummaryGenerator> logger)
+        public MLNetSummaryStrategy(IClock clock, ILogger<MLNetSummaryStrategy> logger)
         {
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -303,7 +303,7 @@ namespace TrackYourDay.Core.Insights.Analytics
             }
         }
 
-        ~SummaryGenerator()
+        ~MLNetSummaryStrategy()
         {
             Dispose(false);
         }

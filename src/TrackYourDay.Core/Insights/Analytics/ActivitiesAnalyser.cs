@@ -87,7 +87,7 @@ namespace TrackYourDay.Core.Insights.Analytics
         {
             var strategies = new List<ISummaryStrategy>
             {
-                serviceProvider.GetRequiredService<SummaryGenerator>(),
+                serviceProvider.GetRequiredService<MLNetSummaryStrategy>(),
                 serviceProvider.GetRequiredService<JiraKeySummaryStrategy>()
             };
             return strategies;
