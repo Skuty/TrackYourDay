@@ -4,7 +4,6 @@
 @using TrackYourDay.Core.ApplicationTrackers.GitLab
 @using TrackYourDay.Core.ApplicationTrackers.Jira
 @using TrackYourDay.Core.ApplicationTrackers.UserTasks
-@using TrackYourDay.Core.Insights.Analytics
 @using TrackYourDay.Core.ApplicationTrackers.Breaks
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams
 @using TrackYourDay.Core.SystemTrackers
@@ -12,7 +11,6 @@
 
 @inject BreakTracker breakTracker
 @inject UserTaskService userTaskService
-@inject ActivitiesAnalyser activitiesAnalyser
 @inject MsTeamsMeetingTracker meetingTracker
 @inject ActivityTracker activityTracker
 @inject GitLabTracker gitlabTracker
@@ -55,12 +53,6 @@
                                  Title="GitLab Activities"
                                  Columns="@gitlabActivityColumns" />
     </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.PieChart" Text="Analytics" BadgeData="@(activitiesAnalyser.GetGroupedActivities().Count)">
-        <TrackerResultsComponent TItem="GroupedActivity"
-        Items="@activitiesAnalyser.GetGroupedActivities()"
-        Title="Grouped Activities"
-        Columns="@groupedActivityColumns" />
-    </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.BugReport" Text="Jira" BadgeData="@(jiraTracker.GetJiraActivities().Count)">
         <TrackerResultsComponent TItem="JiraActivity"
                                  Items="@jiraTracker.GetJiraActivities()"
@@ -75,7 +67,6 @@
     private List<TableColumn<EndedActivity>> activityColumns;
     private List<TableColumn<InstantActivity>> instantActivityColumns;
     private List<TableColumn<EndedMeeting>> meetingColumns;
-    private List<TableColumn<GroupedActivity>> groupedActivityColumns;
     private List<TableColumn<GitLabActivity>> gitlabActivityColumns;
     private List<TableColumn<JiraActivity>> jiraActivityColumns;
 
@@ -118,14 +109,6 @@
             new() { Title = "End", PropertyExpression = x => x.EndDate },
             new() { Title = "Duration", PropertyExpression = x => x.GetDuration() },
             new() { Title = "Title", PropertyExpression = x => x.Title }
-        };
-
-        groupedActivityColumns = new()
-        {
-            new() { Title = "Date", PropertyExpression = x => x.Date},
-            new() { Title = "Duration", PropertyExpression = x => x.Duration },
-            new() { Title = "Description", PropertyExpression = x => x.Description }
-
         };
 
         gitlabActivityColumns = new()
