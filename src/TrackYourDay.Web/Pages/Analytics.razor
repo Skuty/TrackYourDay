@@ -10,15 +10,19 @@
 else
 {
     <MudStack Spacing="2">
-        <MudStack Direction="Row" Spacing="2" AlignItems="AlignItems.Center">
-            <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined" Style="min-width: 250px">
-                @foreach (var strategy in availableStrategies)
-                {
-                    <MudSelectItem Value="@strategy.Key">@strategy.Value</MudSelectItem>
-                }
-            </MudSelect>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateSummary">Generate</MudButton>
-        </MudStack>
+        <MudGrid>
+            <MudItem xs="6">
+                <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
+                    @foreach (var strategy in availableStrategies)
+                    {
+                        <MudSelectItem Value="@strategy.Key">@strategy.Value</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="2">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateSummary">Generate</MudButton>
+            </MudItem>
+        </MudGrid>
         <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
             <ToolBarContent>
                 <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
