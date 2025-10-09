@@ -52,6 +52,8 @@ namespace TrackYourDay.Core.Insights.Analytics
             return result.AsReadOnly();
         }
 
+        public string StrategyName => "Jira Key Grouping";
+
         public void Dispose() { }
     }
 }

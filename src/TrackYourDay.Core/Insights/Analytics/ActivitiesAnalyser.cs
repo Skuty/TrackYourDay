@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Immutable;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.ApplicationTrackers.Breaks.Events;
@@ -80,6 +81,16 @@ namespace TrackYourDay.Core.Insights.Analytics
         public string GetCurrentStrategyName()
         {
             return _summaryStrategy?.GetType().Name ?? "Unknown";
+        }
+
+        public static IReadOnlyList<ISummaryStrategy> GetAvailableStrategies(IServiceProvider serviceProvider)
+        {
+            var strategies = new List<ISummaryStrategy>
+            {
+                serviceProvider.GetRequiredService<SummaryGenerator>(),
+                serviceProvider.GetRequiredService<JiraKeySummaryStrategy>()
+            };
+            return strategies;
         }
     }
 }

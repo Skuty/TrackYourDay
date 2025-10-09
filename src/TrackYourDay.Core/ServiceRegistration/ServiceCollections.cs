@@ -66,11 +66,15 @@ namespace TrackYourDay.Core.ServiceRegistration
                     serviceCollection.GetRequiredService<ILogger<BreakTracker>>());
             });
 
-            services.AddSingleton<ISummaryStrategy, SummaryGenerator>(serviceProvider => 
+            services.AddSingleton<SummaryGenerator>(serviceProvider => 
                 new SummaryGenerator(
                     serviceProvider.GetRequiredService<IClock>(),
                     serviceProvider.GetRequiredService<ILogger<SummaryGenerator>>()
                 )
+            );
+
+            services.AddSingleton<ISummaryStrategy, SummaryGenerator>(serviceProvider => 
+                serviceProvider.GetRequiredService<SummaryGenerator>()
             );
 
             services.AddSingleton<ActivitiesAnalyser>(serviceProvider => 

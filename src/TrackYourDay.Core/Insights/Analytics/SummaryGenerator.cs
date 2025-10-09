@@ -278,6 +278,8 @@ namespace TrackYourDay.Core.Insights.Analytics
             return mergedGroup;
         }
 
+        public string StrategyName => "ML.NET Semantic Summary";
+
         public void Dispose()
         {
             Dispose(true);

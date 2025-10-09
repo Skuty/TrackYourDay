@@ -15,7 +15,7 @@ else
                 <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
                     @foreach (var strategy in availableStrategies)
                     {
-                        <MudSelectItem Value="@strategy.Key">@strategy.Value</MudSelectItem>
+                        <MudSelectItem Value="@strategy.Key">@strategy.Value.StrategyName</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -42,37 +42,21 @@ else
 
 @code {
     private List<GroupedActivity> groupedActivities;
-    private string currentStrategyName;
     private string selectedStrategy = "SummaryGenerator";
-    private Dictionary<string, string> availableStrategies = new()
-    {
-        { "SummaryGenerator", "ML.NET Semantic Summary" },
-        { "JiraKeySummaryStrategy", "Jira Key Grouping" }
-    };
+    private Dictionary<string, ISummaryStrategy> availableStrategies;
 
     protected override async Task OnInitializedAsync()
     {
+        var strategies = ActivitiesAnalyser.GetAvailableStrategies(serviceProvider);
+        availableStrategies = strategies.ToDictionary(s => s.GetType().Name, s => s);
         await GenerateSummary();
     }
 
     private async Task GenerateSummary()
     {
-        ISummaryStrategy strategyInstance = null;
-        switch (selectedStrategy)
-        {
-            case "SummaryGenerator":
-                strategyInstance = serviceProvider.GetRequiredService<ISummaryStrategy>();
-                break;
-            case "JiraKeySummaryStrategy":
-                strategyInstance = serviceProvider.GetRequiredService<JiraKeySummaryStrategy>();
-                break;
-        }
-        if (strategyInstance != null)
-        {
-            activitiesAnalyser.SetSummaryStrategy(strategyInstance);
-        }
+        ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
+        activitiesAnalyser.SetSummaryStrategy(strategyInstance);
         groupedActivities = activitiesAnalyser.GetGroupedActivities().OrderByDescending(activity => activity.Duration).ToList();
-        currentStrategyName = activitiesAnalyser.GetCurrentStrategyName();
         await InvokeAsync(StateHasChanged);
     }
     
