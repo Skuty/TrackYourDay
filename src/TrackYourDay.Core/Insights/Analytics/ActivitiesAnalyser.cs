@@ -90,7 +90,8 @@ namespace TrackYourDay.Core.Insights.Analytics
                 serviceProvider.GetRequiredService<MLNetSummaryStrategy>(),
                 serviceProvider.GetRequiredService<JiraKeySummaryStrategy>(),
                 serviceProvider.GetRequiredService<TimeBasedSummaryStrategy>(),
-                serviceProvider.GetRequiredService<DurationBasedSummaryStrategy>()
+                serviceProvider.GetRequiredService<DurationBasedSummaryStrategy>(),
+                serviceProvider.GetRequiredService<ContextBasedSummaryStrategy>()
             };
             return strategies;
         }

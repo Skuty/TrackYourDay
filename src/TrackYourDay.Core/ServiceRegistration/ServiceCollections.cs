@@ -124,6 +124,12 @@ namespace TrackYourDay.Core.ServiceRegistration
                 )
             );
 
+            services.AddSingleton<ContextBasedSummaryStrategy>(serviceProvider =>
+                new ContextBasedSummaryStrategy(
+                    serviceProvider.GetRequiredService<ILogger<ContextBasedSummaryStrategy>>()
+                )
+            );
+
             return services;
         }
 
