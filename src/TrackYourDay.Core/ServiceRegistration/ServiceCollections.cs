@@ -112,6 +112,18 @@ namespace TrackYourDay.Core.ServiceRegistration
                 )
             );
 
+            services.AddSingleton<TimeBasedSummaryStrategy>(serviceProvider =>
+                new TimeBasedSummaryStrategy(
+                    serviceProvider.GetRequiredService<ILogger<TimeBasedSummaryStrategy>>()
+                )
+            );
+
+            services.AddSingleton<DurationBasedSummaryStrategy>(serviceProvider =>
+                new DurationBasedSummaryStrategy(
+                    serviceProvider.GetRequiredService<ILogger<DurationBasedSummaryStrategy>>()
+                )
+            );
+
             return services;
         }
 
