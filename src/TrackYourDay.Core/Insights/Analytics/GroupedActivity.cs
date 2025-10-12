@@ -94,5 +94,19 @@ namespace TrackYourDay.Core.Insights.Analytics
                 }
             }
         }
+
+        /// <summary>
+        /// Gets the included periods with their corresponding event GUIDs.
+        /// </summary>
+        /// <returns>A read-only list of tuples containing event GUIDs and their time periods.</returns>
+        public IReadOnlyList<(Guid EventGuid, TimePeriod Period)> GetIncludedPeriodsWithEvents()
+        {
+            var result = new List<(Guid, TimePeriod)>(includedPeriods.Count);
+            for (int i = 0; i < includedPeriods.Count && i < processedEvents.Count; i++)
+            {
+                result.Add((processedEvents[i], includedPeriods[i]));
+            }
+            return result.AsReadOnly();
+        }
     }
 }

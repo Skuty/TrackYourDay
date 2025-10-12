@@ -273,25 +273,14 @@ namespace TrackYourDay.Core.Insights.Analytics
 
             var mergedGroup = GroupedActivity.CreateEmptyWithDescriptionForDate(date, description);
             
-            // Access the private fields using reflection to get the actual time periods
-            // Note: This is a workaround. Ideally, GroupedActivity should expose a method for merging
-            var includedPeriodsField = typeof(GroupedActivity).GetField("includedPeriods", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var processedEventsField = typeof(GroupedActivity).GetField("processedEvents", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            // Collect all time periods from all groups
+            // Collect all time periods from all groups using the public method
             foreach (var group in groupList)
             {
-                var includedPeriods = includedPeriodsField?.GetValue(group) as List<TimePeriod>;
-                var processedEvents = processedEventsField?.GetValue(group) as List<Guid>;
+                var periodsWithEvents = group.GetIncludedPeriodsWithEvents();
                 
-                if (includedPeriods != null && processedEvents != null)
+                foreach (var (eventGuid, period) in periodsWithEvents)
                 {
-                    for (int i = 0; i < includedPeriods.Count && i < processedEvents.Count; i++)
-                    {
-                        mergedGroup.Include(processedEvents[i], includedPeriods[i]);
-                    }
+                    mergedGroup.Include(eventGuid, period);
                 }
             }
 
