@@ -103,7 +103,7 @@ namespace TrackYourDay.Core.ServiceRegistration
                 return JiraRestApiClientFactory.Create(jiraSettingsService.GetSettings());
             });
 
-            services.AddSingleton<JiraActivityService>();
+            services.AddSingleton<IJiraActivityService, JiraActivityService>();
             services.AddSingleton<JiraTracker>();
 
             services.AddSingleton<JiraKeySummaryStrategy>(serviceProvider =>

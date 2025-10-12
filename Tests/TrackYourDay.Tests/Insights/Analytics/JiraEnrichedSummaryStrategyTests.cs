@@ -12,21 +12,20 @@ namespace TrackYourDay.Tests.Insights.Analytics
     public class JiraEnrichedSummaryStrategyTests : IDisposable
     {
         private readonly Mock<ILogger<JiraEnrichedSummaryStrategy>> _loggerMock;
-        private readonly Mock<JiraTracker> _jiraTrackerMock;
-        private readonly Mock<JiraActivityService> _jiraActivityServiceMock;
-        private readonly Mock<IJiraRestApiClient> _jiraRestApiClientMock;
+        private readonly Mock<IJiraActivityService> _jiraActivityServiceMock;
         private readonly Mock<IClock> _clockMock;
+        private readonly JiraTracker _jiraTracker;
         private JiraEnrichedSummaryStrategy _sut;
 
         public JiraEnrichedSummaryStrategyTests()
         {
             _loggerMock = new Mock<ILogger<JiraEnrichedSummaryStrategy>>();
             _clockMock = new Mock<IClock>();
-            _jiraRestApiClientMock = new Mock<IJiraRestApiClient>();
-            _jiraActivityServiceMock = new Mock<JiraActivityService>(_jiraRestApiClientMock.Object, null);
-            _jiraTrackerMock = new Mock<JiraTracker>(_jiraActivityServiceMock.Object, _clockMock.Object);
+            _clockMock.Setup(c => c.Now).Returns(DateTime.Now); // Setup default clock value
+            _jiraActivityServiceMock = new Mock<IJiraActivityService>();
+            _jiraTracker = new JiraTracker(_jiraActivityServiceMock.Object, _clockMock.Object);
             
-            _sut = new JiraEnrichedSummaryStrategy(_jiraTrackerMock.Object, _loggerMock.Object);
+            _sut = new JiraEnrichedSummaryStrategy(_jiraTracker, _loggerMock.Object);
         }
 
         public void Dispose()
@@ -44,7 +43,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
         {
             // Given
             var activities = new List<EndedActivity>();
-            _jiraTrackerMock.Setup(jt => jt.GetJiraActivities()).Returns(new List<JiraActivity>());
+            _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
+                .Returns(new List<JiraActivity>());
 
             // When
             var result = _sut.Generate(activities);
@@ -72,7 +72,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new JiraActivity(now.AddHours(-1), "Jira Issue Updated - PROJ-456: User Dashboard | Updated: 2023-01-01 11:00 | Issue ID: 2")
             };
 
-            _jiraTrackerMock.Setup(jt => jt.GetJiraActivities()).Returns(jiraActivities);
+            _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
+                .Returns(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -98,7 +99,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new JiraActivity(now.AddHours(-1), "Jira Issue Updated - PROJ-123: Login Authentication Feature | Updated: 2023-01-01 10:00 | Issue ID: 1")
             };
 
-            _jiraTrackerMock.Setup(jt => jt.GetJiraActivities()).Returns(jiraActivities);
+            _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
+                .Returns(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -125,7 +127,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new JiraActivity(now.AddMinutes(-25), "Jira Issue Updated - PROJ-123: Login Authentication Feature | Updated: 2023-01-01 09:00 | Issue ID: 1")
             };
 
-            _jiraTrackerMock.Setup(jt => jt.GetJiraActivities()).Returns(jiraActivities);
+            _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
+                .Returns(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -147,7 +150,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 CreateActivity(now.AddHours(-1), now, "Random task without Jira")
             };
 
-            _jiraTrackerMock.Setup(jt => jt.GetJiraActivities()).Returns(new List<JiraActivity>());
+            _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
+                .Returns(new List<JiraActivity>());
 
             // When
             var result = _sut.Generate(activities);
@@ -179,7 +183,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new JiraActivity(new DateTime(2023, 1, 2, 9, 0, 0), "Jira Issue Updated - PROJ-123: Feature | Updated: 2023-01-02 09:00 | Issue ID: 1")
             };
 
-            _jiraTrackerMock.Setup(jt => jt.GetJiraActivities()).Returns(jiraActivities);
+            _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
+                .Returns(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -210,7 +215,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new JiraActivity(now.AddHours(-2), "Jira Issue Updated - PROJ-456: Critical Bug | Updated: 2023-01-01 10:00 | Issue ID: 2")
             };
 
-            _jiraTrackerMock.Setup(jt => jt.GetJiraActivities()).Returns(jiraActivities);
+            _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
+                .Returns(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -237,7 +243,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new JiraActivity(now.AddMinutes(-30), "Jira Issue Updated - PROJ-999: Authentication System | Updated: 2023-01-01 10:00 | Issue ID: 1")
             };
 
-            _jiraTrackerMock.Setup(jt => jt.GetJiraActivities()).Returns(jiraActivities);
+            _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
+                .Returns(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
