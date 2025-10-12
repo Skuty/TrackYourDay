@@ -130,6 +130,19 @@ namespace TrackYourDay.Core.ServiceRegistration
                 )
             );
 
+            services.AddSingleton<JiraEnrichedSummaryStrategy>(serviceProvider =>
+                new JiraEnrichedSummaryStrategy(
+                    serviceProvider.GetRequiredService<JiraTracker>(),
+                    serviceProvider.GetRequiredService<ILogger<JiraEnrichedSummaryStrategy>>()
+                )
+            );
+
+            services.AddSingleton<HybridContextualSummaryStrategy>(serviceProvider =>
+                new HybridContextualSummaryStrategy(
+                    serviceProvider.GetRequiredService<ILogger<HybridContextualSummaryStrategy>>()
+                )
+            );
+
             return services;
         }
 

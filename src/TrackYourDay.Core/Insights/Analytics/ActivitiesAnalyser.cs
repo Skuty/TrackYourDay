@@ -89,6 +89,8 @@ namespace TrackYourDay.Core.Insights.Analytics
             {
                 serviceProvider.GetRequiredService<MLNetSummaryStrategy>(),
                 serviceProvider.GetRequiredService<JiraKeySummaryStrategy>(),
+                serviceProvider.GetRequiredService<JiraEnrichedSummaryStrategy>(),
+                serviceProvider.GetRequiredService<HybridContextualSummaryStrategy>(),
                 serviceProvider.GetRequiredService<TimeBasedSummaryStrategy>(),
                 serviceProvider.GetRequiredService<DurationBasedSummaryStrategy>(),
                 serviceProvider.GetRequiredService<ContextBasedSummaryStrategy>()
