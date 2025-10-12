@@ -112,8 +112,8 @@ namespace TrackYourDay.Core.Insights.Analytics
                 group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
             }
 
-            // If we have too many small groups, try to merge them based on semantic similarity
-            if (groups.Count > 10)  // Arbitrary threshold
+            // Apply semantic similarity grouping to merge similar activities
+            if (groups.Count > 1)
             {
                 groups = MergeSimilarGroups(groups);
             }
@@ -124,7 +124,6 @@ namespace TrackYourDay.Core.Insights.Analytics
         private Dictionary<string, GroupedActivity> MergeSimilarGroups(Dictionary<string, GroupedActivity> groups)
         {
             var groupList = groups.Values.ToList();
-            var similarityMatrix = CalculateSimilarityMatrix(groupList);
             var mergedGroups = new Dictionary<string, GroupedActivity>();
             var mergedIndices = new HashSet<int>();
 
@@ -134,7 +133,6 @@ namespace TrackYourDay.Core.Insights.Analytics
 
                 var currentGroup = groupList[i];
                 var currentDescription = currentGroup.Description;
-                var currentVector = GetTextVector(currentDescription);
                 var similarGroups = new List<GroupedActivity> { currentGroup };
 
                 // Find similar groups
@@ -143,12 +141,22 @@ namespace TrackYourDay.Core.Insights.Analytics
                     if (mergedIndices.Contains(j)) continue;
 
                     var otherGroup = groupList[j];
-                    var similarity = CalculateCosineSimilarity(
-                        currentVector, 
+                    
+                    // Use both ML.NET similarity and simple word overlap
+                    var mlSimilarity = CalculateCosineSimilarity(
+                        GetTextVector(currentDescription), 
                         GetTextVector(otherGroup.Description));
+                    
+                    var wordSimilarity = CalculateWordOverlapSimilarity(
+                        currentDescription, 
+                        otherGroup.Description);
 
-                    // If similarity is above threshold, merge
-                    if (similarity > 0.7)  // Threshold can be adjusted
+                    _logger.LogDebug("Similarity between '{Desc1}' and '{Desc2}': ML={MLSim}, Word={WordSim}", 
+                        currentDescription, otherGroup.Description, mlSimilarity, wordSimilarity);
+
+                    // If either similarity metric is above threshold, merge
+                    // Lower thresholds to be more aggressive with grouping
+                    if (mlSimilarity > 0.3 || wordSimilarity > 0.25)
                     {
                         similarGroups.Add(otherGroup);
                         mergedIndices.Add(j);
@@ -263,19 +271,63 @@ namespace TrackYourDay.Core.Insights.Analytics
                 .First()
                 .Description;
 
-            var mergedGroup = GroupedActivity.CreateEmptyWithDescriptionForDate(date, $"Group: {description}");
+            var mergedGroup = GroupedActivity.CreateEmptyWithDescriptionForDate(date, description);
             
-            // Merge all activities from all groups
+            // Access the private fields using reflection to get the actual time periods
+            // Note: This is a workaround. Ideally, GroupedActivity should expose a method for merging
+            var includedPeriodsField = typeof(GroupedActivity).GetField("includedPeriods", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var processedEventsField = typeof(GroupedActivity).GetField("processedEvents", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            // Collect all time periods from all groups
             foreach (var group in groupList)
             {
-                // This is a simplified merge - in a real implementation, you'd want to handle the merging of time periods
-                // and ensure no overlaps are double-counted
-                mergedGroup.Include(Guid.NewGuid(), new TimePeriod(
-                    group.Date.ToDateTime(TimeOnly.MinValue), 
-                    group.Date.ToDateTime(TimeOnly.MaxValue)));
+                var includedPeriods = includedPeriodsField?.GetValue(group) as List<TimePeriod>;
+                var processedEvents = processedEventsField?.GetValue(group) as List<Guid>;
+                
+                if (includedPeriods != null && processedEvents != null)
+                {
+                    for (int i = 0; i < includedPeriods.Count && i < processedEvents.Count; i++)
+                    {
+                        mergedGroup.Include(processedEvents[i], includedPeriods[i]);
+                    }
+                }
             }
 
             return mergedGroup;
+        }
+
+        private float CalculateWordOverlapSimilarity(string text1, string text2)
+        {
+            if (string.IsNullOrWhiteSpace(text1) || string.IsNullOrWhiteSpace(text2))
+                return 0f;
+
+            // Normalize and tokenize
+            var words1 = text1.ToLowerInvariant()
+                .Split(new[] { ' ', '\t', '\n', '\r', '-', '_' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(w => w.Length > 2) // Filter out very short words
+                .ToList();
+            
+            var words2 = text2.ToLowerInvariant()
+                .Split(new[] { ' ', '\t', '\n', '\r', '-', '_' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(w => w.Length > 2)
+                .ToList();
+
+            if (words1.Count == 0 || words2.Count == 0)
+                return 0f;
+
+            // Count common words
+            var commonWords = words1.Intersect(words2).ToList();
+            
+            if (commonWords.Count == 0)
+                return 0f;
+
+            // Use Dice coefficient instead of Jaccard for better similarity on short texts
+            // Dice = 2 * |intersection| / (|A| + |B|)
+            var diceCoefficient = (2.0f * commonWords.Count) / (words1.Count + words2.Count);
+            
+            return diceCoefficient;
         }
 
         public string StrategyName => "ML.NET Semantic Summary";

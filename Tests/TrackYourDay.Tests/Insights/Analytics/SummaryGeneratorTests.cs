@@ -81,6 +81,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             result.First().Duration.Should().Be(TimeSpan.FromHours(2));
         }
 
+        [Fact]
         public void GivenSimilarButNotIdenticalActivities_WhenGenerateIsCalled_ThenGroupsThemBasedOnSemanticSimilarity()
         {
             // Given
@@ -96,8 +97,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
 
             // Then
             result.Should().HaveCount(2);
-            result.Should().Contain(g => g.Description.Contains("login"));
-            result.Should().Contain(g => g.Description.Contains("standup"));
+            result.Should().Contain(g => g.Description.Contains("login", StringComparison.OrdinalIgnoreCase));
+            result.Should().Contain(g => g.Description.Contains("standup", StringComparison.OrdinalIgnoreCase));
         }
 
         [Fact]
@@ -126,6 +127,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             result.Should().Contain(g => g.Date == new DateOnly(2023, 1, 2));
         }
 
+        [Fact]
         public void GivenActivitiesWithDifferentDescriptions_WhenGenerateIsCalled_ThenGroupsThemBySimilarity()
         {
             // Given
@@ -145,10 +147,10 @@ namespace TrackYourDay.Tests.Insights.Analytics
 
             // Then
             result.Should().HaveCount(4); // 2 coding groups (bugs + refactoring) + 2 meetings
-            result.Should().Contain(g => g.Description.Contains("bug") && g.Duration.TotalHours == 1);
-            result.Should().Contain(g => g.Description.Contains("refactor") && g.Duration.TotalHours == 1);
-            result.Should().Contain(g => g.Description.Contains("sync") && g.Duration.TotalHours == 1);
-            result.Should().Contain(g => g.Description.Contains("planning") && g.Duration.TotalHours == 1);
+            result.Should().Contain(g => g.Description.Contains("bug", StringComparison.OrdinalIgnoreCase) && g.Duration.TotalHours == 1);
+            result.Should().Contain(g => g.Description.Contains("refactor", StringComparison.OrdinalIgnoreCase) && g.Duration.TotalHours == 1);
+            result.Should().Contain(g => g.Description.Contains("sync", StringComparison.OrdinalIgnoreCase) && g.Duration.TotalHours == 1);
+            result.Should().Contain(g => g.Description.Contains("planning", StringComparison.OrdinalIgnoreCase) && g.Duration.TotalHours == 1);
         }
     }
 }
