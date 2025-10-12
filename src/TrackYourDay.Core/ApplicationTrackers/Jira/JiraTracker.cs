@@ -6,12 +6,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
     public class JiraTracker
     {
-        private readonly JiraActivityService jiraActivityService;
+        private readonly IJiraActivityService jiraActivityService;
         private readonly IClock clock;
         private DateTime? lastFetchedDate;
         private List<JiraActivity> jiraActivities;
 
-        public JiraTracker(JiraActivityService jiraActivityService, IClock clock)
+        public JiraTracker(IJiraActivityService jiraActivityService, IClock clock)
         {
             this.jiraActivityService = jiraActivityService;
             this.clock = clock;
@@ -24,7 +24,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             {
                 var todayActivities = this.jiraActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
                 this.jiraActivities.AddRange(todayActivities);
-                this.lastFetchedDate = this.clock.Now; this.lastFetchedDate = this.clock.Now;
+                this.lastFetchedDate = this.clock.Now;
             }
 
             if (lastFetchedDate.Value < this.clock.Now.AddMinutes(-5))

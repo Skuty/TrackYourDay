@@ -1,65 +1,68 @@
 ﻿@page "/analytics"
-
 @using TrackYourDay.Core.Insights.Analytics
-@inject ActivitiesAnalyser activitiesAnalyser;
+@inject ActivitiesAnalyser activitiesAnalyser
+@inject IServiceProvider serviceProvider
 
-@if (this.groupedActivities == null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-<MudExpansionPanels>
-    <MudExpansionPanel Text="Grouped Activities" IsInitiallyExpanded="true">
-            <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
-            <ToolBarContent>
-                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            </ToolBarContent>
-            <Columns>
-                <PropertyColumn Property="x => x.Date.ToShortDateString()" Title="Date" Filterable="false" />
-                <PropertyColumn Property="x => x.Duration" Title="Duration" Filterable="true" SortBy="@_sortByDuration"/>
-                <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
-            </Columns>
-            <PagerContent>
-                    <MudDataGridPager T="GroupedActivity" />
-            </PagerContent>
-        </MudDataGrid>    
-    </MudExpansionPanel>
-    </MudExpansionPanels>
-}
+<MudStack Spacing="2">
+    <MudGrid>
+        <MudItem xs="6">
+            <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
+                @foreach (var strategy in availableStrategies)
+                {
+                    <MudSelectItem Value="@strategy.Key">@strategy.Value.StrategyName</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateSummary">Generate</MudButton>
+        </MudItem>
+    </MudGrid>
+    <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
+        <ToolBarContent>
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Date.ToShortDateString()" Title="Date" Filterable="false" />
+            <PropertyColumn Property="x => x.Duration" Title="Duration" Filterable="true" SortBy="@_sortByDuration"/>
+            <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="GroupedActivity" />
+        </PagerContent>
+    </MudDataGrid>    
+</MudStack>
 
 @code {
-    private List<GroupedActivity> groupedActivities;
+    private List<GroupedActivity>? groupedActivities = null;
+    private string selectedStrategy = "Choose strategy";
+    private Dictionary<string, ISummaryStrategy> availableStrategies;
 
     protected override async Task OnInitializedAsync()
     {
-        this.groupedActivities = this.activitiesAnalyser.GetGroupedActivities().OrderByDescending(activity => activity.Duration).ToList();
+        var strategies = ActivitiesAnalyser.GetAvailableStrategies(serviceProvider);
+        availableStrategies = strategies.ToDictionary(s => s.GetType().Name, s => s);
+        // Do not generate summary on load
+    }
+
+    private async Task GenerateSummary()
+    {
+        ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
+        activitiesAnalyser.SetSummaryStrategy(strategyInstance);
+        groupedActivities = activitiesAnalyser.GetGroupedActivities().OrderByDescending(activity => activity.Duration).ToList();
+        await InvokeAsync(StateHasChanged);
     }
     
     private string _searchString;
 
-    // custom sort by name length
-    private Func<GroupedActivity, object> _sortByDuration => x =>
-    {
-        return x.Duration;
-    };
-
-    private Func<GroupedActivity, object> _sortByDescritpion => x =>
-    {
-        return x.Description;
-    };
-
-    // quick filter - filter globally across multiple columns with the same input
+    private Func<GroupedActivity, object> _sortByDuration => x => x.Duration;
+    private Func<GroupedActivity, object> _sortByDescritpion => x => x.Description;
     private Func<GroupedActivity, bool> _quickFilter => x =>
     {
         if (string.IsNullOrWhiteSpace(_searchString))
             return true;
-
         if (x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
-
         return false;
     };
-
 }
