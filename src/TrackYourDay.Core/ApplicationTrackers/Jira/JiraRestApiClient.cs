@@ -34,7 +34,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         public List<JiraIssueResponse> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
         {
-            var response = httpClient.GetAsync($"/rest/api/2/search?jql=assignee=alalak AND updated>={startingFromDate:yyyy-MM-dd}").Result;
+            var response = httpClient.GetAsync($"/rest/api/2/search?jql=assignee=alalak AND updated>={startingFromDate:yyyy-MM-dd}&expand=changelog").Result;
             response.EnsureSuccessStatusCode();
             var content = response.Content.ReadAsStringAsync().Result;
                         
@@ -60,11 +60,47 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     public record JiraIssueResponse(
         [property: JsonPropertyName("key")] string Key,
         [property: JsonPropertyName("id")] string Id,
-        [property: JsonPropertyName("fields")] JiraIssueFieldsResponse Fields);
+        [property: JsonPropertyName("fields")] JiraIssueFieldsResponse Fields,
+        [property: JsonPropertyName("changelog")] JiraChangelogResponse? Changelog);
 
     public record JiraIssueFieldsResponse(
         [property: JsonPropertyName("summary")] string? Summary,
-        [property: JsonPropertyName("updated")] DateTimeOffset Updated
+        [property: JsonPropertyName("updated")] DateTimeOffset Updated,
+        [property: JsonPropertyName("status")] JiraStatusResponse? Status,
+        [property: JsonPropertyName("assignee")] JiraUserResponse? Assignee
+    );
+
+    public record JiraStatusResponse(
+        [property: JsonPropertyName("name")] string? Name
+    );
+
+    public record JiraUserResponse(
+        [property: JsonPropertyName("displayName")] string? DisplayName
+    );
+
+    public record JiraChangelogResponse(
+        [property: JsonPropertyName("histories")] List<JiraHistoryResponse>? Histories
+    );
+
+    public record JiraHistoryResponse(
+        [property: JsonPropertyName("id")] string? Id,
+        [property: JsonPropertyName("author")] JiraAuthorResponse? Author,
+        [property: JsonPropertyName("created")] DateTimeOffset Created,
+        [property: JsonPropertyName("items")] List<JiraChangeItemResponse>? Items
+    );
+
+    public record JiraAuthorResponse(
+        [property: JsonPropertyName("displayName")] string? DisplayName,
+        [property: JsonPropertyName("accountId")] string? AccountId
+    );
+
+    public record JiraChangeItemResponse(
+        [property: JsonPropertyName("field")] string? Field,
+        [property: JsonPropertyName("fieldtype")] string? FieldType,
+        [property: JsonPropertyName("from")] string? From,
+        [property: JsonPropertyName("fromString")] string? FromString,
+        [property: JsonPropertyName("to")] string? To,
+        [property: JsonPropertyName("toString")] string? ToValue
     );
 
     public class JiraDateTimeOffsetConverter : JsonConverter<DateTimeOffset>

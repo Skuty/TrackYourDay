@@ -18,7 +18,9 @@
       "Bash(dotnet test --filter \"FullyQualifiedName~GivenReceivedGitLabEventWithActionTypePushedToAndWithoutTargetType\" --no-build)",
       "Bash(dotnet build Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj --no-restore)",
       "Bash(dotnet test Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj --filter \"FullyQualifiedName~GivenReceivedGitLabEventWithActionTypePushedToAndWithoutTargetType\" --no-build)",
-      "Bash(dotnet clean Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj)"
+      "Bash(dotnet clean Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj)",
+      "Bash(dotnet test --filter \"FullyQualifiedName~JiraActivityServiceTests\")",
+      "Bash(dotnet test --filter \"FullyQualifiedName~JiraTrackerTests\")"
     ],
     "deny": [],
     "ask": []

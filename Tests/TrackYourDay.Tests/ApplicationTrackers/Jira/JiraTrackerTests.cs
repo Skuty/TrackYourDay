@@ -28,8 +28,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             // Given
             var newJiraIssues = new List<JiraIssueResponse>
             {
-                new JiraIssueResponse("KEY-1", "ID-1", new JiraIssueFieldsResponse("Summary 1", new DateTime(2000, 01, 01, 13, 00, 00))),
-                new JiraIssueResponse("KEY-2", "ID-2", new JiraIssueFieldsResponse("Summary 2", new DateTime(2000, 01, 01, 14, 00, 00))),
+                new JiraIssueResponse("KEY-1", "ID-1", new JiraIssueFieldsResponse("Summary 1", new DateTime(2000, 01, 01, 13, 00, 00), null, null), null),
+                new JiraIssueResponse("KEY-2", "ID-2", new JiraIssueFieldsResponse("Summary 2", new DateTime(2000, 01, 01, 14, 00, 00), null, null), null),
             };
 
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(It.IsAny<JiraUser>(), It.IsAny<DateTime>()))
@@ -52,19 +52,19 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             // Given
             var oldJiraIssues = new List<JiraIssueResponse>
             {
-                new JiraIssueResponse("KEY-1", "ID-1", new JiraIssueFieldsResponse("Summary 1", new DateTime(2000, 01, 01, 13, 00, 00))),
-                new JiraIssueResponse("KEY-2", "ID-2", new JiraIssueFieldsResponse("Summary 2", new DateTime(2000, 01, 01, 14, 00, 00))),
+                new JiraIssueResponse("KEY-1", "ID-1", new JiraIssueFieldsResponse("Summary 1", new DateTime(2000, 01, 01, 13, 00, 00), null, null), null),
+                new JiraIssueResponse("KEY-2", "ID-2", new JiraIssueFieldsResponse("Summary 2", new DateTime(2000, 01, 01, 14, 00, 00), null, null), null),
             };
 
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(It.IsAny<JiraUser>(), It.IsAny<DateTime>()))
                 .Returns(oldJiraIssues);
             this.clockMock.Setup(clock => clock.Now).Returns(new DateTime(2000, 01, 01, 15, 00, 00));
             this.jiraTracker.RecognizeActivity();
-            
+
             var newJiraIssues = new List<JiraIssueResponse>
             {
-                new JiraIssueResponse("KEY-3", "ID-3", new JiraIssueFieldsResponse("Summary 3", new DateTime(2000, 01, 01, 17, 00, 00))),
-                new JiraIssueResponse("KEY-4", "ID-4", new JiraIssueFieldsResponse("Summary 4", new DateTime(2000, 01, 01, 18, 00, 00))),
+                new JiraIssueResponse("KEY-3", "ID-3", new JiraIssueFieldsResponse("Summary 3", new DateTime(2000, 01, 01, 17, 00, 00), null, null), null),
+                new JiraIssueResponse("KEY-4", "ID-4", new JiraIssueFieldsResponse("Summary 4", new DateTime(2000, 01, 01, 18, 00, 00), null, null), null),
             };
 
             this.clockMock.Setup(clock => clock.Now).Returns(new DateTime(2000, 01, 01, 16, 00, 00));
