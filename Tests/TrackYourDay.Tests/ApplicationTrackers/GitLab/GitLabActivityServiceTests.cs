@@ -56,6 +56,11 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var activities = this.gitLabActivityService.GetTodayActivities();
 
             // Then
+            // Verify mock was called the expected number of times
+            this.gitLabApiClient.Verify(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()), Times.Once);
+            this.gitLabApiClient.Verify(x => x.GetProject(It.IsAny<GitLabProjectId>()), Times.Once);
+            this.gitLabApiClient.Verify(x => x.GetCommits(It.IsAny<GitLabProjectId>(), It.IsAny<GitLabRefName>(), It.IsAny<DateOnly>()), Times.Once);
+
             activities.Count.Should().Be(2);
             // TODO Dates probably have to be handled in more conscious way including time zones and offsets
             activities[0].OccuranceDate.Should().Be(new DateTime(2025, 03, 16, 21, 06, 53, DateTimeKind.Utc));

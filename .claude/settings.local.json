@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj)",
+      "Bash(dotnet test Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj --filter \"FullyQualifiedName~GitLabActivityServiceTests\" --no-build)",
+      "Bash(dotnet test Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj --filter \"FullyQualifiedName~GitLabActivityServiceTests\" --no-build -v n)",
+      "Bash(dotnet test Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj --filter \"FullyQualifiedName~GivenReceivedGitLabEventWithActionTypePushedToAndWithoutTargetType_WhenGettingActivity_ThenReturnedActivityShouldDescribePushedCommits\" --no-build -v n)",
+      "Bash(dotnet test --filter \"FullyQualifiedName~DebugTest\" -v n)",
+      "Bash(dotnet test --filter \"FullyQualifiedName~DebugTest.CheckCommitCount\" --no-build)",
+      "Bash(dotnet build)",
+      "Bash(dotnet test --filter \"FullyQualifiedName~DebugTest2.DebugTheFailingTest\" --no-build)",
+      "Bash(dotnet test --filter \"FullyQualifiedName~DebugTest2.DebugTheFailingTest\" --logger \"console;verbosity=detailed\")",
+      "Bash(dotnet clean)",
+      "Bash(dotnet test --filter \"FullyQualifiedName~GivenReceivedGitLabEventWithActionTypePushedToAndWithoutTargetType\" --no-build --logger \"console;verbosity=detailed\")",
+      "Bash(dotnet test --filter \"FullyQualifiedName~DebugMinimal\" --logger \"console;verbosity=detailed\")",
+      "Bash(dotnet test --filter \"FullyQualifiedName~GivenReceivedGitLabEventWithActionTypePushedToAndWithoutTargetType\" --list-tests)",
+      "Bash(dotnet build --no-restore)",
+      "Bash(dotnet test --filter \"FullyQualifiedName~GivenReceivedGitLabEventWithActionTypePushedToAndWithoutTargetType\" --no-build)",
+      "Bash(dotnet build Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj --no-restore)",
+      "Bash(dotnet test Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj --filter \"FullyQualifiedName~GivenReceivedGitLabEventWithActionTypePushedToAndWithoutTargetType\" --no-build)",
+      "Bash(dotnet clean Tests/TrackYourDay.Tests/TrackYourDay.Tests.csproj)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

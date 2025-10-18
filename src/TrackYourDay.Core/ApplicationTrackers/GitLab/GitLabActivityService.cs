@@ -50,10 +50,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 }
             } catch (Exception e)
             {
-                this.logger.LogError(e, "Error while fetching GitLab activities");
+                this.logger?.LogError(e, "Error while fetching GitLab activities");
                 this.stopFetchingDueToFailedRequests = true;
             }
-
 
             return this.gitlabActivities;
         }
@@ -146,8 +145,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             var commits = this.gitLabRestApiClient.GetCommits(new GitLabProjectId(gitlabEvent.ProjectId), new GitLabRefName(branchName), DateOnly.FromDateTime(DateTime.Today))
                 .Where(c => c.AuthorEmail == this.userEmail);
 
+            var commitsList = commits.ToList(); // Materialize to avoid multiple enumeration
+
             var gitLabActivities = new List<GitLabActivity>();
-            foreach (var commit in commits)
+            foreach (var commit in commitsList)
             {
                 gitlabActivities.Add(new GitLabActivity(commit.CreatedAt.DateTime, $"Commit to Repository: {projectName}, branch: {branchName}, Title: {commit.Title}"));
             }
