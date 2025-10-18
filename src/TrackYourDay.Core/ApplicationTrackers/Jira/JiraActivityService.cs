@@ -42,23 +42,38 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
                 foreach (var issue in issues)
                 {
-                    // Extract activities from changelog
+                    // Check if this issue was created by the current user in the date range
+                    if (issue.Fields.Created.HasValue &&
+                        issue.Fields.Created.Value.LocalDateTime >= updateDate &&
+                        issue.Fields.Creator?.DisplayName == this.currentUser.DisplayName)
+                    {
+                        activities.Add(CreateIssueCreationActivity(issue));
+                    }
+
+                    // Extract activities from changelog (only for current user)
                     if (issue.Changelog?.Histories != null)
                     {
                         var changelogActivities = this.MapChangelogToActivities(issue);
                         activities.AddRange(changelogActivities);
                     }
-                    else
+
+                    // Fetch and process worklogs for this issue
+                    try
                     {
-                        // Fallback to simple update notification if no changelog
-                        activities.Add(new JiraActivity(
-                            issue.Fields.Updated.LocalDateTime,
-                            $"Jira Issue Updated - {issue.Key}: {issue.Fields.Summary}"
-                        ));
+                        var worklogs = this.jiraRestApiClient.GetIssueWorklogs(issue.Key, updateDate);
+                        var worklogActivities = worklogs
+                            .Where(w => w.Author?.DisplayName == this.currentUser.DisplayName)
+                            .Select(w => CreateWorklogActivity(issue, w))
+                            .ToList();
+                        activities.AddRange(worklogActivities);
+                    }
+                    catch (Exception ex)
+                    {
+                        this.logger?.LogWarning(ex, $"Failed to fetch worklogs for issue {issue.Key}");
                     }
                 }
 
-                return activities;
+                return activities.OrderBy(a => a.OccurrenceDate).ToList();
             }
             catch (Exception e)
             {
@@ -66,6 +81,41 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 this.stopFetchingDueToFailedRequests = true;
                 return new List<JiraActivity>();
             }
+        }
+
+        private JiraActivity CreateIssueCreationActivity(JiraIssueResponse issue)
+        {
+            var issueType = issue.Fields.IssueType?.Name ?? "Issue";
+            var project = issue.Fields.Project?.Key ?? "Unknown";
+            var description = $"Created {issueType} {issue.Key} in {project}: {issue.Fields.Summary}";
+
+            // Add parent/epic context if it's a sub-task
+            if (issue.Fields.IssueType?.IsSubtask == true && issue.Fields.Parent != null)
+            {
+                var parentType = issue.Fields.Parent.Fields?.IssueType?.Name ?? "Issue";
+                description += $" (sub-task of {parentType} {issue.Fields.Parent.Key})";
+            }
+
+            return new JiraActivity(issue.Fields.Created!.Value.LocalDateTime, description);
+        }
+
+        private JiraActivity CreateWorklogActivity(JiraIssueResponse issue, JiraWorklogResponse worklog)
+        {
+            var project = issue.Fields.Project?.Key ?? "Unknown";
+            var issueType = issue.Fields.IssueType?.Name ?? "Issue";
+            var timeSpent = worklog.TimeSpent ?? $"{worklog.TimeSpentSeconds}s";
+
+            var description = $"Logged {timeSpent} on {issueType} {issue.Key} in {project}: {issue.Fields.Summary}";
+
+            if (!string.IsNullOrEmpty(worklog.Comment))
+            {
+                var commentPreview = worklog.Comment.Length > 50
+                    ? worklog.Comment.Substring(0, 50) + "..."
+                    : worklog.Comment;
+                description += $" - \"{commentPreview}\"";
+            }
+
+            return new JiraActivity(worklog.Started.LocalDateTime, description);
         }
 
         private List<JiraActivity> MapChangelogToActivities(JiraIssueResponse issue)
@@ -79,6 +129,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
             foreach (var history in issue.Changelog.Histories)
             {
+                // Only include changes made by the current user
+                if (history.Author?.DisplayName != this.currentUser.DisplayName)
+                {
+                    continue;
+                }
+
                 if (history.Items == null || !history.Items.Any())
                 {
                     continue;
@@ -102,27 +158,32 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             var issueKey = issue.Key;
             var issueSummary = issue.Fields.Summary;
             var activityDate = history.Created.LocalDateTime;
-            var author = history.Author?.DisplayName ?? "Unknown";
+            var project = issue.Fields.Project?.Key ?? "Unknown";
+            var issueType = issue.Fields.IssueType?.Name ?? "Issue";
+
+            // Create issue identifier with type and project context
+            var issueIdentifier = $"{issueType} {issueKey} in {project}";
 
             var description = item.Field?.ToLower() switch
             {
-                "status" => $"Changed status of {issueKey}: {issueSummary} from '{item.FromString}' to '{item.ToValue}'",
-                "assignee" => MapAssigneeChange(issueKey, issueSummary, item.FromString, item.ToValue),
-                "resolution" => MapResolutionChange(issueKey, issueSummary, item.FromString, item.ToValue),
-                "summary" => $"Updated summary of {issueKey} from '{item.FromString}' to '{item.ToValue}'",
-                "description" => $"Updated description of {issueKey}: {issueSummary}",
-                "priority" => $"Changed priority of {issueKey}: {issueSummary} from '{item.FromString}' to '{item.ToValue}'",
-                "labels" => $"Updated labels of {issueKey}: {issueSummary}",
-                "fix version" or "fixversion" => MapFixVersionChange(issueKey, issueSummary, item.FromString, item.ToValue),
-                "component" => MapComponentChange(issueKey, issueSummary, item.FromString, item.ToValue),
-                "sprint" => MapSprintChange(issueKey, issueSummary, item.FromString, item.ToValue),
-                "story points" or "storypoints" => $"Changed story points of {issueKey}: {issueSummary} from '{item.FromString}' to '{item.ToValue}'",
-                "comment" => $"Commented on {issueKey}: {issueSummary}",
-                "attachment" => $"Added attachment to {issueKey}: {issueSummary}",
-                "link" => $"Added link to {issueKey}: {issueSummary}",
-                "timeestimate" or "time estimate" => $"Updated time estimate for {issueKey}: {issueSummary}",
-                "timespent" or "time spent" => $"Logged work on {issueKey}: {issueSummary}",
-                _ => $"Updated {item.Field} of {issueKey}: {issueSummary}"
+                "status" => $"Changed status of {issueIdentifier}: {issueSummary} from '{item.FromString}' to '{item.ToValue}'",
+                "assignee" => MapAssigneeChange(issueIdentifier, issueSummary, item.FromString, item.ToValue),
+                "resolution" => MapResolutionChange(issueIdentifier, issueSummary, item.FromString, item.ToValue),
+                "summary" => $"Updated summary of {issueIdentifier} from '{item.FromString}' to '{item.ToValue}'",
+                "description" => $"Updated description of {issueIdentifier}: {issueSummary}",
+                "priority" => $"Changed priority of {issueIdentifier}: {issueSummary} from '{item.FromString}' to '{item.ToValue}'",
+                "labels" => $"Updated labels of {issueIdentifier}: {issueSummary}",
+                "fix version" or "fixversion" => MapFixVersionChange(issueIdentifier, issueSummary, item.FromString, item.ToValue),
+                "component" => MapComponentChange(issueIdentifier, issueSummary, item.FromString, item.ToValue),
+                "sprint" => MapSprintChange(issueIdentifier, issueSummary, item.FromString, item.ToValue),
+                "story points" or "storypoints" => $"Changed story points of {issueIdentifier}: {issueSummary} from '{item.FromString}' to '{item.ToValue}'",
+                "comment" => $"Commented on {issueIdentifier}: {issueSummary}",
+                "attachment" => $"Added attachment to {issueIdentifier}: {issueSummary}",
+                "link" => $"Added link to {issueIdentifier}: {issueSummary}",
+                "timeestimate" or "time estimate" => $"Updated time estimate for {issueIdentifier}: {issueSummary}",
+                "timespent" or "time spent" => $"Logged work on {issueIdentifier}: {issueSummary}",
+                "parent" => MapParentChange(issueIdentifier, issueSummary, item.FromString, item.ToValue),
+                _ => $"Updated {item.Field} of {issueIdentifier}: {issueSummary}"
             };
 
             return new JiraActivity(activityDate, description);
@@ -205,6 +266,22 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             else
             {
                 return $"Moved {issueKey}: {summary} to different sprint";
+            }
+        }
+
+        private string MapParentChange(string issueKey, string? summary, string? from, string? to)
+        {
+            if (string.IsNullOrEmpty(from))
+            {
+                return $"Linked {issueKey}: {summary} to parent issue {to}";
+            }
+            else if (string.IsNullOrEmpty(to))
+            {
+                return $"Removed parent link from {issueKey}: {summary}";
+            }
+            else
+            {
+                return $"Changed parent of {issueKey}: {summary} from {from} to {to}";
             }
         }
     }

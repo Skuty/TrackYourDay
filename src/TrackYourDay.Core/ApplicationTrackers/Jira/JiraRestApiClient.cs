@@ -9,6 +9,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         JiraUser GetCurrentUser();
 
         List<JiraIssueResponse> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate);
+
+        List<JiraWorklogResponse> GetIssueWorklogs(string issueKey, DateTime startingFromDate);
     }
 
     public class JiraRestApiClient : IJiraRestApiClient
@@ -37,16 +39,37 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             var response = httpClient.GetAsync($"/rest/api/2/search?jql=assignee=alalak AND updated>={startingFromDate:yyyy-MM-dd}&expand=changelog").Result;
             response.EnsureSuccessStatusCode();
             var content = response.Content.ReadAsStringAsync().Result;
-                        
+
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
             options.Converters.Add(new JiraDateTimeOffsetConverter());
-            
+
             var searchResult = JsonSerializer.Deserialize<JiraSearchResponse>(content, options);
             return searchResult?.Issues ?? new List<JiraIssueResponse>();
+        }
+
+        public List<JiraWorklogResponse> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
+        {
+            var response = httpClient.GetAsync($"/rest/api/2/issue/{issueKey}/worklog").Result;
+            response.EnsureSuccessStatusCode();
+            var content = response.Content.ReadAsStringAsync().Result;
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+            options.Converters.Add(new JiraDateTimeOffsetConverter());
+
+            var worklogResult = JsonSerializer.Deserialize<JiraWorklogListResponse>(content, options);
+
+            // Filter worklogs by date
+            return worklogResult?.Worklogs?
+                .Where(w => w.Started >= startingFromDate)
+                .ToList() ?? new List<JiraWorklogResponse>();
         }
     }
 
@@ -66,8 +89,33 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     public record JiraIssueFieldsResponse(
         [property: JsonPropertyName("summary")] string? Summary,
         [property: JsonPropertyName("updated")] DateTimeOffset Updated,
+        [property: JsonPropertyName("created")] DateTimeOffset? Created,
         [property: JsonPropertyName("status")] JiraStatusResponse? Status,
-        [property: JsonPropertyName("assignee")] JiraUserResponse? Assignee
+        [property: JsonPropertyName("assignee")] JiraUserResponse? Assignee,
+        [property: JsonPropertyName("creator")] JiraUserResponse? Creator,
+        [property: JsonPropertyName("issuetype")] JiraIssueTypeResponse? IssueType,
+        [property: JsonPropertyName("project")] JiraProjectResponse? Project,
+        [property: JsonPropertyName("parent")] JiraParentIssueResponse? Parent
+    );
+
+    public record JiraIssueTypeResponse(
+        [property: JsonPropertyName("name")] string? Name,
+        [property: JsonPropertyName("subtask")] bool IsSubtask
+    );
+
+    public record JiraProjectResponse(
+        [property: JsonPropertyName("key")] string? Key,
+        [property: JsonPropertyName("name")] string? Name
+    );
+
+    public record JiraParentIssueResponse(
+        [property: JsonPropertyName("key")] string? Key,
+        [property: JsonPropertyName("fields")] JiraParentFieldsResponse? Fields
+    );
+
+    public record JiraParentFieldsResponse(
+        [property: JsonPropertyName("summary")] string? Summary,
+        [property: JsonPropertyName("issuetype")] JiraIssueTypeResponse? IssueType
     );
 
     public record JiraStatusResponse(
@@ -101,6 +149,19 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         [property: JsonPropertyName("fromString")] string? FromString,
         [property: JsonPropertyName("to")] string? To,
         [property: JsonPropertyName("toString")] string? ToValue
+    );
+
+    public record JiraWorklogListResponse(
+        [property: JsonPropertyName("worklogs")] List<JiraWorklogResponse>? Worklogs
+    );
+
+    public record JiraWorklogResponse(
+        [property: JsonPropertyName("id")] string? Id,
+        [property: JsonPropertyName("author")] JiraUserResponse? Author,
+        [property: JsonPropertyName("comment")] string? Comment,
+        [property: JsonPropertyName("started")] DateTimeOffset Started,
+        [property: JsonPropertyName("timeSpent")] string? TimeSpent,
+        [property: JsonPropertyName("timeSpentSeconds")] int TimeSpentSeconds
     );
 
     public class JiraDateTimeOffsetConverter : JsonConverter<DateTimeOffset>
@@ -153,5 +214,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         public List<JiraIssueResponse> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
             => new List<JiraIssueResponse>();
+
+        public List<JiraWorklogResponse> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
+            => new List<JiraWorklogResponse>();
     }
 }

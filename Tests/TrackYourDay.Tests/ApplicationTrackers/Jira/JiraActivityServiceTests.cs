@@ -10,26 +10,54 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         private readonly Mock<IJiraRestApiClient> jiraRestApiClientMock;
         private readonly Mock<ILogger<JiraActivityService>> loggerMock;
         private readonly JiraActivityService jiraActivityService;
+        private readonly JiraUser currentUser;
 
         public JiraActivityServiceTests()
         {
             this.jiraRestApiClientMock = new Mock<IJiraRestApiClient>();
             this.loggerMock = new Mock<ILogger<JiraActivityService>>();
             this.jiraActivityService = new JiraActivityService(jiraRestApiClientMock.Object, loggerMock.Object);
+            this.currentUser = new JiraUser("test-user-name", "test-user");  // Name, DisplayName
+
+            // Setup default current user
+            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
+        }
+
+        private JiraIssueFieldsResponse CreateIssueFields(
+            string summary,
+            DateTime updated,
+            DateTime? created = null,
+            string? projectKey = "PROJ",
+            string? projectName = "Project",
+            string? issueType = "Task",
+            bool isSubtask = false,
+            string? creatorName = null,
+            JiraParentIssueResponse? parent = null)
+        {
+            return new JiraIssueFieldsResponse(
+                summary,
+                new DateTimeOffset(updated),
+                created.HasValue ? new DateTimeOffset(created.Value) : null,
+                new JiraStatusResponse("Open"),
+                new JiraUserResponse("test-user"),
+                creatorName != null ? new JiraUserResponse(creatorName) : null,
+                new JiraIssueTypeResponse(issueType, isSubtask),
+                new JiraProjectResponse(projectKey, projectName),
+                parent
+            );
         }
 
         [Fact]
-        public void GivenIssueWithStatusChange_WhenGettingActivities_ThenReturnStatusChangeActivity()
+        public void GivenIssueWithStatusChangeByCurrentUser_WhenGettingActivities_ThenReturnStatusChangeActivity()
         {
             // Given
-            var currentUser = new JiraUser("test-user", "test@example.com");
             var updateDate = new DateTime(2000, 01, 01);
 
             var changelog = new JiraChangelogResponse(new List<JiraHistoryResponse>
             {
                 new JiraHistoryResponse(
                     "1",
-                    new JiraAuthorResponse("John Doe", "account123"),
+                    new JiraAuthorResponse("test-user", "account123"),
                     new DateTime(2000, 01, 01, 10, 00, 00),
                     new List<JiraChangeItemResponse>
                     {
@@ -39,10 +67,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
             var issues = new List<JiraIssueResponse>
             {
-                new JiraIssueResponse("PROJ-1", "1", new JiraIssueFieldsResponse("Test Issue", new DateTime(2000, 01, 01, 10, 00, 00), null, null), changelog)
+                new JiraIssueResponse("PROJ-1", "1", CreateIssueFields("Test Issue", new DateTime(2000, 01, 01, 10, 00, 00)), changelog)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
 
             // When
@@ -51,36 +78,59 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             // Then
             activities.Should().NotBeNull();
             activities.Should().HaveCount(1);
-            activities[0].Description.Should().Contain("Changed status of PROJ-1");
+            activities[0].Description.Should().Contain("Changed status");
+            activities[0].Description.Should().Contain("PROJ-1");
             activities[0].Description.Should().Contain("In Progress");
             activities[0].Description.Should().Contain("Done");
         }
 
         [Fact]
-        public void GivenIssueWithAssigneeChange_WhenGettingActivities_ThenReturnAssignmentActivity()
+        public void GivenIssueWithStatusChangeByOtherUser_WhenGettingActivities_ThenReturnNoActivities()
         {
             // Given
-            var currentUser = new JiraUser("test-user", "test@example.com");
             var updateDate = new DateTime(2000, 01, 01);
 
             var changelog = new JiraChangelogResponse(new List<JiraHistoryResponse>
             {
                 new JiraHistoryResponse(
                     "1",
-                    new JiraAuthorResponse("John Doe", "account123"),
+                    new JiraAuthorResponse("other-user", "account456"),
                     new DateTime(2000, 01, 01, 10, 00, 00),
                     new List<JiraChangeItemResponse>
                     {
-                        new JiraChangeItemResponse("assignee", "jira", null, null, "account456", "Jane Smith")
+                        new JiraChangeItemResponse("status", "jira", "10001", "In Progress", "10002", "Done")
                     })
             });
 
             var issues = new List<JiraIssueResponse>
             {
-                new JiraIssueResponse("PROJ-2", "2", new JiraIssueFieldsResponse("Assign Test", new DateTime(2000, 01, 01, 10, 00, 00), null, null), changelog)
+                new JiraIssueResponse("PROJ-1", "1", CreateIssueFields("Test Issue", new DateTime(2000, 01, 01, 10, 00, 00)), changelog)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
+
+            // When
+            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+
+            // Then
+            activities.Should().NotBeNull();
+            activities.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void GivenIssueCreatedByCurrentUser_WhenGettingActivities_ThenReturnIssueCreationActivity()
+        {
+            // Given
+            var updateDate = new DateTime(2000, 01, 01);
+            var createdDate = new DateTime(2000, 01, 01, 9, 00, 00);
+
+            var issues = new List<JiraIssueResponse>
+            {
+                new JiraIssueResponse("PROJ-1", "1",
+                    CreateIssueFields("New Issue", new DateTime(2000, 01, 01, 10, 00, 00), createdDate, creatorName: "test-user"),
+                    null)
+            };
+
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
 
             // When
@@ -89,35 +139,31 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             // Then
             activities.Should().NotBeNull();
             activities.Should().HaveCount(1);
-            activities[0].Description.Should().Contain("Assigned PROJ-2");
-            activities[0].Description.Should().Contain("Jane Smith");
+            activities[0].Description.Should().Contain("Created");
+            activities[0].Description.Should().Contain("PROJ-1");
+            activities[0].Description.Should().Contain("New Issue");
         }
 
         [Fact]
-        public void GivenIssueWithResolution_WhenGettingActivities_ThenReturnResolvedActivity()
+        public void GivenSubtaskCreatedByCurrentUser_WhenGettingActivities_ThenReturnSubtaskCreationWithParent()
         {
             // Given
-            var currentUser = new JiraUser("test-user", "test@example.com");
             var updateDate = new DateTime(2000, 01, 01);
+            var createdDate = new DateTime(2000, 01, 01, 9, 00, 00);
 
-            var changelog = new JiraChangelogResponse(new List<JiraHistoryResponse>
-            {
-                new JiraHistoryResponse(
-                    "1",
-                    new JiraAuthorResponse("John Doe", "account123"),
-                    new DateTime(2000, 01, 01, 10, 00, 00),
-                    new List<JiraChangeItemResponse>
-                    {
-                        new JiraChangeItemResponse("resolution", "jira", null, null, "10000", "Fixed")
-                    })
-            });
+            var parent = new JiraParentIssueResponse(
+                "PROJ-1",
+                new JiraParentFieldsResponse("Parent Story", new JiraIssueTypeResponse("Story", false))
+            );
 
             var issues = new List<JiraIssueResponse>
             {
-                new JiraIssueResponse("PROJ-3", "3", new JiraIssueFieldsResponse("Resolution Test", new DateTime(2000, 01, 01, 10, 00, 00), null, null), changelog)
+                new JiraIssueResponse("PROJ-2", "2",
+                    CreateIssueFields("Subtask Issue", new DateTime(2000, 01, 01, 10, 00, 00), createdDate,
+                        issueType: "Sub-task", isSubtask: true, creatorName: "test-user", parent: parent),
+                    null)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
 
             // When
@@ -126,45 +172,115 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             // Then
             activities.Should().NotBeNull();
             activities.Should().HaveCount(1);
-            activities[0].Description.Should().Contain("Resolved PROJ-3");
-            activities[0].Description.Should().Contain("Fixed");
+            activities[0].Description.Should().Contain("Created Sub-task");
+            activities[0].Description.Should().Contain("PROJ-2");
+            activities[0].Description.Should().Contain("sub-task of Story PROJ-1");
         }
 
         [Fact]
-        public void GivenIssueWithMultipleChanges_WhenGettingActivities_ThenReturnMultipleActivities()
+        public void GivenWorklogByCurrentUser_WhenGettingActivities_ThenReturnWorklogActivity()
         {
             // Given
-            var currentUser = new JiraUser("test-user", "test@example.com");
             var updateDate = new DateTime(2000, 01, 01);
+
+            var issues = new List<JiraIssueResponse>
+            {
+                new JiraIssueResponse("PROJ-1", "1", CreateIssueFields("Test Issue", new DateTime(2000, 01, 01, 10, 00, 00)), null)
+            };
+
+            var worklogs = new List<JiraWorklogResponse>
+            {
+                new JiraWorklogResponse(
+                    "1",
+                    new JiraUserResponse("test-user"),
+                    "Fixed the bug",
+                    new DateTime(2000, 01, 01, 11, 00, 00),
+                    "2h",
+                    7200
+                )
+            };
+
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).Returns(worklogs);
+
+            // When
+            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+
+            // Then
+            activities.Should().NotBeNull();
+            activities.Should().HaveCount(1);
+            activities[0].Description.Should().Contain("Logged 2h");
+            activities[0].Description.Should().Contain("PROJ-1");
+            activities[0].Description.Should().Contain("Fixed the bug");
+        }
+
+        [Fact]
+        public void GivenWorklogByOtherUser_WhenGettingActivities_ThenReturnNoWorklogActivity()
+        {
+            // Given
+            var updateDate = new DateTime(2000, 01, 01);
+
+            var issues = new List<JiraIssueResponse>
+            {
+                new JiraIssueResponse("PROJ-1", "1", CreateIssueFields("Test Issue", new DateTime(2000, 01, 01, 10, 00, 00)), null)
+            };
+
+            var worklogs = new List<JiraWorklogResponse>
+            {
+                new JiraWorklogResponse(
+                    "1",
+                    new JiraUserResponse("other-user"),
+                    "Fixed the bug",
+                    new DateTime(2000, 01, 01, 11, 00, 00),
+                    "2h",
+                    7200
+                )
+            };
+
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).Returns(worklogs);
+
+            // When
+            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+
+            // Then
+            activities.Should().NotBeNull();
+            activities.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void GivenMultipleActivitiesByCurrentUser_WhenGettingActivities_ThenReturnAllActivitiesSortedByDate()
+        {
+            // Given
+            var updateDate = new DateTime(2000, 01, 01);
+            var createdDate = new DateTime(2000, 01, 01, 8, 00, 00);
 
             var changelog = new JiraChangelogResponse(new List<JiraHistoryResponse>
             {
                 new JiraHistoryResponse(
                     "1",
-                    new JiraAuthorResponse("John Doe", "account123"),
+                    new JiraAuthorResponse("test-user", "account123"),
                     new DateTime(2000, 01, 01, 10, 00, 00),
                     new List<JiraChangeItemResponse>
                     {
-                        new JiraChangeItemResponse("status", "jira", "10001", "To Do", "10002", "In Progress"),
-                        new JiraChangeItemResponse("assignee", "jira", null, null, "account456", "Jane Smith")
-                    }),
-                new JiraHistoryResponse(
-                    "2",
-                    new JiraAuthorResponse("Jane Smith", "account456"),
-                    new DateTime(2000, 01, 01, 14, 00, 00),
-                    new List<JiraChangeItemResponse>
-                    {
-                        new JiraChangeItemResponse("status", "jira", "10002", "In Progress", "10003", "Done")
+                        new JiraChangeItemResponse("status", "jira", "10001", "To Do", "10002", "In Progress")
                     })
             });
 
             var issues = new List<JiraIssueResponse>
             {
-                new JiraIssueResponse("PROJ-4", "4", new JiraIssueFieldsResponse("Multi Change Test", new DateTime(2000, 01, 01, 14, 00, 00), null, null), changelog)
+                new JiraIssueResponse("PROJ-1", "1",
+                    CreateIssueFields("Test Issue", new DateTime(2000, 01, 01, 14, 00, 00), createdDate, creatorName: "test-user"),
+                    changelog)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
+            var worklogs = new List<JiraWorklogResponse>
+            {
+                new JiraWorklogResponse("1", new JiraUserResponse("test-user"), "Work done", new DateTime(2000, 01, 01, 12, 00, 00), "1h", 3600)
+            };
+
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).Returns(worklogs);
 
             // When
             var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
@@ -172,59 +288,22 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             // Then
             activities.Should().NotBeNull();
             activities.Should().HaveCount(3);
-            activities[0].Description.Should().Contain("In Progress");
-            activities[1].Description.Should().Contain("Assigned");
-            activities[2].Description.Should().Contain("Done");
+            activities[0].OccurrenceDate.Should().Be(new DateTime(2000, 01, 01, 8, 00, 00)); // Created
+            activities[1].OccurrenceDate.Should().Be(new DateTime(2000, 01, 01, 10, 00, 00)); // Status change
+            activities[2].OccurrenceDate.Should().Be(new DateTime(2000, 01, 01, 12, 00, 00)); // Worklog
         }
 
         [Fact]
-        public void GivenIssueWithComment_WhenGettingActivities_ThenReturnCommentActivity()
+        public void GivenIssueWithProjectAndIssueTypeInfo_WhenGettingActivities_ThenIncludeContextInDescription()
         {
             // Given
-            var currentUser = new JiraUser("test-user", "test@example.com");
             var updateDate = new DateTime(2000, 01, 01);
 
             var changelog = new JiraChangelogResponse(new List<JiraHistoryResponse>
             {
                 new JiraHistoryResponse(
                     "1",
-                    new JiraAuthorResponse("John Doe", "account123"),
-                    new DateTime(2000, 01, 01, 10, 00, 00),
-                    new List<JiraChangeItemResponse>
-                    {
-                        new JiraChangeItemResponse("comment", "jira", null, null, "12345", "This is a comment")
-                    })
-            });
-
-            var issues = new List<JiraIssueResponse>
-            {
-                new JiraIssueResponse("PROJ-5", "5", new JiraIssueFieldsResponse("Comment Test", new DateTime(2000, 01, 01, 10, 00, 00), null, null), changelog)
-            };
-
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
-
-            // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
-
-            // Then
-            activities.Should().NotBeNull();
-            activities.Should().HaveCount(1);
-            activities[0].Description.Should().Contain("Commented on PROJ-5");
-        }
-
-        [Fact]
-        public void GivenIssueWithPriorityChange_WhenGettingActivities_ThenReturnPriorityChangeActivity()
-        {
-            // Given
-            var currentUser = new JiraUser("test-user", "test@example.com");
-            var updateDate = new DateTime(2000, 01, 01);
-
-            var changelog = new JiraChangelogResponse(new List<JiraHistoryResponse>
-            {
-                new JiraHistoryResponse(
-                    "1",
-                    new JiraAuthorResponse("John Doe", "account123"),
+                    new JiraAuthorResponse("test-user", "account123"),
                     new DateTime(2000, 01, 01, 10, 00, 00),
                     new List<JiraChangeItemResponse>
                     {
@@ -234,10 +313,12 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
             var issues = new List<JiraIssueResponse>
             {
-                new JiraIssueResponse("PROJ-6", "6", new JiraIssueFieldsResponse("Priority Test", new DateTime(2000, 01, 01, 10, 00, 00), null, null), changelog)
+                new JiraIssueResponse("MYPROJ-123", "1",
+                    CreateIssueFields("Priority Test", new DateTime(2000, 01, 01, 10, 00, 00),
+                        projectKey: "MYPROJ", issueType: "Bug"),
+                    changelog)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
 
             // When
@@ -246,106 +327,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             // Then
             activities.Should().NotBeNull();
             activities.Should().HaveCount(1);
-            activities[0].Description.Should().Contain("Changed priority of PROJ-6");
+            activities[0].Description.Should().Contain("Bug MYPROJ-123 in MYPROJ");
             activities[0].Description.Should().Contain("Medium");
             activities[0].Description.Should().Contain("High");
-        }
-
-        [Fact]
-        public void GivenIssueWithoutChangelog_WhenGettingActivities_ThenReturnSimpleUpdateActivity()
-        {
-            // Given
-            var currentUser = new JiraUser("test-user", "test@example.com");
-            var updateDate = new DateTime(2000, 01, 01);
-
-            var issues = new List<JiraIssueResponse>
-            {
-                new JiraIssueResponse("PROJ-7", "7", new JiraIssueFieldsResponse("No Changelog Test", new DateTime(2000, 01, 01, 10, 00, 00), null, null), null)
-            };
-
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
-
-            // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
-
-            // Then
-            activities.Should().NotBeNull();
-            activities.Should().HaveCount(1);
-            activities[0].Description.Should().Contain("Jira Issue Updated - PROJ-7");
-        }
-
-        [Fact]
-        public void GivenIssueWithSprintChange_WhenGettingActivities_ThenReturnSprintActivity()
-        {
-            // Given
-            var currentUser = new JiraUser("test-user", "test@example.com");
-            var updateDate = new DateTime(2000, 01, 01);
-
-            var changelog = new JiraChangelogResponse(new List<JiraHistoryResponse>
-            {
-                new JiraHistoryResponse(
-                    "1",
-                    new JiraAuthorResponse("John Doe", "account123"),
-                    new DateTime(2000, 01, 01, 10, 00, 00),
-                    new List<JiraChangeItemResponse>
-                    {
-                        new JiraChangeItemResponse("sprint", "custom", null, null, "123", "Sprint 5")
-                    })
-            });
-
-            var issues = new List<JiraIssueResponse>
-            {
-                new JiraIssueResponse("PROJ-8", "8", new JiraIssueFieldsResponse("Sprint Test", new DateTime(2000, 01, 01, 10, 00, 00), null, null), changelog)
-            };
-
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
-
-            // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
-
-            // Then
-            activities.Should().NotBeNull();
-            activities.Should().HaveCount(1);
-            activities[0].Description.Should().Contain("Added PROJ-8");
-            activities[0].Description.Should().Contain("sprint");
-        }
-
-        [Fact]
-        public void GivenIssueWithTimeLogging_WhenGettingActivities_ThenReturnWorkLogActivity()
-        {
-            // Given
-            var currentUser = new JiraUser("test-user", "test@example.com");
-            var updateDate = new DateTime(2000, 01, 01);
-
-            var changelog = new JiraChangelogResponse(new List<JiraHistoryResponse>
-            {
-                new JiraHistoryResponse(
-                    "1",
-                    new JiraAuthorResponse("John Doe", "account123"),
-                    new DateTime(2000, 01, 01, 10, 00, 00),
-                    new List<JiraChangeItemResponse>
-                    {
-                        new JiraChangeItemResponse("timespent", "jira", "0", "0m", "7200", "2h")
-                    })
-            });
-
-            var issues = new List<JiraIssueResponse>
-            {
-                new JiraIssueResponse("PROJ-9", "9", new JiraIssueFieldsResponse("Time Log Test", new DateTime(2000, 01, 01, 10, 00, 00), null, null), changelog)
-            };
-
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
-
-            // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
-
-            // Then
-            activities.Should().NotBeNull();
-            activities.Should().HaveCount(1);
-            activities[0].Description.Should().Contain("Logged work on PROJ-9");
         }
     }
 }
