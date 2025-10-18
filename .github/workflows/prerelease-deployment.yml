@@ -1,0 +1,41 @@
+name: Prerelease Deployment
+
+on:
+  push:
+    branches:
+      - "feat/*"
+      - "beta/*"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Build the project
+      run: dotnet build --configuration Release
+
+    - name: Run tests
+      run: dotnet test --no-build --verbosity normal
+
+    - name: Generate prerelease version
+      id: version
+      run: |
+        echo "PRERELEASE_VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+
+    - name: Deploy prerelease
+      env:
+        PRERELEASE_VERSION: ${{ env.PRERELEASE_VERSION }}
+      run: |
+        echo "Deploying prerelease version $PRERELEASE_VERSION"
+        # Add deployment commands here, e.g., upload to a staging environment or prerelease channel

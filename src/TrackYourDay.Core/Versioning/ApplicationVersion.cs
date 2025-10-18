@@ -5,12 +5,14 @@
         private int major;
         private int minor;
         private int patch;
+        private string? prerelease;
 
-        public ApplicationVersion(int major, int minor, int patch)
+        public ApplicationVersion(int major, int minor, int patch, string? prerelease = null)
         {
             this.major = major;
             this.minor = minor;
             this.patch = patch;
+            this.prerelease = prerelease;
         }
 
         public ApplicationVersion(string version)
@@ -18,26 +20,37 @@
             try
             {
                 var versionWithoutSPrefix = version.Replace("v", string.Empty);
-                var splittedVersion = versionWithoutSPrefix.Split('.');
-                this.major = int.Parse(splittedVersion[0]);
-                this.minor = int.Parse(splittedVersion[1]);
-                this.patch = int.Parse(splittedVersion[2]);
-            } catch (Exception e)
+                var parts = versionWithoutSPrefix.Split('-');
+                var versionParts = parts[0].Split('.');
+
+                this.major = int.Parse(versionParts[0]);
+                this.minor = int.Parse(versionParts[1]);
+                this.patch = int.Parse(versionParts[2]);
+
+                if (parts.Length > 1)
+                {
+                    this.prerelease = parts[1];
+                }
+            }
+            catch (Exception)
             {
-                throw new ArgumentException("Version {version} is not in supported format.", version);
+                throw new ArgumentException($"Version {version} is not in a supported format.");
             }
         }
 
-        public ApplicationVersion(Version version)
+        public ApplicationVersion(Version version, string? prerelease = null)
         {
             this.major = version.Major;
             this.minor = version.Minor;
             this.patch = version.Build > 0 ? version.Build : 0;
+            this.prerelease = prerelease;
         }
 
         public override string ToString()
         {
-            return $"{this.major}.{this.minor}.{this.patch}";
+            return this.prerelease == null
+                ? $"{this.major}.{this.minor}.{this.patch}"
+                : $"{this.major}.{this.minor}.{this.patch}-{this.prerelease}";
         }
 
         public bool IsNewerThan(ApplicationVersion versionToCompare)
@@ -52,10 +65,19 @@
                 return true;
             }
 
-            //TODO fix this for scenario 0.1.0 and 0.0.8
-            if ( this.patch > versionToCompare.patch)
+            if (this.patch > versionToCompare.patch)
             {
                 return true;
+            }
+
+            if (this.prerelease == null && versionToCompare.prerelease != null)
+            {
+                return true; // Stable versions are newer than prerelease versions
+            }
+
+            if (this.prerelease != null && versionToCompare.prerelease != null)
+            {
+                return string.Compare(this.prerelease, versionToCompare.prerelease, StringComparison.Ordinal) > 0;
             }
 
             return false;

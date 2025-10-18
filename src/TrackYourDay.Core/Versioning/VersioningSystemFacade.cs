@@ -8,10 +8,12 @@ namespace TrackYourDay.Core.Versioning
     {
         private ApplicationVersion newestAvailableApplicationVersion = null!;
         private ApplicationVersion currentApplicationVersion = null!;
+        private bool includePrereleases;
 
-        public VersioningSystemFacade(Version assemblyVersion)
+        public VersioningSystemFacade(Version assemblyVersion, bool includePrereleases = false)
         {
             this.currentApplicationVersion = new ApplicationVersion(assemblyVersion);
+            this.includePrereleases = includePrereleases;
         }
 
         public ApplicationVersion GetCurrentApplicationVersion()
@@ -30,7 +32,8 @@ namespace TrackYourDay.Core.Versioning
                 }
 
                 return this.newestAvailableApplicationVersion;
-            } catch
+            }
+            catch
             {
                 return this.GetCurrentApplicationVersion();
             }
@@ -40,7 +43,6 @@ namespace TrackYourDay.Core.Versioning
         {
             var url = "https://api.github.com/repos/skuty/TrackYourDay/releases";
 
-            // TODO: Replace with injected HttpClient from IHttpClientFactory
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(url);
             var productValue = new ProductInfoHeaderValue("TrackYourDay", this.GetCurrentApplicationVersion().ToString());
@@ -50,13 +52,16 @@ namespace TrackYourDay.Core.Versioning
 
             HttpResponseMessage response = client.GetAsync(url).Result;
 
-
             if (response.IsSuccessStatusCode)
             {
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
 
-                return result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at).FirstOrDefault().body;
+                var release = this.includePrereleases
+                    ? result.OrderByDescending(v => v.published_at).FirstOrDefault()
+                    : result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at).FirstOrDefault();
+
+                return release?.body ?? "No release notes available.";
             }
 
             throw new Exception("Cannot get newest release name from GitHub repository.");
@@ -66,7 +71,6 @@ namespace TrackYourDay.Core.Versioning
         {
             return this.GetNewestAvailableApplicationVersion().IsNewerThan(this.GetCurrentApplicationVersion());
         }
-
 
         public void UpdateApplication()
         {
@@ -79,8 +83,8 @@ namespace TrackYourDay.Core.Versioning
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = batchFilePath,
-                    UseShellExecute = false, // Set to true to allow batch script execution
-                    WorkingDirectory = appDirectory // Ensure it's executed in the app's directory
+                    UseShellExecute = false,
+                    WorkingDirectory = appDirectory
                 };
 
                 Process.Start(startInfo);
@@ -89,7 +93,7 @@ namespace TrackYourDay.Core.Versioning
             }
             else
             {
-                throw new ArgumentNullException("ApplicationUpdater", "Updater Applicatoin was not found.");
+                throw new ArgumentNullException("ApplicationUpdater", "Updater Application was not found.");
             }
         }
 
@@ -97,7 +101,6 @@ namespace TrackYourDay.Core.Versioning
         {
             var url = "https://api.github.com/repos/skuty/TrackYourDay/releases";
 
-            // TODO: Replace with injected HttpClient from IHttpClientFactory
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(url);
             var productValue = new ProductInfoHeaderValue("TrackYourDay", this.GetCurrentApplicationVersion().ToString());
@@ -107,13 +110,16 @@ namespace TrackYourDay.Core.Versioning
 
             HttpResponseMessage response = client.GetAsync(url).Result;
 
-
             if (response.IsSuccessStatusCode)
             {
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
 
-                return result.Where(v => v.prerelease == false).OrderByDescending(v =>v.published_at).FirstOrDefault().name;
+                var release = this.includePrereleases
+                    ? result.OrderByDescending(v => v.published_at).FirstOrDefault()
+                    : result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at).FirstOrDefault();
+
+                return release?.name ?? "0.0.0";
             }
 
             throw new Exception("Cannot get newest release name from GitHub repository.");
