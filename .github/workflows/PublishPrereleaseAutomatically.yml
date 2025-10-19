@@ -56,25 +56,15 @@ jobs:
                 filename: 'TrackYourDay_v${{ steps.version.outputs.VERSION }}.zip'
                 exclusions: '*.git*'
 
-            - name: Create tag
-              run: git tag v${{ steps.version.outputs.VERSION }}
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Push tag
-              uses: ad-m/github-push-action@master
-              with:
-                github_token: ${{ secrets.GITHUB_TOKEN }}
-                branch: ${{ github.ref }}
-                tags: true
-
             - uses: ncipollo/release-action@v1
               with:
                 artifacts: 'src\TrackYourDay.MAUI\bin\Release\net8.0-windows10.0.19041.0\win10-x64\TrackYourDay_v${{ steps.version.outputs.VERSION }}.zip'
                 artifactErrorsFailBuild: true
                 prerelease: true
                 tag: v${{ steps.version.outputs.VERSION }}
+                commit: ${{ github.sha }}
                 artifactContentType: application/zip
                 body: 'Automated prerelease build from main branch (commit: ${{ github.sha }})'
                 name: 'TrackYourDay v${{ steps.version.outputs.VERSION }} (Prerelease)'
                 makeLatest: false
+                skipIfReleaseExists: true
