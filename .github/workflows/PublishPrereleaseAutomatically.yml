@@ -1,0 +1,70 @@
+name: Publish Prerelease Automatically
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+    create-prerelease:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+              with:
+                fetch-depth: 0
+
+            - name: Generate prerelease version
+              id: version
+              run: |
+                $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+                $shortSha = "${{ github.sha }}".Substring(0, 7)
+                $version = "0.0.0-beta.$timestamp+$shortSha"
+                echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+                echo "Generated version: $version"
+              shell: pwsh
+
+            - name: Update Assembly version
+              uses: managedcode/MAUIAppVersion@v1
+              with:
+                csproj: 'src\TrackYourDay.MAUI\TrackYourDay.MAUI.csproj'
+                version: ${{ github.run_number }}
+                displayVersion: ${{ steps.version.outputs.VERSION }}
+
+            - name: Set up .NET Core
+              uses: actions/setup-dotnet@v4
+              with:
+                dotnet-version: 8.0.x
+
+            - name: Restore dependencies
+              run: dotnet restore --runtime win-x64
+
+            - name: Build
+              run: dotnet build --configuration Release
+
+            - name: Test
+              run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
+              env:
+                VSTEST_LOG_PATH: test_results.xml
+
+            - name: Archive build output
+              uses: thedoctor0/zip-release@0.7.1
+              with:
+                type: 'zip'
+                directory: 'src\TrackYourDay.MAUI\bin\Release\net8.0-windows10.0.19041.0\win10-x64'
+                filename: 'TrackYourDay_v${{ steps.version.outputs.VERSION }}.zip'
+                exclusions: '*.git*'
+
+            - uses: ncipollo/release-action@v1
+              with:
+                artifacts: 'src\TrackYourDay.MAUI\bin\Release\net8.0-windows10.0.19041.0\win10-x64\TrackYourDay_v${{ steps.version.outputs.VERSION }}.zip'
+                artifactErrorsFailBuild: true
+                prerelease: true
+                tag: v${{ steps.version.outputs.VERSION }}
+                commit: ${{ github.sha }}
+                artifactContentType: application/zip
+                body: 'Automated prerelease build from main branch (commit: ${{ github.sha }})'
+                name: 'TrackYourDay v${{ steps.version.outputs.VERSION }} (Prerelease)'
+                makeLatest: false
+                skipIfReleaseExists: true

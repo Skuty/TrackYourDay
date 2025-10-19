@@ -8,6 +8,24 @@ echo ----------------------------------------------------
 
 echo Content of following directory will be deleted: %CD%
 
+echo ----------------------------------------------------
+
+echo Which version channel do you want to download?
+echo 1 - Stable (recommended)
+echo 2 - Prerelease (includes beta versions)
+echo.
+set /p "channel_choice=Enter your choice (1 or 2): "
+
+if "%channel_choice%"=="2" (
+    set "include_prerelease=Prerelease"
+    echo You selected: Prerelease channel
+) else (
+    set "include_prerelease=Stable"
+    echo You selected: Stable channel
+)
+
+echo ----------------------------------------------------
+
 pause
 
 echo Deleting all files and subdirectories except Updater.
@@ -25,9 +43,12 @@ echo ----------------------------------------------------
 
 echo Downloading newest Version from GitHub Releases.
 powershell -NoProfile -Command ^
-    "$latestRelease = Invoke-RestMethod -Uri 'https://api.github.com/repos/Skuty/TrackYourDay/releases/latest' -Headers @{ 'User-Agent' = 'Mozilla/5.0' };" ^
-    "$zipAsset = $latestRelease.assets | Where-Object { $_.name -like 'TrackYourDay*.zip' };" ^
+    "$includePrerelease = '%include_prerelease%' -eq 'Prerelease';" ^
+    "$allReleases = Invoke-RestMethod -Uri 'https://api.github.com/repos/Skuty/TrackYourDay/releases' -Headers @{ 'User-Agent' = 'Mozilla/5.0' };" ^
+    "$latestRelease = if ($includePrerelease) { $allReleases ^| Sort-Object published_at -Descending ^| Select-Object -First 1 } else { $allReleases ^| Where-Object { -not $_.prerelease } ^| Sort-Object published_at -Descending ^| Select-Object -First 1 };" ^
+    "$zipAsset = $latestRelease.assets ^| Where-Object { $_.name -like 'TrackYourDay*.zip' };" ^
     "$downloadUrl = $zipAsset.browser_download_url;" ^
+    "Write-Host ('Downloading release: ' + $latestRelease.name + ' (Prerelease: ' + $latestRelease.prerelease + ')');" ^
     "Invoke-WebRequest -Uri $downloadUrl -OutFile 'TrackYourDay_NewestRelease.zip';"
 
 echo Extracting TrackYourDay_NewestRelease.zip.
