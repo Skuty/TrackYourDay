@@ -4,13 +4,17 @@ on:
   workflow_dispatch:
     inputs:
           version:
-              description: 'Version number'
+              description: 'Version number (e.g., 1.2.3 or 1.2.3-beta.1)'
               default: '0.0.0'
               required: true
           isPreRelease:
                 type: boolean
                 description: Is this version a pre release
                 required: true
+          releaseNotes:
+              description: 'Release notes (optional)'
+              default: ''
+              required: false
 
 jobs:
     create-release:
@@ -70,3 +74,5 @@ jobs:
                 prerelease: ${{ github.event.inputs.isPreRelease }}
                 tag: v${{ github.event.inputs.version }}
                 artifactContentType: application/zip
+                body: ${{ github.event.inputs.releaseNotes }}
+                name: 'TrackYourDay v${{ github.event.inputs.version }}'

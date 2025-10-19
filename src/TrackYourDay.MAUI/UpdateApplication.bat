@@ -25,9 +25,12 @@ echo ----------------------------------------------------
 
 echo Downloading newest Version from GitHub Releases.
 powershell -NoProfile -Command ^
-    "$latestRelease = Invoke-RestMethod -Uri 'https://api.github.com/repos/Skuty/TrackYourDay/releases/latest' -Headers @{ 'User-Agent' = 'Mozilla/5.0' };" ^
-    "$zipAsset = $latestRelease.assets | Where-Object { $_.name -like 'TrackYourDay*.zip' };" ^
+    "$includePrerelease = '%1' -eq 'Prerelease';" ^
+    "$allReleases = Invoke-RestMethod -Uri 'https://api.github.com/repos/Skuty/TrackYourDay/releases' -Headers @{ 'User-Agent' = 'Mozilla/5.0' };" ^
+    "$latestRelease = if ($includePrerelease) { $allReleases ^| Sort-Object published_at -Descending ^| Select-Object -First 1 } else { $allReleases ^| Where-Object { -not $_.prerelease } ^| Sort-Object published_at -Descending ^| Select-Object -First 1 };" ^
+    "$zipAsset = $latestRelease.assets ^| Where-Object { $_.name -like 'TrackYourDay*.zip' };" ^
     "$downloadUrl = $zipAsset.browser_download_url;" ^
+    "Write-Host ('Downloading release: ' + $latestRelease.name + ' (Prerelease: ' + $latestRelease.prerelease + ')');" ^
     "Invoke-WebRequest -Uri $downloadUrl -OutFile 'TrackYourDay_NewestRelease.zip';"
 
 echo Extracting TrackYourDay_NewestRelease.zip.

@@ -1,0 +1,89 @@
+name: Publish Prerelease Automatically
+
+on:
+  push:
+    branches:
+      - 'beta/**'
+      - 'prerelease/**'
+
+jobs:
+    create-prerelease:
+        runs-on: windows-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+              with:
+                fetch-depth: 0
+
+            - name: Get branch name
+              id: branch_name
+              run: |
+                $branchName = "${{ github.ref }}" -replace 'refs/heads/', ''
+                $branchName = $branchName -replace '/', '-'
+                echo "BRANCH_NAME=$branchName" >> $env:GITHUB_OUTPUT
+              shell: pwsh
+
+            - name: Generate prerelease version
+              id: version
+              run: |
+                $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+                $branchName = "${{ steps.branch_name.outputs.BRANCH_NAME }}"
+                $version = "0.0.0-$branchName.$timestamp"
+                echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+                echo "Generated version: $version"
+              shell: pwsh
+
+            - name: Update Assembly version
+              uses: managedcode/MAUIAppVersion@v1
+              with:
+                csproj: 'src\TrackYourDay.MAUI\TrackYourDay.MAUI.csproj'
+                version: ${{ github.run_number }}
+                displayVersion: ${{ steps.version.outputs.VERSION }}
+
+            - name: Set up .NET Core
+              uses: actions/setup-dotnet@v4
+              with:
+                dotnet-version: 8.0.x
+
+            - name: Restore dependencies
+              run: dotnet restore --runtime win-x64
+
+            - name: Build
+              run: dotnet build --configuration Release
+
+            - name: Test
+              run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
+              env:
+                VSTEST_LOG_PATH: test_results.xml
+
+            - name: Archive build output
+              uses: thedoctor0/zip-release@0.7.1
+              with:
+                type: 'zip'
+                directory: 'src\TrackYourDay.MAUI\bin\Release\net8.0-windows10.0.19041.0\win10-x64'
+                filename: 'TrackYourDay_v${{ steps.version.outputs.VERSION }}.zip'
+                exclusions: '*.git*'
+
+            - name: Create tag
+              run: git tag v${{ steps.version.outputs.VERSION }}
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Push tag
+              uses: ad-m/github-push-action@master
+              with:
+                github_token: ${{ secrets.GITHUB_TOKEN }}
+                branch: ${{ github.ref }}
+                tags: true
+
+            - uses: ncipollo/release-action@v1
+              with:
+                artifacts: 'src\TrackYourDay.MAUI\bin\Release\net8.0-windows10.0.19041.0\win10-x64\TrackYourDay_v${{ steps.version.outputs.VERSION }}.zip'
+                artifactErrorsFailBuild: true
+                prerelease: true
+                tag: v${{ steps.version.outputs.VERSION }}
+                artifactContentType: application/zip
+                body: 'Automated prerelease build from branch ${{ steps.branch_name.outputs.BRANCH_NAME }}'
+                name: 'TrackYourDay v${{ steps.version.outputs.VERSION }} (Prerelease)'
+                makeLatest: false
