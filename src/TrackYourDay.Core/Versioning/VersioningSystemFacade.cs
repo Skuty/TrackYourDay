@@ -1,54 +1,17 @@
 ﻿using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Http.Headers;
-using TrackYourDay.Core.Settings;
 
 namespace TrackYourDay.Core.Versioning
 {
     public class VersioningSystemFacade
     {
-        private const string UpdateChannelSettingKey = "UpdateChannel";
         private ApplicationVersion newestAvailableApplicationVersion = null!;
-        private ApplicationVersion newestAvailablePrereleaseVersion = null!;
         private ApplicationVersion currentApplicationVersion = null!;
-        private UpdateChannel currentChannel = UpdateChannel.Stable;
-        private readonly IGenericSettingsService? settingsService;
 
-        public VersioningSystemFacade(Version assemblyVersion, IGenericSettingsService settingsService = null)
+        public VersioningSystemFacade(Version assemblyVersion)
         {
             this.currentApplicationVersion = new ApplicationVersion(assemblyVersion);
-            this.settingsService = settingsService;
-
-            // Load saved channel preference
-            if (settingsService != null)
-            {
-                var savedChannel = settingsService.GetSetting<string>(UpdateChannelSettingKey, UpdateChannel.Stable.ToString());
-                if (Enum.TryParse<UpdateChannel>(savedChannel, out var channel))
-                {
-                    this.currentChannel = channel;
-                }
-            }
-        }
-
-        public UpdateChannel GetCurrentChannel()
-        {
-            return this.currentChannel;
-        }
-
-        public void SetChannel(UpdateChannel channel)
-        {
-            this.currentChannel = channel;
-
-            // Persist the channel preference
-            if (settingsService != null)
-            {
-                settingsService.SetSetting(UpdateChannelSettingKey, channel.ToString());
-                settingsService.PersistSettings();
-            }
-
-            // Clear cached version to force refresh on next check
-            this.newestAvailableApplicationVersion = null!;
-            this.newestAvailablePrereleaseVersion = null!;
         }
 
         public ApplicationVersion GetCurrentApplicationVersion()
@@ -58,49 +21,22 @@ namespace TrackYourDay.Core.Versioning
 
         public ApplicationVersion GetNewestAvailableApplicationVersion()
         {
-            return GetNewestAvailableApplicationVersion(this.currentChannel);
-        }
-
-        public ApplicationVersion GetNewestAvailableApplicationVersion(UpdateChannel channel)
-        {
             try
             {
-                if (channel == UpdateChannel.Stable)
+                if (this.newestAvailableApplicationVersion == null)
                 {
-                    if (this.newestAvailableApplicationVersion == null)
-                    {
-                        var versionFromGitHub = this.GetNewestReleaseNameFromGitHubRepositoryUsingRestApi(false);
-                        this.newestAvailableApplicationVersion = new ApplicationVersion(versionFromGitHub);
-                    }
-                    return this.newestAvailableApplicationVersion;
+                    var versionFromGitHub = this.GetNewestReleaseNameFromGitHubRepositoryUsingRestApi();
+                    this.newestAvailableApplicationVersion = new ApplicationVersion(versionFromGitHub);
                 }
-                else
-                {
-                    if (this.newestAvailablePrereleaseVersion == null)
-                    {
-                        var versionFromGitHub = this.GetNewestReleaseNameFromGitHubRepositoryUsingRestApi(true);
-                        this.newestAvailablePrereleaseVersion = new ApplicationVersion(versionFromGitHub);
-                    }
-                    return this.newestAvailablePrereleaseVersion;
-                }
+
+                return this.newestAvailableApplicationVersion;
             } catch
             {
                 return this.GetCurrentApplicationVersion();
             }
         }
 
-        public void ForceRefreshVersionCheck()
-        {
-            this.newestAvailableApplicationVersion = null!;
-            this.newestAvailablePrereleaseVersion = null!;
-        }
-
         public string GetWhatsNewForNewestAvailableApplicationVersion()
-        {
-            return GetWhatsNewForNewestAvailableApplicationVersion(this.currentChannel);
-        }
-
-        public string GetWhatsNewForNewestAvailableApplicationVersion(UpdateChannel channel)
         {
             var url = "https://api.github.com/repos/skuty/TrackYourDay/releases";
 
@@ -120,12 +56,7 @@ namespace TrackYourDay.Core.Versioning
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
 
-                bool includePrereleases = channel == UpdateChannel.Prerelease;
-                var filteredReleases = includePrereleases
-                    ? result.OrderByDescending(v => v.published_at)
-                    : result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at);
-
-                return filteredReleases.FirstOrDefault()?.body ?? string.Empty;
+                return result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at).FirstOrDefault()?.body ?? string.Empty;
             }
 
             throw new Exception("Cannot get newest release name from GitHub repository.");
@@ -148,7 +79,6 @@ namespace TrackYourDay.Core.Versioning
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = batchFilePath,
-                    Arguments = this.currentChannel.ToString(), // Pass the current channel as argument
                     UseShellExecute = false, // Set to true to allow batch script execution
                     WorkingDirectory = appDirectory // Ensure it's executed in the app's directory
                 };
@@ -163,7 +93,7 @@ namespace TrackYourDay.Core.Versioning
             }
         }
 
-        private string GetNewestReleaseNameFromGitHubRepositoryUsingRestApi(bool includePrereleases)
+        private string GetNewestReleaseNameFromGitHubRepositoryUsingRestApi()
         {
             var url = "https://api.github.com/repos/skuty/TrackYourDay/releases";
 
@@ -183,11 +113,7 @@ namespace TrackYourDay.Core.Versioning
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
 
-                var filteredReleases = includePrereleases
-                    ? result.OrderByDescending(v => v.published_at)
-                    : result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at);
-
-                return filteredReleases.FirstOrDefault()?.name ?? "0.0.0";
+                return result.Where(v => v.prerelease == false).OrderByDescending(v =>v.published_at).FirstOrDefault()?.name ?? "0.0.0";
             }
 
             throw new Exception("Cannot get newest release name from GitHub repository.");

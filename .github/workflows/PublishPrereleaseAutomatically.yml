@@ -3,8 +3,7 @@ name: Publish Prerelease Automatically
 on:
   push:
     branches:
-      - 'beta/**'
-      - 'prerelease/**'
+      - 'main'
 
 jobs:
     create-prerelease:
@@ -16,20 +15,12 @@ jobs:
               with:
                 fetch-depth: 0
 
-            - name: Get branch name
-              id: branch_name
-              run: |
-                $branchName = "${{ github.ref }}" -replace 'refs/heads/', ''
-                $branchName = $branchName -replace '/', '-'
-                echo "BRANCH_NAME=$branchName" >> $env:GITHUB_OUTPUT
-              shell: pwsh
-
             - name: Generate prerelease version
               id: version
               run: |
                 $timestamp = Get-Date -Format "yyyyMMddHHmmss"
-                $branchName = "${{ steps.branch_name.outputs.BRANCH_NAME }}"
-                $version = "0.0.0-$branchName.$timestamp"
+                $shortSha = "${{ github.sha }}".Substring(0, 7)
+                $version = "0.0.0-beta.$timestamp+$shortSha"
                 echo "VERSION=$version" >> $env:GITHUB_OUTPUT
                 echo "Generated version: $version"
               shell: pwsh
@@ -84,6 +75,6 @@ jobs:
                 prerelease: true
                 tag: v${{ steps.version.outputs.VERSION }}
                 artifactContentType: application/zip
-                body: 'Automated prerelease build from branch ${{ steps.branch_name.outputs.BRANCH_NAME }}'
+                body: 'Automated prerelease build from main branch (commit: ${{ github.sha }})'
                 name: 'TrackYourDay v${{ steps.version.outputs.VERSION }} (Prerelease)'
                 makeLatest: false
