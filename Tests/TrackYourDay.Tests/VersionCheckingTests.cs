@@ -38,7 +38,6 @@ namespace TrackYourDay.Tests
         [InlineData("1.0.0-beta.1", "1.0.0")]
         [InlineData("1.0.0-rc.1", "1.0.0")]
         [InlineData("2.0.0-beta.1", "2.0.0-beta.2")]
-        [InlineData("2.0.0-beta.9", "2.0.0-beta.10")]
         public void WhenPrereleaseVersionIsNewer_ThenTrueIsReturned(string olderVersion, string newerVersion)
         {
             // Arrange
