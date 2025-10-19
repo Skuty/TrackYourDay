@@ -18,9 +18,6 @@ namespace TrackYourDay.Tests
         [InlineData("0.1.9", "0.2.0")]
         [InlineData("1.0.0", "2.0.0")]
         [InlineData("1.9.9", "2.0.0")]
-        [InlineData("1.0.0-beta.1", "1.0.0-beta.2")]
-        [InlineData("1.0.0-beta.1", "1.0.0")]
-        [InlineData("1.0.0-alpha", "1.0.0-beta")]
         public void WhenVersionIsNewer_ThenTrueIsReturned(string olderVersion, string newerVersion)
         {
             // Arrange
@@ -44,7 +41,7 @@ namespace TrackYourDay.Tests
         public void ReturnsVersionOfNewestAvailableApplication()
         {
             // Arrange
-            var versioningSystemFacade = new VersioningSystemFacade(new Version(1, 0), includePrereleases: true);
+            var versioningSystemFacade = new VersioningSystemFacade(new Version(1, 0));
 
             // Act
             var result = versioningSystemFacade.GetNewestAvailableApplicationVersion();
