@@ -33,7 +33,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Then
             activities.Count.Should().Be(1);
             activities.First().OccuranceDate.Should().Be(gitLabEvent.CreatedAt.DateTime);
-            activities.First().Description.Should().Be("Merge Request Opened with Title: Merge request from branch with 2 commits to master with squashing");
+            activities.First().Description.Should().Be("Opened Merge Request: Merge request from branch with 2 commits to master with squashing");
         }
 
         [Fact]
@@ -56,12 +56,189 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var activities = this.gitLabActivityService.GetTodayActivities();
 
             // Then
+            // Verify mock was called the expected number of times
+            this.gitLabApiClient.Verify(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()), Times.Once);
+            this.gitLabApiClient.Verify(x => x.GetProject(It.IsAny<GitLabProjectId>()), Times.Once);
+            this.gitLabApiClient.Verify(x => x.GetCommits(It.IsAny<GitLabProjectId>(), It.IsAny<GitLabRefName>(), It.IsAny<DateOnly>()), Times.Once);
+
             activities.Count.Should().Be(2);
             // TODO Dates probably have to be handled in more conscious way including time zones and offsets
             activities[0].OccuranceDate.Should().Be(new DateTime(2025, 03, 16, 21, 06, 53, DateTimeKind.Utc));
-            activities[0].Description.Should().Be("Commit done to Repository: ss.skuty / test, to branch: master, with Title: Merge branch 'BranchPushedOnCreation' into 'master'");
+            activities[0].Description.Should().Be("Commit to Repository: ss.skuty / test, branch: master, Title: Merge branch 'BranchPushedOnCreation' into 'master'");
             activities[1].OccuranceDate.Should().Be(new DateTime(2025, 03, 16, 21, 06, 53, DateTimeKind.Utc));
-            activities[1].Description.Should().Be("Commit done to Repository: ss.skuty / test, to branch: master, with Title: Merge request from branch with 2 commits to master with squashing");
+            activities[1].Description.Should().Be("Commit to Repository: ss.skuty / test, branch: master, Title: Merge request from branch with 2 commits to master with squashing");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForBranchCreation_WhenGettingActivity_ThenReturnedActivityShouldDescribeBranchCreation()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseForPushedNew());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            var gitLabProject = JsonSerializer.Deserialize<GitLabProject>(this.GetResponseForProject());
+            this.gitLabApiClient.Setup(gitLabApiClient => gitLabApiClient.GetProject(It.IsAny<GitLabProjectId>()))
+                .Returns(gitLabProject);
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().OccuranceDate.Should().Be(gitLabEvent.CreatedAt.DateTime);
+            activities.First().Description.Should().Be("Created new branch 'BranchPushedOnCreation' in Repository: ss.skuty / test");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForBranchDeletion_WhenGettingActivity_ThenReturnedActivityShouldDescribeBranchDeletion()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseForDeleted());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            var gitLabProject = JsonSerializer.Deserialize<GitLabProject>(this.GetResponseForProject());
+            this.gitLabApiClient.Setup(gitLabApiClient => gitLabApiClient.GetProject(It.IsAny<GitLabProjectId>()))
+                .Returns(gitLabProject);
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().OccuranceDate.Should().Be(gitLabEvent.CreatedAt.DateTime);
+            activities.First().Description.Should().Be("Deleted branch 'BranchPushedOnCreation' from Repository: ss.skuty / test");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForMergedMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeMergedMergeRequest()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_MergedMergeRequest());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().Description.Should().Be("Merged Merge Request: Add new feature");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForApprovedMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeApprovedMergeRequest()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_ApprovedMergeRequest());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().Description.Should().Be("Approved Merge Request: Fix bug in authentication");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForOpenedIssue_WhenGettingActivity_ThenReturnedActivityShouldDescribeOpenedIssue()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_OpenedIssue());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().Description.Should().Be("Opened Issue: Cannot login to the application");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForClosedIssue_WhenGettingActivity_ThenReturnedActivityShouldDescribeClosedIssue()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_ClosedIssue());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().Description.Should().Be("Closed Issue: Cannot login to the application");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForCommentOnMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeComment()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CommentOnMergeRequest());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().Description.Should().Contain("Commented on Merge Request");
+            activities.First().Description.Should().Contain("Looks good to me!");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForCommentOnIssue_WhenGettingActivity_ThenReturnedActivityShouldDescribeComment()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CommentOnIssue());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().Description.Should().Contain("Commented on Issue");
+            activities.First().Description.Should().Contain("I can reproduce this issue");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForCreatedWikiPage_WhenGettingActivity_ThenReturnedActivityShouldDescribeWikiCreation()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CreatedWikiPage());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().Description.Should().Be("Created Wiki Page: Installation Guide");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventForCreatedMilestone_WhenGettingActivity_ThenReturnedActivityShouldDescribeMilestoneCreation()
+        {
+            // Given
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CreatedMilestone());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then
+            activities.Count.Should().Be(1);
+            activities.First().Description.Should().Be("Created Milestone: Version 2.0");
         }
 
         // Below are just raw responses from gitlab, not to be dependent on gitlab api but just to instantiate objects as they were real
@@ -719,6 +896,242 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 }";
 
             return $"[{firstCommit}, {secondCommit}]";
+        }
+
+        private string GetResponseFor_MergedMergeRequest()
+        {
+            return @"
+            {
+                ""id"": 4105331557,
+                ""project_id"": 24674429,
+                ""action_name"": ""merged"",
+                ""target_id"": 369438333,
+                ""target_iid"": 32,
+                ""target_type"": ""MergeRequest"",
+                ""author_id"": 8272154,
+                ""target_title"": ""Add new feature"",
+                ""created_at"": ""2025-03-16T21:10:00.000Z"",
+                ""author"": {
+                    ""id"": 8272154,
+                    ""username"": ""ss.skuty"",
+                    ""name"": ""Adam Kuba"",
+                    ""state"": ""active"",
+                    ""locked"": false,
+                    ""avatar_url"": ""https://secure.gravatar.com/avatar/3822593552766ab8aa67b5d48388e42ce6b992558760418a7325084dd3b6013d?s=80\u0026d=identicon"",
+                    ""web_url"": ""https://gitlab.com/ss.skuty""
+                },
+                ""imported"": false,
+                ""imported_from"": ""none"",
+                ""author_username"": ""ss.skuty""
+            }";
+        }
+
+        private string GetResponseFor_ApprovedMergeRequest()
+        {
+            return @"
+            {
+                ""id"": 4105331558,
+                ""project_id"": 24674429,
+                ""action_name"": ""approved"",
+                ""target_id"": 369438334,
+                ""target_iid"": 33,
+                ""target_type"": ""MergeRequest"",
+                ""author_id"": 8272154,
+                ""target_title"": ""Fix bug in authentication"",
+                ""created_at"": ""2025-03-16T21:15:00.000Z"",
+                ""author"": {
+                    ""id"": 8272154,
+                    ""username"": ""ss.skuty"",
+                    ""name"": ""Adam Kuba"",
+                    ""state"": ""active"",
+                    ""locked"": false,
+                    ""avatar_url"": ""https://secure.gravatar.com/avatar/3822593552766ab8aa67b5d48388e42ce6b992558760418a7325084dd3b6013d?s=80\u0026d=identicon"",
+                    ""web_url"": ""https://gitlab.com/ss.skuty""
+                },
+                ""imported"": false,
+                ""imported_from"": ""none"",
+                ""author_username"": ""ss.skuty""
+            }";
+        }
+
+        private string GetResponseFor_OpenedIssue()
+        {
+            return @"
+            {
+                ""id"": 4105331559,
+                ""project_id"": 24674429,
+                ""action_name"": ""opened"",
+                ""target_id"": 123456,
+                ""target_iid"": 42,
+                ""target_type"": ""Issue"",
+                ""author_id"": 8272154,
+                ""target_title"": ""Cannot login to the application"",
+                ""created_at"": ""2025-03-16T21:20:00.000Z"",
+                ""author"": {
+                    ""id"": 8272154,
+                    ""username"": ""ss.skuty"",
+                    ""name"": ""Adam Kuba"",
+                    ""state"": ""active"",
+                    ""locked"": false,
+                    ""avatar_url"": ""https://secure.gravatar.com/avatar/3822593552766ab8aa67b5d48388e42ce6b992558760418a7325084dd3b6013d?s=80\u0026d=identicon"",
+                    ""web_url"": ""https://gitlab.com/ss.skuty""
+                },
+                ""imported"": false,
+                ""imported_from"": ""none"",
+                ""author_username"": ""ss.skuty""
+            }";
+        }
+
+        private string GetResponseFor_ClosedIssue()
+        {
+            return @"
+            {
+                ""id"": 4105331560,
+                ""project_id"": 24674429,
+                ""action_name"": ""closed"",
+                ""target_id"": 123456,
+                ""target_iid"": 42,
+                ""target_type"": ""Issue"",
+                ""author_id"": 8272154,
+                ""target_title"": ""Cannot login to the application"",
+                ""created_at"": ""2025-03-16T21:25:00.000Z"",
+                ""author"": {
+                    ""id"": 8272154,
+                    ""username"": ""ss.skuty"",
+                    ""name"": ""Adam Kuba"",
+                    ""state"": ""active"",
+                    ""locked"": false,
+                    ""avatar_url"": ""https://secure.gravatar.com/avatar/3822593552766ab8aa67b5d48388e42ce6b992558760418a7325084dd3b6013d?s=80\u0026d=identicon"",
+                    ""web_url"": ""https://gitlab.com/ss.skuty""
+                },
+                ""imported"": false,
+                ""imported_from"": ""none"",
+                ""author_username"": ""ss.skuty""
+            }";
+        }
+
+        private string GetResponseFor_CommentOnMergeRequest()
+        {
+            return @"
+            {
+                ""id"": 4105331561,
+                ""project_id"": 24674429,
+                ""action_name"": ""commented on"",
+                ""target_id"": null,
+                ""target_iid"": 33,
+                ""target_type"": ""Note"",
+                ""author_id"": 8272154,
+                ""target_title"": ""Fix bug in authentication"",
+                ""created_at"": ""2025-03-16T21:30:00.000Z"",
+                ""author"": {
+                    ""id"": 8272154,
+                    ""username"": ""ss.skuty"",
+                    ""name"": ""Adam Kuba"",
+                    ""state"": ""active"",
+                    ""locked"": false,
+                    ""avatar_url"": ""https://secure.gravatar.com/avatar/3822593552766ab8aa67b5d48388e42ce6b992558760418a7325084dd3b6013d?s=80\u0026d=identicon"",
+                    ""web_url"": ""https://gitlab.com/ss.skuty""
+                },
+                ""note"": {
+                    ""id"": 987654321,
+                    ""body"": ""Looks good to me! Ready to merge."",
+                    ""noteable_type"": ""MergeRequest"",
+                    ""noteable_id"": 369438334
+                },
+                ""imported"": false,
+                ""imported_from"": ""none"",
+                ""author_username"": ""ss.skuty""
+            }";
+        }
+
+        private string GetResponseFor_CommentOnIssue()
+        {
+            return @"
+            {
+                ""id"": 4105331562,
+                ""project_id"": 24674429,
+                ""action_name"": ""commented on"",
+                ""target_id"": null,
+                ""target_iid"": 42,
+                ""target_type"": ""Note"",
+                ""author_id"": 8272154,
+                ""target_title"": ""Cannot login to the application"",
+                ""created_at"": ""2025-03-16T21:35:00.000Z"",
+                ""author"": {
+                    ""id"": 8272154,
+                    ""username"": ""ss.skuty"",
+                    ""name"": ""Adam Kuba"",
+                    ""state"": ""active"",
+                    ""locked"": false,
+                    ""avatar_url"": ""https://secure.gravatar.com/avatar/3822593552766ab8aa67b5d48388e42ce6b992558760418a7325084dd3b6013d?s=80\u0026d=identicon"",
+                    ""web_url"": ""https://gitlab.com/ss.skuty""
+                },
+                ""note"": {
+                    ""id"": 987654322,
+                    ""body"": ""I can reproduce this issue on my local environment."",
+                    ""noteable_type"": ""Issue"",
+                    ""noteable_id"": 123456
+                },
+                ""imported"": false,
+                ""imported_from"": ""none"",
+                ""author_username"": ""ss.skuty""
+            }";
+        }
+
+        private string GetResponseFor_CreatedWikiPage()
+        {
+            return @"
+            {
+                ""id"": 4105331563,
+                ""project_id"": 24674429,
+                ""action_name"": ""created"",
+                ""target_id"": 555,
+                ""target_iid"": null,
+                ""target_type"": ""WikiPage::Meta"",
+                ""author_id"": 8272154,
+                ""target_title"": ""Installation Guide"",
+                ""created_at"": ""2025-03-16T21:40:00.000Z"",
+                ""author"": {
+                    ""id"": 8272154,
+                    ""username"": ""ss.skuty"",
+                    ""name"": ""Adam Kuba"",
+                    ""state"": ""active"",
+                    ""locked"": false,
+                    ""avatar_url"": ""https://secure.gravatar.com/avatar/3822593552766ab8aa67b5d48388e42ce6b992558760418a7325084dd3b6013d?s=80\u0026d=identicon"",
+                    ""web_url"": ""https://gitlab.com/ss.skuty""
+                },
+                ""imported"": false,
+                ""imported_from"": ""none"",
+                ""author_username"": ""ss.skuty""
+            }";
+        }
+
+        private string GetResponseFor_CreatedMilestone()
+        {
+            return @"
+            {
+                ""id"": 4105331564,
+                ""project_id"": 24674429,
+                ""action_name"": ""created"",
+                ""target_id"": 666,
+                ""target_iid"": 5,
+                ""target_type"": ""Milestone"",
+                ""author_id"": 8272154,
+                ""target_title"": ""Version 2.0"",
+                ""created_at"": ""2025-03-16T21:45:00.000Z"",
+                ""author"": {
+                    ""id"": 8272154,
+                    ""username"": ""ss.skuty"",
+                    ""name"": ""Adam Kuba"",
+                    ""state"": ""active"",
+                    ""locked"": false,
+                    ""avatar_url"": ""https://secure.gravatar.com/avatar/3822593552766ab8aa67b5d48388e42ce6b992558760418a7325084dd3b6013d?s=80\u0026d=identicon"",
+                    ""web_url"": ""https://gitlab.com/ss.skuty""
+                },
+                ""imported"": false,
+                ""imported_from"": ""none"",
+                ""author_username"": ""ss.skuty""
+            }";
         }
     }
 }
