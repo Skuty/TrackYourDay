@@ -160,11 +160,11 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IEncryptionService, EncryptionService>();
             services.AddSingleton<IClock, Clock>();
             services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
-
+            
             // Generic settings infrastructure
             services.AddSingleton<IGenericSettingsRepository, SqliteGenericSettingsRepository>();
             services.AddSingleton<IGenericSettingsService, GenericSettingsService>();
-
+            
             // Specific settings services
             services.AddSingleton<IGitLabSettingsService, GitLabSettingsService>();
             services.AddSingleton<IJiraSettingsService, JiraSettingsService>();

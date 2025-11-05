@@ -56,7 +56,7 @@ namespace TrackYourDay.Core.Versioning
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
 
-                return result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at).FirstOrDefault()?.body ?? string.Empty;
+                return result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at).FirstOrDefault().body;
             }
 
             throw new Exception("Cannot get newest release name from GitHub repository.");
@@ -89,7 +89,7 @@ namespace TrackYourDay.Core.Versioning
             }
             else
             {
-                throw new ArgumentNullException("ApplicationUpdater", "Updater Application was not found.");
+                throw new ArgumentNullException("ApplicationUpdater", "Updater Applicatoin was not found.");
             }
         }
 
@@ -113,7 +113,7 @@ namespace TrackYourDay.Core.Versioning
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
 
-                return result.Where(v => v.prerelease == false).OrderByDescending(v =>v.published_at).FirstOrDefault()?.name ?? "0.0.0";
+                return result.Where(v => v.prerelease == false).OrderByDescending(v =>v.published_at).FirstOrDefault().name;
             }
 
             throw new Exception("Cannot get newest release name from GitHub repository.");
