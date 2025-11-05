@@ -5,15 +5,17 @@
         private int major;
         private int minor;
         private int patch;
+        public bool IsPrerelease { get; private set; }
 
-        public ApplicationVersion(int major, int minor, int patch)
+        public ApplicationVersion(int major, int minor, int patch, bool isPrerelease)
         {
             this.major = major;
             this.minor = minor;
             this.patch = patch;
+            this.IsPrerelease = isPrerelease;
         }
 
-        public ApplicationVersion(string version)
+        public ApplicationVersion(string version, bool isPrerelease)
         {
             try
             {
@@ -22,22 +24,26 @@
                 this.major = int.Parse(splittedVersion[0]);
                 this.minor = int.Parse(splittedVersion[1]);
                 this.patch = int.Parse(splittedVersion[2]);
-            } catch (Exception e)
+                this.IsPrerelease = isPrerelease;
+            }
+            catch (Exception e)
             {
-                throw new ArgumentException("Version {version} is not in supported format.", version);
+                throw new ArgumentException($"Version {version} is not in supported format.", nameof(version));
             }
         }
 
-        public ApplicationVersion(Version version)
+        public ApplicationVersion(Version version, bool isPrerelease)
         {
             this.major = version.Major;
             this.minor = version.Minor;
             this.patch = version.Build > 0 ? version.Build : 0;
+            this.IsPrerelease = isPrerelease;
         }
 
         public override string ToString()
         {
-            return $"{this.major}.{this.minor}.{this.patch}";
+            var version = $"{this.major}.{this.minor}.{this.patch}";
+            return IsPrerelease ? $"{version}-beta" : version;
         }
 
         public bool IsNewerThan(ApplicationVersion versionToCompare)
@@ -46,14 +52,21 @@
             {
                 return true;
             }
+            if (this.major < versionToCompare.major)
+            {
+                return false;
+            }
 
             if (this.minor > versionToCompare.minor)
             {
                 return true;
             }
+            if (this.minor < versionToCompare.minor)
+            {
+                return false;
+            }
 
-            //TODO fix this for scenario 0.1.0 and 0.0.8
-            if ( this.patch > versionToCompare.patch)
+            if (this.patch > versionToCompare.patch)
             {
                 return true;
             }

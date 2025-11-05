@@ -21,8 +21,8 @@ namespace TrackYourDay.Tests
         public void WhenVersionIsNewer_ThenTrueIsReturned(string olderVersion, string newerVersion)
         {
             // Arrange
-            var older = new ApplicationVersion(olderVersion);
-            var newer = new ApplicationVersion(newerVersion);
+            var older = new ApplicationVersion(olderVersion, false);
+            var newer = new ApplicationVersion(newerVersion, false);
 
             // Act
             var isNewerVersion = newer.IsNewerThan(older);

@@ -11,12 +11,12 @@ namespace TrackYourDay.Core.Versioning
 
         public VersioningSystemFacade(Version assemblyVersion)
         {
-            this.currentApplicationVersion = new ApplicationVersion(assemblyVersion);
+            this.currentApplicationVersion = new ApplicationVersion(assemblyVersion, false);
         }
 
         public ApplicationVersion GetCurrentApplicationVersion()
         {
-            return this.currentApplicationVersion ?? new ApplicationVersion(0, 0, 0);
+            return this.currentApplicationVersion ?? new ApplicationVersion(0, 0, 0, false);
         }
 
         public ApplicationVersion GetNewestAvailableApplicationVersion()
@@ -25,12 +25,13 @@ namespace TrackYourDay.Core.Versioning
             {
                 if (this.newestAvailableApplicationVersion == null)
                 {
-                    var versionFromGitHub = this.GetNewestReleaseNameFromGitHubRepositoryUsingRestApi();
-                    this.newestAvailableApplicationVersion = new ApplicationVersion(versionFromGitHub);
+                    var releaseInfo = this.GetNewestReleaseInfoFromGitHubRepositoryUsingRestApi();
+                    this.newestAvailableApplicationVersion = new ApplicationVersion(releaseInfo.name, releaseInfo.prerelease);
                 }
 
                 return this.newestAvailableApplicationVersion;
-            } catch
+            }
+            catch
             {
                 return this.GetCurrentApplicationVersion();
             }
@@ -40,38 +41,28 @@ namespace TrackYourDay.Core.Versioning
         {
             var url = "https://api.github.com/repos/skuty/TrackYourDay/releases";
 
-            // TODO: Replace with injected HttpClient from IHttpClientFactory
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(url);
-            var productValue = new ProductInfoHeaderValue("TrackYourDay", this.GetCurrentApplicationVersion().ToString());
-
-            client.DefaultRequestHeaders.UserAgent.Add(productValue);
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-
+            using var client = CreateGitHubClient(url);
             HttpResponseMessage response = client.GetAsync(url).Result;
-
 
             if (response.IsSuccessStatusCode)
             {
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
-
-                return result.Where(v => v.prerelease == false).OrderByDescending(v => v.published_at).FirstOrDefault().body;
+                return result.OrderByDescending(v => v.published_at).FirstOrDefault()?.body ?? string.Empty;
             }
 
-            throw new Exception("Cannot get newest release name from GitHub repository.");
+            throw new Exception("Cannot get newest release information from GitHub repository.");
         }
 
         public bool IsNewerVersionAvailable()
         {
-            return this.GetNewestAvailableApplicationVersion().IsNewerThan(this.GetCurrentApplicationVersion());
+            var newestVersion = this.GetNewestAvailableApplicationVersion();
+            return newestVersion.IsNewerThan(this.GetCurrentApplicationVersion());
         }
-
 
         public void UpdateApplication()
         {
             string appDirectory = AppDomain.CurrentDomain.BaseDirectory;
-
             string batchFilePath = Path.Combine(appDirectory, "UpdateApplication.bat");
 
             if (File.Exists(batchFilePath))
@@ -79,44 +70,50 @@ namespace TrackYourDay.Core.Versioning
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = batchFilePath,
-                    UseShellExecute = false, // Set to true to allow batch script execution
-                    WorkingDirectory = appDirectory // Ensure it's executed in the app's directory
+                    UseShellExecute = false,
+                    WorkingDirectory = appDirectory
                 };
 
                 Process.Start(startInfo);
-
                 Process.GetCurrentProcess().Kill();
             }
             else
             {
-                throw new ArgumentNullException("ApplicationUpdater", "Updater Applicatoin was not found.");
+                throw new ArgumentNullException("ApplicationUpdater", "Updater Application was not found.");
             }
         }
 
-        private string GetNewestReleaseNameFromGitHubRepositoryUsingRestApi()
+        private GitHubReleaseResponse GetNewestReleaseInfoFromGitHubRepositoryUsingRestApi()
         {
             var url = "https://api.github.com/repos/skuty/TrackYourDay/releases";
 
-            // TODO: Replace with injected HttpClient from IHttpClientFactory
-            HttpClient client = new HttpClient();
-            client.BaseAddress = new Uri(url);
-            var productValue = new ProductInfoHeaderValue("TrackYourDay", this.GetCurrentApplicationVersion().ToString());
-
-            client.DefaultRequestHeaders.UserAgent.Add(productValue);
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
-
+            using var client = CreateGitHubClient(url);
             HttpResponseMessage response = client.GetAsync(url).Result;
-
 
             if (response.IsSuccessStatusCode)
             {
                 var json = response.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<List<GitHubReleaseResponse>>(json);
 
-                return result.Where(v => v.prerelease == false).OrderByDescending(v =>v.published_at).FirstOrDefault().name;
+                return result.OrderByDescending(v => v.published_at).FirstOrDefault() 
+                    ?? throw new Exception("No releases found in GitHub repository.");
             }
 
-            throw new Exception("Cannot get newest release name from GitHub repository.");
+            throw new Exception("Cannot get newest release information from GitHub repository.");
+        }
+
+        private HttpClient CreateGitHubClient(string url)
+        {
+            var client = new HttpClient
+            {
+                BaseAddress = new Uri(url)
+            };
+
+            var productValue = new ProductInfoHeaderValue("TrackYourDay", this.GetCurrentApplicationVersion().ToString());
+            client.DefaultRequestHeaders.UserAgent.Add(productValue);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+
+            return client;
         }
     }
 }
