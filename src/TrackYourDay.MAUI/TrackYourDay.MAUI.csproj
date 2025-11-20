@@ -78,18 +78,12 @@
     <Compile Update="SimpleNotificationPage..xaml.cs">
       <DependentUpon>SimpleNotificationPage..xaml</DependentUpon>
     </Compile>
-    <Compile Update="MeetingDescriptionPage.xaml.cs">
-      <DependentUpon>MeetingDescriptionPage.xaml</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <MauiXaml Update="PopupBlazorPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
     <MauiXaml Update="SimpleNotificationPage..xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </MauiXaml>
-    <MauiXaml Update="MeetingDescriptionPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </MauiXaml>
   </ItemGroup>
