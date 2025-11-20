@@ -27,7 +27,7 @@ public partial class MeetingDescriptionPage : ContentPage
         
         if (endedMeeting == null)
         {
-            throw new InvalidOperationException($"Meeting with GUID {meetingGuid} not found");
+            throw new InvalidOperationException("Meeting not found in the tracker");
         }
 
         this.meetingDescriptionViewModel = new MeetingDescriptionViewModel()
@@ -60,7 +60,7 @@ public partial class MeetingDescriptionPage : ContentPage
         }
     }
 
-    public void OnSaveDescriptionButtonClicked(object sender, EventArgs args)
+    public async void OnSaveDescriptionButtonClicked(object sender, EventArgs args)
 	{ 
         try
         {
@@ -76,7 +76,7 @@ public partial class MeetingDescriptionPage : ContentPage
         } 
         catch (Exception)
         {
-            this.DisplayAlert("Failed to save meeting description", "An error occurred while saving the description. Please try again.", "OK");
+            await this.DisplayAlert("Failed to save meeting description", "An error occurred while saving the description. Please try again.", "OK");
             return;
         }
 
