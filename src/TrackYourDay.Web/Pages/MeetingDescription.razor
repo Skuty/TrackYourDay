@@ -94,7 +94,11 @@
             }
             await CloseWindow();
         }
-        catch (Exception)
+        catch (InvalidOperationException)
+        {
+            errorMessage = "Unable to save description. The meeting may no longer be available.";
+        }
+        catch
         {
             errorMessage = "An error occurred while saving the description. Please try again.";
         }
