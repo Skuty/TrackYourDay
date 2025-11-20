@@ -74,9 +74,9 @@ public partial class MeetingDescriptionPage : ContentPage
                 }
             }
         } 
-        catch (Exception ex)
+        catch (Exception)
         {
-            this.DisplayAlert("Failed to save meeting description", $"An error occurred: {ex.Message}", "OK");
+            this.DisplayAlert("Failed to save meeting description", "An error occurred while saving the description. Please try again.", "OK");
             return;
         }
 
