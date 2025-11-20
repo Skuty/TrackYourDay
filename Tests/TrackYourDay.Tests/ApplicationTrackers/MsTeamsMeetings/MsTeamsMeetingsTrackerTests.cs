@@ -69,5 +69,42 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
             // Then
             this.publisherMock.Verify(x => x.Publish(It.IsAny<MeetingEndedEvent>(), CancellationToken.None), Times.Once);
         }
+
+        [Fact]
+        public void GivenEndedMeeting_WhenSettingDescription_ThenDescriptionIsSet()
+        {
+            // Given
+            var meetingGuid = Guid.NewGuid();
+            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(meetingGuid, this.clock.Now, "Test meeting"));
+            this.msTeamsMeetingsTracker.RecognizeActivity();
+            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns((StartedMeeting)null);
+            this.msTeamsMeetingsTracker.RecognizeActivity();
+
+            // When
+            var endedMeeting = this.msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
+            endedMeeting.SetDescription("Discussed project requirements");
+
+            // Then
+            Assert.Equal("Discussed project requirements", endedMeeting.Description);
+            Assert.Equal("Discussed project requirements", endedMeeting.GetDescription());
+        }
+
+        [Fact]
+        public void GivenEndedMeetingWithoutDescription_WhenGettingDescription_ThenReturnsMeetingTitle()
+        {
+            // Given
+            var meetingGuid = Guid.NewGuid();
+            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(meetingGuid, this.clock.Now, "Test meeting"));
+            this.msTeamsMeetingsTracker.RecognizeActivity();
+            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns((StartedMeeting)null);
+            this.msTeamsMeetingsTracker.RecognizeActivity();
+
+            // When
+            var endedMeeting = this.msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
+
+            // Then
+            Assert.Null(endedMeeting.Description);
+            Assert.Equal("Test meeting", endedMeeting.GetDescription());
+        }
     }
 }

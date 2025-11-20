@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="TrackYourDay.MAUI.MeetingDescriptionPage"
+             xmlns:local="clr-namespace:TrackYourDay.MAUI"
+             Shell.NavBarIsVisible="False"
+             Title="Track Your Day - Meeting Description">
+    
+    <StackLayout>
+        <ProgressBar HorizontalOptions="FillAndExpand" Progress="0" x:Name="progressBar" />
+        <Label Text="What was the meeting about?" HorizontalOptions="Center" TextColor="DarkBlue" FontSize="30" />
+        <Label
+            x:Name="meetingTitleLabel"
+            Text="Loading ..." 
+            HorizontalOptions="Center" TextColor="Black" FontSize="15" />
+        <Label 
+            x:Name="meetingDurationLabel"
+            Text="Loading ..." 
+            HorizontalOptions="Center" TextColor="Black" FontSize="15" />
+        <Label 
+            x:Name="meetingBordersLabel"
+            Text="Loading ..." 
+            HorizontalOptions="Center" TextColor="Black" FontSize="15" />
+        
+        <Entry 
+            x:Name="descriptionEntry"
+            Placeholder="Enter a short description..."
+            HorizontalOptions="FillAndExpand"
+            Margin="10" />
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Button 
+                Grid.Column="0"
+                HorizontalOptions="FillAndExpand"
+                BackgroundColor="Green"
+                Text="Save Description" 
+                Clicked="OnSaveDescriptionButtonClicked" />
+
+            <Button 
+                Grid.Column="1"
+                HorizontalOptions="FillAndExpand"
+                BackgroundColor="Gray"
+                Text="Skip" 
+                Clicked="OnSkipButtonClicked" />
+
+        </Grid>
+    </StackLayout>
+</ContentPage>
