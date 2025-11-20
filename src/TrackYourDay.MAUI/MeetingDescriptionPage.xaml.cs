@@ -23,7 +23,12 @@ public partial class MeetingDescriptionPage : ContentPage
         this.showPeriod = TimeSpan.FromSeconds(120);
         this.counterStep = 1 / (this.showPeriod.TotalSeconds * 4);
 
-        var endedMeeting = this.meetingTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
+        var endedMeeting = this.meetingTracker.GetEndedMeetings().FirstOrDefault(m => m.Guid == meetingGuid);
+        
+        if (endedMeeting == null)
+        {
+            throw new InvalidOperationException($"Meeting with GUID {meetingGuid} not found");
+        }
 
         this.meetingDescriptionViewModel = new MeetingDescriptionViewModel()
         {
@@ -62,13 +67,16 @@ public partial class MeetingDescriptionPage : ContentPage
             var description = this.descriptionEntry.Text;
             if (!string.IsNullOrWhiteSpace(description))
             {
-                var endedMeeting = this.meetingTracker.GetEndedMeetings().First(m => m.Guid == this.meetingGuid);
-                endedMeeting.SetDescription(description);
+                var endedMeeting = this.meetingTracker.GetEndedMeetings().FirstOrDefault(m => m.Guid == this.meetingGuid);
+                if (endedMeeting != null)
+                {
+                    endedMeeting.SetDescription(description);
+                }
             }
         } 
         catch (Exception ex)
         {
-            this.DisplayAlert("Something went wrong", $"{ex}", "OK");
+            this.DisplayAlert("Failed to save meeting description", $"An error occurred: {ex.Message}", "OK");
             return;
         }
 
