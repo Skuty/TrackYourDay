@@ -88,9 +88,13 @@
     {
         try
         {
-            if (!string.IsNullOrWhiteSpace(description) && endedMeeting != null)
+            if (endedMeeting != null)
             {
-                endedMeeting.SetDescription(description);
+                // Only set description if user entered something
+                if (!string.IsNullOrWhiteSpace(description))
+                {
+                    endedMeeting.SetDescription(description);
+                }
             }
             await CloseWindow();
         }
@@ -98,8 +102,9 @@
         {
             errorMessage = "Unable to save description. The meeting may no longer be available.";
         }
-        catch
+        catch (Exception)
         {
+            // Catch any unexpected exceptions to prevent popup from getting stuck
             errorMessage = "An error occurred while saving the description. Please try again.";
         }
     }
