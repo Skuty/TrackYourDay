@@ -103,7 +103,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
             var endedMeeting = this.msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
 
             // Then
-            Assert.Null(endedMeeting.Description);
+            Assert.Equal(string.Empty, endedMeeting.Description);
             Assert.Equal("Test meeting", endedMeeting.GetDescription());
         }
     }

@@ -2,7 +2,7 @@
 {
     public record class EndedMeeting (Guid Guid, DateTime StartDate, DateTime EndDate, string Title)
     {
-        public string? Description { get; private set; }
+        public string Description { get; private set; } = string.Empty;
 
         public TimeSpan GetDuration()
         {
