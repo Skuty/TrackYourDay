@@ -1,5 +1,5 @@
 using Microsoft.Data.Sqlite;
-using System.Collections.Concurrent;
+using Newtonsoft.Json;
 using TrackYourDay.Core.SystemTrackers.SystemStates;
 
 namespace TrackYourDay.Core.SystemTrackers
@@ -7,26 +7,17 @@ namespace TrackYourDay.Core.SystemTrackers
     public class SqliteActivityRepository : IActivityRepository
     {
         private readonly string databaseFileName;
-        private readonly ConcurrentDictionary<DateOnly, List<EndedActivity>> cache = new();
 
-        public SqliteActivityRepository(string? customDatabasePath = null)
+        public SqliteActivityRepository()
         {
-            if (customDatabasePath != null)
-            {
-                this.databaseFileName = customDatabasePath;
-            }
-            else
-            {
-                var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
+            var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
 
-                if (!Directory.Exists(appDataPath))
-                {
-                    Directory.CreateDirectory($"{appDataPath}");
-                }
-
-                this.databaseFileName = $"{appDataPath}\\TrackYourDayActivities.db";
+            if (!Directory.Exists(appDataPath))
+            {
+                Directory.CreateDirectory($"{appDataPath}");
             }
-            
+
+            this.databaseFileName = $"{appDataPath}\\TrackYourDayGeneric.db";
             InitializeStructure();
         }
 
@@ -37,40 +28,28 @@ namespace TrackYourDay.Core.SystemTrackers
 
             var insertCommand = connection.CreateCommand();
             insertCommand.CommandText = @"
-                INSERT INTO activities (Date, StartDate, EndDate, ActivityDescription, ActivityType)
-                VALUES (@date, @startDate, @endDate, @description, @type)";
+                INSERT INTO historical_activities (Guid, Date, StartDate, EndDate, ActivityTypeJson, ActivityDescription)
+                VALUES (@guid, @date, @startDate, @endDate, @activityTypeJson, @description)";
             
+            insertCommand.Parameters.AddWithValue("@guid", activity.Guid.ToString());
             insertCommand.Parameters.AddWithValue("@date", activity.StartDate.Date.ToString("yyyy-MM-dd"));
             insertCommand.Parameters.AddWithValue("@startDate", activity.StartDate.ToString("o"));
             insertCommand.Parameters.AddWithValue("@endDate", activity.EndDate.ToString("o"));
+            insertCommand.Parameters.AddWithValue("@activityTypeJson", JsonConvert.SerializeObject(activity.ActivityType));
             insertCommand.Parameters.AddWithValue("@description", activity.ActivityType.ActivityDescription);
-            insertCommand.Parameters.AddWithValue("@type", activity.ActivityType.GetType().Name);
             insertCommand.ExecuteNonQuery();
-
-            // Update cache
-            var date = DateOnly.FromDateTime(activity.StartDate.Date);
-            if (!cache.ContainsKey(date))
-            {
-                cache[date] = new List<EndedActivity>();
-            }
-            cache[date].Add(activity);
         }
 
         public IReadOnlyCollection<EndedActivity> GetActivitiesForDate(DateOnly date)
         {
-            if (cache.TryGetValue(date, out var cachedActivities))
-            {
-                return cachedActivities.AsReadOnly();
-            }
-
             var activities = new List<EndedActivity>();
             using var connection = new SqliteConnection($"Data Source={databaseFileName}");
             connection.Open();
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT StartDate, EndDate, ActivityDescription, ActivityType 
-                FROM activities 
+                SELECT Guid, StartDate, EndDate, ActivityTypeJson 
+                FROM historical_activities 
                 WHERE Date = @date
                 ORDER BY StartDate";
             command.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
@@ -78,22 +57,19 @@ namespace TrackYourDay.Core.SystemTrackers
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
-                var startDate = DateTime.Parse(reader.GetString(0));
-                var endDate = DateTime.Parse(reader.GetString(1));
-                var description = reader.GetString(2);
-                var type = reader.GetString(3);
-
-                // Reconstruct the SystemState based on the type
-                SystemState systemState = type switch
+                var guid = Guid.Parse(reader.GetString(0));
+                var startDate = DateTime.Parse(reader.GetString(1));
+                var endDate = DateTime.Parse(reader.GetString(2));
+                var activityTypeJson = reader.GetString(3);
+                var activityType = JsonConvert.DeserializeObject<SystemState>(activityTypeJson, new JsonSerializerSettings
                 {
-                    nameof(SystemLockedState) => SystemStateFactory.SystemLockedState(),
-                    _ => SystemStateFactory.FocusOnApplicationState(description)
-                };
+                    TypeNameHandling = TypeNameHandling.Auto
+                });
 
-                activities.Add(new EndedActivity(startDate, endDate, systemState));
+                var activity = new EndedActivity(startDate, endDate, activityType) { Guid = guid };
+                activities.Add(activity);
             }
 
-            cache[date] = activities;
             return activities.AsReadOnly();
         }
 
@@ -105,8 +81,8 @@ namespace TrackYourDay.Core.SystemTrackers
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT StartDate, EndDate, ActivityDescription, ActivityType 
-                FROM activities 
+                SELECT Guid, StartDate, EndDate, ActivityTypeJson 
+                FROM historical_activities 
                 WHERE Date >= @startDate AND Date <= @endDate
                 ORDER BY StartDate";
             command.Parameters.AddWithValue("@startDate", startDate.ToString("yyyy-MM-dd"));
@@ -115,18 +91,17 @@ namespace TrackYourDay.Core.SystemTrackers
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
-                var start = DateTime.Parse(reader.GetString(0));
-                var end = DateTime.Parse(reader.GetString(1));
-                var description = reader.GetString(2);
-                var type = reader.GetString(3);
-
-                SystemState systemState = type switch
+                var guid = Guid.Parse(reader.GetString(0));
+                var startDateVal = DateTime.Parse(reader.GetString(1));
+                var endDateVal = DateTime.Parse(reader.GetString(2));
+                var activityTypeJson = reader.GetString(3);
+                var activityType = JsonConvert.DeserializeObject<SystemState>(activityTypeJson, new JsonSerializerSettings
                 {
-                    nameof(SystemLockedState) => SystemStateFactory.SystemLockedState(),
-                    _ => SystemStateFactory.FocusOnApplicationState(description)
-                };
+                    TypeNameHandling = TypeNameHandling.Auto
+                });
 
-                activities.Add(new EndedActivity(start, end, systemState));
+                var activity = new EndedActivity(startDateVal, endDateVal, activityType) { Guid = guid };
+                activities.Add(activity);
             }
 
             return activities.AsReadOnly();
@@ -134,14 +109,12 @@ namespace TrackYourDay.Core.SystemTrackers
 
         public void Clear()
         {
-            cache.Clear();
-            
-            if (File.Exists(databaseFileName))
-            {
-                File.Delete(databaseFileName);
-            }
+            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            connection.Open();
 
-            InitializeStructure();
+            var clearCommand = connection.CreateCommand();
+            clearCommand.CommandText = "DELETE FROM historical_activities";
+            clearCommand.ExecuteNonQuery();
         }
 
         public long GetDatabaseSizeInBytes()
@@ -159,7 +132,7 @@ namespace TrackYourDay.Core.SystemTrackers
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT COUNT(*) FROM activities";
+            command.CommandText = "SELECT COUNT(*) FROM historical_activities";
             return Convert.ToInt32(command.ExecuteScalar());
         }
 
@@ -170,15 +143,16 @@ namespace TrackYourDay.Core.SystemTrackers
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                CREATE TABLE IF NOT EXISTS activities (
+                CREATE TABLE IF NOT EXISTS historical_activities (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Guid TEXT UNIQUE NOT NULL,
                     Date TEXT NOT NULL,
                     StartDate TEXT NOT NULL,
                     EndDate TEXT NOT NULL,
-                    ActivityDescription TEXT NOT NULL,
-                    ActivityType TEXT NOT NULL
+                    ActivityTypeJson TEXT NOT NULL,
+                    ActivityDescription TEXT NOT NULL
                 );
-                CREATE INDEX IF NOT EXISTS idx_activities_date ON activities(Date);";
+                CREATE INDEX IF NOT EXISTS idx_historical_activities_date ON historical_activities(Date);";
             command.ExecuteNonQuery();
         }
     }

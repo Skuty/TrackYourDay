@@ -1,31 +1,21 @@
 using Microsoft.Data.Sqlite;
-using System.Collections.Concurrent;
 
 namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 {
     public class SqliteMeetingRepository : IMeetingRepository
     {
         private readonly string databaseFileName;
-        private readonly ConcurrentDictionary<DateOnly, List<EndedMeeting>> cache = new();
 
-        public SqliteMeetingRepository(string? customDatabasePath = null)
+        public SqliteMeetingRepository()
         {
-            if (customDatabasePath != null)
-            {
-                this.databaseFileName = customDatabasePath;
-            }
-            else
-            {
-                var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
+            var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
 
-                if (!Directory.Exists(appDataPath))
-                {
-                    Directory.CreateDirectory($"{appDataPath}");
-                }
-
-                this.databaseFileName = $"{appDataPath}\\TrackYourDayMeetings.db";
+            if (!Directory.Exists(appDataPath))
+            {
+                Directory.CreateDirectory($"{appDataPath}");
             }
-            
+
+            this.databaseFileName = $"{appDataPath}\\TrackYourDayGeneric.db";
             InitializeStructure();
         }
 
@@ -36,40 +26,28 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 
             var insertCommand = connection.CreateCommand();
             insertCommand.CommandText = @"
-                INSERT INTO meetings (Guid, Date, StartDate, EndDate, Title)
-                VALUES (@guid, @date, @startDate, @endDate, @title)";
+                INSERT INTO historical_meetings (Guid, Date, StartDate, EndDate, Title, Description)
+                VALUES (@guid, @date, @startDate, @endDate, @title, @description)";
             
             insertCommand.Parameters.AddWithValue("@guid", meeting.Guid.ToString());
             insertCommand.Parameters.AddWithValue("@date", meeting.StartDate.Date.ToString("yyyy-MM-dd"));
             insertCommand.Parameters.AddWithValue("@startDate", meeting.StartDate.ToString("o"));
             insertCommand.Parameters.AddWithValue("@endDate", meeting.EndDate.ToString("o"));
             insertCommand.Parameters.AddWithValue("@title", meeting.Title);
+            insertCommand.Parameters.AddWithValue("@description", meeting.Description);
             insertCommand.ExecuteNonQuery();
-
-            // Update cache
-            var date = DateOnly.FromDateTime(meeting.StartDate.Date);
-            if (!cache.ContainsKey(date))
-            {
-                cache[date] = new List<EndedMeeting>();
-            }
-            cache[date].Add(meeting);
         }
 
         public IReadOnlyCollection<EndedMeeting> GetMeetingsForDate(DateOnly date)
         {
-            if (cache.TryGetValue(date, out var cachedMeetings))
-            {
-                return cachedMeetings.AsReadOnly();
-            }
-
             var meetings = new List<EndedMeeting>();
             using var connection = new SqliteConnection($"Data Source={databaseFileName}");
             connection.Open();
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT Guid, StartDate, EndDate, Title 
-                FROM meetings 
+                SELECT Guid, StartDate, EndDate, Title, Description 
+                FROM historical_meetings 
                 WHERE Date = @date
                 ORDER BY StartDate";
             command.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
@@ -81,11 +59,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
                 var startDate = DateTime.Parse(reader.GetString(1));
                 var endDate = DateTime.Parse(reader.GetString(2));
                 var title = reader.GetString(3);
+                var description = reader.GetString(4);
 
-                meetings.Add(new EndedMeeting(guid, startDate, endDate, title));
+                var meeting = new EndedMeeting(guid, startDate, endDate, title);
+                meeting.SetDescription(description);
+                meetings.Add(meeting);
             }
 
-            cache[date] = meetings;
             return meetings.AsReadOnly();
         }
 
@@ -97,8 +77,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                SELECT Guid, StartDate, EndDate, Title 
-                FROM meetings 
+                SELECT Guid, StartDate, EndDate, Title, Description 
+                FROM historical_meetings 
                 WHERE Date >= @startDate AND Date <= @endDate
                 ORDER BY StartDate";
             command.Parameters.AddWithValue("@startDate", startDate.ToString("yyyy-MM-dd"));
@@ -108,11 +88,14 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
             while (reader.Read())
             {
                 var guid = Guid.Parse(reader.GetString(0));
-                var start = DateTime.Parse(reader.GetString(1));
-                var end = DateTime.Parse(reader.GetString(2));
+                var startDateVal = DateTime.Parse(reader.GetString(1));
+                var endDateVal = DateTime.Parse(reader.GetString(2));
                 var title = reader.GetString(3);
+                var description = reader.GetString(4);
 
-                meetings.Add(new EndedMeeting(guid, start, end, title));
+                var meeting = new EndedMeeting(guid, startDateVal, endDateVal, title);
+                meeting.SetDescription(description);
+                meetings.Add(meeting);
             }
 
             return meetings.AsReadOnly();
@@ -120,14 +103,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 
         public void Clear()
         {
-            cache.Clear();
-            
-            if (File.Exists(databaseFileName))
-            {
-                File.Delete(databaseFileName);
-            }
+            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            connection.Open();
 
-            InitializeStructure();
+            var clearCommand = connection.CreateCommand();
+            clearCommand.CommandText = "DELETE FROM historical_meetings";
+            clearCommand.ExecuteNonQuery();
         }
 
         public long GetDatabaseSizeInBytes()
@@ -145,7 +126,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT COUNT(*) FROM meetings";
+            command.CommandText = "SELECT COUNT(*) FROM historical_meetings";
             return Convert.ToInt32(command.ExecuteScalar());
         }
 
@@ -156,15 +137,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                CREATE TABLE IF NOT EXISTS meetings (
+                CREATE TABLE IF NOT EXISTS historical_meetings (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Guid TEXT UNIQUE NOT NULL,
                     Date TEXT NOT NULL,
                     StartDate TEXT NOT NULL,
                     EndDate TEXT NOT NULL,
-                    Title TEXT NOT NULL
+                    Title TEXT NOT NULL,
+                    Description TEXT NOT NULL
                 );
-                CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(Date);";
+                CREATE INDEX IF NOT EXISTS idx_historical_meetings_date ON historical_meetings(Date);";
             command.ExecuteNonQuery();
         }
     }

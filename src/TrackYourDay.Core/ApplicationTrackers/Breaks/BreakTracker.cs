@@ -14,7 +14,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
         private readonly TimeSpan timeOfNoActivityToStartBreak;
         private readonly IPublisher publisher;
         private readonly IClock clock;
-        private readonly IBreakRepository? breakRepository;
+        private readonly IBreakRepository breakRepository;
         private Queue<StartedActivity> activitiesToProcessOld = new Queue<StartedActivity>();
         //TODO: Imitate break on debugging and check processedActivities, there are activities in wrong order
         private Queue<ActivityToProcess> activitiesToProcess = new Queue<ActivityToProcess>();
@@ -24,7 +24,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
         private StartedBreak? currentStartedBreak;
         private DateTime lastTimeOfActivity;
 
-        public BreakTracker(IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger, IBreakRepository? breakRepository = null)
+        public BreakTracker(IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger, IBreakRepository breakRepository)
         {
             this.publisher = publisher;
             this.clock = clock;
@@ -36,7 +36,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
         }
 
         // <summary> This constructor is used only for testing purposes. It should be marked as internal/private in future.<summary>
-        public BreakTracker(StartedBreak startedBreak, IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger) : this(publisher, clock, timeOfNoActivityToStartBreak, logger)
+        public BreakTracker(StartedBreak startedBreak, IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger, IBreakRepository breakRepository) : this(publisher, clock, timeOfNoActivityToStartBreak, logger, breakRepository)
         {
             currentStartedBreak = startedBreak;
             this.logger = logger;
@@ -153,33 +153,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
         public ReadOnlyCollection<EndedBreak> GetEndedBreaks()
         {
             return endedBreaks.ToList().Select(i => i.Value).ToList().AsReadOnly();
-        }
-
-        public IReadOnlyCollection<EndedBreak> GetBreaksForDate(DateOnly date)
-        {
-            if (breakRepository == null)
-            {
-                // Fallback to in-memory breaks for today
-                if (date == DateOnly.FromDateTime(clock.Now.Date))
-                {
-                    return GetEndedBreaks();
-                }
-                return Array.Empty<EndedBreak>();
-            }
-
-            // If requesting today's data, combine in-memory and persisted data
-            if (date == DateOnly.FromDateTime(clock.Now.Date))
-            {
-                var persistedBreaks = breakRepository.GetBreaksForDate(date);
-                var inMemoryBreaks = endedBreaks.Values.ToList();
-                var allBreaks = persistedBreaks.Concat(inMemoryBreaks)
-                    .GroupBy(b => b.Guid)
-                    .Select(g => g.First())
-                    .ToList();
-                return allBreaks.AsReadOnly();
-            }
-
-            return breakRepository.GetBreaksForDate(date);
         }
     }
 }

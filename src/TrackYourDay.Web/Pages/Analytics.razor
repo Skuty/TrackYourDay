@@ -2,9 +2,10 @@
 @using TrackYourDay.Core.Insights.Analytics
 @using TrackYourDay.Core.SystemTrackers
 @using TrackYourDay.Core
+@using TrackYourDay.Core.Persistence
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject IServiceProvider serviceProvider
-@inject ActivityTracker activityTracker
+@inject HistoricalDataService historicalDataService
 @inject IClock clock
 
 <MudStack Spacing="2">
@@ -105,7 +106,7 @@
         while (currentDate <= endDate.Value)
         {
             var dateOnly = DateOnly.FromDateTime(currentDate);
-            var dateActivities = activityTracker.GetActivitiesForDate(dateOnly);
+            var dateActivities = historicalDataService.GetActivitiesForDate(dateOnly);
             
             allActivities.AddRange(dateActivities);
             

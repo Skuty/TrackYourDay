@@ -1,30 +1,21 @@
 using Microsoft.Data.Sqlite;
-using System.Collections.Concurrent;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Breaks
 {
     public class SqliteBreakRepository : IBreakRepository
     {
         private readonly string databaseFileName;
-        private readonly ConcurrentDictionary<DateOnly, List<EndedBreak>> cache = new();
 
-        public SqliteBreakRepository(string? customDatabasePath = null)
+        public SqliteBreakRepository()
         {
-            if (customDatabasePath != null)
-            {
-                this.databaseFileName = customDatabasePath;
-            }
-            else
-            {
-                var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
+            var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
 
-                if (!Directory.Exists(appDataPath))
-                {
-                    Directory.CreateDirectory($"{appDataPath}");
-                }
-
-                this.databaseFileName = $"{appDataPath}\\TrackYourDayBreaks.db";
+            if (!Directory.Exists(appDataPath))
+            {
+                Directory.CreateDirectory($"{appDataPath}");
             }
+
+            this.databaseFileName = $"{appDataPath}\\TrackYourDayGeneric.db";
             
             InitializeStructure();
         }
@@ -36,7 +27,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
 
             var insertCommand = connection.CreateCommand();
             insertCommand.CommandText = @"
-                INSERT INTO breaks (Guid, Date, BreakStartedAt, BreakEndedAt, BreakDescription)
+                INSERT INTO historical_breaks (Guid, Date, BreakStartedAt, BreakEndedAt, BreakDescription)
                 VALUES (@guid, @date, @startedAt, @endedAt, @description)";
             
             insertCommand.Parameters.AddWithValue("@guid", endedBreak.Guid.ToString());
@@ -45,23 +36,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
             insertCommand.Parameters.AddWithValue("@endedAt", endedBreak.BreakEndedAt.ToString("o"));
             insertCommand.Parameters.AddWithValue("@description", endedBreak.BreakDescription);
             insertCommand.ExecuteNonQuery();
-
-            // Update cache
-            var date = DateOnly.FromDateTime(endedBreak.BreakStartedAt.Date);
-            if (!cache.ContainsKey(date))
-            {
-                cache[date] = new List<EndedBreak>();
-            }
-            cache[date].Add(endedBreak);
         }
 
         public IReadOnlyCollection<EndedBreak> GetBreaksForDate(DateOnly date)
         {
-            if (cache.TryGetValue(date, out var cachedBreaks))
-            {
-                return cachedBreaks.AsReadOnly();
-            }
-
             var breaks = new List<EndedBreak>();
             using var connection = new SqliteConnection($"Data Source={databaseFileName}");
             connection.Open();
@@ -69,7 +47,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
             var command = connection.CreateCommand();
             command.CommandText = @"
                 SELECT Guid, BreakStartedAt, BreakEndedAt, BreakDescription 
-                FROM breaks 
+                FROM historical_breaks 
                 WHERE Date = @date
                 ORDER BY BreakStartedAt";
             command.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
@@ -85,7 +63,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
                 breaks.Add(new EndedBreak(guid, startedAt, endedAt, description));
             }
 
-            cache[date] = breaks;
             return breaks.AsReadOnly();
         }
 
@@ -98,7 +75,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
             var command = connection.CreateCommand();
             command.CommandText = @"
                 SELECT Guid, BreakStartedAt, BreakEndedAt, BreakDescription 
-                FROM breaks 
+                FROM historical_breaks 
                 WHERE Date >= @startDate AND Date <= @endDate
                 ORDER BY BreakStartedAt";
             command.Parameters.AddWithValue("@startDate", startDate.ToString("yyyy-MM-dd"));
@@ -120,14 +97,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
 
         public void Clear()
         {
-            cache.Clear();
-            
-            if (File.Exists(databaseFileName))
-            {
-                File.Delete(databaseFileName);
-            }
+            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            connection.Open();
 
-            InitializeStructure();
+            var clearCommand = connection.CreateCommand();
+            clearCommand.CommandText = "DELETE FROM historical_breaks";
+            clearCommand.ExecuteNonQuery();
         }
 
         public long GetDatabaseSizeInBytes()
@@ -145,7 +120,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = "SELECT COUNT(*) FROM breaks";
+            command.CommandText = "SELECT COUNT(*) FROM historical_breaks";
             return Convert.ToInt32(command.ExecuteScalar());
         }
 
@@ -156,7 +131,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
 
             var command = connection.CreateCommand();
             command.CommandText = @"
-                CREATE TABLE IF NOT EXISTS breaks (
+                CREATE TABLE IF NOT EXISTS historical_breaks (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Guid TEXT UNIQUE NOT NULL,
                     Date TEXT NOT NULL,
@@ -164,7 +139,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
                     BreakEndedAt TEXT NOT NULL,
                     BreakDescription TEXT NOT NULL
                 );
-                CREATE INDEX IF NOT EXISTS idx_breaks_date ON breaks(Date);";
+                CREATE INDEX IF NOT EXISTS idx_historical_breaks_date ON historical_breaks(Date);";
             command.ExecuteNonQuery();
         }
     }

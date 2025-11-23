@@ -185,6 +185,7 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IActivityRepository, SqliteActivityRepository>();
             services.AddSingleton<IBreakRepository, SqliteBreakRepository>();
             services.AddSingleton<IMeetingRepository, SqliteMeetingRepository>();
+            services.AddSingleton<TrackYourDay.Core.Persistence.HistoricalDataService>();
 
             return services;
         }
