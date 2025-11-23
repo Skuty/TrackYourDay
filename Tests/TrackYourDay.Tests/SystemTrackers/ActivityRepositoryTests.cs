@@ -4,6 +4,7 @@ using Xunit;
 
 namespace TrackYourDay.Tests.SystemTrackers
 {
+    [Trait("Category", "Unit")]
     public class ActivityRepositoryTests
     {
         private string GetTempDatabasePath() => Path.Combine(Path.GetTempPath(), $"test_activities_{Guid.NewGuid()}.db");

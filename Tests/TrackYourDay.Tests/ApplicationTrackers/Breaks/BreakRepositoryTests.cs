@@ -3,6 +3,7 @@ using Xunit;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.Breaks
 {
+    [Trait("Category", "Unit")]
     public class BreakRepositoryTests
     {
         private string GetTempDatabasePath() => Path.Combine(Path.GetTempPath(), $"test_breaks_{Guid.NewGuid()}.db");
