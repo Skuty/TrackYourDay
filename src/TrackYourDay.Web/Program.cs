@@ -28,6 +28,8 @@ namespace TrackYourDay.Web
 
             builder.Services.AddSettings();
 
+            builder.Services.AddRepositories();
+
             builder.Services.AddTrackers();
 
             builder.Services.AddCoreNotifications();

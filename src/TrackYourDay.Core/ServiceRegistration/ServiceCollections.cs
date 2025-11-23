@@ -34,6 +34,7 @@ namespace TrackYourDay.Core.ServiceRegistration
                 var mousePositionRecognizingStrategy = new MousePositionRecognizingStrategy();
                 var lastInputRecognizingStrategy = new LastInputRecognizingStrategy();
                 var logger = container.GetRequiredService<ILogger<ActivityTracker>>();
+                var activityRepository = container.GetRequiredService<IActivityRepository>();
 
                 return new ActivityTracker(
                     clock,
@@ -41,7 +42,8 @@ namespace TrackYourDay.Core.ServiceRegistration
                     focusedWindowRecognizingStategy,
                     mousePositionRecognizingStrategy,
                     lastInputRecognizingStrategy,
-                    logger);
+                    logger,
+                    activityRepository);
             });
 
             services.AddSingleton<MsTeamsMeetingTracker>(container =>
@@ -58,12 +60,14 @@ namespace TrackYourDay.Core.ServiceRegistration
             {
                 var breaksSettingsService = serviceCollection.GetRequiredService<IBreaksSettingsService>();
                 var breaksSettings = breaksSettingsService.GetSettings();
+                var breakRepository = serviceCollection.GetRequiredService<IBreakRepository>();
                 
                 return new BreakTracker(
                     serviceCollection.GetRequiredService<IPublisher>(),
                     serviceCollection.GetRequiredService<IClock>(),
                     breaksSettings.TimeOfNoActivityToStartBreak,
-                    serviceCollection.GetRequiredService<ILogger<BreakTracker>>());
+                    serviceCollection.GetRequiredService<ILogger<BreakTracker>>(),
+                    breakRepository);
             });
 
             services.AddSingleton<MLNetSummaryStrategy>(serviceProvider => 
@@ -171,6 +175,15 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IBreaksSettingsService, BreaksSettingsService>();
             services.AddSingleton<IActivitiesSettingsService, ActivitiesSettingsService>();
             services.AddSingleton<IWorkdaySettingsService, WorkdaySettingsService>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddRepositories(this IServiceCollection services)
+        {
+            services.AddSingleton<IActivityRepository, SqliteActivityRepository>();
+            services.AddSingleton<IBreakRepository, SqliteBreakRepository>();
+            services.AddSingleton<IMeetingRepository, SqliteMeetingRepository>();
 
             return services;
         }

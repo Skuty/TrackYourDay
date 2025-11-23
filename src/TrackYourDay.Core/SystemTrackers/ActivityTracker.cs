@@ -13,6 +13,7 @@ namespace TrackYourDay.Core.SystemTrackers
 
         private readonly IClock clock;
         private readonly IPublisher publisher;
+        private readonly IActivityRepository? activityRepository;
         private readonly ISystemStateRecognizingStrategy focusedWindowRecognizingStategy;
         private readonly ISystemStateRecognizingStrategy mousePositionRecognizingStrategy;
         private readonly ISystemStateRecognizingStrategy lastInputRecognizingStrategy;
@@ -28,11 +29,13 @@ namespace TrackYourDay.Core.SystemTrackers
             ISystemStateRecognizingStrategy startedActivityRecognizingStrategy,
             ISystemStateRecognizingStrategy mousePositionRecognizingStrategy,
             ISystemStateRecognizingStrategy lastInputRecognizingStrategy,
-            ILogger<ActivityTracker> logger)
+            ILogger<ActivityTracker> logger,
+            IActivityRepository? activityRepository = null)
         {
             this.logger = logger;
             this.clock = clock;
             this.publisher = publisher;
+            this.activityRepository = activityRepository;
             focusedWindowRecognizingStategy = startedActivityRecognizingStrategy;
             this.mousePositionRecognizingStrategy = mousePositionRecognizingStrategy;
             this.lastInputRecognizingStrategy = lastInputRecognizingStrategy;
@@ -57,6 +60,10 @@ namespace TrackYourDay.Core.SystemTrackers
             {
                 var endedActivity = currentStartedActivity.End(clock.Now);
                 endedActivities.Add(endedActivity);
+                
+                // Persist to database
+                activityRepository?.Save(endedActivity);
+                
                 currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedFocusedWindow);
                 publisher.Publish(new PeriodicActivityEndedEvent(Guid.NewGuid(), endedActivity));
                 publisher.Publish(new PeriodicActivityStartedEvent(Guid.NewGuid(), currentStartedActivity));
@@ -88,6 +95,29 @@ namespace TrackYourDay.Core.SystemTrackers
         public IReadOnlyCollection<EndedActivity> GetEndedActivities()
         {
             return endedActivities.ToImmutableArray();
+        }
+
+        public IReadOnlyCollection<EndedActivity> GetActivitiesForDate(DateOnly date)
+        {
+            if (activityRepository == null)
+            {
+                // Fallback to in-memory activities for today
+                if (date == DateOnly.FromDateTime(clock.Now.Date))
+                {
+                    return endedActivities.ToImmutableArray();
+                }
+                return Array.Empty<EndedActivity>();
+            }
+
+            // If requesting today's data, combine in-memory and persisted data
+            if (date == DateOnly.FromDateTime(clock.Now.Date))
+            {
+                var persistedActivities = activityRepository.GetActivitiesForDate(date);
+                var allActivities = persistedActivities.Concat(endedActivities).ToList();
+                return allActivities.ToImmutableArray();
+            }
+
+            return activityRepository.GetActivitiesForDate(date);
         }
 
         public IReadOnlyCollection<InstantActivity> GetInstantActivities()
