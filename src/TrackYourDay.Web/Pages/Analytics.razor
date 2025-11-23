@@ -64,8 +64,8 @@
         availableStrategies = strategies.ToDictionary(s => s.GetType().Name, s => s);
         
         // Set default dates to today
-        startDate = DateTime.Now.Date;
-        endDate = DateTime.Now.Date;
+        startDate = clock.Now.Date;
+        endDate = clock.Now.Date;
         
         // Do not generate summary on load
     }

@@ -124,7 +124,7 @@
 
     protected override void OnInitialized()
     {
-        selectedDate = DateTime.Now;
+        selectedDate = clock.Now.Date;
         this.Refresh();
     }
 
@@ -149,7 +149,7 @@
         // Only calculate estimated end time for today
         if (IsToday())
         {
-            this.estimatedEndOfWorkDay = DateTime.Now + workday.OverallTimeLeftToWork;
+            this.estimatedEndOfWorkDay = clock.Now + workday.OverallTimeLeftToWork;
         }
 
         worktimeLeftDataChart[0] = this.workday.TimeLeftToWorkActively.TotalMinutes;
@@ -163,6 +163,6 @@
     
     private bool IsToday()
     {
-        return selectedDate.HasValue && selectedDate.Value.Date == DateTime.Now.Date;
+        return selectedDate.HasValue && selectedDate.Value.Date == clock.Now.Date;
     }
 }
