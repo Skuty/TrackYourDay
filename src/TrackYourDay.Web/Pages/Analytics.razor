@@ -1,11 +1,23 @@
 ﻿@page "/analytics"
 @using TrackYourDay.Core.Insights.Analytics
+@using TrackYourDay.Core.SystemTrackers
+@using TrackYourDay.Core.ApplicationTrackers.Breaks
+@using TrackYourDay.Core
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject IServiceProvider serviceProvider
+@inject ActivityTracker activityTracker
+@inject BreakTracker breakTracker
+@inject IClock clock
 
 <MudStack Spacing="2">
     <MudGrid>
-        <MudItem xs="6">
+        <MudItem xs="3">
+            <MudDatePicker Label="Start Date" @bind-Date="startDate" />
+        </MudItem>
+        <MudItem xs="3">
+            <MudDatePicker Label="End Date" @bind-Date="endDate" />
+        </MudItem>
+        <MudItem xs="4">
             <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
                 @foreach (var strategy in availableStrategies)
                 {
@@ -37,19 +49,61 @@
     private List<GroupedActivity>? groupedActivities = null;
     private string selectedStrategy = "Choose strategy";
     private Dictionary<string, ISummaryStrategy> availableStrategies;
+    private DateTime? startDate;
+    private DateTime? endDate;
 
     protected override async Task OnInitializedAsync()
     {
         var strategies = ActivitiesAnalyser.GetAvailableStrategies(serviceProvider);
         availableStrategies = strategies.ToDictionary(s => s.GetType().Name, s => s);
+        
+        // Set default dates to today
+        startDate = DateTime.Now.Date;
+        endDate = DateTime.Now.Date;
+        
         // Do not generate summary on load
     }
 
     private async Task GenerateSummary()
     {
+        if (startDate == null || endDate == null || string.IsNullOrEmpty(selectedStrategy))
+        {
+            return;
+        }
+
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
-        activitiesAnalyser.SetSummaryStrategy(strategyInstance);
-        groupedActivities = activitiesAnalyser.GetGroupedActivities().OrderByDescending(activity => activity.Duration).ToList();
+        
+        // Get activities for the date range
+        var allActivities = new List<TrackYourDay.Core.SystemTrackers.EndedActivity>();
+        var allBreaks = new List<TrackYourDay.Core.ApplicationTrackers.Breaks.EndedBreak>();
+        
+        var currentDate = startDate.Value;
+        while (currentDate <= endDate.Value)
+        {
+            var dateOnly = DateOnly.FromDateTime(currentDate);
+            var dateActivities = activityTracker.GetActivitiesForDate(dateOnly);
+            var dateBreaks = breakTracker.GetBreaksForDate(dateOnly);
+            
+            allActivities.AddRange(dateActivities);
+            allBreaks.AddRange(dateBreaks);
+            
+            currentDate = currentDate.AddDays(1);
+        }
+        
+        // Generate grouped activities using the strategy
+        var groupedActivitiesFromStrategy = strategyInstance.Generate(allActivities);
+        
+        // Apply break reductions
+        foreach (var endedBreak in allBreaks)
+        {
+            var breakPeriod = TrackYourDay.Core.Insights.Analytics.TimePeriod.CreateFrom(endedBreak.BreakStartedAt, endedBreak.BreakEndedAt);
+            foreach (var activity in groupedActivitiesFromStrategy)
+            {
+                activity.ReduceBy(endedBreak.Guid, breakPeriod);
+            }
+        }
+        
+        groupedActivities = groupedActivitiesFromStrategy.OrderByDescending(activity => activity.Duration).ToList();
         await InvokeAsync(StateHasChanged);
     }
     

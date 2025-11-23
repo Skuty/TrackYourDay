@@ -53,7 +53,8 @@ namespace TrackYourDay.Core.ServiceRegistration
                 var loggerForStrategy = container.GetRequiredService<ILogger<ProcessBasedMeetingRecognizingStrategy>>();
                 var meetingDiscoveryStrategy = new ProcessBasedMeetingRecognizingStrategy(loggerForStrategy, new WindowsProcessService());
                 var loggerForMs = container.GetRequiredService<ILogger<MsTeamsMeetingTracker>>();
-                return new MsTeamsMeetingTracker(clock, publisher, meetingDiscoveryStrategy, loggerForMs);
+                var meetingRepository = container.GetRequiredService<IMeetingRepository>();
+                return new MsTeamsMeetingTracker(clock, publisher, meetingDiscoveryStrategy, loggerForMs, meetingRepository);
             });
 
             services.AddSingleton<BreakTracker>(serviceCollection => 

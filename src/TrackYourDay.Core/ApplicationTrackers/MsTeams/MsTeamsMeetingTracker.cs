@@ -10,15 +10,17 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
         private IPublisher publisher;
         private IMeetingDiscoveryStrategy meetingDiscoveryStrategy;
         private ILogger<MsTeamsMeetingTracker> logger;
+        private IMeetingRepository? meetingRepository;
         private StartedMeeting ongoingMeeting;
         private List<EndedMeeting> endedMeetings;
 
-        public MsTeamsMeetingTracker(IClock clock, IPublisher publisher, IMeetingDiscoveryStrategy meetingDiscoveryStrategy, ILogger<MsTeamsMeetingTracker> logger)
+        public MsTeamsMeetingTracker(IClock clock, IPublisher publisher, IMeetingDiscoveryStrategy meetingDiscoveryStrategy, ILogger<MsTeamsMeetingTracker> logger, IMeetingRepository? meetingRepository = null)
         {
             this.clock = clock;
             this.publisher = publisher;
             this.meetingDiscoveryStrategy = meetingDiscoveryStrategy;
             this.logger = logger;
+            this.meetingRepository = meetingRepository;
             this.endedMeetings = new List<EndedMeeting>();
         }
 
@@ -48,6 +50,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
                 this.ongoingMeeting = null;
 
                 this.endedMeetings.Add(endedMeeting);
+                
+                // Persist to database
+                meetingRepository?.Save(endedMeeting);
+                
                 this.publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), CancellationToken.None);
                 this.logger.LogInformation("Meeting ended: {0}", endedMeeting);
 
@@ -60,6 +66,33 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
         public IReadOnlyCollection<EndedMeeting> GetEndedMeetings()
         {
             return this.endedMeetings.AsReadOnly();
+        }
+
+        public IReadOnlyCollection<EndedMeeting> GetMeetingsForDate(DateOnly date)
+        {
+            if (meetingRepository == null)
+            {
+                // Fallback to in-memory meetings for today
+                if (date == DateOnly.FromDateTime(clock.Now.Date))
+                {
+                    return GetEndedMeetings();
+                }
+                return Array.Empty<EndedMeeting>();
+            }
+
+            // If requesting today's data, combine in-memory and persisted data
+            if (date == DateOnly.FromDateTime(clock.Now.Date))
+            {
+                var persistedMeetings = meetingRepository.GetMeetingsForDate(date);
+                var inMemoryMeetings = endedMeetings.ToList();
+                var allMeetings = persistedMeetings.Concat(inMemoryMeetings)
+                    .GroupBy(m => m.Guid)
+                    .Select(g => g.First())
+                    .ToList();
+                return allMeetings.AsReadOnly();
+            }
+
+            return meetingRepository.GetMeetingsForDate(date);
         }
     }
 }

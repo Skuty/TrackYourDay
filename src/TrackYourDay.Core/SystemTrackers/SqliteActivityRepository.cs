@@ -9,16 +9,24 @@ namespace TrackYourDay.Core.SystemTrackers
         private readonly string databaseFileName;
         private readonly ConcurrentDictionary<DateOnly, List<EndedActivity>> cache = new();
 
-        public SqliteActivityRepository()
+        public SqliteActivityRepository(string? customDatabasePath = null)
         {
-            var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
-
-            if (!Directory.Exists(appDataPath))
+            if (customDatabasePath != null)
             {
-                Directory.CreateDirectory($"{appDataPath}");
+                this.databaseFileName = customDatabasePath;
             }
+            else
+            {
+                var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
 
-            this.databaseFileName = $"{appDataPath}\\TrackYourDayActivities.db";
+                if (!Directory.Exists(appDataPath))
+                {
+                    Directory.CreateDirectory($"{appDataPath}");
+                }
+
+                this.databaseFileName = $"{appDataPath}\\TrackYourDayActivities.db";
+            }
+            
             InitializeStructure();
         }
 
