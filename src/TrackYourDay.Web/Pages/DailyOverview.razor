@@ -7,8 +7,9 @@
 @using TrackYourDay.Core.SystemTrackers
 @using TrackYourDay.Web.Components
 
-    <div style="display: flex; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 10px;">
         <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
+        <MudDatePicker Label="Select Date" @bind-Date="selectedDate" DateChanged="OnDateChanged" />
         <OperationalBarComponent></OperationalBarComponent>
     </div>
 
@@ -54,7 +55,7 @@
 <MudStack Row="true">
     <MudCard>
         <MudCardContent>
-            <MudText Typo="Typo.h5">Your todays Workday progress:</MudText>
+            <MudText Typo="Typo.h5">Workday progress for @selectedDate?.ToString("D"):</MudText>
             <MudText Typo="Typo.body2">Time Of All Activities: @workday.TimeOfAllActivities</MudText>
             <MudText Typo="Typo.body2">Time Of All Breaks: @workday.TimeOfAllBreaks</MudText>
             <MudText Typo="Typo.body2">Overall Time Left To Work: @workday.OverallTimeLeftToWork</MudText>
@@ -94,9 +95,12 @@
     private BreakTracker breakTracker { get; set; }
     [Inject]
     public required IMediator Mediator { get; set; }
+    [Inject]
+    private IClock clock { get; set; }
 
     private Workday workday;
     private WorkdayDefinition workdayDefinition;
+    private DateTime? selectedDate;
 
     private DateTime estimatedEndOfWorkDay;
 
@@ -111,15 +115,29 @@
 
     protected override void OnInitialized()
     {
+        selectedDate = DateTime.Now;
         this.Refresh();
+    }
+
+    private void OnDateChanged(DateTime? date)
+    {
+        selectedDate = date ?? DateTime.Now;
+        Refresh();
     }
 
     private void Refresh()
     {
-        this.workdayDefinition = this.workdaySettingsService.GetWorkdayDefinition();
-        this.workday = Workday.CreateBasedOn(this.workdayDefinition, this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
+        if (selectedDate == null) return;
 
-        this.estimatedEndOfWorkDay = DateTime.Now + workday.OverallTimeLeftToWork;
+        var dateOnly = DateOnly.FromDateTime(selectedDate.Value);
+        this.workdayDefinition = this.workdaySettingsService.GetWorkdayDefinition();
+        
+        var activities = this.activityTracker.GetActivitiesForDate(dateOnly);
+        var breaks = this.breakTracker.GetBreaksForDate(dateOnly);
+        
+        this.workday = Workday.CreateBasedOn(this.workdayDefinition, activities, breaks);
+
+        this.estimatedEndOfWorkDay = selectedDate.Value.Date + workday.OverallTimeLeftToWork;
 
         worktimeLeftDataChart[0] = this.workday.TimeLeftToWorkActively.TotalMinutes;
         worktimeLeftDataChart[1] = this.workday.TimeAlreadyActivelyWorkded.TotalMinutes;

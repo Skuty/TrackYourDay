@@ -3,6 +3,8 @@
 @using TrackYourDay.Core.ApplicationTrackers.Breaks
 @using TrackYourDay.Core.ApplicationTrackers.GitLab
 @using TrackYourDay.Core.ApplicationTrackers.Jira
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams
+@using TrackYourDay.Core.SystemTrackers
 
 <h1>Settings</h1>
 
@@ -29,6 +31,17 @@
         <MudTextField @bind-Value="jiraApiUrl" Label="Jira API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="jiraApiKey" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
     </MudTabPanel>
+    <MudTabPanel Text="Database Management">
+        <MudText Typo="Typo.h6">Storage Overview</MudText>
+        <MudText Typo="Typo.body2">Activities: @activitiesCount records (@FormatBytes(activitiesSize))</MudText>
+        <MudText Typo="Typo.body2">Breaks: @breaksCount records (@FormatBytes(breaksSize))</MudText>
+        <MudText Typo="Typo.body2">Meetings: @meetingsCount records (@FormatBytes(meetingsSize))</MudText>
+        <MudText Typo="Typo.body2">Total Storage: @FormatBytes(totalSize)</MudText>
+        <MudDivider Class="my-4" />
+        <MudText Typo="Typo.h6" Class="mb-2">Clear All Historical Data</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Warning">Warning: This action cannot be undone!</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ShowClearDatabaseDialog" Class="mt-2">Clear Database</MudButton>
+    </MudTabPanel>
 </MudTabs>
 
 <MudDialog @bind-IsVisible="isSettingsSavedDialogVisible">
@@ -45,6 +58,28 @@
     </DialogActions>
 </MudDialog>
 
+<MudDialog @bind-IsVisible="isClearDatabaseDialogVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-3" Color="Color.Error" /> Confirm Database Clear
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>Are you sure you want to delete all historical data?</MudText>
+        <MudText Color="Color.Error">This will permanently remove:</MudText>
+        <ul>
+            <li>@activitiesCount activity records</li>
+            <li>@breaksCount break records</li>
+            <li>@meetingsCount meeting records</li>
+        </ul>
+        <MudText>This action cannot be undone!</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="HideClearDatabaseDialog">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ClearDatabase">Clear All Data</MudButton>
+    </DialogActions>
+</MudDialog>
+
 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettings">Save</MudButton>
 
 @code {
@@ -56,21 +91,43 @@
     
     [Inject]
     private IJiraSettingsService jiraSettingsService { get; init; }
+    
+    [Inject]
+    private IActivityRepository activityRepository { get; init; }
+    
+    [Inject]
+    private IBreakRepository breakRepository { get; init; }
+    
+    [Inject]
+    private IMeetingRepository meetingRepository { get; init; }
 
     private int minutesOfNoActivityToStartBreak = 5;
     private bool isSettingsSavedDialogVisible;
+    private bool isClearDatabaseDialogVisible;
     private string gitLabApiUrl = string.Empty;
     private string gitLabApiKey = string.Empty;
     private string jiraApiUrl = string.Empty;
     private string jiraApiKey = string.Empty;
+    
+    private long activitiesSize;
+    private long breaksSize;
+    private long meetingsSize;
+    private long totalSize;
+    private int activitiesCount;
+    private int breaksCount;
+    private int meetingsCount;
 
     protected override void OnInitialized()
     {
         this.LoadSettings();
+        this.LoadDatabaseStats();
     }
 
     private void ShowSettingsSavedDialog() => isSettingsSavedDialogVisible = true;
     private void HideSettingsSavedDialog() => isSettingsSavedDialogVisible = false;
+    
+    private void ShowClearDatabaseDialog() => isClearDatabaseDialogVisible = true;
+    private void HideClearDatabaseDialog() => isClearDatabaseDialogVisible = false;
 
     private void LoadSettings()
     {
@@ -84,6 +141,44 @@
         var jiraSettings = this.jiraSettingsService.GetSettings();
         this.jiraApiUrl = jiraSettings.ApiUrl;
         this.jiraApiKey = jiraSettings.ApiKey;
+    }
+    
+    private void LoadDatabaseStats()
+    {
+        activitiesSize = activityRepository.GetDatabaseSizeInBytes();
+        activitiesCount = activityRepository.GetTotalRecordCount();
+        
+        breaksSize = breakRepository.GetDatabaseSizeInBytes();
+        breaksCount = breakRepository.GetTotalRecordCount();
+        
+        meetingsSize = meetingRepository.GetDatabaseSizeInBytes();
+        meetingsCount = meetingRepository.GetTotalRecordCount();
+        
+        totalSize = activitiesSize + breaksSize + meetingsSize;
+    }
+    
+    private string FormatBytes(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+    
+    private void ClearDatabase()
+    {
+        activityRepository.Clear();
+        breakRepository.Clear();
+        meetingRepository.Clear();
+        
+        HideClearDatabaseDialog();
+        LoadDatabaseStats();
+        StateHasChanged();
     }
 
     private void SaveSettings()

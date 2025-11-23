@@ -78,8 +78,8 @@ namespace TrackYourDay.Core.SystemTrackers
                 // Reconstruct the SystemState based on the type
                 SystemState systemState = type switch
                 {
-                    nameof(SystemLockedState) => SystemStateFactory.SystemLockedEvent(),
-                    _ => SystemStateFactory.FocusedWindowEvent(description)
+                    nameof(SystemLockedState) => SystemStateFactory.SystemLockedState(),
+                    _ => SystemStateFactory.FocusOnApplicationState(description)
                 };
 
                 activities.Add(new EndedActivity(startDate, endDate, systemState));
@@ -114,8 +114,8 @@ namespace TrackYourDay.Core.SystemTrackers
 
                 SystemState systemState = type switch
                 {
-                    nameof(SystemLockedState) => SystemStateFactory.SystemLockedEvent(),
-                    _ => SystemStateFactory.FocusedWindowEvent(description)
+                    nameof(SystemLockedState) => SystemStateFactory.SystemLockedState(),
+                    _ => SystemStateFactory.FocusOnApplicationState(description)
                 };
 
                 activities.Add(new EndedActivity(start, end, systemState));
