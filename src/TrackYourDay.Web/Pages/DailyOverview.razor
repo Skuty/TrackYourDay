@@ -9,7 +9,7 @@
 
     <div style="display: flex; align-items: center; gap: 10px;">
         <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
-        <MudDatePicker Label="Select Date" @bind-Date="selectedDate" DateChanged="OnDateChanged" />
+        <MudDatePicker Label="Select Date" Date="selectedDate" DateChanged="OnDateChanged" />
         <OperationalBarComponent></OperationalBarComponent>
     </div>
 

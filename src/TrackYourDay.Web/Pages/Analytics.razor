@@ -1,12 +1,10 @@
 ﻿@page "/analytics"
 @using TrackYourDay.Core.Insights.Analytics
 @using TrackYourDay.Core.SystemTrackers
-@using TrackYourDay.Core.ApplicationTrackers.Breaks
 @using TrackYourDay.Core
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject IServiceProvider serviceProvider
 @inject ActivityTracker activityTracker
-@inject BreakTracker breakTracker
 @inject IClock clock
 
 <MudStack Spacing="2">
@@ -102,35 +100,23 @@
         
         // Get activities for the date range
         var allActivities = new List<TrackYourDay.Core.SystemTrackers.EndedActivity>();
-        var allBreaks = new List<TrackYourDay.Core.ApplicationTrackers.Breaks.EndedBreak>();
         
         var currentDate = startDate.Value;
         while (currentDate <= endDate.Value)
         {
             var dateOnly = DateOnly.FromDateTime(currentDate);
             var dateActivities = activityTracker.GetActivitiesForDate(dateOnly);
-            var dateBreaks = breakTracker.GetBreaksForDate(dateOnly);
             
             allActivities.AddRange(dateActivities);
-            allBreaks.AddRange(dateBreaks);
             
             currentDate = currentDate.AddDays(1);
         }
         
         // Generate grouped activities using the strategy
-        var groupedActivitiesFromStrategy = strategyInstance.Generate(allActivities);
+        groupedActivities = strategyInstance.Generate(allActivities)
+            .OrderByDescending(activity => activity.Duration)
+            .ToList();
         
-        // Apply break reductions
-        foreach (var endedBreak in allBreaks)
-        {
-            var breakPeriod = TrackYourDay.Core.Insights.Analytics.TimePeriod.CreateFrom(endedBreak.BreakStartedAt, endedBreak.BreakEndedAt);
-            foreach (var activity in groupedActivitiesFromStrategy)
-            {
-                activity.ReduceBy(endedBreak.Guid, breakPeriod);
-            }
-        }
-        
-        groupedActivities = groupedActivitiesFromStrategy.OrderByDescending(activity => activity.Duration).ToList();
         await InvokeAsync(StateHasChanged);
     }
     
