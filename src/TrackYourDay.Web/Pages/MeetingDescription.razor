@@ -1,0 +1,122 @@
+@page "/MeetingDescription/{MeetingGuidString}"
+
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams
+@using TrackYourDay.Core.MAUIProxy
+@using MediatR
+
+@inject MsTeamsMeetingTracker meetingTracker
+@inject IMediator mediator
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
+    @if (endedMeeting != null)
+    {
+        <MudPaper Class="pa-6" Elevation="3">
+            <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4" Color="Color.Primary">
+                What was the meeting about?
+            </MudText>
+
+            <MudText Typo="Typo.body1" Class="mb-2">
+                <strong>Meeting:</strong> @endedMeeting.Title
+            </MudText>
+
+            <MudText Typo="Typo.body1" Class="mb-2">
+                <strong>Duration:</strong> @((int)endedMeeting.GetDuration().TotalMinutes) minutes
+            </MudText>
+
+            <MudText Typo="Typo.body1" Class="mb-4">
+                <strong>Time:</strong> @endedMeeting.StartDate.ToShortTimeString() - @endedMeeting.EndDate.ToShortTimeString()
+            </MudText>
+
+            <MudTextField @bind-Value="description" 
+                          Label="Description" 
+                          Variant="Variant.Outlined" 
+                          Lines="3"
+                          Placeholder="Enter a short description..."
+                          Class="mb-4" />
+
+            <MudGrid>
+                <MudItem xs="6">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Success" 
+                               FullWidth="true" 
+                               OnClick="SaveDescription">
+                        Save Description
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Default" 
+                               FullWidth="true" 
+                               OnClick="Skip">
+                        Skip
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-3">@errorMessage</MudAlert>
+            }
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Warning">Meeting not found</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string MeetingGuidString { get; set; }
+
+    [CascadingParameter(Name = "ParentMauiWindowId")]
+    public Guid ParentMauiWindowId { get; set; }
+
+    private EndedMeeting endedMeeting;
+    private string description = string.Empty;
+    private string errorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (Guid.TryParse(MeetingGuidString, out var meetingGuid))
+        {
+            endedMeeting = meetingTracker.GetEndedMeetings().FirstOrDefault(m => m.Guid == meetingGuid);
+        }
+    }
+
+    private async Task SaveDescription()
+    {
+        try
+        {
+            if (endedMeeting != null)
+            {
+                // Only set description if user entered something
+                if (!string.IsNullOrWhiteSpace(description))
+                {
+                    endedMeeting.SetDescription(description);
+                }
+            }
+            await CloseWindow();
+        }
+        catch (InvalidOperationException)
+        {
+            errorMessage = "Unable to save description. The meeting may no longer be available.";
+        }
+        catch (Exception)
+        {
+            // Catch any unexpected exceptions to prevent popup from getting stuck
+            errorMessage = "An error occurred while saving the description. Please try again.";
+        }
+    }
+
+    private async Task Skip()
+    {
+        await CloseWindow();
+    }
+
+    private async Task CloseWindow()
+    {
+        // Send command to close the MAUI window
+        await mediator.Send(new CloseWindowCommand(ParentMauiWindowId));
+    }
+}
