@@ -3,9 +3,7 @@
     <WindowsPackageType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">None</WindowsPackageType>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">net8.0-windows10.0.19041.0</TargetFrameworks>
-    <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('windows'))">net8.0</TargetFrameworks>
-    <EnableDefaultItems Condition="'$(TargetFramework)' == 'net8.0' AND !$([MSBuild]::IsOSPlatform('windows'))">false</EnableDefaultItems>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
 	<OutputType>Exe</OutputType>
     <RootNamespace>TrackYourDay.MAUI</RootNamespace>
     <UseMaui>true</UseMaui>
@@ -27,10 +25,7 @@
       <PropertyGroup Condition="'$(RuntimeIdentifierOverride)' != ''">
 	    <RuntimeIdentifier>$(RuntimeIdentifierOverride)</RuntimeIdentifier>
       </PropertyGroup>
-  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('windows'))">
-    <Compile Include="ProgramStub.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('windows'))">
+  <ItemGroup>
     <Resource Include="Resources\AppIcon\defaultclockicon.svg" />
   </ItemGroup>
   <ItemGroup>
