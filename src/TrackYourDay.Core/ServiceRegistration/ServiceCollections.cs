@@ -182,9 +182,16 @@ namespace TrackYourDay.Core.ServiceRegistration
 
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            services.AddSingleton<IActivityRepository, SqliteActivityRepository>();
-            services.AddSingleton<IBreakRepository, SqliteBreakRepository>();
-            services.AddSingleton<IMeetingRepository, SqliteMeetingRepository>();
+            // Register unified repository for each type with adapters
+            services.AddSingleton<IActivityRepository>(sp => 
+                new SystemTrackers.ActivityRepositoryAdapter(
+                    new TrackYourDay.Core.Persistence.SqliteHistoricalDataRepository<SystemTrackers.EndedActivity>()));
+            services.AddSingleton<IBreakRepository>(sp => 
+                new ApplicationTrackers.Breaks.BreakRepositoryAdapter(
+                    new TrackYourDay.Core.Persistence.SqliteHistoricalDataRepository<ApplicationTrackers.Breaks.EndedBreak>()));
+            services.AddSingleton<IMeetingRepository>(sp => 
+                new ApplicationTrackers.MsTeams.MeetingRepositoryAdapter(
+                    new TrackYourDay.Core.Persistence.SqliteHistoricalDataRepository<ApplicationTrackers.MsTeams.EndedMeeting>()));
             services.AddSingleton<TrackYourDay.Core.Persistence.HistoricalDataService>();
 
             return services;

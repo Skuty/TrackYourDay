@@ -1,12 +1,10 @@
+using TrackYourDay.Core.Persistence;
+
 namespace TrackYourDay.Core.SystemTrackers
 {
-    public interface IActivityRepository
+    public interface IActivityRepository : IHistoricalDataRepository<EndedActivity>
     {
-        void Save(EndedActivity activity);
         IReadOnlyCollection<EndedActivity> GetActivitiesForDate(DateOnly date);
         IReadOnlyCollection<EndedActivity> GetActivitiesBetweenDates(DateOnly startDate, DateOnly endDate);
-        void Clear();
-        long GetDatabaseSizeInBytes();
-        int GetTotalRecordCount();
     }
 }
