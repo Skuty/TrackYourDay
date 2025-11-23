@@ -17,9 +17,18 @@
 
 <MudExpansionPanels MultiExpansion="true">
     <MudExpansionPanel Text="Short overview" IsInitiallyExpanded="true">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Estimated end of Workday at: @this.estimatedEndOfWorkDay.ToShortTimeString()</h2>
-        </div>
+        @if (IsToday())
+        {
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Estimated end of Workday at: @this.estimatedEndOfWorkDay.ToShortTimeString()</h2>
+            </div>
+        }
+        else
+        {
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Historical Data for @selectedDate?.ToString("D")</h2>
+            </div>
+        }
         <MudGrid Justify="Justify.Center">
             <MudItem>
                 <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
@@ -137,7 +146,11 @@
         
         this.workday = Workday.CreateBasedOn(this.workdayDefinition, activities, breaks);
 
-        this.estimatedEndOfWorkDay = selectedDate.Value.Date + workday.OverallTimeLeftToWork;
+        // Only calculate estimated end time for today
+        if (IsToday())
+        {
+            this.estimatedEndOfWorkDay = DateTime.Now + workday.OverallTimeLeftToWork;
+        }
 
         worktimeLeftDataChart[0] = this.workday.TimeLeftToWorkActively.TotalMinutes;
         worktimeLeftDataChart[1] = this.workday.TimeAlreadyActivelyWorkded.TotalMinutes;
@@ -146,5 +159,10 @@
 
         breaksLeftDataChart[0] = this.workday.BreakTimeLeft.TotalMinutes;
         breaksLeftDataChart[1] = this.workday.ValidBreakTimeUsed.TotalMinutes;
+    }
+    
+    private bool IsToday()
+    {
+        return selectedDate.HasValue && selectedDate.Value.Date == DateTime.Now.Date;
     }
 }
