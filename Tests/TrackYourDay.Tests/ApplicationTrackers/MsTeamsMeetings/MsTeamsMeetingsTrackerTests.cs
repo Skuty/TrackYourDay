@@ -15,6 +15,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
         private Mock<IPublisher> publisherMock;
         private Mock<IMeetingDiscoveryStrategy> meetingDiscoveryStrategy;
         private Mock<ILogger<MsTeamsMeetingTracker>> loggerMock;
+        private Mock<IMeetingRepository> meetingRepositoryMock;
         private MsTeamsMeetingTracker msTeamsMeetingsTracker;
 
         public MsTeamsMeetingsTrackerTests()
@@ -23,7 +24,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
             this.loggerMock = new Mock<ILogger<MsTeamsMeetingTracker>>();
             this.publisherMock = new Mock<IPublisher>();
             this.meetingDiscoveryStrategy = new Mock<IMeetingDiscoveryStrategy>();
-            this.msTeamsMeetingsTracker = new MsTeamsMeetingTracker(this.clock, this.publisherMock.Object, this.meetingDiscoveryStrategy.Object, this.loggerMock.Object);
+            this.meetingRepositoryMock = new Mock<IMeetingRepository>();
+            this.msTeamsMeetingsTracker = new MsTeamsMeetingTracker(this.clock, this.publisherMock.Object, this.meetingDiscoveryStrategy.Object, this.loggerMock.Object, this.meetingRepositoryMock.Object);
         }
 
         [Fact]
