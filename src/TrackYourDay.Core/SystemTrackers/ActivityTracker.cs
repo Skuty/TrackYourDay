@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
+using TrackYourDay.Core.Persistence;
 using TrackYourDay.Core.SystemTrackers.ActivityRecognizing;
 using TrackYourDay.Core.SystemTrackers.Events;
 using TrackYourDay.Core.SystemTrackers.SystemStates;

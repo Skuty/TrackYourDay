@@ -192,7 +192,22 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IMeetingRepository>(sp => 
                 new ApplicationTrackers.MsTeams.MeetingRepositoryAdapter(
                     new TrackYourDay.Core.Persistence.SqliteHistoricalDataRepository<ApplicationTrackers.MsTeams.EndedMeeting>()));
-            services.AddSingleton<TrackYourDay.Core.Persistence.HistoricalDataService>();
+            
+            services.AddSingleton<TrackYourDay.Core.Persistence.HistoricalDataService>(sp =>
+            {
+                var historicalDataService = new TrackYourDay.Core.Persistence.HistoricalDataService(
+                    sp.GetRequiredService<IClock>(),
+                    sp.GetRequiredService<ActivityTracker>(),
+                    sp.GetRequiredService<BreakTracker>(),
+                    sp.GetRequiredService<MsTeamsMeetingTracker>());
+
+                // Register repositories only (trackers are now injected via constructor)
+                historicalDataService.RegisterRepository(sp.GetRequiredService<IActivityRepository>());
+                historicalDataService.RegisterRepository(sp.GetRequiredService<IBreakRepository>());
+                historicalDataService.RegisterRepository(sp.GetRequiredService<IMeetingRepository>());
+
+                return historicalDataService;
+            });
 
             return services;
         }

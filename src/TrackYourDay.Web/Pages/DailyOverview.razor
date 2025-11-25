@@ -139,8 +139,8 @@
         var dateOnly = DateOnly.FromDateTime(selectedDate.Value);
         this.workdayDefinition = this.workdaySettingsService.GetWorkdayDefinition();
         
-        var activities = this.historicalDataService.GetActivitiesForDate(dateOnly);
-        var breaks = this.historicalDataService.GetBreaksForDate(dateOnly);
+        var activities = this.historicalDataService.GetForDate<EndedActivity>(dateOnly);
+        var breaks = this.historicalDataService.GetForDate<EndedBreak>(dateOnly);
         
         this.workday = Workday.CreateBasedOn(this.workdayDefinition, activities, breaks);
 
