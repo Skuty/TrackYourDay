@@ -5,10 +5,13 @@
 @using TrackYourDay.Core.Insights.Workdays
 @using TrackYourDay.Core.Settings
 @using TrackYourDay.Core.SystemTrackers
+@using TrackYourDay.Core.Persistence
+@using TrackYourDay.Core.Persistence.Specifications
 @using TrackYourDay.Web.Components
 
-    <div style="display: flex; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 10px;">
         <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
+        <MudDatePicker Label="Select Date" Date="selectedDate" DateChanged="OnDateChanged" />
         <OperationalBarComponent></OperationalBarComponent>
     </div>
 
@@ -16,9 +19,18 @@
 
 <MudExpansionPanels MultiExpansion="true">
     <MudExpansionPanel Text="Short overview" IsInitiallyExpanded="true">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Estimated end of Workday at: @this.estimatedEndOfWorkDay.ToShortTimeString()</h2>
-        </div>
+        @if (IsToday())
+        {
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Estimated end of Workday at: @this.estimatedEndOfWorkDay.ToShortTimeString()</h2>
+            </div>
+        }
+        else
+        {
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Historical Data for @selectedDate?.ToString("D")</h2>
+            </div>
+        }
         <MudGrid Justify="Justify.Center">
             <MudItem>
                 <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
@@ -54,7 +66,7 @@
 <MudStack Row="true">
     <MudCard>
         <MudCardContent>
-            <MudText Typo="Typo.h5">Your todays Workday progress:</MudText>
+            <MudText Typo="Typo.h5">Workday progress for @selectedDate?.ToString("D"):</MudText>
             <MudText Typo="Typo.body2">Time Of All Activities: @workday.TimeOfAllActivities</MudText>
             <MudText Typo="Typo.body2">Time Of All Breaks: @workday.TimeOfAllBreaks</MudText>
             <MudText Typo="Typo.body2">Overall Time Left To Work: @workday.OverallTimeLeftToWork</MudText>
@@ -89,14 +101,17 @@
     [Inject]
     private IWorkdaySettingsService workdaySettingsService { get; set; }
     [Inject]
-    private ActivityTracker activityTracker { get; set; }
+    private IHistoricalDataRepository<EndedActivity> activityRepository { get; set; }
     [Inject]
-    private BreakTracker breakTracker { get; set; }
+    private IHistoricalDataRepository<EndedBreak> breakRepository { get; set; }
     [Inject]
     public required IMediator Mediator { get; set; }
+    [Inject]
+    private IClock clock { get; set; }
 
     private Workday workday;
     private WorkdayDefinition workdayDefinition;
+    private DateTime? selectedDate;
 
     private DateTime estimatedEndOfWorkDay;
 
@@ -111,15 +126,33 @@
 
     protected override void OnInitialized()
     {
+        selectedDate = clock.Now.Date;
         this.Refresh();
+    }
+
+    private void OnDateChanged(DateTime? date)
+    {
+        selectedDate = date ?? DateTime.Now;
+        Refresh();
     }
 
     private void Refresh()
     {
-        this.workdayDefinition = this.workdaySettingsService.GetWorkdayDefinition();
-        this.workday = Workday.CreateBasedOn(this.workdayDefinition, this.activityTracker.GetEndedActivities(), this.breakTracker.GetEndedBreaks());
+        if (selectedDate == null) return;
 
-        this.estimatedEndOfWorkDay = DateTime.Now + workday.OverallTimeLeftToWork;
+        var dateOnly = DateOnly.FromDateTime(selectedDate.Value);
+        this.workdayDefinition = this.workdaySettingsService.GetWorkdayDefinition();
+        
+        var activities = this.activityRepository.Find(new ActivityByDateSpecification(dateOnly));
+        var breaks = this.breakRepository.Find(new BreakByDateSpecification(dateOnly));
+        
+        this.workday = Workday.CreateBasedOn(this.workdayDefinition, activities, breaks);
+
+        // Only calculate estimated end time for today
+        if (IsToday())
+        {
+            this.estimatedEndOfWorkDay = clock.Now + workday.OverallTimeLeftToWork;
+        }
 
         worktimeLeftDataChart[0] = this.workday.TimeLeftToWorkActively.TotalMinutes;
         worktimeLeftDataChart[1] = this.workday.TimeAlreadyActivelyWorkded.TotalMinutes;
@@ -128,5 +161,10 @@
 
         breaksLeftDataChart[0] = this.workday.BreakTimeLeft.TotalMinutes;
         breaksLeftDataChart[1] = this.workday.ValidBreakTimeUsed.TotalMinutes;
+    }
+    
+    private bool IsToday()
+    {
+        return selectedDate.HasValue && selectedDate.Value.Date == clock.Now.Date;
     }
 }

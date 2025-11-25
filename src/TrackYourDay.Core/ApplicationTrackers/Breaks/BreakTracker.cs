@@ -108,6 +108,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
                         var endedBreak = currentStartedBreak.EndBreak(activityToProcess.ActivityDate);
                         logger.LogInformation("End: {EndedBreak}", endedBreak);
                         endedBreaks.TryAdd(endedBreak.Guid, endedBreak);
+                        
                         currentStartedBreak = null;
                         lastTimeOfActivity = activityToProcess.ActivityDate;
                         processedActivities.Add(activityToProcess);

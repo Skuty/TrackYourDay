@@ -1,11 +1,23 @@
 ﻿@page "/analytics"
 @using TrackYourDay.Core.Insights.Analytics
+@using TrackYourDay.Core.SystemTrackers
+@using TrackYourDay.Core
+@using TrackYourDay.Core.Persistence
+@using TrackYourDay.Core.Persistence.Specifications
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject IServiceProvider serviceProvider
+@inject IHistoricalDataRepository<EndedActivity> activityRepository
+@inject IClock clock
 
 <MudStack Spacing="2">
     <MudGrid>
-        <MudItem xs="6">
+        <MudItem xs="3">
+            <MudDatePicker Label="Start Date" @bind-Date="startDate" />
+        </MudItem>
+        <MudItem xs="3">
+            <MudDatePicker Label="End Date" @bind-Date="endDate" />
+        </MudItem>
+        <MudItem xs="4">
             <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
                 @foreach (var strategy in availableStrategies)
                 {
@@ -17,6 +29,11 @@
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateSummary">Generate</MudButton>
         </MudItem>
     </MudGrid>
+    
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <MudAlert Severity="Severity.Warning">@errorMessage</MudAlert>
+    }
     <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
         <ToolBarContent>
             <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
@@ -37,19 +54,63 @@
     private List<GroupedActivity>? groupedActivities = null;
     private string selectedStrategy = "Choose strategy";
     private Dictionary<string, ISummaryStrategy> availableStrategies;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string errorMessage = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         var strategies = ActivitiesAnalyser.GetAvailableStrategies(serviceProvider);
         availableStrategies = strategies.ToDictionary(s => s.GetType().Name, s => s);
+        
+        // Set default dates to today
+        startDate = clock.Now.Date;
+        endDate = clock.Now.Date;
+        
         // Do not generate summary on load
     }
 
     private async Task GenerateSummary()
     {
+        errorMessage = string.Empty;
+        
+        if (startDate == null)
+        {
+            errorMessage = "Please select a start date.";
+            return;
+        }
+        
+        if (endDate == null)
+        {
+            errorMessage = "Please select an end date.";
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(selectedStrategy) || selectedStrategy == "Choose strategy")
+        {
+            errorMessage = "Please select a summary strategy.";
+            return;
+        }
+        
+        if (startDate.Value > endDate.Value)
+        {
+            errorMessage = "Start date must be before or equal to end date.";
+            return;
+        }
+
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
-        activitiesAnalyser.SetSummaryStrategy(strategyInstance);
-        groupedActivities = activitiesAnalyser.GetGroupedActivities().OrderByDescending(activity => activity.Duration).ToList();
+        
+        // Get activities for the date range using the repository
+        var allActivities = activityRepository.Find(
+            new ActivityByDateRangeSpecification(
+                DateOnly.FromDateTime(startDate.Value),
+                DateOnly.FromDateTime(endDate.Value)));
+        
+        // Generate grouped activities using the strategy
+        groupedActivities = strategyInstance.Generate(allActivities)
+            .OrderByDescending(activity => activity.Duration)
+            .ToList();
+        
         await InvokeAsync(StateHasChanged);
     }
     

@@ -57,6 +57,7 @@ namespace TrackYourDay.Core.SystemTrackers
             {
                 var endedActivity = currentStartedActivity.End(clock.Now);
                 endedActivities.Add(endedActivity);
+                
                 currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedFocusedWindow);
                 publisher.Publish(new PeriodicActivityEndedEvent(Guid.NewGuid(), endedActivity));
                 publisher.Publish(new PeriodicActivityStartedEvent(Guid.NewGuid(), currentStartedActivity));

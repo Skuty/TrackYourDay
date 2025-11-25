@@ -48,6 +48,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
                 this.ongoingMeeting = null;
 
                 this.endedMeetings.Add(endedMeeting);
+                
                 this.publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), CancellationToken.None);
                 this.logger.LogInformation("Meeting ended: {0}", endedMeeting);
 

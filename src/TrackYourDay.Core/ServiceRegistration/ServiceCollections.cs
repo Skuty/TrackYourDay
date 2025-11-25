@@ -9,6 +9,8 @@ using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using TrackYourDay.Core.Insights.Analytics;
 using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.Notifications;
+using TrackYourDay.Core.Persistence;
+using TrackYourDay.Core.Persistence.EventHandlers;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.ActivityRecognizing;
@@ -171,6 +173,32 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IBreaksSettingsService, BreaksSettingsService>();
             services.AddSingleton<IActivitiesSettingsService, ActivitiesSettingsService>();
             services.AddSingleton<IWorkdaySettingsService, WorkdaySettingsService>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddRepositories(this IServiceCollection services)
+        {
+            // Register generic repositories with tracker integration
+            services.AddSingleton<IHistoricalDataRepository<EndedActivity>>(sp => 
+                new GenericDataRepository<EndedActivity>(
+                    sp.GetRequiredService<IClock>(),
+                    () => sp.GetRequiredService<ActivityTracker>().GetEndedActivities()));
+            
+            services.AddSingleton<IHistoricalDataRepository<EndedBreak>>(sp => 
+                new GenericDataRepository<EndedBreak>(
+                    sp.GetRequiredService<IClock>(),
+                    () => sp.GetRequiredService<BreakTracker>().GetEndedBreaks()));
+            
+            services.AddSingleton<IHistoricalDataRepository<EndedMeeting>>(sp => 
+                new GenericDataRepository<EndedMeeting>(
+                    sp.GetRequiredService<IClock>(),
+                    () => sp.GetRequiredService<MsTeamsMeetingTracker>().GetEndedMeetings()));
+
+            // Register persistence event handlers
+            services.AddTransient<INotificationHandler<SystemTrackers.Events.PeriodicActivityEndedEvent>, PersistEndedActivityHandler>();
+            services.AddTransient<INotificationHandler<ApplicationTrackers.Breaks.Events.BreakEndedEvent>, PersistEndedBreakHandler>();
+            services.AddTransient<INotificationHandler<ApplicationTrackers.MsTeams.PublicEvents.MeetingEndedEvent>, PersistEndedMeetingHandler>();
 
             return services;
         }
