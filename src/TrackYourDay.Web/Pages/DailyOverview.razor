@@ -99,7 +99,9 @@
     [Inject]
     private IWorkdaySettingsService workdaySettingsService { get; set; }
     [Inject]
-    private TrackYourDay.Core.Persistence.HistoricalDataService historicalDataService { get; set; }
+    private IActivityRepository activityRepository { get; set; }
+    [Inject]
+    private IBreakRepository breakRepository { get; set; }
     [Inject]
     public required IMediator Mediator { get; set; }
     [Inject]
@@ -139,8 +141,8 @@
         var dateOnly = DateOnly.FromDateTime(selectedDate.Value);
         this.workdayDefinition = this.workdaySettingsService.GetWorkdayDefinition();
         
-        var activities = this.historicalDataService.GetForDate<EndedActivity>(dateOnly);
-        var breaks = this.historicalDataService.GetForDate<EndedBreak>(dateOnly);
+        var activities = this.activityRepository.GetForDate(dateOnly);
+        var breaks = this.breakRepository.GetForDate(dateOnly);
         
         this.workday = Workday.CreateBasedOn(this.workdayDefinition, activities, breaks);
 

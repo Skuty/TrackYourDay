@@ -5,7 +5,7 @@
 @using TrackYourDay.Core.Persistence
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject IServiceProvider serviceProvider
-@inject HistoricalDataService historicalDataService
+@inject IActivityRepository activityRepository
 @inject IClock clock
 
 <MudStack Spacing="2">
@@ -99,8 +99,8 @@
 
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
         
-        // Get activities for the date range using the new generic method
-        var allActivities = historicalDataService.GetBetweenDates<TrackYourDay.Core.SystemTrackers.EndedActivity>(
+        // Get activities for the date range using the repository
+        var allActivities = activityRepository.GetBetweenDates(
             DateOnly.FromDateTime(startDate.Value),
             DateOnly.FromDateTime(endDate.Value));
         

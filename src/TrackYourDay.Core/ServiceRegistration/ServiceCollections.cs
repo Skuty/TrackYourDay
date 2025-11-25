@@ -182,32 +182,21 @@ namespace TrackYourDay.Core.ServiceRegistration
 
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            // Register unified repository for each type with adapters
+            // Register type-specific repositories with tracker integration
             services.AddSingleton<IActivityRepository>(sp => 
-                new SystemTrackers.ActivityRepositoryAdapter(
-                    new TrackYourDay.Core.Persistence.SqliteHistoricalDataRepository<SystemTrackers.EndedActivity>()));
-            services.AddSingleton<IBreakRepository>(sp => 
-                new ApplicationTrackers.Breaks.BreakRepositoryAdapter(
-                    new TrackYourDay.Core.Persistence.SqliteHistoricalDataRepository<ApplicationTrackers.Breaks.EndedBreak>()));
-            services.AddSingleton<IMeetingRepository>(sp => 
-                new ApplicationTrackers.MsTeams.MeetingRepositoryAdapter(
-                    new TrackYourDay.Core.Persistence.SqliteHistoricalDataRepository<ApplicationTrackers.MsTeams.EndedMeeting>()));
-            
-            services.AddSingleton<TrackYourDay.Core.Persistence.HistoricalDataService>(sp =>
-            {
-                var historicalDataService = new TrackYourDay.Core.Persistence.HistoricalDataService(
+                new SystemTrackers.ActivityRepository(
                     sp.GetRequiredService<IClock>(),
-                    sp.GetRequiredService<ActivityTracker>(),
-                    sp.GetRequiredService<BreakTracker>(),
-                    sp.GetRequiredService<MsTeamsMeetingTracker>());
-
-                // Register repositories only (trackers are now injected via constructor)
-                historicalDataService.RegisterRepository(sp.GetRequiredService<IActivityRepository>());
-                historicalDataService.RegisterRepository(sp.GetRequiredService<IBreakRepository>());
-                historicalDataService.RegisterRepository(sp.GetRequiredService<IMeetingRepository>());
-
-                return historicalDataService;
-            });
+                    () => sp.GetRequiredService<ActivityTracker>().GetEndedActivities()));
+            
+            services.AddSingleton<IBreakRepository>(sp => 
+                new ApplicationTrackers.Breaks.BreakRepository(
+                    sp.GetRequiredService<IClock>(),
+                    () => sp.GetRequiredService<BreakTracker>().GetEndedBreaks()));
+            
+            services.AddSingleton<IMeetingRepository>(sp => 
+                new ApplicationTrackers.MsTeams.MeetingRepository(
+                    sp.GetRequiredService<IClock>(),
+                    () => sp.GetRequiredService<MsTeamsMeetingTracker>().GetEndedMeetings()));
 
             return services;
         }

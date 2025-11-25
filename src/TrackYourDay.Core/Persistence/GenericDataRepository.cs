@@ -1,15 +1,31 @@
 using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
+using TrackYourDay.Core.ApplicationTrackers.Breaks;
+using TrackYourDay.Core.ApplicationTrackers.MsTeams;
+using TrackYourDay.Core.SystemTrackers;
 
 namespace TrackYourDay.Core.Persistence
 {
-    public class SqliteHistoricalDataRepository<T> : IHistoricalDataRepository<T> where T : class
+    /// <summary>
+    /// Generic repository that handles both current session data (from trackers) 
+    /// and historical persisted data (from SQLite database).
+    /// Type-specific repository that implements IHistoricalDataRepository<T>.
+    /// </summary>
+    public class GenericDataRepository<T> : IHistoricalDataRepository<T> where T : class
     {
         private readonly string databaseFileName;
+        private readonly IClock clock;
         private readonly string typeName;
+        private readonly Func<IReadOnlyCollection<T>>? getCurrentSessionData;
 
-        public SqliteHistoricalDataRepository()
+        public GenericDataRepository(
+            IClock clock,
+            Func<IReadOnlyCollection<T>>? getCurrentSessionDataProvider = null)
         {
+            this.clock = clock;
+            this.typeName = typeof(T).Name;
+            this.getCurrentSessionData = getCurrentSessionDataProvider;
+
             var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
 
             if (!Directory.Exists(appDataPath))
@@ -18,17 +34,17 @@ namespace TrackYourDay.Core.Persistence
             }
 
             this.databaseFileName = $"{appDataPath}\\TrackYourDayGeneric.db";
-            this.typeName = typeof(T).Name;
-            
             InitializeStructure();
         }
 
+        /// <summary>
+        /// Saves an item to the database.
+        /// </summary>
         public void Save(T item)
         {
             using var connection = new SqliteConnection($"Data Source={databaseFileName}");
             connection.Open();
 
-            // Extract Guid from the item using reflection
             var guidProperty = typeof(T).GetProperty("Guid");
             
             if (guidProperty == null)
@@ -53,14 +69,109 @@ namespace TrackYourDay.Core.Persistence
             insertCommand.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Gets data for a specific date. 
+        /// If the date is today and tracker is available, returns from in-memory tracker.
+        /// Otherwise, returns from persisted database.
+        /// </summary>
         public IReadOnlyCollection<T> GetForDate(DateOnly date)
         {
-            var items = new List<T>();
+            var today = DateOnly.FromDateTime(clock.Now.Date);
+
+            // If requesting today's data and we have a tracker, get from tracker (in-memory)
+            if (date == today && getCurrentSessionData != null)
+            {
+                return getCurrentSessionData();
+            }
+
+            // For historical data, query from database
+            return GetFromDatabase(date);
+        }
+
+        /// <summary>
+        /// Gets data between two dates.
+        /// Combines tracker data (for today) with database data (for historical dates).
+        /// </summary>
+        public IReadOnlyCollection<T> GetBetweenDates(DateOnly startDate, DateOnly endDate)
+        {
+            var today = DateOnly.FromDateTime(clock.Now.Date);
+
+            // If the range includes today, combine database + tracker data
+            if (endDate >= today && getCurrentSessionData != null)
+            {
+                var allData = new List<T>();
+
+                // Get historical data from database (if start date is before today)
+                if (startDate < today)
+                {
+                    var dbEndDate = endDate >= today ? today.AddDays(-1) : endDate;
+                    allData.AddRange(GetFromDatabaseBetweenDates(startDate, dbEndDate));
+                }
+
+                // Add today's data from tracker (if today is in range)
+                if (endDate >= today)
+                {
+                    allData.AddRange(getCurrentSessionData());
+                }
+
+                return allData;
+            }
+
+            // All historical data - get from database only
+            return GetFromDatabaseBetweenDates(startDate, endDate);
+        }
+
+        /// <summary>
+        /// Clears all data of type T from the database.
+        /// </summary>
+        public void Clear()
+        {
+            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            connection.Open();
+
+            var clearCommand = connection.CreateCommand();
+            clearCommand.CommandText = "DELETE FROM historical_data WHERE TypeName = @typeName";
+            clearCommand.Parameters.AddWithValue("@typeName", typeName);
+            clearCommand.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Gets the total size of the database file in bytes.
+        /// </summary>
+        public long GetDatabaseSizeInBytes()
+        {
+            if (File.Exists(databaseFileName))
+            {
+                return new FileInfo(databaseFileName).Length;
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// Gets the total count of records for type T in the database.
+        /// </summary>
+        public int GetTotalRecordCount()
+        {
             using var connection = new SqliteConnection($"Data Source={databaseFileName}");
             connection.Open();
 
             var command = connection.CreateCommand();
-            // Query JSON fields directly - check for StartDate (EndedActivity, EndedMeeting) or BreakStartedAt (EndedBreak)
+            command.CommandText = "SELECT COUNT(*) FROM historical_data WHERE TypeName = @typeName";
+            command.Parameters.AddWithValue("@typeName", typeName);
+            return Convert.ToInt32(command.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Queries the database for data on a specific date using JSON extraction.
+        /// </summary>
+        private IReadOnlyCollection<T> GetFromDatabase(DateOnly date)
+        {
+            var items = new List<T>();
+
+            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            connection.Open();
+
+            var command = connection.CreateCommand();
             command.CommandText = @"
                 SELECT DataJson 
                 FROM historical_data 
@@ -90,14 +201,17 @@ namespace TrackYourDay.Core.Persistence
             return items.AsReadOnly();
         }
 
-        public IReadOnlyCollection<T> GetBetweenDates(DateOnly startDate, DateOnly endDate)
+        /// <summary>
+        /// Queries the database for data between two dates using JSON extraction.
+        /// </summary>
+        private IReadOnlyCollection<T> GetFromDatabaseBetweenDates(DateOnly startDate, DateOnly endDate)
         {
             var items = new List<T>();
+
             using var connection = new SqliteConnection($"Data Source={databaseFileName}");
             connection.Open();
 
             var command = connection.CreateCommand();
-            // Query JSON fields directly - check for StartDate (EndedActivity, EndedMeeting) or BreakStartedAt (EndedBreak)
             command.CommandText = @"
                 SELECT DataJson 
                 FROM historical_data 
@@ -131,37 +245,9 @@ namespace TrackYourDay.Core.Persistence
             return items.AsReadOnly();
         }
 
-        public void Clear()
-        {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
-            connection.Open();
-
-            var clearCommand = connection.CreateCommand();
-            clearCommand.CommandText = "DELETE FROM historical_data WHERE TypeName = @typeName";
-            clearCommand.Parameters.AddWithValue("@typeName", typeName);
-            clearCommand.ExecuteNonQuery();
-        }
-
-        public long GetDatabaseSizeInBytes()
-        {
-            if (File.Exists(databaseFileName))
-            {
-                return new FileInfo(databaseFileName).Length;
-            }
-            return 0;
-        }
-
-        public int GetTotalRecordCount()
-        {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
-            connection.Open();
-
-            var command = connection.CreateCommand();
-            command.CommandText = "SELECT COUNT(*) FROM historical_data WHERE TypeName = @typeName";
-            command.Parameters.AddWithValue("@typeName", typeName);
-            return Convert.ToInt32(command.ExecuteScalar());
-        }
-
+        /// <summary>
+        /// Initializes the database schema if it doesn't exist.
+        /// </summary>
         private void InitializeStructure()
         {
             using var connection = new SqliteConnection($"Data Source={databaseFileName}");
