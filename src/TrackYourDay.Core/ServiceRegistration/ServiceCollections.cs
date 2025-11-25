@@ -9,6 +9,8 @@ using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using TrackYourDay.Core.Insights.Analytics;
 using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.Notifications;
+using TrackYourDay.Core.Persistence;
+using TrackYourDay.Core.Persistence.EventHandlers;
 using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.ActivityRecognizing;
@@ -34,7 +36,6 @@ namespace TrackYourDay.Core.ServiceRegistration
                 var mousePositionRecognizingStrategy = new MousePositionRecognizingStrategy();
                 var lastInputRecognizingStrategy = new LastInputRecognizingStrategy();
                 var logger = container.GetRequiredService<ILogger<ActivityTracker>>();
-                var activityRepository = container.GetRequiredService<IActivityRepository>();
 
                 return new ActivityTracker(
                     clock,
@@ -42,8 +43,7 @@ namespace TrackYourDay.Core.ServiceRegistration
                     focusedWindowRecognizingStategy,
                     mousePositionRecognizingStrategy,
                     lastInputRecognizingStrategy,
-                    logger,
-                    activityRepository);
+                    logger);
             });
 
             services.AddSingleton<MsTeamsMeetingTracker>(container =>
@@ -53,22 +53,19 @@ namespace TrackYourDay.Core.ServiceRegistration
                 var loggerForStrategy = container.GetRequiredService<ILogger<ProcessBasedMeetingRecognizingStrategy>>();
                 var meetingDiscoveryStrategy = new ProcessBasedMeetingRecognizingStrategy(loggerForStrategy, new WindowsProcessService());
                 var loggerForMs = container.GetRequiredService<ILogger<MsTeamsMeetingTracker>>();
-                var meetingRepository = container.GetRequiredService<IMeetingRepository>();
-                return new MsTeamsMeetingTracker(clock, publisher, meetingDiscoveryStrategy, loggerForMs, meetingRepository);
+                return new MsTeamsMeetingTracker(clock, publisher, meetingDiscoveryStrategy, loggerForMs);
             });
 
             services.AddSingleton<BreakTracker>(serviceCollection => 
             {
                 var breaksSettingsService = serviceCollection.GetRequiredService<IBreaksSettingsService>();
                 var breaksSettings = breaksSettingsService.GetSettings();
-                var breakRepository = serviceCollection.GetRequiredService<IBreakRepository>();
                 
                 return new BreakTracker(
                     serviceCollection.GetRequiredService<IPublisher>(),
                     serviceCollection.GetRequiredService<IClock>(),
                     breaksSettings.TimeOfNoActivityToStartBreak,
-                    serviceCollection.GetRequiredService<ILogger<BreakTracker>>(),
-                    breakRepository);
+                    serviceCollection.GetRequiredService<ILogger<BreakTracker>>());
             });
 
             services.AddSingleton<MLNetSummaryStrategy>(serviceProvider => 
@@ -182,21 +179,26 @@ namespace TrackYourDay.Core.ServiceRegistration
 
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            // Register type-specific repositories with tracker integration
-            services.AddSingleton<IActivityRepository>(sp => 
-                new SystemTrackers.ActivityRepository(
+            // Register generic repositories with tracker integration
+            services.AddSingleton<IHistoricalDataRepository<EndedActivity>>(sp => 
+                new GenericDataRepository<EndedActivity>(
                     sp.GetRequiredService<IClock>(),
                     () => sp.GetRequiredService<ActivityTracker>().GetEndedActivities()));
             
-            services.AddSingleton<IBreakRepository>(sp => 
-                new ApplicationTrackers.Breaks.BreakRepository(
+            services.AddSingleton<IHistoricalDataRepository<EndedBreak>>(sp => 
+                new GenericDataRepository<EndedBreak>(
                     sp.GetRequiredService<IClock>(),
                     () => sp.GetRequiredService<BreakTracker>().GetEndedBreaks()));
             
-            services.AddSingleton<IMeetingRepository>(sp => 
-                new ApplicationTrackers.MsTeams.MeetingRepository(
+            services.AddSingleton<IHistoricalDataRepository<EndedMeeting>>(sp => 
+                new GenericDataRepository<EndedMeeting>(
                     sp.GetRequiredService<IClock>(),
                     () => sp.GetRequiredService<MsTeamsMeetingTracker>().GetEndedMeetings()));
+
+            // Register persistence event handlers
+            services.AddTransient<INotificationHandler<SystemTrackers.Events.PeriodicActivityEndedEvent>, PersistEndedActivityHandler>();
+            services.AddTransient<INotificationHandler<ApplicationTrackers.Breaks.Events.BreakEndedEvent>, PersistEndedBreakHandler>();
+            services.AddTransient<INotificationHandler<ApplicationTrackers.MsTeams.PublicEvents.MeetingEndedEvent>, PersistEndedMeetingHandler>();
 
             return services;
         }

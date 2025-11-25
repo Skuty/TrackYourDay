@@ -2,6 +2,7 @@ using Microsoft.Data.Sqlite;
 using Newtonsoft.Json;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
+using TrackYourDay.Core.Persistence.Specifications;
 using TrackYourDay.Core.SystemTrackers;
 
 namespace TrackYourDay.Core.Persistence
@@ -10,6 +11,7 @@ namespace TrackYourDay.Core.Persistence
     /// Generic repository that handles both current session data (from trackers) 
     /// and historical persisted data (from SQLite database).
     /// Type-specific repository that implements IHistoricalDataRepository<T>.
+    /// Supports the Specification Pattern for flexible querying.
     /// </summary>
     public class GenericDataRepository<T> : IHistoricalDataRepository<T> where T : class
     {
@@ -70,55 +72,35 @@ namespace TrackYourDay.Core.Persistence
         }
 
         /// <summary>
-        /// Gets data for a specific date. 
-        /// If the date is today and tracker is available, returns from in-memory tracker.
-        /// Otherwise, returns from persisted database.
+        /// Queries data using a specification pattern.
+        /// Applies the specification to both in-memory tracker data (if today) and database data.
         /// </summary>
-        public IReadOnlyCollection<T> GetForDate(DateOnly date)
+        public IReadOnlyCollection<T> Find(ISpecification<T> specification)
         {
-            var today = DateOnly.FromDateTime(clock.Now.Date);
+            if (specification == null)
+                throw new ArgumentNullException(nameof(specification));
 
-            // If requesting today's data and we have a tracker, get from tracker (in-memory)
-            if (date == today && getCurrentSessionData != null)
+            var items = new List<T>();
+
+            // Get from database using specification
+            items.AddRange(GetFromDatabaseBySpecification(specification));
+
+            // If we have current session data, filter it using the specification
+            if (getCurrentSessionData != null)
             {
-                return getCurrentSessionData();
+                var currentData = getCurrentSessionData()
+                    .Where(item => specification.IsSatisfiedBy(item))
+                    .ToList();
+                
+                // Add current session items that aren't already in the results (avoid duplicates)
+                var existingGuids = items
+                    .Select(item => GetGuidFromItem(item))
+                    .ToHashSet();
+                
+                items.AddRange(currentData.Where(item => !existingGuids.Contains(GetGuidFromItem(item))));
             }
 
-            // For historical data, query from database
-            return GetFromDatabase(date);
-        }
-
-        /// <summary>
-        /// Gets data between two dates.
-        /// Combines tracker data (for today) with database data (for historical dates).
-        /// </summary>
-        public IReadOnlyCollection<T> GetBetweenDates(DateOnly startDate, DateOnly endDate)
-        {
-            var today = DateOnly.FromDateTime(clock.Now.Date);
-
-            // If the range includes today, combine database + tracker data
-            if (endDate >= today && getCurrentSessionData != null)
-            {
-                var allData = new List<T>();
-
-                // Get historical data from database (if start date is before today)
-                if (startDate < today)
-                {
-                    var dbEndDate = endDate >= today ? today.AddDays(-1) : endDate;
-                    allData.AddRange(GetFromDatabaseBetweenDates(startDate, dbEndDate));
-                }
-
-                // Add today's data from tracker (if today is in range)
-                if (endDate >= today)
-                {
-                    allData.AddRange(getCurrentSessionData());
-                }
-
-                return allData;
-            }
-
-            // All historical data - get from database only
-            return GetFromDatabaseBetweenDates(startDate, endDate);
+            return items.AsReadOnly();
         }
 
         /// <summary>
@@ -162,9 +144,9 @@ namespace TrackYourDay.Core.Persistence
         }
 
         /// <summary>
-        /// Queries the database for data on a specific date using JSON extraction.
+        /// Queries the database using a specification pattern.
         /// </summary>
-        private IReadOnlyCollection<T> GetFromDatabase(DateOnly date)
+        private IReadOnlyCollection<T> GetFromDatabaseBySpecification(ISpecification<T> specification)
         {
             var items = new List<T>();
 
@@ -172,17 +154,24 @@ namespace TrackYourDay.Core.Persistence
             connection.Open();
 
             var command = connection.CreateCommand();
-            command.CommandText = @"
+            
+            // Build query with specification
+            var whereClause = specification.GetSqlWhereClause();
+            command.CommandText = $@"
                 SELECT DataJson 
                 FROM historical_data 
                 WHERE TypeName = @typeName 
-                  AND (
-                    date(json_extract(DataJson, '$.StartDate')) = @date 
-                    OR date(json_extract(DataJson, '$.BreakStartedAt')) = @date
-                  )
+                  AND ({whereClause})
                 ORDER BY Id";
-            command.Parameters.AddWithValue("@date", date.ToString("yyyy-MM-dd"));
+            
             command.Parameters.AddWithValue("@typeName", typeName);
+            
+            // Add specification parameters
+            var specParams = specification.GetSqlParameters();
+            foreach (var param in specParams)
+            {
+                command.Parameters.AddWithValue(param.Key, param.Value);
+            }
 
             using var reader = command.ExecuteReader();
             while (reader.Read())
@@ -202,47 +191,15 @@ namespace TrackYourDay.Core.Persistence
         }
 
         /// <summary>
-        /// Queries the database for data between two dates using JSON extraction.
+        /// Extracts the Guid from an entity using reflection.
         /// </summary>
-        private IReadOnlyCollection<T> GetFromDatabaseBetweenDates(DateOnly startDate, DateOnly endDate)
+        private Guid GetGuidFromItem(T item)
         {
-            var items = new List<T>();
-
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
-            connection.Open();
-
-            var command = connection.CreateCommand();
-            command.CommandText = @"
-                SELECT DataJson 
-                FROM historical_data 
-                WHERE TypeName = @typeName 
-                  AND (
-                    (date(json_extract(DataJson, '$.StartDate')) >= @startDate 
-                     AND date(json_extract(DataJson, '$.StartDate')) <= @endDate)
-                    OR 
-                    (date(json_extract(DataJson, '$.BreakStartedAt')) >= @startDate 
-                     AND date(json_extract(DataJson, '$.BreakStartedAt')) <= @endDate)
-                  )
-                ORDER BY Id";
-            command.Parameters.AddWithValue("@startDate", startDate.ToString("yyyy-MM-dd"));
-            command.Parameters.AddWithValue("@endDate", endDate.ToString("yyyy-MM-dd"));
-            command.Parameters.AddWithValue("@typeName", typeName);
-
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                var dataJson = reader.GetString(0);
-                var item = JsonConvert.DeserializeObject<T>(dataJson, new JsonSerializerSettings
-                {
-                    TypeNameHandling = TypeNameHandling.Auto
-                });
-                if (item != null)
-                {
-                    items.Add(item);
-                }
-            }
-
-            return items.AsReadOnly();
+            var guidProperty = typeof(T).GetProperty("Guid");
+            if (guidProperty == null)
+                return Guid.Empty;
+            
+            return (Guid)guidProperty.GetValue(item)!;
         }
 
         /// <summary>

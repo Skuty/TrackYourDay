@@ -10,17 +10,15 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
         private IPublisher publisher;
         private IMeetingDiscoveryStrategy meetingDiscoveryStrategy;
         private ILogger<MsTeamsMeetingTracker> logger;
-        private IMeetingRepository meetingRepository;
         private StartedMeeting ongoingMeeting;
         private List<EndedMeeting> endedMeetings;
 
-        public MsTeamsMeetingTracker(IClock clock, IPublisher publisher, IMeetingDiscoveryStrategy meetingDiscoveryStrategy, ILogger<MsTeamsMeetingTracker> logger, IMeetingRepository meetingRepository)
+        public MsTeamsMeetingTracker(IClock clock, IPublisher publisher, IMeetingDiscoveryStrategy meetingDiscoveryStrategy, ILogger<MsTeamsMeetingTracker> logger)
         {
             this.clock = clock;
             this.publisher = publisher;
             this.meetingDiscoveryStrategy = meetingDiscoveryStrategy;
             this.logger = logger;
-            this.meetingRepository = meetingRepository;
             this.endedMeetings = new List<EndedMeeting>();
         }
 
@@ -50,9 +48,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
                 this.ongoingMeeting = null;
 
                 this.endedMeetings.Add(endedMeeting);
-                
-                // Persist to database
-                meetingRepository?.Save(endedMeeting);
                 
                 this.publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), CancellationToken.None);
                 this.logger.LogInformation("Meeting ended: {0}", endedMeeting);

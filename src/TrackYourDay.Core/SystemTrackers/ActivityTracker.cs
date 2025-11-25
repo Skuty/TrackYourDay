@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
-using TrackYourDay.Core.Persistence;
 using TrackYourDay.Core.SystemTrackers.ActivityRecognizing;
 using TrackYourDay.Core.SystemTrackers.Events;
 using TrackYourDay.Core.SystemTrackers.SystemStates;
@@ -14,7 +13,6 @@ namespace TrackYourDay.Core.SystemTrackers
 
         private readonly IClock clock;
         private readonly IPublisher publisher;
-        private readonly IActivityRepository activityRepository;
         private readonly ISystemStateRecognizingStrategy focusedWindowRecognizingStategy;
         private readonly ISystemStateRecognizingStrategy mousePositionRecognizingStrategy;
         private readonly ISystemStateRecognizingStrategy lastInputRecognizingStrategy;
@@ -30,13 +28,11 @@ namespace TrackYourDay.Core.SystemTrackers
             ISystemStateRecognizingStrategy startedActivityRecognizingStrategy,
             ISystemStateRecognizingStrategy mousePositionRecognizingStrategy,
             ISystemStateRecognizingStrategy lastInputRecognizingStrategy,
-            ILogger<ActivityTracker> logger,
-            IActivityRepository activityRepository)
+            ILogger<ActivityTracker> logger)
         {
             this.logger = logger;
             this.clock = clock;
             this.publisher = publisher;
-            this.activityRepository = activityRepository;
             focusedWindowRecognizingStategy = startedActivityRecognizingStrategy;
             this.mousePositionRecognizingStrategy = mousePositionRecognizingStrategy;
             this.lastInputRecognizingStrategy = lastInputRecognizingStrategy;
@@ -61,9 +57,6 @@ namespace TrackYourDay.Core.SystemTrackers
             {
                 var endedActivity = currentStartedActivity.End(clock.Now);
                 endedActivities.Add(endedActivity);
-                
-                // Persist to database
-                activityRepository?.Save(endedActivity);
                 
                 currentStartedActivity = ActivityFactory.StartedActivity(endedActivity.EndDate, recognizedFocusedWindow);
                 publisher.Publish(new PeriodicActivityEndedEvent(Guid.NewGuid(), endedActivity));

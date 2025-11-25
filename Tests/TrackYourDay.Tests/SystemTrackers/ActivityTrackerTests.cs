@@ -19,7 +19,6 @@ namespace TrackYourDay.Tests.SystemTrackers
         private Mock<ISystemStateRecognizingStrategy> startedActivityRecognizingStrategy;
         private Mock<ISystemStateRecognizingStrategy> mousePositionRecognizingStrategy;
         private Mock<ISystemStateRecognizingStrategy> lastInputRecognizingStrategy;
-        private Mock<IActivityRepository> activityRepositoryMock;
         private ActivityTracker activityEventTracker;
 
         public ActivityTrackerTests()
@@ -30,7 +29,6 @@ namespace TrackYourDay.Tests.SystemTrackers
             startedActivityRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
             mousePositionRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
             lastInputRecognizingStrategy = new Mock<ISystemStateRecognizingStrategy>();
-            activityRepositoryMock = new Mock<IActivityRepository>();
 
             activityEventTracker = new ActivityTracker(
                 clock,
@@ -38,8 +36,7 @@ namespace TrackYourDay.Tests.SystemTrackers
                 startedActivityRecognizingStrategy.Object,
                 mousePositionRecognizingStrategy.Object,
                 lastInputRecognizingStrategy.Object,
-                loggerMock.Object,
-                activityRepositoryMock.Object);
+                loggerMock.Object);
         }
 
         [Fact]

@@ -14,7 +14,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
         private readonly TimeSpan timeOfNoActivityToStartBreak;
         private readonly IPublisher publisher;
         private readonly IClock clock;
-        private readonly IBreakRepository breakRepository;
         private Queue<StartedActivity> activitiesToProcessOld = new Queue<StartedActivity>();
         //TODO: Imitate break on debugging and check processedActivities, there are activities in wrong order
         private Queue<ActivityToProcess> activitiesToProcess = new Queue<ActivityToProcess>();
@@ -24,19 +23,18 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
         private StartedBreak? currentStartedBreak;
         private DateTime lastTimeOfActivity;
 
-        public BreakTracker(IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger, IBreakRepository breakRepository)
+        public BreakTracker(IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger)
         {
             this.publisher = publisher;
             this.clock = clock;
             this.timeOfNoActivityToStartBreak = timeOfNoActivityToStartBreak;
-            this.breakRepository = breakRepository;
 
             lastTimeOfActivity = this.clock.Now;
             this.logger = logger;
         }
 
         // <summary> This constructor is used only for testing purposes. It should be marked as internal/private in future.<summary>
-        public BreakTracker(StartedBreak startedBreak, IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger, IBreakRepository breakRepository) : this(publisher, clock, timeOfNoActivityToStartBreak, logger, breakRepository)
+        public BreakTracker(StartedBreak startedBreak, IPublisher publisher, IClock clock, TimeSpan timeOfNoActivityToStartBreak, ILogger<BreakTracker> logger) : this(publisher, clock, timeOfNoActivityToStartBreak, logger)
         {
             currentStartedBreak = startedBreak;
             this.logger = logger;
@@ -110,9 +108,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
                         var endedBreak = currentStartedBreak.EndBreak(activityToProcess.ActivityDate);
                         logger.LogInformation("End: {EndedBreak}", endedBreak);
                         endedBreaks.TryAdd(endedBreak.Guid, endedBreak);
-                        
-                        // Persist to database
-                        breakRepository?.Save(endedBreak);
                         
                         currentStartedBreak = null;
                         lastTimeOfActivity = activityToProcess.ActivityDate;

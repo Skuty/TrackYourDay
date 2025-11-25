@@ -5,6 +5,7 @@
 @using TrackYourDay.Core.ApplicationTrackers.Jira
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams
 @using TrackYourDay.Core.SystemTrackers
+@using TrackYourDay.Core.Persistence
 
 <h1>Settings</h1>
 
@@ -93,13 +94,13 @@
     private IJiraSettingsService jiraSettingsService { get; init; }
     
     [Inject]
-    private IActivityRepository activityRepository { get; init; }
+    private IHistoricalDataRepository<EndedActivity> activityRepository { get; init; }
     
     [Inject]
-    private IBreakRepository breakRepository { get; init; }
+    private IHistoricalDataRepository<EndedBreak> breakRepository { get; init; }
     
     [Inject]
-    private IMeetingRepository meetingRepository { get; init; }
+    private IHistoricalDataRepository<EndedMeeting> meetingRepository { get; init; }
 
     private int minutesOfNoActivityToStartBreak = 5;
     private bool isSettingsSavedDialogVisible;

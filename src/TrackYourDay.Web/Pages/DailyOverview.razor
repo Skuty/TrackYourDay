@@ -5,6 +5,8 @@
 @using TrackYourDay.Core.Insights.Workdays
 @using TrackYourDay.Core.Settings
 @using TrackYourDay.Core.SystemTrackers
+@using TrackYourDay.Core.Persistence
+@using TrackYourDay.Core.Persistence.Specifications
 @using TrackYourDay.Web.Components
 
     <div style="display: flex; align-items: center; gap: 10px;">
@@ -99,9 +101,9 @@
     [Inject]
     private IWorkdaySettingsService workdaySettingsService { get; set; }
     [Inject]
-    private IActivityRepository activityRepository { get; set; }
+    private IHistoricalDataRepository<EndedActivity> activityRepository { get; set; }
     [Inject]
-    private IBreakRepository breakRepository { get; set; }
+    private IHistoricalDataRepository<EndedBreak> breakRepository { get; set; }
     [Inject]
     public required IMediator Mediator { get; set; }
     [Inject]
@@ -141,8 +143,8 @@
         var dateOnly = DateOnly.FromDateTime(selectedDate.Value);
         this.workdayDefinition = this.workdaySettingsService.GetWorkdayDefinition();
         
-        var activities = this.activityRepository.GetForDate(dateOnly);
-        var breaks = this.breakRepository.GetForDate(dateOnly);
+        var activities = this.activityRepository.Find(new ActivityByDateSpecification(dateOnly));
+        var breaks = this.breakRepository.Find(new BreakByDateSpecification(dateOnly));
         
         this.workday = Workday.CreateBasedOn(this.workdayDefinition, activities, breaks);
 

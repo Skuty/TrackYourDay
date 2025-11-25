@@ -3,9 +3,10 @@
 @using TrackYourDay.Core.SystemTrackers
 @using TrackYourDay.Core
 @using TrackYourDay.Core.Persistence
+@using TrackYourDay.Core.Persistence.Specifications
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject IServiceProvider serviceProvider
-@inject IActivityRepository activityRepository
+@inject IHistoricalDataRepository<EndedActivity> activityRepository
 @inject IClock clock
 
 <MudStack Spacing="2">
@@ -100,9 +101,10 @@
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
         
         // Get activities for the date range using the repository
-        var allActivities = activityRepository.GetBetweenDates(
-            DateOnly.FromDateTime(startDate.Value),
-            DateOnly.FromDateTime(endDate.Value));
+        var allActivities = activityRepository.Find(
+            new ActivityByDateRangeSpecification(
+                DateOnly.FromDateTime(startDate.Value),
+                DateOnly.FromDateTime(endDate.Value)));
         
         // Generate grouped activities using the strategy
         groupedActivities = strategyInstance.Generate(allActivities)
