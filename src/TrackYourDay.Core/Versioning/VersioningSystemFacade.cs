@@ -8,6 +8,7 @@ namespace TrackYourDay.Core.Versioning
     {
         private ApplicationVersion newestAvailableApplicationVersion = null!;
         private ApplicationVersion currentApplicationVersion = null!;
+        private string newestAvailableVersionTagName = null!;
 
         public VersioningSystemFacade(Version assemblyVersion)
         {
@@ -27,6 +28,7 @@ namespace TrackYourDay.Core.Versioning
                 {
                     var releaseInfo = this.GetNewestReleaseInfoFromGitHubRepositoryUsingRestApi();
                     this.newestAvailableApplicationVersion = new ApplicationVersion(releaseInfo.name, releaseInfo.prerelease);
+                    this.newestAvailableVersionTagName = releaseInfo.tag_name;
                 }
 
                 return this.newestAvailableApplicationVersion;
@@ -62,6 +64,9 @@ namespace TrackYourDay.Core.Versioning
 
         public void UpdateApplication()
         {
+            // Ensure we have the newest version info fetched
+            this.GetNewestAvailableApplicationVersion();
+
             string appDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string batchFilePath = Path.Combine(appDirectory, "UpdateApplication.bat");
 
@@ -70,6 +75,7 @@ namespace TrackYourDay.Core.Versioning
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = batchFilePath,
+                    Arguments = this.newestAvailableVersionTagName ?? string.Empty,
                     UseShellExecute = false,
                     WorkingDirectory = appDirectory
                 };
