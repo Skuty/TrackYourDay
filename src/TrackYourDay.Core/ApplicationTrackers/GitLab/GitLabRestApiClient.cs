@@ -9,6 +9,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         List<GitLabEvent> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate);
         GitLabProject GetProject(GitLabProjectId projectId);
         List<GitLabCommit> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate);
+        List<GitLabCommit> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha);
     }
 
     public class GitLabRestApiClient : IGitLabRestApiClient
@@ -71,6 +72,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             var content = response.Content.ReadAsStringAsync().Result;
             return JsonSerializer.Deserialize<List<GitLabCommit>>(content) ?? new List<GitLabCommit>();
         }
+
+        public List<GitLabCommit> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha)
+        {
+            // Use GitLab's compare API to get commits between two SHAs
+            var response = httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/compare?from={commitFromSha}&to={commitToSha}").Result;
+            response.EnsureSuccessStatusCode();
+            var content = response.Content.ReadAsStringAsync().Result;
+            var comparison = JsonSerializer.Deserialize<GitLabComparison>(content);
+            return comparison?.Commits ?? new List<GitLabCommit>();
+        }
     }
     public class NullGitLabRestApiClient : IGitLabRestApiClient
     {
@@ -112,6 +123,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             => throw new NotSupportedException("GitLab is not configured");
 
         public List<GitLabCommit> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
+            => new();
+
+        public List<GitLabCommit> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha)
             => new();
     }
 
@@ -254,4 +268,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             [property: JsonPropertyName("message")] string Message,
             [property: JsonPropertyName("parent_ids")] List<string> ParentIds,
             [property: JsonPropertyName("web_url")] string WebUrl);
+
+        public record GitLabComparison(
+            [property: JsonPropertyName("commit")] GitLabCommit? Commit,
+            [property: JsonPropertyName("commits")] List<GitLabCommit> Commits,
+            [property: JsonPropertyName("compare_timeout")] bool CompareTimeout,
+            [property: JsonPropertyName("compare_same_ref")] bool CompareSameRef);
 }
