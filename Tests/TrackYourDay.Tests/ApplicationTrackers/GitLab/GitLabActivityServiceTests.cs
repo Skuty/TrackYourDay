@@ -49,7 +49,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Returns(gitLabProject);
 
             var gitLabCommits = JsonSerializer.Deserialize<List<GitLabCommit>>(this.GetResponseWith2CommitsRelatedToMergeRequest());
-            this.gitLabApiClient.Setup(x => x.GetCommits(It.IsAny<GitLabProjectId>(), It.IsAny<GitLabRefName>(), It.IsAny<DateOnly>()))
+            this.gitLabApiClient.Setup(x => x.GetCommitsByShaRange(It.IsAny<GitLabProjectId>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(gitLabCommits);
 
             // When
@@ -59,7 +59,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Verify mock was called the expected number of times
             this.gitLabApiClient.Verify(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()), Times.Once);
             this.gitLabApiClient.Verify(x => x.GetProject(It.IsAny<GitLabProjectId>()), Times.Once);
-            this.gitLabApiClient.Verify(x => x.GetCommits(It.IsAny<GitLabProjectId>(), It.IsAny<GitLabRefName>(), It.IsAny<DateOnly>()), Times.Once);
+            this.gitLabApiClient.Verify(x => x.GetCommitsByShaRange(It.IsAny<GitLabProjectId>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
 
             activities.Count.Should().Be(2);
             // TODO Dates probably have to be handled in more conscious way including time zones and offsets
@@ -239,6 +239,40 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Then
             activities.Count.Should().Be(1);
             activities.First().Description.Should().Be("Created Milestone: Version 2.0");
+        }
+
+        [Fact]
+        public void GivenReceivedGitLabEventWithMultipleCommitsInPush_WhenGettingActivity_ThenAllCommitsAreReturnedWithCorrectTimestamps()
+        {
+            // Given - Simulate a push with 10 commits
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_PushedMultipleCommits());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .Returns(new List<GitLabEvent> { gitLabEvent });
+
+            var gitLabProject = JsonSerializer.Deserialize<GitLabProject>(this.GetResponseForProject());
+            this.gitLabApiClient.Setup(gitLabApiClient => gitLabApiClient.GetProject(It.IsAny<GitLabProjectId>()))
+                .Returns(gitLabProject);
+
+            var gitLabCommits = JsonSerializer.Deserialize<List<GitLabCommit>>(this.GetResponseWithMultipleCommits());
+            this.gitLabApiClient.Setup(x => x.GetCommitsByShaRange(It.IsAny<GitLabProjectId>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(gitLabCommits);
+
+            // When
+            var activities = this.gitLabActivityService.GetTodayActivities();
+
+            // Then - All 10 commits should be visible as activities
+            activities.Count.Should().Be(10);
+            
+            // Verify each commit has its own distinct timestamp
+            activities[0].OccuranceDate.Should().Be(new DateTime(2025, 03, 16, 10, 00, 00, DateTimeKind.Utc));
+            activities[0].Description.Should().Contain("Commit 1");
+            
+            activities[9].OccuranceDate.Should().Be(new DateTime(2025, 03, 16, 19, 00, 00, DateTimeKind.Utc));
+            activities[9].Description.Should().Contain("Commit 10");
+
+            // Verify that GetCommitsByShaRange was called (not the old GetCommits method)
+            this.gitLabApiClient.Verify(x => x.GetCommitsByShaRange(It.IsAny<GitLabProjectId>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            this.gitLabApiClient.Verify(x => x.GetCommits(It.IsAny<GitLabProjectId>(), It.IsAny<GitLabRefName>(), It.IsAny<DateOnly>()), Times.Never);
         }
 
         // Below are just raw responses from gitlab, not to be dependent on gitlab api but just to instantiate objects as they were real
@@ -1132,6 +1166,202 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 ""imported_from"": ""none"",
                 ""author_username"": ""ss.skuty""
             }";
+        }
+
+        private string GetResponseFor_PushedMultipleCommits()
+        {
+            return @"
+            {
+                ""id"": 4105331600,
+                ""project_id"": 24674429,
+                ""action_name"": ""pushed to"",
+                ""target_id"": null,
+                ""target_iid"": null,
+                ""target_type"": null,
+                ""author_id"": 8272154,
+                ""target_title"": null,
+                ""created_at"": ""2025-03-16T19:00:00.000Z"",
+                ""author"": {
+                    ""id"": 8272154,
+                    ""username"": ""ss.skuty"",
+                    ""name"": ""Adam Kuba"",
+                    ""state"": ""active"",
+                    ""locked"": false,
+                    ""avatar_url"": ""https://secure.gravatar.com/avatar/test?s=80\u0026d=identicon"",
+                    ""web_url"": ""https://gitlab.com/ss.skuty""
+                },
+                ""imported"": false,
+                ""imported_from"": ""none"",
+                ""push_data"": {
+                    ""commit_count"": 10,
+                    ""action"": ""pushed"",
+                    ""ref_type"": ""branch"",
+                    ""commit_from"": ""commit_sha_0"",
+                    ""commit_to"": ""commit_sha_10"",
+                    ""ref"": ""feature-branch"",
+                    ""commit_title"": ""Commit 10"",
+                    ""ref_count"": null
+                },
+                ""author_username"": ""ss.skuty""
+            }";
+        }
+
+        private string GetResponseWithMultipleCommits()
+        {
+            // Return 10 commits with distinct timestamps to verify all are captured
+            return @"
+            [
+                {
+                    ""id"": ""commit_sha_1"",
+                    ""short_id"": ""sha1"",
+                    ""created_at"": ""2025-03-16T10:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_0""],
+                    ""title"": ""Commit 1"",
+                    ""message"": ""Commit 1\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T10:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T10:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha1""
+                },
+                {
+                    ""id"": ""commit_sha_2"",
+                    ""short_id"": ""sha2"",
+                    ""created_at"": ""2025-03-16T11:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_1""],
+                    ""title"": ""Commit 2"",
+                    ""message"": ""Commit 2\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T11:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T11:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha2""
+                },
+                {
+                    ""id"": ""commit_sha_3"",
+                    ""short_id"": ""sha3"",
+                    ""created_at"": ""2025-03-16T12:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_2""],
+                    ""title"": ""Commit 3"",
+                    ""message"": ""Commit 3\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T12:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T12:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha3""
+                },
+                {
+                    ""id"": ""commit_sha_4"",
+                    ""short_id"": ""sha4"",
+                    ""created_at"": ""2025-03-16T13:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_3""],
+                    ""title"": ""Commit 4"",
+                    ""message"": ""Commit 4\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T13:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T13:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha4""
+                },
+                {
+                    ""id"": ""commit_sha_5"",
+                    ""short_id"": ""sha5"",
+                    ""created_at"": ""2025-03-16T14:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_4""],
+                    ""title"": ""Commit 5"",
+                    ""message"": ""Commit 5\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T14:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T14:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha5""
+                },
+                {
+                    ""id"": ""commit_sha_6"",
+                    ""short_id"": ""sha6"",
+                    ""created_at"": ""2025-03-16T15:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_5""],
+                    ""title"": ""Commit 6"",
+                    ""message"": ""Commit 6\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T15:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T15:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha6""
+                },
+                {
+                    ""id"": ""commit_sha_7"",
+                    ""short_id"": ""sha7"",
+                    ""created_at"": ""2025-03-16T16:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_6""],
+                    ""title"": ""Commit 7"",
+                    ""message"": ""Commit 7\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T16:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T16:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha7""
+                },
+                {
+                    ""id"": ""commit_sha_8"",
+                    ""short_id"": ""sha8"",
+                    ""created_at"": ""2025-03-16T17:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_7""],
+                    ""title"": ""Commit 8"",
+                    ""message"": ""Commit 8\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T17:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T17:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha8""
+                },
+                {
+                    ""id"": ""commit_sha_9"",
+                    ""short_id"": ""sha9"",
+                    ""created_at"": ""2025-03-16T18:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_8""],
+                    ""title"": ""Commit 9"",
+                    ""message"": ""Commit 9\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T18:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T18:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha9""
+                },
+                {
+                    ""id"": ""commit_sha_10"",
+                    ""short_id"": ""sha10"",
+                    ""created_at"": ""2025-03-16T19:00:00.000+00:00"",
+                    ""parent_ids"": [""commit_sha_9""],
+                    ""title"": ""Commit 10"",
+                    ""message"": ""Commit 10\n"",
+                    ""author_name"": ""Adam Kuba"",
+                    ""author_email"": ""ss.skuty@gmail.com"",
+                    ""authored_date"": ""2025-03-16T19:00:00.000+00:00"",
+                    ""committer_name"": ""Adam Kuba"",
+                    ""committer_email"": ""ss.skuty@gmail.com"",
+                    ""committed_date"": ""2025-03-16T19:00:00.000+00:00"",
+                    ""web_url"": ""https://gitlab.com/test/-/commit/sha10""
+                }
+            ]";
         }
     }
 }

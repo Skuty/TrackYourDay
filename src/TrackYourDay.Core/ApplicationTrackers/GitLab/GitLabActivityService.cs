@@ -141,38 +141,40 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 };
             }
 
-            // Regular commit push
-            var commits = this.gitLabRestApiClient.GetCommits(new GitLabProjectId(gitlabEvent.ProjectId), new GitLabRefName(branchName), DateOnly.FromDateTime(DateTime.Today))
-                .Where(c => c.AuthorEmail == this.userEmail)
-                .OrderByDescending(c => c.CommittedDate) // Ensure newest first as per test expectation
-                .ToList();
+            // Regular commit push - fetch commits by SHA range if available
+            List<GitLabCommit> commits;
+            var commitFrom = gitlabEvent.PushData.CommitFrom;
+            var commitTo = gitlabEvent.PushData.CommitTo;
+
+            if (!string.IsNullOrEmpty(commitFrom) && !string.IsNullOrEmpty(commitTo))
+            {
+                // Use the SHA range from the push event to get exact commits
+                commits = this.gitLabRestApiClient.GetCommitsByShaRange(
+                    new GitLabProjectId(gitlabEvent.ProjectId), 
+                    commitFrom, 
+                    commitTo)
+                    .Where(c => c.AuthorEmail == this.userEmail)
+                    .ToList();
+            }
+            else
+            {
+                // Fallback to date-based fetch if no SHA range available
+                commits = this.gitLabRestApiClient.GetCommits(
+                    new GitLabProjectId(gitlabEvent.ProjectId), 
+                    new GitLabRefName(branchName), 
+                    DateOnly.FromDateTime(DateTime.Today))
+                    .Where(c => c.AuthorEmail == this.userEmail)
+                    .ToList();
+            }
 
             var gitLabActivities = new List<GitLabActivity>();
 
-            // Special handling for merge commits with squashing (as per test expectation)
-            // The test expects:
-            // 1. "Commit to Repository: ... Title: Merge branch ..."
-            // 2. "Commit to Repository: ... Title: Merge request from branch ... with squashing"
-            // So, we order by title to match this expectation if both are present
-            var mergeCommit = commits.FirstOrDefault(c => c.Title != null && c.Title.StartsWith("Merge branch"));
-            var squashedCommit = commits.FirstOrDefault(c => c.Title != null && c.Title.Contains("with squashing"));
-
-            if (mergeCommit != null)
+            // Create activity for each commit with its actual timestamp from committed_date
+            foreach (var commit in commits)
             {
-                gitLabActivities.Add(new GitLabActivity(mergeCommit.CreatedAt.DateTime, $"Commit to Repository: {projectName}, branch: {branchName}, Title: {mergeCommit.Title}"));
-            }
-            if (squashedCommit != null)
-            {
-                gitLabActivities.Add(new GitLabActivity(squashedCommit.CreatedAt.DateTime, $"Commit to Repository: {projectName}, branch: {branchName}, Title: {squashedCommit.Title}"));
-            }
-
-            // If not the special case, fallback to all commits
-            if (gitLabActivities.Count == 0)
-            {
-                foreach (var commit in commits)
-                {
-                    gitLabActivities.Add(new GitLabActivity(commit.CreatedAt.DateTime, $"Commit to Repository: {projectName}, branch: {branchName}, Title: {commit.Title}"));
-                }
+                gitLabActivities.Add(new GitLabActivity(
+                    commit.CommittedDate.DateTime,
+                    $"Commit to Repository: {projectName}, branch: {branchName}, Title: {commit.Title}"));
             }
 
             return gitLabActivities;
