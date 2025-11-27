@@ -64,9 +64,6 @@ namespace TrackYourDay.Core.Versioning
 
         public void UpdateApplication()
         {
-            // Ensure we have the newest version info fetched
-            this.GetNewestAvailableApplicationVersion();
-
             string appDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string batchFilePath = Path.Combine(appDirectory, "UpdateApplication.bat");
 
