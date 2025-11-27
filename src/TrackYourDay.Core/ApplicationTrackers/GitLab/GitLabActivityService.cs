@@ -169,7 +169,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             var gitLabActivities = new List<GitLabActivity>();
 
-            // Return all commits with their actual timestamps from the committed_date
+            // Create activity for each commit with its actual timestamp from committed_date
             foreach (var commit in commits)
             {
                 gitLabActivities.Add(new GitLabActivity(
