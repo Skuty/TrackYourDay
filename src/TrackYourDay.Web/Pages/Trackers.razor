@@ -1,12 +1,15 @@
 ﻿@page "/trackers"
 
 @using System.Linq.Expressions
+@using TrackYourDay.Core
 @using TrackYourDay.Core.ApplicationTrackers.GitLab
 @using TrackYourDay.Core.ApplicationTrackers.Jira
 @using TrackYourDay.Core.ApplicationTrackers.UserTasks
 @using TrackYourDay.Core.ApplicationTrackers.Breaks
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams
 @using TrackYourDay.Core.SystemTrackers
+@using TrackYourDay.Core.Persistence
+@using TrackYourDay.Core.Persistence.Specifications
 @using TrackYourDay.Web.Components
 
 @inject BreakTracker breakTracker
@@ -15,53 +18,77 @@
 @inject ActivityTracker activityTracker
 @inject GitLabTracker gitlabTracker
 @inject JiraTracker jiraTracker
+@inject IHistoricalDataRepository<EndedBreak> breakRepository
+@inject IHistoricalDataRepository<EndedActivity> activityRepository
+@inject IHistoricalDataRepository<EndedMeeting> meetingRepository
+@inject IClock clock
+
+<div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+    <MudDatePicker Label="Select Date" Date="selectedDate" DateChanged="OnDateChanged" />
+    @if (!IsToday())
+    {
+        <MudText Typo="Typo.body1" Color="Color.Info">Showing historical data for @selectedDate?.ToString("D")</MudText>
+    }
+</div>
 
 <MudTabs Elevation="2" Rounded="true" Centered="false" Class="my-6">
-    <MudTabPanel Icon="@Icons.Material.Filled.FreeBreakfast" Text="Breaks" BadgeData="@(breakTracker.GetEndedBreaks().Count)">
+    <MudTabPanel Icon="@Icons.Material.Filled.FreeBreakfast" Text="Breaks" BadgeData="@(breaks.Count)">
         <TrackerResultsComponent TItem="EndedBreak" 
-        Items="@breakTracker.GetEndedBreaks()"
+        Items="@breaks"
         Title="Breaks"
         Columns="@breakColumns"/>
     </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.Task" Text="Tasks" BadgeData="@(userTaskService.GetAllTasks().Count())">
+    <MudTabPanel Icon="@Icons.Material.Filled.Task" Text="Tasks" BadgeData="@(userTasks.Count())">
         <TrackerResultsComponent TItem="UserTask"
-        Items="@userTaskService.GetAllTasks()"
+        Items="@userTasks"
         Title="User Tasks"
         Columns="@userTasksColumns" />
     </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="System" BadgeData="@(activityTracker.GetEndedActivities().Count)">
+    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="System" BadgeData="@(activities.Count)">
         <TrackerResultsComponent TItem="EndedActivity"
-        Items="@activityTracker.GetEndedActivities()"
+        Items="@activities"
         Title="System Activities"
         Columns="@activityColumns"/>
     </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="Inputs" BadgeData="@(activityTracker.GetInstantActivities().Count)">
+    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="Inputs" BadgeData="@(instantActivities.Count)">
         <TrackerResultsComponent TItem="InstantActivity"
-        Items="@activityTracker.GetInstantActivities()"
+        Items="@instantActivities"
         Title="Instant Activities"
         Columns="@instantActivityColumns" />
     </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.VideoCameraFront" Text="Teams Meetings" BadgeData="@(meetingTracker.GetEndedMeetings().Count)">
+    <MudTabPanel Icon="@Icons.Material.Filled.VideoCameraFront" Text="Teams Meetings" BadgeData="@(meetings.Count)">
         <TrackerResultsComponent TItem="EndedMeeting"
-        Items="@meetingTracker.GetEndedMeetings()"
+        Items="@meetings"
         Title="Teams Meetings"
         Columns="@meetingColumns" />
     </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.CallSplit" Text="GitLab" BadgeData="@(gitlabTracker.GetGitLabActivities().Count)">
+    <MudTabPanel Icon="@Icons.Material.Filled.CallSplit" Text="GitLab" BadgeData="@(gitLabActivities.Count)">
         <TrackerResultsComponent TItem="GitLabActivity"
-                                 Items="@gitlabTracker.GetGitLabActivities()"
+                                 Items="@gitLabActivities"
                                  Title="GitLab Activities"
                                  Columns="@gitlabActivityColumns" />
     </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.BugReport" Text="Jira" BadgeData="@(jiraTracker.GetJiraActivities().Count)">
+    <MudTabPanel Icon="@Icons.Material.Filled.BugReport" Text="Jira" BadgeData="@(jiraActivities.Count)">
         <TrackerResultsComponent TItem="JiraActivity"
-                                 Items="@jiraTracker.GetJiraActivities()"
+                                 Items="@jiraActivities"
                                  Title="Jira Activities"
                                  Columns="@jiraActivityColumns" />
     </MudTabPanel>
 </MudTabs>
 
 @code {
+    private DateTime? selectedDate;
+    
+    // Data collections
+    private IReadOnlyCollection<EndedBreak> breaks = new List<EndedBreak>();
+    private IEnumerable<UserTask> userTasks = new List<UserTask>();
+    private IReadOnlyCollection<EndedActivity> activities = new List<EndedActivity>();
+    private IReadOnlyCollection<InstantActivity> instantActivities = new List<InstantActivity>();
+    private IReadOnlyCollection<EndedMeeting> meetings = new List<EndedMeeting>();
+    private IReadOnlyCollection<GitLabActivity> gitLabActivities = new List<GitLabActivity>();
+    private IReadOnlyCollection<JiraActivity> jiraActivities = new List<JiraActivity>();
+
+    // Column definitions
     private List<TableColumn<EndedBreak>> breakColumns;
     private List<TableColumn<UserTask>> userTasksColumns;
     private List<TableColumn<EndedActivity>> activityColumns;
@@ -71,6 +98,58 @@
     private List<TableColumn<JiraActivity>> jiraActivityColumns;
 
     protected override void OnInitialized()
+    {
+        selectedDate = clock.Now.Date;
+        InitializeColumns();
+        RefreshData();
+    }
+
+    private void OnDateChanged(DateTime? date)
+    {
+        selectedDate = date ?? clock.Now.Date;
+        RefreshData();
+    }
+
+    private bool IsToday()
+    {
+        return selectedDate.HasValue && selectedDate.Value.Date == clock.Now.Date;
+    }
+
+    private void RefreshData()
+    {
+        if (selectedDate == null) return;
+
+        var dateOnly = DateOnly.FromDateTime(selectedDate.Value);
+
+        // For breaks, activities, and meetings, use the repository (which combines current session + historical data)
+        breaks = breakRepository.Find(new BreakByDateSpecification(dateOnly));
+        activities = activityRepository.Find(new ActivityByDateSpecification(dateOnly));
+        meetings = meetingRepository.Find(new MeetingByDateSpecification(dateOnly));
+
+        // For user tasks, filter by date (in-memory only, no persistence yet)
+        userTasks = userTaskService.GetAllTasks()
+            .Where(t => DateOnly.FromDateTime(t.StartDate) == dateOnly)
+            .ToList();
+
+        // For instant activities, filter by date (in-memory only)
+        instantActivities = activityTracker.GetInstantActivities()
+            .Where(a => DateOnly.FromDateTime(a.OccuranceDate) == dateOnly)
+            .ToList();
+
+        // For GitLab activities, filter by date (in-memory only, fetched from API)
+        gitLabActivities = gitlabTracker.GetGitLabActivities()
+            .Where(a => DateOnly.FromDateTime(a.OccuranceDate) == dateOnly)
+            .ToList();
+
+        // For Jira activities, filter by date (in-memory only, fetched from API)
+        jiraActivities = jiraTracker.GetJiraActivities()
+            .Where(a => DateOnly.FromDateTime(a.OccurrenceDate) == dateOnly)
+            .ToList();
+
+        StateHasChanged();
+    }
+
+    private void InitializeColumns()
     {
         breakColumns = new()
         {
