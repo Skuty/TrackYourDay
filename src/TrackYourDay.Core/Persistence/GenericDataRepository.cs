@@ -72,6 +72,44 @@ namespace TrackYourDay.Core.Persistence
         }
 
         /// <summary>
+        /// Updates an existing item in the database by its Guid.
+        /// </summary>
+        public void Update(T item)
+        {
+            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            connection.Open();
+
+            var guidProperty = typeof(T).GetProperty("Guid");
+            
+            if (guidProperty == null)
+            {
+                throw new InvalidOperationException($"Type {typeName} must have a Guid property");
+            }
+
+            var guid = (Guid)guidProperty.GetValue(item)!;
+            var dataJson = JsonConvert.SerializeObject(item, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto
+            });
+
+            var updateCommand = connection.CreateCommand();
+            updateCommand.CommandText = @"
+                UPDATE historical_data 
+                SET DataJson = @dataJson
+                WHERE Guid = @guid AND TypeName = @typeName";
+            
+            updateCommand.Parameters.AddWithValue("@guid", guid.ToString());
+            updateCommand.Parameters.AddWithValue("@typeName", typeName);
+            updateCommand.Parameters.AddWithValue("@dataJson", dataJson);
+            
+            var rowsAffected = updateCommand.ExecuteNonQuery();
+            if (rowsAffected == 0)
+            {
+                throw new InvalidOperationException($"No record found with Guid {guid} for type {typeName}");
+            }
+        }
+
+        /// <summary>
         /// Queries data using a specification pattern.
         /// Applies the specification to both in-memory tracker data (if today) and database data.
         /// </summary>

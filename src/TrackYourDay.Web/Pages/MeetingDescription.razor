@@ -2,10 +2,12 @@
 
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams
 @using TrackYourDay.Core.MAUIProxy
+@using TrackYourDay.Core.Persistence
 @using MediatR
 
 @inject MsTeamsMeetingTracker meetingTracker
 @inject IMediator mediator
+@inject IHistoricalDataRepository<EndedMeeting> meetingRepository
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
     @if (endedMeeting != null)
@@ -94,6 +96,8 @@
                 if (!string.IsNullOrWhiteSpace(description))
                 {
                     endedMeeting.SetDescription(description);
+                    // Update the persisted meeting with the new description
+                    meetingRepository.Update(endedMeeting);
                 }
             }
             await CloseWindow();
