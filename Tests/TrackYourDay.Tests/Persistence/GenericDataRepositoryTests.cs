@@ -97,5 +97,19 @@ namespace TrackYourDay.Tests.Persistence
             Assert.Equal("Discussed project timeline and milestones", updatedMeeting.Description);
             Assert.Equal("Discussed project timeline and milestones", updatedMeeting.GetDescription());
         }
+
+        [Fact]
+        public void GivenMeetingDoesNotExist_WhenUpdating_ThenThrowsInvalidOperationException()
+        {
+            // Given
+            var meetingGuid = Guid.NewGuid();
+            var startDate = DateTime.Now.AddHours(-1);
+            var endDate = DateTime.Now;
+            var endedMeeting = new EndedMeeting(meetingGuid, startDate, endDate, "Non-existent Meeting");
+            // Note: We do NOT save the meeting to the database
+
+            // When & Then
+            Assert.Throws<InvalidOperationException>(() => repository.Update(endedMeeting));
+        }
     }
 }

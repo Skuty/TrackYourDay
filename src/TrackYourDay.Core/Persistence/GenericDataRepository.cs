@@ -101,7 +101,12 @@ namespace TrackYourDay.Core.Persistence
             updateCommand.Parameters.AddWithValue("@guid", guid.ToString());
             updateCommand.Parameters.AddWithValue("@typeName", typeName);
             updateCommand.Parameters.AddWithValue("@dataJson", dataJson);
-            updateCommand.ExecuteNonQuery();
+            
+            var rowsAffected = updateCommand.ExecuteNonQuery();
+            if (rowsAffected == 0)
+            {
+                throw new InvalidOperationException($"No record found with Guid {guid} for type {typeName}");
+            }
         }
 
         /// <summary>
