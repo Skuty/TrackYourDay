@@ -29,7 +29,7 @@ classDiagram
     class ActivityTracker {
         -IClock clock
         -IPublisher publisher
-        -ISystemStateRecognizingStrategy focusedWindowRecognizingStategy
+        -ISystemStateRecognizingStrategy focusedWindowRecognizingStrategy
         -ISystemStateRecognizingStrategy mousePositionRecognizingStrategy
         -StartedActivity currentStartedActivity
         -List~EndedActivity~ endedActivities
@@ -43,7 +43,7 @@ classDiagram
         +RecognizeActivity() SystemState
     }
     
-    class FocusedWindowRecognizingStategy {
+    class FocusedWindowRecognizingStrategy {
         +RecognizeActivity() SystemState
     }
     
@@ -56,7 +56,7 @@ classDiagram
     }
     
     ActivityTracker --> ISystemStateRecognizingStrategy
-    ISystemStateRecognizingStrategy <|.. FocusedWindowRecognizingStategy
+    ISystemStateRecognizingStrategy <|.. FocusedWindowRecognizingStrategy
     ISystemStateRecognizingStrategy <|.. MousePositionRecognizingStrategy
     ISystemStateRecognizingStrategy <|.. LastInputRecognizingStrategy
 ```
