@@ -45,14 +45,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="UpdateApplication.bat" />
+    <None Remove="appsettings.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="UpdateApplication.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="appsettings.json">
+    <None Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MediatR" Version="12.1.1" />
