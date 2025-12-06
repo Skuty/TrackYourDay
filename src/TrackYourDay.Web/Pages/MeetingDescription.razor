@@ -95,7 +95,7 @@
                 // Only set description if user entered something
                 if (!string.IsNullOrWhiteSpace(description))
                 {
-                    endedMeeting.SetDescription(description);
+                    endedMeeting.Describe(description);
                     // Update the persisted meeting with the new description
                     meetingRepository.Update(endedMeeting);
                 }
