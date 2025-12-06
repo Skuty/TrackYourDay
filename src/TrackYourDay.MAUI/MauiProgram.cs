@@ -6,9 +6,10 @@ using System.Reflection;
 using TrackYourDay.MAUI.BackgroundJobs.BreakTracking;
 using TrackYourDay.MAUI.ServiceRegistration;
 using TrackYourDay.Core.ServiceRegistration;
-using TrackYourDay.Core.Settings;
 using TrackYourDay.Web.ServiceRegistration;
 using TrackYourDay.Core.SystemTrackers;
+using TrackYourDay.MAUI.Infrastructure;
+using Microsoft.Extensions.Configuration;
 
 namespace TrackYourDay.MAUI
 {
@@ -26,12 +27,14 @@ namespace TrackYourDay.MAUI
             builder.Services.AddMudServices();
             builder.Services.AddMauiBlazorWebView();
 
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Information()
-                .Enrich.FromLogContext()
-                .WriteTo.File("C:\\Logs\\TrackYourDay\\TrackYourDay_.log",
-                    rollingInterval: RollingInterval.Day)
-                .CreateLogger();
+            // Load configuration from appsettings.json
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .Build();
+
+            // Configure logging from appsettings.json
+            Log.Logger = LoggingConfiguration.ConfigureSerilog(configuration);
 
             builder.Services.AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
