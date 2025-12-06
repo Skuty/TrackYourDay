@@ -173,6 +173,7 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IBreaksSettingsService, BreaksSettingsService>();
             services.AddSingleton<IActivitiesSettingsService, ActivitiesSettingsService>();
             services.AddSingleton<IWorkdaySettingsService, WorkdaySettingsService>();
+            services.AddSingleton<ILoggingSettingsService, LoggingSettingsService>();
 
             return services;
         }
