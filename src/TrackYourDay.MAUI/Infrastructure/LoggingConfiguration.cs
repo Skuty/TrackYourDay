@@ -36,61 +36,36 @@ namespace TrackYourDay.MAUI.Infrastructure
 
             if (settings.EnablePerClassLogging)
             {
-                // Configure per-class logging for trackers
-                AddPerClassLogger(loggerConfig, logDirectory, "ActivityTracker", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "BreakTracker", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "MsTeamsMeetingTracker", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "GitLabTracker", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "JiraTracker", logLevel);
-                
-                // Configure per-class logging for analytics/summary strategies
-                AddPerClassLogger(loggerConfig, logDirectory, "ActivitiesAnalyser", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "MLNetSummaryStrategy", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "JiraEnrichedSummaryStrategy", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "HybridContextualSummaryStrategy", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "ContextBasedSummaryStrategy", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "TimeBasedSummaryStrategy", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "DurationBasedSummaryStrategy", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "JiraKeySummaryStrategy", logLevel);
-                
-                // Configure per-class logging for persistence
-                AddPerClassLogger(loggerConfig, logDirectory, "PersistEndedActivityHandler", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "PersistEndedBreakHandler", logLevel);
-                AddPerClassLogger(loggerConfig, logDirectory, "PersistEndedMeetingHandler", logLevel);
+                // Configure generic per-class logging using SourceContext
+                // This will create a separate log file for each class that logs
+                var perClassDir = Path.Combine(logDirectory, "PerClass");
+                if (!Directory.Exists(perClassDir))
+                {
+                    Directory.CreateDirectory(perClassDir);
+                }
+
+                loggerConfig.WriteTo.Logger(lc => lc
+                    .Filter.ByIncludingOnly(evt => evt.Properties.ContainsKey("SourceContext"))
+                    .WriteTo.Map(
+                        evt => evt.Properties.ContainsKey("SourceContext")
+                            ? ExtractClassName(evt.Properties["SourceContext"]?.ToString() ?? "Unknown")
+                            : "Unknown",
+                        (className, wt) => wt.File(
+                            Path.Combine(perClassDir, $"{className}_.log"),
+                            rollingInterval: RollingInterval.Day,
+                            restrictedToMinimumLevel: logLevel)));
             }
 
             return loggerConfig.CreateLogger();
         }
 
-        private static void AddPerClassLogger(
-            LoggerConfiguration config, 
-            string logDirectory, 
-            string className, 
-            LogEventLevel minLevel)
+        private static string ExtractClassName(string sourceContext)
         {
-            var logFile = Path.Combine(logDirectory, "PerClass", $"{className}_.log");
-            
-            // Ensure per-class directory exists
-            var perClassDir = Path.Combine(logDirectory, "PerClass");
-            if (!Directory.Exists(perClassDir))
-            {
-                Directory.CreateDirectory(perClassDir);
-            }
-
-            config.WriteTo.Logger(lc => lc
-                .Filter.ByIncludingOnly(evt => 
-                {
-                    if (!evt.Properties.ContainsKey("SourceContext"))
-                        return false;
-                    
-                    var sourceContext = evt.Properties["SourceContext"]?.ToString() ?? string.Empty;
-                    // Use EndsWith to match the class name more precisely and avoid false positives
-                    return sourceContext.EndsWith($"{className}\"", StringComparison.OrdinalIgnoreCase);
-                })
-                .WriteTo.File(
-                    logFile,
-                    rollingInterval: RollingInterval.Day,
-                    restrictedToMinimumLevel: minLevel));
+            // SourceContext format is typically: "\"Namespace.ClassName\""
+            // Extract just the class name
+            var cleaned = sourceContext.Trim('"');
+            var lastDot = cleaned.LastIndexOf('.');
+            return lastDot >= 0 ? cleaned.Substring(lastDot + 1) : cleaned;
         }
 
         private static LogEventLevel ParseLogLevel(string logLevel)

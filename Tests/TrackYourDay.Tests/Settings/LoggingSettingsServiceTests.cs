@@ -23,8 +23,7 @@ namespace TrackYourDay.Tests.Settings
             Assert.NotNull(settings);
             Assert.Equal("Information", settings.MinimumLogLevel);
             Assert.True(settings.EnablePerClassLogging);
-            Assert.NotEmpty(settings.LogDirectory); // Verify directory is set (platform-specific)
-            Assert.Contains("TrackYourDay", settings.LogDirectory); // Verify it contains app name
+            Assert.Equal("C:\\Logs\\TrackYourDay", settings.LogDirectory);
         }
 
         [Fact]

@@ -10,6 +10,7 @@ using TrackYourDay.Core.Settings;
 using TrackYourDay.Web.ServiceRegistration;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.MAUI.Infrastructure;
+using Microsoft.Extensions.Configuration;
 
 namespace TrackYourDay.MAUI
 {
@@ -27,8 +28,16 @@ namespace TrackYourDay.MAUI
             builder.Services.AddMudServices();
             builder.Services.AddMauiBlazorWebView();
 
-            // Configure default logging first (will be reconfigured after loading settings)
-            Log.Logger = LoggingConfiguration.ConfigureSerilog(new LoggingSettings());
+            // Load configuration from appsettings.json
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .Build();
+
+            // Configure logging from appsettings.json
+            var loggingSettings = new LoggingSettings();
+            configuration.GetSection("Logging").Bind(loggingSettings);
+            Log.Logger = LoggingConfiguration.ConfigureSerilog(loggingSettings);
 
             builder.Services.AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
@@ -59,21 +68,7 @@ namespace TrackYourDay.MAUI
             builder.Services.AddBlazorWebViewDeveloperTools();
 
 #endif
-            var app = builder.Build();
-            
-            // Reconfigure logging with user settings after DI container is built
-            try
-            {
-                var loggingSettingsService = app.Services.GetRequiredService<ILoggingSettingsService>();
-                var loggingSettings = loggingSettingsService.GetLoggingSettings();
-                Log.Logger = LoggingConfiguration.ConfigureSerilog(loggingSettings);
-            }
-            catch
-            {
-                // If loading settings fails, continue with default configuration
-            }
-            
-            return app;
+            return builder.Build();
         }
     }
 }
