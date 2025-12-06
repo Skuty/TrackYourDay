@@ -6,7 +6,6 @@ using System.Reflection;
 using TrackYourDay.MAUI.BackgroundJobs.BreakTracking;
 using TrackYourDay.MAUI.ServiceRegistration;
 using TrackYourDay.Core.ServiceRegistration;
-using TrackYourDay.Core.Settings;
 using TrackYourDay.Web.ServiceRegistration;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.MAUI.Infrastructure;
@@ -35,9 +34,7 @@ namespace TrackYourDay.MAUI
                 .Build();
 
             // Configure logging from appsettings.json
-            var loggingSettings = new LoggingSettings();
-            configuration.GetSection("Logging").Bind(loggingSettings);
-            Log.Logger = LoggingConfiguration.ConfigureSerilog(loggingSettings);
+            Log.Logger = LoggingConfiguration.ConfigureSerilog(configuration);
 
             builder.Services.AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));

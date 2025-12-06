@@ -1,16 +1,18 @@
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
-using TrackYourDay.Core.Settings;
+using Microsoft.Extensions.Configuration;
 
 namespace TrackYourDay.MAUI.Infrastructure
 {
     public static class LoggingConfiguration
     {
-        public static ILogger ConfigureSerilog(LoggingSettings settings)
+        public static ILogger ConfigureSerilog(IConfiguration configuration)
         {
-            var logLevel = ParseLogLevel(settings.MinimumLogLevel);
-            var logDirectory = settings.LogDirectory;
+            var loggingSection = configuration.GetSection("Logging");
+            var logLevel = ParseLogLevel(loggingSection["MinimumLogLevel"] ?? "Information");
+            var logDirectory = loggingSection["LogDirectory"] ?? "C:\\Logs\\TrackYourDay";
+            var enablePerClassLogging = loggingSection.GetValue<bool>("EnablePerClassLogging", true);
             
             // Ensure directory exists
             if (!Directory.Exists(logDirectory))
@@ -34,7 +36,7 @@ namespace TrackYourDay.MAUI.Infrastructure
                 rollingInterval: RollingInterval.Day,
                 restrictedToMinimumLevel: logLevel);
 
-            if (settings.EnablePerClassLogging)
+            if (enablePerClassLogging)
             {
                 // Configure generic per-class logging using SourceContext
                 // This will create a separate log file for each class that logs
