@@ -79,8 +79,14 @@ namespace TrackYourDay.MAUI.Infrastructure
 
             config.WriteTo.Logger(lc => lc
                 .Filter.ByIncludingOnly(evt => 
-                    evt.Properties.ContainsKey("SourceContext") &&
-                    evt.Properties["SourceContext"].ToString().Contains(className))
+                {
+                    if (!evt.Properties.ContainsKey("SourceContext"))
+                        return false;
+                    
+                    var sourceContext = evt.Properties["SourceContext"]?.ToString() ?? string.Empty;
+                    // Use EndsWith to match the class name more precisely and avoid false positives
+                    return sourceContext.EndsWith($"{className}\"", StringComparison.OrdinalIgnoreCase);
+                })
                 .WriteTo.File(
                     logFile,
                     rollingInterval: RollingInterval.Day,

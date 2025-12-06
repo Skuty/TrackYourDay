@@ -27,20 +27,8 @@ namespace TrackYourDay.MAUI
             builder.Services.AddMudServices();
             builder.Services.AddMauiBlazorWebView();
 
-            // Register settings services first to load logging configuration
-            builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
-            builder.Services.AddSingleton<IClock, Clock>();
-            builder.Services.AddSingleton<IGenericSettingsRepository, SqliteGenericSettingsRepository>();
-            builder.Services.AddSingleton<IGenericSettingsService, GenericSettingsService>();
-            builder.Services.AddSingleton<ILoggingSettingsService, LoggingSettingsService>();
-
-            // Build a temporary service provider to get logging settings
-            var tempServiceProvider = builder.Services.BuildServiceProvider();
-            var loggingSettingsService = tempServiceProvider.GetRequiredService<ILoggingSettingsService>();
-            var loggingSettings = loggingSettingsService.GetLoggingSettings();
-
-            // Configure Serilog with the settings
-            Log.Logger = LoggingConfiguration.ConfigureSerilog(loggingSettings);
+            // Configure default logging first (will be reconfigured after loading settings)
+            Log.Logger = LoggingConfiguration.ConfigureSerilog(new LoggingSettings());
 
             builder.Services.AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
@@ -71,7 +59,21 @@ namespace TrackYourDay.MAUI
             builder.Services.AddBlazorWebViewDeveloperTools();
 
 #endif
-            return builder.Build();
+            var app = builder.Build();
+            
+            // Reconfigure logging with user settings after DI container is built
+            try
+            {
+                var loggingSettingsService = app.Services.GetRequiredService<ILoggingSettingsService>();
+                var loggingSettings = loggingSettingsService.GetLoggingSettings();
+                Log.Logger = LoggingConfiguration.ConfigureSerilog(loggingSettings);
+            }
+            catch
+            {
+                // If loading settings fails, continue with default configuration
+            }
+            
+            return app;
         }
     }
 }
