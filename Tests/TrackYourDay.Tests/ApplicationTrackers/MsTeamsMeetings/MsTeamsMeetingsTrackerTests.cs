@@ -82,7 +82,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
 
             // When
             var endedMeeting = this.msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
-            endedMeeting.SetDescription("Discussed project requirements");
+            endedMeeting.Describe("Discussed project requirements");
 
             // Then
             Assert.Equal("Discussed project requirements", endedMeeting.Description);

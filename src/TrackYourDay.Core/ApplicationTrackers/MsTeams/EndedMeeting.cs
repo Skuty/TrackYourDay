@@ -14,7 +14,7 @@
             return !string.IsNullOrWhiteSpace(Description) ? Description : Title;
         }
 
-        public void SetDescription(string description)
+        public void Describe(string description)
         {
             Description = description;
         }
