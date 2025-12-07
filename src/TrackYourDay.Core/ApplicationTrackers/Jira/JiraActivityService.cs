@@ -35,8 +35,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             // Create a deterministic GUID based on the activity date and description
             // This ensures the same activity will always have the same GUID
             var input = $"{occurrenceDate:O}|{description}";
-            var hash = MD5.HashData(Encoding.UTF8.GetBytes(input));
-            return new Guid(hash);
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(input));
+            // Take first 16 bytes for GUID
+            return new Guid(hash.Take(16).ToArray());
         }
 
         public List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate)
