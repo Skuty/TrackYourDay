@@ -111,20 +111,20 @@ Examples:
 - `WhenCreatingTimePeriod_ThenDurationIsEqualToTimeBetweenStartDateAndEndDate`
 
 ### Test Structure
-Use Arrange-Act-Assert (AAA) pattern with comments:
+Use Given-When-Then pattern with comments:
 
 ```csharp
 [Fact]
 public void GivenValidInput_WhenProcessing_ThenReturnsExpectedResult()
 {
-    // Arrange
+    // Given
     var input = CreateTestInput();
     var sut = new SystemUnderTest();
 
-    // Act
+    // When
     var result = sut.Process(input);
 
-    // Assert
+    // Then
     result.Should().Be(expectedValue);
 }
 ```
@@ -211,16 +211,17 @@ public class MyTrackerJob : IJob
 ## Pull Request Guidelines
 
 When submitting PRs:
-1. Ensure all tests pass (`dotnet test`)
-2. Build succeeds in Release configuration
-3. No new warnings introduced
-4. Add tests for new functionality
-5. Update documentation if adding new features
-6. Follow existing code style and patterns
+1. Use conventional commits with prefixes: `feat:` for features, `fix:` for bug fixes, `chore:` for maintenance
+2. Ensure all tests pass (`dotnet test`)
+3. Build succeeds in Release configuration
+4. No new warnings introduced
+5. Add tests for new functionality
+6. Update documentation if adding new features
+7. Follow existing code style and patterns
 
 ## Additional Notes
 
 - This is primarily a learning project (see README.md)
-- Pull requests are unlikely to be accepted (per contribution guidelines)
+- Pull requests will mostly be accepted
 - For feature requests or bugs, create an issue first
 - The application is licensed under BSD-style license
