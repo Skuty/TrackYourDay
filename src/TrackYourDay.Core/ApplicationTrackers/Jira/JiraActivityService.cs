@@ -1,8 +1,11 @@
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using System.Text;
+using TrackYourDay.Core.Persistence;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
-    public record class JiraActivity(DateTime OccurrenceDate, string Description);
+    public record class JiraActivity(Guid Guid, DateTime OccurrenceDate, string Description);
 
     public interface IJiraActivityService
     {
@@ -13,13 +16,27 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     {
         private readonly IJiraRestApiClient jiraRestApiClient;
         private readonly ILogger<JiraActivityService> logger;
+        private readonly IHistoricalDataRepository<JiraActivity>? repository;
         private JiraUser currentUser;
         private bool stopFetchingDueToFailedRequests = false;
 
-        public JiraActivityService(IJiraRestApiClient jiraRestApiClient, ILogger<JiraActivityService> logger)
+        public JiraActivityService(
+            IJiraRestApiClient jiraRestApiClient, 
+            ILogger<JiraActivityService> logger,
+            IHistoricalDataRepository<JiraActivity>? repository = null)
         {
             this.jiraRestApiClient = jiraRestApiClient;
             this.logger = logger;
+            this.repository = repository;
+        }
+
+        private Guid GenerateGuidForActivity(DateTime occurrenceDate, string description)
+        {
+            // Create a deterministic GUID based on the activity date and description
+            // This ensures the same activity will always have the same GUID
+            var input = $"{occurrenceDate:O}|{description}";
+            var hash = MD5.HashData(Encoding.UTF8.GetBytes(input));
+            return new Guid(hash);
         }
 
         public List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate)
@@ -73,6 +90,24 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                     }
                 }
 
+                // Persist new activities to the database
+                if (repository != null)
+                {
+                    foreach (var activity in activities)
+                    {
+                        try
+                        {
+                            repository.Save(activity);
+                            logger?.LogDebug("Persisted Jira activity: {Description}", activity.Description);
+                        }
+                        catch (Exception ex)
+                        {
+                            // If Save fails, the activity might already exist, which is fine
+                            logger?.LogDebug(ex, "Activity may already be persisted: {Description}", activity.Description);
+                        }
+                    }
+                }
+
                 return activities.OrderBy(a => a.OccurrenceDate).ToList();
             }
             catch (Exception e)
@@ -96,7 +131,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 description += $" (sub-task of {parentType} {issue.Fields.Parent.Key})";
             }
 
-            return new JiraActivity(issue.Fields.Created!.Value.LocalDateTime, description);
+            return new JiraActivity(GenerateGuidForActivity(issue.Fields.Created!.Value.LocalDateTime, description), issue.Fields.Created!.Value.LocalDateTime, description);
         }
 
         private JiraActivity CreateWorklogActivity(JiraIssueResponse issue, JiraWorklogResponse worklog)
@@ -115,7 +150,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 description += $" - \"{commentPreview}\"";
             }
 
-            return new JiraActivity(worklog.Started.LocalDateTime, description);
+            return new JiraActivity(GenerateGuidForActivity(worklog.Started.LocalDateTime, description), worklog.Started.LocalDateTime, description);
         }
 
         private List<JiraActivity> MapChangelogToActivities(JiraIssueResponse issue)
@@ -186,7 +221,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 _ => $"Updated {item.Field} of {issueIdentifier}: {issueSummary}"
             };
 
-            return new JiraActivity(activityDate, description);
+            return new JiraActivity(GenerateGuidForActivity(activityDate, description), activityDate, description);
         }
 
         private string MapAssigneeChange(string issueKey, string? summary, string? from, string? to)

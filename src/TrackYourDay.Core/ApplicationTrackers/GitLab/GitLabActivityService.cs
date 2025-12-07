@@ -1,8 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using System.Text;
+using TrackYourDay.Core.Persistence;
 
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
-    public record class GitLabActivity(DateTime OccuranceDate, string Description);
+    public record class GitLabActivity(Guid Guid, DateTime OccuranceDate, string Description);
 
     //TODO: Split namespaces for internal and eternal objects like GitLabACtivity and GitLabCommit
 
@@ -10,16 +13,30 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
     {
         private readonly IGitLabRestApiClient gitLabRestApiClient;
         private readonly ILogger<GitLabActivityService> logger;
+        private readonly IHistoricalDataRepository<GitLabActivity>? repository;
         private GitLabUserId userId;
         private string userEmail;
         private List<GitLabActivity> gitlabActivities;
         private bool stopFetchingDueToFailedRequests = false;
 
-        public GitLabActivityService(IGitLabRestApiClient gitLabRestApiClient, ILogger<GitLabActivityService> logger)
+        public GitLabActivityService(
+            IGitLabRestApiClient gitLabRestApiClient, 
+            ILogger<GitLabActivityService> logger,
+            IHistoricalDataRepository<GitLabActivity>? repository = null)
         {
             this.gitLabRestApiClient = gitLabRestApiClient;
             this.logger = logger;
+            this.repository = repository;
             this.gitlabActivities = new List<GitLabActivity>();
+        }
+
+        private Guid GenerateGuidForActivity(DateTime occuranceDate, string description)
+        {
+            // Create a deterministic GUID based on the activity date and description
+            // This ensures the same activity will always have the same GUID
+            var input = $"{occuranceDate:O}|{description}";
+            var hash = MD5.HashData(Encoding.UTF8.GetBytes(input));
+            return new Guid(hash);
         }
 
         public List<GitLabActivity> GetTodayActivities()
@@ -43,10 +60,27 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
                 foreach (var gitlabEvent in events)
                 {
-                    // TODO: store GitLabData and only add new items to it instead of repulling everything from scratch
                     var gitLabActivity = this.MapGitLabEventToGitLabActivity(gitlabEvent);
 
                     this.gitlabActivities.AddRange(gitLabActivity);
+                    
+                    // Persist new activities to the database
+                    if (repository != null)
+                    {
+                        foreach (var activity in gitLabActivity)
+                        {
+                            try
+                            {
+                                repository.Save(activity);
+                                logger?.LogDebug("Persisted GitLab activity: {Description}", activity.Description);
+                            }
+                            catch (Exception ex)
+                            {
+                                // If Save fails, the activity might already exist, which is fine
+                                logger?.LogDebug(ex, "Activity may already be persisted: {Description}", activity.Description);
+                            }
+                        }
+                    }
                 }
             } catch (Exception e)
             {
@@ -101,9 +135,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             }
 
             // Fallback for other event types
+            var description = $"{gitlabEvent.Action} {gitlabEvent.TargetType}: {gitlabEvent.TargetTitle}";
             return new List<GitLabActivity>
             {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, $"{gitlabEvent.Action} {gitlabEvent.TargetType}: {gitlabEvent.TargetTitle}")
+                new GitLabActivity(GenerateGuidForActivity(gitlabEvent.CreatedAt.DateTime, description), gitlabEvent.CreatedAt.DateTime, description)
             };
         }
 
@@ -116,18 +151,20 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             // Check if this is a new branch creation (action_name is "pushed new" and push_data.action is "created")
             if (gitlabEvent.PushData.Action == "created" && gitlabEvent.PushData.RefType == "branch")
             {
+                var description = $"Created new branch '{branchName}' in Repository: {projectName}";
                 return new List<GitLabActivity>
                 {
-                    new GitLabActivity(gitlabEvent.CreatedAt.DateTime, $"Created new branch '{branchName}' in Repository: {projectName}")
+                    new GitLabActivity(GenerateGuidForActivity(gitlabEvent.CreatedAt.DateTime, description), gitlabEvent.CreatedAt.DateTime, description)
                 };
             }
 
             // Check if this is a tag creation
             if (gitlabEvent.PushData.Action == "created" && gitlabEvent.PushData.RefType == "tag")
             {
+                var description = $"Created new tag '{branchName}' in Repository: {projectName}";
                 return new List<GitLabActivity>
                 {
-                    new GitLabActivity(gitlabEvent.CreatedAt.DateTime, $"Created new tag '{branchName}' in Repository: {projectName}")
+                    new GitLabActivity(GenerateGuidForActivity(gitlabEvent.CreatedAt.DateTime, description), gitlabEvent.CreatedAt.DateTime, description)
                 };
             }
 
@@ -135,9 +172,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             if (gitlabEvent.PushData.Action == "removed")
             {
                 var refType = gitlabEvent.PushData.RefType;
+                var description = $"Deleted {refType} '{branchName}' from Repository: {projectName}";
                 return new List<GitLabActivity>
                 {
-                    new GitLabActivity(gitlabEvent.CreatedAt.DateTime, $"Deleted {refType} '{branchName}' from Repository: {projectName}")
+                    new GitLabActivity(GenerateGuidForActivity(gitlabEvent.CreatedAt.DateTime, description), gitlabEvent.CreatedAt.DateTime, description)
                 };
             }
 
@@ -172,9 +210,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             // Create activity for each commit with its actual timestamp from committed_date
             foreach (var commit in commits)
             {
+                var description = $"Commit to Repository: {projectName}, branch: {branchName}, Title: {commit.Title}";
                 gitLabActivities.Add(new GitLabActivity(
+                    GenerateGuidForActivity(commit.CommittedDate.DateTime, description),
                     commit.CommittedDate.DateTime,
-                    $"Commit to Repository: {projectName}, branch: {branchName}, Title: {commit.Title}"));
+                    description));
             }
 
             return gitLabActivities;
@@ -196,7 +236,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             return new List<GitLabActivity>
             {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
+                new GitLabActivity(GenerateGuidForActivity(gitlabEvent.CreatedAt.DateTime, description), gitlabEvent.CreatedAt.DateTime, description)
             };
         }
 
@@ -214,7 +254,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             return new List<GitLabActivity>
             {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
+                new GitLabActivity(GenerateGuidForActivity(gitlabEvent.CreatedAt.DateTime, description), gitlabEvent.CreatedAt.DateTime, description)
             };
         }
 
@@ -236,7 +276,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             return new List<GitLabActivity>
             {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
+                new GitLabActivity(GenerateGuidForActivity(gitlabEvent.CreatedAt.DateTime, description), gitlabEvent.CreatedAt.DateTime, description)
             };
         }
 
@@ -252,7 +292,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             return new List<GitLabActivity>
             {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
+                new GitLabActivity(GenerateGuidForActivity(gitlabEvent.CreatedAt.DateTime, description), gitlabEvent.CreatedAt.DateTime, description)
             };
         }
 
@@ -270,7 +310,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             return new List<GitLabActivity>
             {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
+                new GitLabActivity(GenerateGuidForActivity(gitlabEvent.CreatedAt.DateTime, description), gitlabEvent.CreatedAt.DateTime, description)
             };
         }
 
