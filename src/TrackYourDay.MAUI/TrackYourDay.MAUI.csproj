@@ -10,6 +10,8 @@
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableDefaultCssItems>false</EnableDefaultCssItems>
+    <!-- Disable unused MAUI target frameworks to avoid workload requirements -->
+    <MauiEnableTizenTargetFramework>false</MauiEnableTizenTargetFramework>
     <!-- Display name -->
     <ApplicationTitle>TrackYourDay.MAUI</ApplicationTitle>
     <!-- App Identifier -->
