@@ -20,6 +20,9 @@ jobs:
         with:
           dotnet-version: 10.0.x  
 
+      - name: Install MAUI Windows workload
+        run: dotnet workload install maui-windows
+
       - name: Cache NuGet packages
         id: cache-nugetpackages
         uses: actions/cache@v4

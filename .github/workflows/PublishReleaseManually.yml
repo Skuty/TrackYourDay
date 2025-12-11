@@ -32,6 +32,9 @@ jobs:
               with:
                 dotnet-version: 10.0.x  # Specify the .NET version you need
 
+            - name: Install MAUI Windows workload
+              run: dotnet workload install maui-windows
+
             - name: Restore dependencies
               run: dotnet restore --runtime win-x64
                 
