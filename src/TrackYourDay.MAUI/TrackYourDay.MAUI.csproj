@@ -3,7 +3,7 @@
     <WindowsPackageType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">None</WindowsPackageType>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net8.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 	<OutputType>Exe</OutputType>
     <RootNamespace>TrackYourDay.MAUI</RootNamespace>
     <UseMaui>true</UseMaui>
