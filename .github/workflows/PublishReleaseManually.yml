@@ -65,7 +65,7 @@ jobs:
 
             - uses: ncipollo/release-action@v1
               with:
-                artifacts: 'src\TrackYourDay.MAUI\bin\Release\net8.0-windows10.0.19041.0\win10-x64\TrackYourDay_v${{ github.event.inputs.version }}.zip'
+                artifacts: 'src\TrackYourDay.MAUI\bin\Release\net8.0-windows10.0.19041.0\TrackYourDay_v${{ github.event.inputs.version }}.zip'
                 artifactErrorsFailBuild: true
                 prerelease: ${{ github.event.inputs.isPreRelease }}
                 tag: v${{ github.event.inputs.version }}
