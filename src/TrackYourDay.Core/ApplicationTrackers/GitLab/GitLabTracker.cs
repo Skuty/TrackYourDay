@@ -14,6 +14,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         private readonly IGenericSettingsService settingsService;
         private readonly ILogger<GitLabTracker> logger;
         private List<GitLabActivity> publishedActivities;
+        private List<DiscoveredGitLabActivity> discoveredActivities;
 
         public GitLabTracker(
             IGitLabActivityService gitLabActivityService,
@@ -28,6 +29,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             this.settingsService = settingsService;
             this.logger = logger;
             this.publishedActivities = new List<GitLabActivity>();
+            this.discoveredActivities = new List<DiscoveredGitLabActivity>();
         }
 
         public async Task RecognizeActivity()
@@ -45,7 +47,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             foreach (var activity in newActivities)
             {
                 this.publishedActivities.Add(activity);
-                await this.publisher.Publish(new GitLabActivityDiscoveredEvent(Guid.NewGuid(), activity), CancellationToken.None);
+                var guid = Guid.NewGuid();
+                var discoveredActivity = new DiscoveredGitLabActivity(guid, activity.OccuranceDate, activity.Description);
+                this.discoveredActivities.Add(discoveredActivity);
+                await this.publisher.Publish(new GitLabActivityDiscoveredEvent(guid, activity), CancellationToken.None);
                 this.logger.LogInformation("GitLab activity discovered: {0}", activity.Description);
             }
 
@@ -61,6 +66,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         public IReadOnlyCollection<GitLabActivity> GetGitLabActivities()
         {
             return this.publishedActivities.AsReadOnly();
+        }
+
+        public IReadOnlyCollection<DiscoveredGitLabActivity> GetDiscoveredGitLabActivities()
+        {
+            return this.discoveredActivities.AsReadOnly();
         }
     }
 }
