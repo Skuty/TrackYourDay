@@ -9,6 +9,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
     {
         private const string LastFetchTimestampKey = "GitLabTracker.LastFetchTimestamp";
         private readonly IGitLabActivityService gitLabActivityService;
+        private readonly IClock clock;
         private readonly IPublisher publisher;
         private readonly IGenericSettingsService settingsService;
         private readonly ILogger<GitLabTracker> logger;
@@ -16,11 +17,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
         public GitLabTracker(
             IGitLabActivityService gitLabActivityService,
+            IClock clock,
             IPublisher publisher,
             IGenericSettingsService settingsService,
             ILogger<GitLabTracker> logger)
         {
             this.gitLabActivityService = gitLabActivityService;
+            this.clock = clock;
             this.publisher = publisher;
             this.settingsService = settingsService;
             this.logger = logger;
@@ -29,7 +32,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
         public async Task RecognizeActivity()
         {
-            var lastFetchTimestamp = this.settingsService.GetSetting<DateTime>(LastFetchTimestampKey, DateTime.MinValue);
+            var lastFetchTimestamp = this.settingsService.GetSetting<DateTime>(LastFetchTimestampKey, this.clock.Now.AddDays(-7));
             var allActivities = this.gitLabActivityService.GetTodayActivities();
             
             // Filter activities that occurred after the last fetch timestamp

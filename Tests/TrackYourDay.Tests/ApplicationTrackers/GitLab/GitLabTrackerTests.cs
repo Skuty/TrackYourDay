@@ -13,6 +13,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
     public class GitLabTrackerTests
     {
         private Mock<IGitLabActivityService> gitLabActivityServiceMock;
+        private Mock<IClock> clockMock;
         private Mock<IPublisher> publisherMock;
         private Mock<IGenericSettingsService> settingsServiceMock;
         private Mock<ILogger<GitLabTracker>> loggerMock;
@@ -21,12 +22,16 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         public GitLabTrackerTests()
         {
             this.gitLabActivityServiceMock = new Mock<IGitLabActivityService>();
+            this.clockMock = new Mock<IClock>();
             this.publisherMock = new Mock<IPublisher>();
             this.settingsServiceMock = new Mock<IGenericSettingsService>();
             this.loggerMock = new Mock<ILogger<GitLabTracker>>();
 
+            this.clockMock.Setup(c => c.Now).Returns(new DateTime(2025, 03, 16, 12, 0, 0));
+
             this.gitLabTracker = new GitLabTracker(
                 this.gitLabActivityServiceMock.Object,
+                this.clockMock.Object,
                 this.publisherMock.Object,
                 this.settingsServiceMock.Object,
                 this.loggerMock.Object);
@@ -249,6 +254,32 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             this.publisherMock.Verify(
                 p => p.Publish(It.IsAny<GitLabActivityDiscoveredEvent>(), It.IsAny<CancellationToken>()),
                 Times.Never);
+        }
+
+        [Fact]
+        public async Task GivenNoStoredTimestamp_WhenRecognizingActivity_ThenUsesLast7DaysAsDefault()
+        {
+            // Given - Clock is set to 2025-03-16 12:00:00
+            // Default should be 7 days before: 2025-03-09 12:00:00
+            var activityWithin7Days = new GitLabActivity(new DateTime(2025, 03, 10, 10, 0, 0), "Activity within 7 days");
+            var activityBefore7Days = new GitLabActivity(new DateTime(2025, 03, 09, 10, 0, 0), "Activity before 7 days");
+            
+            this.gitLabActivityServiceMock
+                .Setup(s => s.GetTodayActivities())
+                .Returns(new List<GitLabActivity> { activityBefore7Days, activityWithin7Days });
+            
+            // Mock the settings service to use the default value (7 days ago)
+            this.settingsServiceMock
+                .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
+                .Returns((string key, DateTime defaultValue) => defaultValue);
+
+            // When
+            await this.gitLabTracker.RecognizeActivity();
+
+            // Then - Only activity within 7 days should be published (> 7 days ago)
+            this.publisherMock.Verify(
+                p => p.Publish(It.IsAny<GitLabActivityDiscoveredEvent>(), It.IsAny<CancellationToken>()),
+                Times.Once);
         }
     }
 }
