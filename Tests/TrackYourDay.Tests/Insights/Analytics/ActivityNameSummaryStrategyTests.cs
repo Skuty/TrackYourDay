@@ -110,7 +110,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
         }
 
         [Fact]
-        public void GivenActivitiesOnDifferentDays_WhenGenerateIsCalled_ThenGroupsByDateAndName()
+        public void GivenActivitiesOnDifferentDays_WhenGenerateIsCalled_ThenGroupsByNameOnly()
         {
             // Given
             var activity1 = CreateActivity(
@@ -134,13 +134,13 @@ namespace TrackYourDay.Tests.Insights.Analytics
             var result = _sut.Generate(activities);
 
             // Then
-            result.Should().HaveCount(2);
-            result.Should().Contain(g => g.Date == new DateOnly(2023, 1, 1) && g.Duration == TimeSpan.FromHours(2));
-            result.Should().Contain(g => g.Date == new DateOnly(2023, 1, 2) && g.Duration == TimeSpan.FromHours(1));
+            result.Should().ContainSingle();
+            result.First().Description.Should().Be("Working on feature");
+            result.First().Duration.Should().Be(TimeSpan.FromHours(3));
         }
 
         [Fact]
-        public void GivenActivitiesWithMultipleNamesOnMultipleDays_WhenGenerateIsCalled_ThenGroupsCorrectly()
+        public void GivenActivitiesWithMultipleNamesOnMultipleDays_WhenGenerateIsCalled_ThenGroupsByNameAcrossDays()
         {
             // Given
             var activities = new List<EndedActivity>
@@ -156,13 +156,9 @@ namespace TrackYourDay.Tests.Insights.Analytics
             var result = _sut.Generate(activities);
 
             // Then
-            result.Should().HaveCount(4);
-            // Day 1
-            result.Should().Contain(g => g.Date == new DateOnly(2023, 1, 1) && g.Description == "Coding" && g.Duration == TimeSpan.FromHours(2));
-            result.Should().Contain(g => g.Date == new DateOnly(2023, 1, 1) && g.Description == "Meeting" && g.Duration == TimeSpan.FromHours(1));
-            // Day 2
-            result.Should().Contain(g => g.Date == new DateOnly(2023, 1, 2) && g.Description == "Coding" && g.Duration == TimeSpan.FromHours(1));
-            result.Should().Contain(g => g.Date == new DateOnly(2023, 1, 2) && g.Description == "Meeting" && g.Duration == TimeSpan.FromHours(1));
+            result.Should().HaveCount(2);
+            result.Should().Contain(g => g.Description == "Coding" && g.Duration == TimeSpan.FromHours(3));
+            result.Should().Contain(g => g.Description == "Meeting" && g.Duration == TimeSpan.FromHours(2));
         }
 
         [Fact]

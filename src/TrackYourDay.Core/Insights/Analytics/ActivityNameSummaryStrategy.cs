@@ -27,33 +27,22 @@ namespace TrackYourDay.Core.Insights.Analytics
                 return Array.Empty<GroupedActivity>();
             }
 
-            var activitiesByDate = activitiesList
-                .GroupBy(a => DateOnly.FromDateTime(a.StartDate.Date))
-                .OrderBy(g => g.Key);
+            var groups = new Dictionary<string, GroupedActivity>();
+            var firstActivityDate = DateOnly.FromDateTime(activitiesList.First().StartDate.Date);
 
-            var result = new List<GroupedActivity>();
-
-            foreach (var dailyActivities in activitiesByDate)
+            foreach (var activity in activitiesList)
             {
-                var date = dailyActivities.Key;
-                var groups = new Dictionary<string, GroupedActivity>();
+                var description = activity.GetDescription();
 
-                foreach (var activity in dailyActivities)
+                if (!groups.TryGetValue(description, out var group))
                 {
-                    var description = activity.GetDescription();
-
-                    if (!groups.TryGetValue(description, out var group))
-                    {
-                        group = GroupedActivity.CreateEmptyWithDescriptionForDate(date, description);
-                        groups[description] = group;
-                    }
-                    group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
+                    group = GroupedActivity.CreateEmptyWithDescriptionForDate(firstActivityDate, description);
+                    groups[description] = group;
                 }
-
-                result.AddRange(groups.Values);
+                group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
             }
 
-            return result.AsReadOnly();
+            return groups.Values.ToList().AsReadOnly();
         }
 
         public void Dispose() { }
