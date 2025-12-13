@@ -93,7 +93,8 @@ namespace TrackYourDay.Core.Insights.Analytics
                 serviceProvider.GetRequiredService<HybridContextualSummaryStrategy>(),
                 serviceProvider.GetRequiredService<TimeBasedSummaryStrategy>(),
                 serviceProvider.GetRequiredService<DurationBasedSummaryStrategy>(),
-                serviceProvider.GetRequiredService<ContextBasedSummaryStrategy>()
+                serviceProvider.GetRequiredService<ContextBasedSummaryStrategy>(),
+                serviceProvider.GetRequiredService<ActivityNameSummaryStrategy>()
             };
             return strategies;
         }
