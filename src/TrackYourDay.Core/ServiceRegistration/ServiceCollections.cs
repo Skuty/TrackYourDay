@@ -209,10 +209,10 @@ namespace TrackYourDay.Core.ServiceRegistration
                     sp.GetRequiredService<IClock>(),
                     () => sp.GetRequiredService<MsTeamsMeetingTracker>().GetEndedMeetings()));
 
-            services.AddSingleton<IHistoricalDataRepository<DiscoveredGitLabActivity>>(sp => 
-                new GenericDataRepository<DiscoveredGitLabActivity>(
+            services.AddSingleton<IHistoricalDataRepository<GitLabActivity>>(sp => 
+                new GenericDataRepository<GitLabActivity>(
                     sp.GetRequiredService<IClock>(),
-                    () => sp.GetRequiredService<GitLabTracker>().GetDiscoveredGitLabActivities()));
+                    () => sp.GetRequiredService<GitLabTracker>().GetGitLabActivities()));
 
             // Register persistence event handlers
             services.AddTransient<INotificationHandler<SystemTrackers.Events.PeriodicActivityEndedEvent>, PersistEndedActivityHandler>();

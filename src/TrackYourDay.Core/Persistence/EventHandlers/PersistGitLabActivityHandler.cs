@@ -10,11 +10,11 @@ namespace TrackYourDay.Core.Persistence.EventHandlers
     /// </summary>
     public class PersistGitLabActivityHandler : INotificationHandler<GitLabActivityDiscoveredEvent>
     {
-        private readonly IHistoricalDataRepository<DiscoveredGitLabActivity> repository;
+        private readonly IHistoricalDataRepository<GitLabActivity> repository;
         private readonly ILogger<PersistGitLabActivityHandler> logger;
 
         public PersistGitLabActivityHandler(
-            IHistoricalDataRepository<DiscoveredGitLabActivity> repository,
+            IHistoricalDataRepository<GitLabActivity> repository,
             ILogger<PersistGitLabActivityHandler> logger)
         {
             this.repository = repository;
@@ -25,17 +25,12 @@ namespace TrackYourDay.Core.Persistence.EventHandlers
         {
             try
             {
-                var discoveredActivity = new DiscoveredGitLabActivity(
-                    notification.Guid,
-                    notification.Activity.OccuranceDate,
-                    notification.Activity.Description);
-
-                repository.Save(discoveredActivity);
-                logger.LogDebug("Persisted GitLab activity with Guid: {ActivityGuid}", discoveredActivity.Guid);
+                repository.Save(notification.Activity);
+                logger.LogDebug("Persisted GitLab activity with Guid: {ActivityGuid}", notification.Activity.Guid);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to persist GitLab activity with Guid: {ActivityGuid}", notification.Guid);
+                logger.LogError(ex, "Failed to persist GitLab activity with Guid: {ActivityGuid}", notification.Activity.Guid);
                 throw;
             }
 
