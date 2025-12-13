@@ -38,7 +38,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenNoActivitiesExist_WhenRecognizingActivity_ThenNoEventsArePublished()
+        public async Task GivenNoActivitiesExist_WhenRecognizingActivity_ThenNoEventsArePublished()
         {
             // Given
             this.gitLabActivityServiceMock
@@ -49,7 +49,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Returns(DateTime.MinValue);
 
             // When
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // Then
             this.publisherMock.Verify(
@@ -58,7 +58,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenNewActivitiesExist_WhenRecognizingActivity_ThenEventsArePublishedForEachActivity()
+        public async Task GivenNewActivitiesExist_WhenRecognizingActivity_ThenEventsArePublishedForEachActivity()
         {
             // Given
             var activity1 = new GitLabActivity(new DateTime(2025, 03, 16, 10, 0, 0), "Opened Issue: Test issue");
@@ -72,7 +72,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Returns(DateTime.MinValue);
 
             // When
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // Then
             this.publisherMock.Verify(
@@ -81,7 +81,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenActivitiesAlreadyProcessed_WhenRecognizingActivity_ThenNoNewEventsArePublished()
+        public async Task GivenActivitiesAlreadyProcessed_WhenRecognizingActivity_ThenNoNewEventsArePublished()
         {
             // Given
             var activity = new GitLabActivity(new DateTime(2025, 03, 16, 10, 0, 0), "Opened Issue: Test issue");
@@ -95,7 +95,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Returns(lastFetchTimestamp);
 
             // When
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // Then
             this.publisherMock.Verify(
@@ -104,7 +104,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenMixOfOldAndNewActivities_WhenRecognizingActivity_ThenOnlyNewActivitiesArePublished()
+        public async Task GivenMixOfOldAndNewActivities_WhenRecognizingActivity_ThenOnlyNewActivitiesArePublished()
         {
             // Given
             var oldActivity = new GitLabActivity(new DateTime(2025, 03, 16, 9, 0, 0), "Old Activity");
@@ -120,7 +120,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Returns(lastFetchTimestamp);
 
             // When
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // Then
             this.publisherMock.Verify(
@@ -129,7 +129,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenNewActivitiesArePublished_WhenRecognizingActivity_ThenLastFetchTimestampIsUpdated()
+        public async Task GivenNewActivitiesArePublished_WhenRecognizingActivity_ThenLastFetchTimestampIsUpdated()
         {
             // Given
             var activity1 = new GitLabActivity(new DateTime(2025, 03, 16, 10, 0, 0), "Activity 1");
@@ -143,7 +143,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Returns(DateTime.MinValue);
 
             // When
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // Then
             this.settingsServiceMock.Verify(
@@ -153,7 +153,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenNoNewActivities_WhenRecognizingActivity_ThenLastFetchTimestampIsNotUpdated()
+        public async Task GivenNoNewActivities_WhenRecognizingActivity_ThenLastFetchTimestampIsNotUpdated()
         {
             // Given
             this.gitLabActivityServiceMock
@@ -164,7 +164,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Returns(new DateTime(2025, 03, 16, 10, 0, 0));
 
             // When
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // Then
             this.settingsServiceMock.Verify(
@@ -174,7 +174,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenActivitiesArePublished_WhenGettingActivities_ThenPublishedActivitiesAreReturned()
+        public async Task GivenActivitiesArePublished_WhenGettingActivities_ThenPublishedActivitiesAreReturned()
         {
             // Given
             var activity1 = new GitLabActivity(new DateTime(2025, 03, 16, 10, 0, 0), "Activity 1");
@@ -187,7 +187,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
                 .Returns(DateTime.MinValue);
 
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // When
             var activities = this.gitLabTracker.GetGitLabActivities();
@@ -199,7 +199,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenActivitiesArePublishedInMultipleCalls_WhenGettingActivities_ThenAllPublishedActivitiesAreReturned()
+        public async Task GivenActivitiesArePublishedInMultipleCalls_WhenGettingActivities_ThenAllPublishedActivitiesAreReturned()
         {
             // Given - First call with activities
             var activity1 = new GitLabActivity(new DateTime(2025, 03, 16, 10, 0, 0), "Activity 1");
@@ -210,7 +210,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
                 .Returns(DateTime.MinValue);
 
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // Given - Second call with new activities
             var activity2 = new GitLabActivity(new DateTime(2025, 03, 16, 11, 0, 0), "Activity 2");
@@ -221,7 +221,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
                 .Returns(new DateTime(2025, 03, 16, 10, 0, 0));
 
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // When
             var activities = this.gitLabTracker.GetGitLabActivities();
@@ -233,7 +233,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenActivitiesWithSameTimestamp_WhenRecognizingActivity_ThenActivitiesAfterLastFetchArePublished()
+        public async Task GivenActivitiesWithSameTimestamp_WhenRecognizingActivity_ThenActivitiesAfterLastFetchArePublished()
         {
             // Given
             var activity1 = new GitLabActivity(new DateTime(2025, 03, 16, 10, 0, 0), "Activity 1");
@@ -248,7 +248,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .Returns(lastFetchTimestamp);
 
             // When
-            this.gitLabTracker.RecognizeActivity();
+            await this.gitLabTracker.RecognizeActivity();
 
             // Then - Activities with same timestamp as last fetch should NOT be published
             this.publisherMock.Verify(

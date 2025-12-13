@@ -30,7 +30,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             this.publishedActivities = new List<GitLabActivity>();
         }
 
-        public void RecognizeActivity()
+        public async Task RecognizeActivity()
         {
             var lastFetchTimestamp = this.settingsService.GetSetting<DateTime>(LastFetchTimestampKey, DateTime.MinValue);
             var allActivities = this.gitLabActivityService.GetTodayActivities();
@@ -45,7 +45,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             foreach (var activity in newActivities)
             {
                 this.publishedActivities.Add(activity);
-                this.publisher.Publish(new GitLabActivityDiscoveredEvent(Guid.NewGuid(), activity), CancellationToken.None);
+                await this.publisher.Publish(new GitLabActivityDiscoveredEvent(Guid.NewGuid(), activity), CancellationToken.None);
                 this.logger.LogInformation("GitLab activity discovered: {0}", activity.Description);
             }
 
