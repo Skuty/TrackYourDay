@@ -96,8 +96,16 @@ namespace TrackYourDay.Core.ServiceRegistration
                 return GitLabRestApiClientFactory.Create(gitLabSettingsService.GetSettings());
             });
 
-            services.AddSingleton<GitLabActivityService>();
-            services.AddSingleton<GitLabTracker>();
+            services.AddSingleton<IGitLabActivityService, GitLabActivityService>();
+            services.AddSingleton<GitLabTracker>(serviceProvider =>
+                new GitLabTracker(
+                    serviceProvider.GetRequiredService<IGitLabActivityService>(),
+                    serviceProvider.GetRequiredService<IClock>(),
+                    serviceProvider.GetRequiredService<IPublisher>(),
+                    serviceProvider.GetRequiredService<IGenericSettingsService>(),
+                    serviceProvider.GetRequiredService<ILogger<GitLabTracker>>()
+                )
+            );
 
             services.AddSingleton<IJiraRestApiClient>(serviceCollection =>
             {

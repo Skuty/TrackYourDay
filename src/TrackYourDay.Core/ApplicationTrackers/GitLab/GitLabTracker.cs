@@ -1,33 +1,66 @@
-﻿using TrackYourDay.Core.SystemTrackers.SystemStates;
+﻿using MediatR;
+using Microsoft.Extensions.Logging;
+using TrackYourDay.Core.ApplicationTrackers.GitLab.PublicEvents;
+using TrackYourDay.Core.Settings;
 
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
     public class GitLabTracker
     {
-        private readonly GitLabActivityService gitLabActivityService;
-        private DateTime? lastFetchedDate;
-        private List<GitLabActivity> gitlabActivities;
+        private const string LastFetchTimestampKey = "GitLabTracker.LastFetchTimestamp";
+        private readonly IGitLabActivityService gitLabActivityService;
+        private readonly IClock clock;
+        private readonly IPublisher publisher;
+        private readonly IGenericSettingsService settingsService;
+        private readonly ILogger<GitLabTracker> logger;
+        private List<GitLabActivity> publishedActivities;
 
-        public GitLabTracker(GitLabActivityService gitLabActivityService)
+        public GitLabTracker(
+            IGitLabActivityService gitLabActivityService,
+            IClock clock,
+            IPublisher publisher,
+            IGenericSettingsService settingsService,
+            ILogger<GitLabTracker> logger)
         {
             this.gitLabActivityService = gitLabActivityService;
-            this.gitlabActivities = new List<GitLabActivity>();
+            this.clock = clock;
+            this.publisher = publisher;
+            this.settingsService = settingsService;
+            this.logger = logger;
+            this.publishedActivities = new List<GitLabActivity>();
         }
 
         public async Task RecognizeActivity()
         {
-            // Process activities
+            var lastFetchTimestamp = this.settingsService.GetSetting<DateTime>(LastFetchTimestampKey, this.clock.Now.AddDays(-7));
+            var allActivities = this.gitLabActivityService.GetTodayActivities();
+            
+            // Filter activities that occurred after the last fetch timestamp
+            var newActivities = allActivities
+                .Where(a => a.OccuranceDate > lastFetchTimestamp)
+                .OrderBy(a => a.OccuranceDate)
+                .ToList();
+
+            // Publish events for new activities
+            foreach (var activity in newActivities)
+            {
+                this.publishedActivities.Add(activity);
+                await this.publisher.Publish(new GitLabActivityDiscoveredEvent(Guid.NewGuid(), activity), CancellationToken.None);
+                this.logger.LogInformation("GitLab activity discovered: {0}", activity.Description);
+            }
+
+            // Update last fetch timestamp
+            if (newActivities.Any())
+            {
+                var latestActivityDate = newActivities.Max(a => a.OccuranceDate);
+                this.settingsService.SetSetting(LastFetchTimestampKey, latestActivityDate);
+                this.settingsService.PersistSettings();
+            }
         }
 
         public IReadOnlyCollection<GitLabActivity> GetGitLabActivities()
         {
-            if (this.lastFetchedDate == null || this.lastFetchedDate.Value < DateTime.Now.AddMinutes(-5))
-            {
-                this.lastFetchedDate = DateTime.Now;
-                this.gitlabActivities = this.gitLabActivityService.GetTodayActivities();
-            }
-
-            return this.gitlabActivities;
+            return this.publishedActivities.AsReadOnly();
         }
     }
 }
