@@ -6,7 +6,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
     //TODO: Split namespaces for internal and eternal objects like GitLabACtivity and GitLabCommit
 
-    public class GitLabActivityService
+    public class GitLabActivityService : IGitLabActivityService
     {
         private readonly IGitLabRestApiClient gitLabRestApiClient;
         private readonly ILogger<GitLabActivityService> logger;
