@@ -2,7 +2,10 @@
 
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
-    public record class GitLabActivity(DateTime OccuranceDate, string Description);
+    public record class GitLabActivity(DateTime OccuranceDate, string Description)
+    {
+        public Guid Guid { get; init; } = Guid.NewGuid();
+    }
 
     //TODO: Split namespaces for internal and eternal objects like GitLabACtivity and GitLabCommit
 
