@@ -145,6 +145,12 @@ namespace TrackYourDay.Core.ServiceRegistration
                 )
             );
 
+            services.AddSingleton<ActivityNameSummaryStrategy>(serviceProvider =>
+                new ActivityNameSummaryStrategy(
+                    serviceProvider.GetRequiredService<ILogger<ActivityNameSummaryStrategy>>()
+                )
+            );
+
             return services;
         }
 
