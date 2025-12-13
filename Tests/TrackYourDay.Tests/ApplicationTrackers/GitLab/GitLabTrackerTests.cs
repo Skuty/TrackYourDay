@@ -13,7 +13,6 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
     public class GitLabTrackerTests
     {
         private Mock<IGitLabActivityService> gitLabActivityServiceMock;
-        private Mock<IClock> clockMock;
         private Mock<IPublisher> publisherMock;
         private Mock<IGenericSettingsService> settingsServiceMock;
         private Mock<ILogger<GitLabTracker>> loggerMock;
@@ -22,16 +21,12 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         public GitLabTrackerTests()
         {
             this.gitLabActivityServiceMock = new Mock<IGitLabActivityService>();
-            this.clockMock = new Mock<IClock>();
             this.publisherMock = new Mock<IPublisher>();
             this.settingsServiceMock = new Mock<IGenericSettingsService>();
             this.loggerMock = new Mock<ILogger<GitLabTracker>>();
 
-            this.clockMock.Setup(c => c.Now).Returns(new DateTime(2025, 03, 16, 12, 0, 0));
-
             this.gitLabTracker = new GitLabTracker(
                 this.gitLabActivityServiceMock.Object,
-                this.clockMock.Object,
                 this.publisherMock.Object,
                 this.settingsServiceMock.Object,
                 this.loggerMock.Object);
