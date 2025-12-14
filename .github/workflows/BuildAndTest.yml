@@ -7,6 +7,11 @@ on:
   pull_request:
     branches:
       - 'main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
@@ -37,9 +42,9 @@ jobs:
         run: dotnet restore --runtime win-x64
       
       - name: Build
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
+        run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
         env:
           VSTEST_LOG_PATH: test_results.xml

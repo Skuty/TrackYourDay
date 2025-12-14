@@ -35,14 +35,24 @@ jobs:
             - name: Install MAUI workloads
               run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
 
+            - name: Cache NuGet packages
+              id: cache-nugetpackages
+              uses: actions/cache@v4
+              with:
+                path: ~\.nuget\packages
+                key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+                restore-keys: |
+                  ${{ runner.os }}-nuget-
+
             - name: Restore dependencies
+              if: steps.cache-nugetpackages.outputs.cache-hit != 'true'
               run: dotnet restore --runtime win-x64
                 
             - name: Build 
-              run: dotnet build --configuration Release
+              run: dotnet build --configuration Release --no-restore
 
             - name: Test
-              run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
+              run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
               env:
                 VSTEST_LOG_PATH: test_results.xml
             
