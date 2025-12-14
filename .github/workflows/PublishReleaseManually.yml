@@ -45,7 +45,6 @@ jobs:
                   ${{ runner.os }}-nuget-
 
             - name: Restore dependencies
-              if: steps.cache-nugetpackages.outputs.cache-hit != 'true'
               run: dotnet restore --runtime win-x64
                 
             - name: Build 
