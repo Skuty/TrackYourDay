@@ -20,6 +20,9 @@ jobs:
         with:
           dotnet-version: 8.0.x  
 
+      - name: Install MAUI workloads
+        run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
+
       - name: Cache NuGet packages
         id: cache-nugetpackages
         uses: actions/cache@v4
