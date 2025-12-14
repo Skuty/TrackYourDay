@@ -7,6 +7,11 @@ on:
   pull_request:
     branches:
       - 'main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
@@ -20,7 +25,21 @@ jobs:
         with:
           dotnet-version: 8.0.x  
 
+      - name: Cache MAUI workloads
+        id: cache-maui-workloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\.dotnet\sdk-manifests
+            ~\.dotnet\packs
+            ~\.dotnet\metadata
+            ~\.dotnet\workload-packs
+          key: ${{ runner.os }}-maui-workloads-${{ hashFiles('**/Directory.Build.props', '**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-maui-workloads-
+
       - name: Install MAUI workloads
+        if: steps.cache-maui-workloads.outputs.cache-hit != 'true'
         run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
 
       - name: Cache NuGet packages
@@ -33,13 +52,12 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        if: steps.cache-nugetpackages.outputs.cache-hit != 'true'
         run: dotnet restore --runtime win-x64
       
       - name: Build
-        run: dotnet build --configuration Release
+        run: dotnet build --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
+        run: dotnet test --configuration Release --no-build --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
         env:
           VSTEST_LOG_PATH: test_results.xml
