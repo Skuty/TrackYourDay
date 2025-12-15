@@ -26,7 +26,7 @@ namespace TrackYourDay.MAUI
 
                 logger.LogInformation("Starting TrackYourDay application");
 
-                // Scheduler have to be started manually due to lack of full support for HostedServices in MAUI
+                // Scheduler has to be started manually due to lack of full support for HostedServices in MAUI
                 var sched = this.schedulerFactory.GetScheduler().Result;
                 sched.Start();
 
@@ -64,14 +64,14 @@ namespace TrackYourDay.MAUI
                 switch (appWindow.Presenter)
                 {
                     case Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter:
-                        //disable the max button
+                        // Enable maximization and maximize the window on startup
                         overlappedPresenter.IsMaximizable = true;
                         overlappedPresenter.Maximize();
                         break;
                 }
 
-                //When user execute the closing method, we can make the window do not close by   e.Cancel = true;.
-                appWindow.Closing += async (s, e) =>
+                // When the user executes the closing method, we can make the window not close by setting e.Cancel = true
+                appWindow.Closing += (s, e) =>
                 {
                     e.Cancel = true;
                     switch (appWindow.Presenter)
