@@ -17,55 +17,142 @@ namespace TrackYourDay.MAUI
     {
         public static MauiApp CreateMauiApp()
         {
-            var builder = MauiApp.CreateBuilder();
-            builder
-                .UseMauiApp<App>()
-                .ConfigureFonts(fonts =>
-                {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                });
-            builder.Services.AddMudServices();
-            builder.Services.AddMauiBlazorWebView();
+            try
+            {
+                // Setup global exception handlers first
+                SetupGlobalExceptionHandlers();
 
-            // Load configuration from appsettings.json
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .Build();
+                var builder = MauiApp.CreateBuilder();
+                builder
+                    .UseMauiApp<App>()
+                    .ConfigureFonts(fonts =>
+                    {
+                        fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                    });
+                builder.Services.AddMudServices();
+                builder.Services.AddMauiBlazorWebView();
 
-            // Configure logging from appsettings.json
-            Log.Logger = LoggingConfiguration.ConfigureSerilog(configuration);
+                // Load configuration from appsettings.json
+                var configuration = new ConfigurationBuilder()
+                    .SetBasePath(AppContext.BaseDirectory)
+                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                    .Build();
 
-            builder.Services.AddLogging(loggingBuilder =>
-                loggingBuilder.AddSerilog(dispose: true));
+                // Configure logging from appsettings.json
+                Log.Logger = LoggingConfiguration.ConfigureSerilog(configuration);
 
-            builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
+                builder.Services.AddLogging(loggingBuilder =>
+                    loggingBuilder.AddSerilog(dispose: true));
 
-            builder.Services.AddSettings();
+                builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
-            builder.Services.AddRepositories();
+                builder.Services.AddSettings();
 
-            builder.Services.AddTrackers();
+                builder.Services.AddRepositories();
 
-            builder.Services.AddCoreNotifications();
+                builder.Services.AddTrackers();
 
-            builder.Services.AddMauiNotifications();
+                builder.Services.AddCoreNotifications();
 
-            builder.Services.AddEventHandlingForBlazorUIComponents();
+                builder.Services.AddMauiNotifications();
 
-            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
+                builder.Services.AddEventHandlingForBlazorUIComponents();
 
-            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<AddActivityToProcessWhenActivityStartedEventHandler>());
+                builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ActivityTracker>());
 
-            builder.Services.AddBackgroundJobs();
+                builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<AddActivityToProcessWhenActivityStartedEventHandler>());
 
-            builder.Services.AddQuartzHostedService();
+                builder.Services.AddBackgroundJobs();
+
+                builder.Services.AddQuartzHostedService();
 
 #if DEBUG
-            builder.Services.AddBlazorWebViewDeveloperTools();
+                builder.Services.AddBlazorWebViewDeveloperTools();
 
 #endif
-            return builder.Build();
+                Log.Information("TrackYourDay MAUI application initialized successfully");
+                return builder.Build();
+            }
+            catch (Exception ex)
+            {
+                // Log to a safe location if Serilog isn't configured yet
+                LogStartupError(ex);
+                throw;
+            }
+        }
+
+        private static void SetupGlobalExceptionHandlers()
+        {
+            // Handle unhandled exceptions in the application domain
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
+                var exception = args.ExceptionObject as Exception;
+                LogUnhandledException(exception, "AppDomain.UnhandledException");
+            };
+
+            // Handle unobserved task exceptions
+            TaskScheduler.UnobservedTaskException += (sender, args) =>
+            {
+                LogUnhandledException(args.Exception, "TaskScheduler.UnobservedTaskException");
+                args.SetObserved();
+            };
+        }
+
+        private static void LogStartupError(Exception ex)
+        {
+            var errorLogPath = GetSafeErrorLogPath();
+            try
+            {
+                var errorMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Startup Error: {ex}\n\n";
+                File.AppendAllText(errorLogPath, errorMessage);
+            }
+            catch
+            {
+                // If we can't even write to the error log, there's nothing more we can do
+            }
+        }
+
+        private static void LogUnhandledException(Exception ex, string source)
+        {
+            try
+            {
+                Log.Fatal(ex, "Unhandled exception from {Source}", source);
+            }
+            catch
+            {
+                // If Serilog fails, fall back to file logging
+                LogStartupError(ex);
+            }
+        }
+
+        private static string GetSafeErrorLogPath()
+        {
+            // Try multiple locations for error logging
+            var locations = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "TrackYourDay", "Errors"),
+                Path.Combine(Path.GetTempPath(), "TrackYourDay", "Errors"),
+                Path.Combine(AppContext.BaseDirectory, "Errors")
+            };
+
+            foreach (var location in locations)
+            {
+                try
+                {
+                    if (!Directory.Exists(location))
+                    {
+                        Directory.CreateDirectory(location);
+                    }
+                    return Path.Combine(location, "startup-errors.log");
+                }
+                catch
+                {
+                    continue;
+                }
+            }
+
+            // Last resort - use temp file
+            return Path.Combine(Path.GetTempPath(), "TrackYourDay-startup-errors.log");
         }
     }
 }
