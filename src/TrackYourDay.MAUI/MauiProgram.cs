@@ -108,7 +108,19 @@ namespace TrackYourDay.MAUI
             }
             catch
             {
-                // If we can't even write to the error log, there's nothing more we can do
+                // Last resort: write to console and system event log
+                Console.Error.WriteLine($"CRITICAL: Failed to log startup error to file. Exception: {ex}");
+                try
+                {
+                    // Try to write to Windows Event Log as absolute last resort
+                    System.Diagnostics.EventLog.WriteEntry("TrackYourDay", 
+                        $"Startup Error: {ex}", 
+                        System.Diagnostics.EventLogEntryType.Error);
+                }
+                catch
+                {
+                    // If even event log fails, there's nothing more we can do
+                }
             }
         }
 

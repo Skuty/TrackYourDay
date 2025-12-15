@@ -104,7 +104,7 @@ namespace TrackYourDay.MAUI.Infrastructure
                     }
                     catch
                     {
-                        // Clean up test file if delete fails
+                        // Clean up test file if deletion fails (file was created but delete threw exception)
                         try { File.Delete(testFile); } catch { }
                         throw;
                     }
