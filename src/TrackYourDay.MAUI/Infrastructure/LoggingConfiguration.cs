@@ -97,8 +97,17 @@ namespace TrackYourDay.MAUI.Infrastructure
                     
                     // Test if we can write to this directory
                     var testFile = Path.Combine(directory, ".write-test");
-                    File.WriteAllText(testFile, "test");
-                    File.Delete(testFile);
+                    try
+                    {
+                        File.WriteAllText(testFile, "test");
+                        File.Delete(testFile);
+                    }
+                    catch
+                    {
+                        // Clean up test file if delete fails
+                        try { File.Delete(testFile); } catch { }
+                        throw;
+                    }
                     
                     return directory;
                 }

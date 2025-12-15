@@ -27,7 +27,7 @@ namespace TrackYourDay.MAUI
                 logger.LogInformation("Starting TrackYourDay application");
 
                 // Scheduler has to be started manually due to lack of full support for HostedServices in MAUI
-                var sched = this.schedulerFactory.GetScheduler().Result;
+                var sched = this.schedulerFactory.GetScheduler().GetAwaiter().GetResult();
                 sched.Start();
 
                 this.MinimizeWindowOnCloseInsteadOfClosing();
