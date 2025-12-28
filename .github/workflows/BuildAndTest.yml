@@ -18,10 +18,10 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x  
+          dotnet-version: 9.0.x  
 
       - name: Install MAUI workloads
-        run: dotnet workload install maui --source https://api.nuget.org/v3/index.json
+        run: dotnet workload install maui
 
       - name: Cache NuGet packages
         id: cache-nugetpackages
@@ -34,7 +34,7 @@ jobs:
 
       - name: Restore dependencies
         if: steps.cache-nugetpackages.outputs.cache-hit != 'true'
-        run: dotnet restore --runtime win-x64
+        run: dotnet restore
       
       - name: Build
         run: dotnet build --configuration Release

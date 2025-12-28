@@ -34,7 +34,9 @@ namespace TrackYourDay.Core
 
             using (Aes aesAlg = Aes.Create())
             {
+#pragma warning disable SYSLIB0041 // Rfc2898DeriveBytes obsolete constructor - deferred to future update
                 var key = new Rfc2898DeriveBytes(salt, Encoding.UTF8.GetBytes(salt)).GetBytes(32);
+#pragma warning restore SYSLIB0041
                 aesAlg.Key = key;
                 aesAlg.GenerateIV();
 
@@ -65,7 +67,9 @@ namespace TrackYourDay.Core
 
             using (Aes aesAlg = Aes.Create())
             {
+#pragma warning disable SYSLIB0041 // Rfc2898DeriveBytes obsolete constructor - deferred to future update
                 var key = new Rfc2898DeriveBytes(salt, Encoding.UTF8.GetBytes(salt)).GetBytes(32);
+#pragma warning restore SYSLIB0041
                 aesAlg.Key = key;
                 using (var msDecrypt = new MemoryStream(Convert.FromBase64String(text)))
                 {
