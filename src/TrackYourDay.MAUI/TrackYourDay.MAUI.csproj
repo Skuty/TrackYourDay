@@ -1,10 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <WindowsPackageType Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">None</WindowsPackageType>
-  </PropertyGroup>
-  <PropertyGroup>
-    <TargetFramework>net9.0-windows10.0.22000.0</TargetFramework>
-	<OutputType>Exe</OutputType>
+<PropertyGroup>
+<TargetFramework>net9.0-windows10.0.22000.0</TargetFramework>
+<OutputType>Exe</OutputType>
     <RootNamespace>TrackYourDay.MAUI</RootNamespace>
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
@@ -21,6 +18,9 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.19041.0</TargetPlatformMinVersion>
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(RuntimeIdentifierOverride)' == ''">win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
       <PropertyGroup Condition="'$(RuntimeIdentifierOverride)' != ''">
 	    <RuntimeIdentifier>$(RuntimeIdentifierOverride)</RuntimeIdentifier>
