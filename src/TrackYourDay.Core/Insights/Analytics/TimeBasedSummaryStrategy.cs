@@ -15,36 +15,36 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public string StrategyName => "Time of Day Groups";
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<EndedActivity> activities)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<ITrackableItem> items)
         {
-            if (activities == null) throw new ArgumentNullException(nameof(activities));
-            var activitiesList = activities.ToList();
-            if (!activitiesList.Any())
+            if (items == null) throw new ArgumentNullException(nameof(items));
+            var itemsList = items.ToList();
+            if (!itemsList.Any())
             {
-                _logger.LogInformation("No activities to generate summary for.");
+                _logger.LogInformation("No items to generate summary for.");
                 return Array.Empty<GroupedActivity>();
             }
 
-            var activitiesByDate = activitiesList
+            var itemsByDate = itemsList
                 .GroupBy(a => DateOnly.FromDateTime(a.StartDate.Date))
                 .OrderBy(g => g.Key);
 
             var result = new List<GroupedActivity>();
 
-            foreach (var dailyActivities in activitiesByDate)
+            foreach (var dailyItems in itemsByDate)
             {
-                var date = dailyActivities.Key;
+                var date = dailyItems.Key;
                 var groups = new Dictionary<string, GroupedActivity>();
 
-                foreach (var activity in dailyActivities)
+                foreach (var item in dailyItems)
                 {
-                    var timeOfDay = GetTimeOfDay(activity.StartDate.TimeOfDay);
+                    var timeOfDay = GetTimeOfDay(item.StartDate.TimeOfDay);
                     if (!groups.TryGetValue(timeOfDay, out var group))
                     {
                         group = GroupedActivity.CreateEmptyWithDescriptionForDate(date, timeOfDay);
                         groups[timeOfDay] = group;
                     }
-                    group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
+                    group.Include(item.Guid, new TimePeriod(item.StartDate, item.EndDate));
                 }
 
                 result.AddRange(groups.Values);

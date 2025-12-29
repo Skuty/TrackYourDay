@@ -1,6 +1,8 @@
-﻿namespace TrackYourDay.Core.ApplicationTrackers.UserTasks
+﻿using TrackYourDay.Core.Insights.Analytics;
+
+namespace TrackYourDay.Core.ApplicationTrackers.UserTasks
 {
-    public class UserTask
+    public class UserTask : ITrackableItem
     {
         public Guid Guid { get; init; }
 
@@ -9,6 +11,8 @@
         public DateTime? EndDate { get; private set; }
 
         public string Description { get; private set; }
+
+        DateTime ITrackableItem.EndDate => EndDate ?? DateTime.Now;
 
         public static UserTask StartTask(DateTime startDate, string description)
         {
@@ -53,6 +57,11 @@
             return EndDate is not null 
                 ? TimeSpan.FromTicks(EndDate.Value.Ticks - StartDate.Ticks) 
                 : TimeSpan.FromTicks(DateTime.Now.Ticks - StartDate.Ticks);
+        }
+
+        public string GetDescription()
+        {
+            return Description;
         }
     }
 }

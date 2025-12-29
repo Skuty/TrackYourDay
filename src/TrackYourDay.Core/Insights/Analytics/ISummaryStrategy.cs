@@ -6,7 +6,7 @@ namespace TrackYourDay.Core.Insights.Analytics
 {
     public interface ISummaryStrategy : IDisposable
     {
-        IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<EndedActivity> activities);
+        IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<ITrackableItem> items);
         string StrategyName { get; }
     }
 }

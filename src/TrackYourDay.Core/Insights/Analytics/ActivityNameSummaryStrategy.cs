@@ -17,29 +17,29 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public string StrategyName => "Activity Name Groups";
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<EndedActivity> activities)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<ITrackableItem> items)
         {
-            if (activities == null) throw new ArgumentNullException(nameof(activities));
-            var activitiesList = activities.ToList();
-            if (!activitiesList.Any())
+            if (items == null) throw new ArgumentNullException(nameof(items));
+            var itemsList = items.ToList();
+            if (!itemsList.Any())
             {
-                _logger.LogInformation("No activities to generate summary for.");
+                _logger.LogInformation("No items to generate summary for.");
                 return Array.Empty<GroupedActivity>();
             }
 
             var groups = new Dictionary<string, GroupedActivity>();
-            var firstActivityDate = DateOnly.FromDateTime(activitiesList.First().StartDate.Date);
+            var firstItemDate = DateOnly.FromDateTime(itemsList.First().StartDate.Date);
 
-            foreach (var activity in activitiesList)
+            foreach (var item in itemsList)
             {
-                var description = activity.GetDescription();
+                var description = item.GetDescription();
 
                 if (!groups.TryGetValue(description, out var group))
                 {
-                    group = GroupedActivity.CreateEmptyWithDescriptionForDate(firstActivityDate, description);
+                    group = GroupedActivity.CreateEmptyWithDescriptionForDate(firstItemDate, description);
                     groups[description] = group;
                 }
-                group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
+                group.Include(item.Guid, new TimePeriod(item.StartDate, item.EndDate));
             }
 
             return groups.Values.ToList().AsReadOnly();

@@ -1,6 +1,8 @@
-﻿namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
+﻿using TrackYourDay.Core.Insights.Analytics;
+
+namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 {
-    public record class EndedMeeting (Guid Guid, DateTime StartDate, DateTime EndDate, string Title)
+    public record class EndedMeeting (Guid Guid, DateTime StartDate, DateTime EndDate, string Title) : ITrackableItem
     {
         public string Description { get; private set; } = string.Empty;
 

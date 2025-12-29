@@ -58,50 +58,50 @@ namespace TrackYourDay.Core.Insights.Analytics
             _textFeaturizer = textPipeline.Fit(emptyData);
         }
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackYourDay.Core.SystemTrackers.EndedActivity> activities)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<ITrackableItem> items)
         {
-            if (activities == null) throw new ArgumentNullException(nameof(activities));
+            if (items == null) throw new ArgumentNullException(nameof(items));
 
-            var activitiesList = activities.ToList();
-            if (!activitiesList.Any())
+            var itemsList = items.ToList();
+            if (!itemsList.Any())
             {
-                _logger.LogInformation("No activities to generate summary for.");
+                _logger.LogInformation("No items to generate summary for.");
                 return Array.Empty<GroupedActivity>();
             }
 
-            // Group activities by date
-            var activitiesByDate = activitiesList
+            // Group items by date
+            var itemsByDate = itemsList
                 .GroupBy(a => DateOnly.FromDateTime(a.StartDate.Date))
                 .OrderBy(g => g.Key);
 
             var result = new List<GroupedActivity>();
 
-            foreach (var dailyActivities in activitiesByDate)
+            foreach (var dailyItems in itemsByDate)
             {
-                var date = dailyActivities.Key;
-                var dailyActivitiesList = dailyActivities.OrderBy(a => a.StartDate).ToList();
+                var date = dailyItems.Key;
+                var dailyItemsList = dailyItems.OrderBy(a => a.StartDate).ToList();
 
-                // Process activities to find logical groups
-                var groupedActivities = ProcessActivities(dailyActivitiesList);
+                // Process items to find logical groups
+                var groupedItems = ProcessItems(dailyItemsList);
 
                 // Add to results
-                result.AddRange(groupedActivities.Values);
+                result.AddRange(groupedItems.Values);
             }
 
             return result.AsReadOnly();
         }
 
-        private Dictionary<string, GroupedActivity> ProcessActivities(List<EndedActivity> activities)
+        private Dictionary<string, GroupedActivity> ProcessItems(List<ITrackableItem> items)
         {
             var groups = new Dictionary<string, GroupedActivity>();
-            var date = DateOnly.FromDateTime(activities.First().StartDate);
+            var date = DateOnly.FromDateTime(items.First().StartDate);
 
             // First pass: Group by exact matches
-            foreach (var activity in activities)
+            foreach (var item in items)
             {
-                var description = activity.GetDescription();
-                var activityType = activity.ActivityType.GetType().Name;
-                var groupKey = $"{activityType}_{description}";
+                var description = item.GetDescription();
+                var itemType = item.GetType().Name;
+                var groupKey = $"{itemType}_{description}";
 
                 if (!groups.TryGetValue(groupKey, out var group))
                 {
@@ -109,7 +109,7 @@ namespace TrackYourDay.Core.Insights.Analytics
                     groups[groupKey] = group;
                 }
 
-                group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
+                group.Include(item.Guid, new TimePeriod(item.StartDate, item.EndDate));
             }
 
             // Apply semantic similarity grouping to merge similar activities

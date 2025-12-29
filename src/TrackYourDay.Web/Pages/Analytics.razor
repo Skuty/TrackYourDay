@@ -1,12 +1,16 @@
 ﻿@page "/analytics"
 @using TrackYourDay.Core.Insights.Analytics
 @using TrackYourDay.Core.SystemTrackers
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams
+@using TrackYourDay.Core.ApplicationTrackers.UserTasks
 @using TrackYourDay.Core
 @using TrackYourDay.Core.Persistence
 @using TrackYourDay.Core.Persistence.Specifications
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject IServiceProvider serviceProvider
 @inject IHistoricalDataRepository<EndedActivity> activityRepository
+@inject IHistoricalDataRepository<EndedMeeting> meetingRepository
+@inject UserTaskService userTaskService
 @inject IClock clock
 
 <MudStack Spacing="2">
@@ -100,14 +104,32 @@
 
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
         
-        // Get activities for the date range using the repository
-        var allActivities = activityRepository.Find(
+        // Collect all trackable items for the date range
+        var allItems = new List<ITrackableItem>();
+        
+        // Get activities from the repository
+        var activities = activityRepository.Find(
             new ActivityByDateRangeSpecification(
                 DateOnly.FromDateTime(startDate.Value),
                 DateOnly.FromDateTime(endDate.Value)));
+        allItems.AddRange(activities);
+        
+        // Get meetings from the repository
+        var meetings = meetingRepository.Find(
+            new MeetingByDateRangeSpecification(
+                DateOnly.FromDateTime(startDate.Value),
+                DateOnly.FromDateTime(endDate.Value)));
+        allItems.AddRange(meetings);
+        
+        // Get user tasks from the service
+        var userTasks = userTaskService.GetAllTasks()
+            .Where(t => t.EndDate.HasValue && 
+                       DateOnly.FromDateTime(t.StartDate) >= DateOnly.FromDateTime(startDate.Value) &&
+                       DateOnly.FromDateTime(t.StartDate) <= DateOnly.FromDateTime(endDate.Value));
+        allItems.AddRange(userTasks);
         
         // Generate grouped activities using the strategy
-        groupedActivities = strategyInstance.Generate(allActivities)
+        groupedActivities = strategyInstance.Generate(allItems)
             .OrderByDescending(activity => activity.Duration)
             .ToList();
         

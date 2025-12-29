@@ -15,29 +15,29 @@ namespace TrackYourDay.Core.Insights.Analytics
             _logger = logger;
         }
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<EndedActivity> activities)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<ITrackableItem> items)
         {
-            if (activities == null) throw new ArgumentNullException(nameof(activities));
-            var activitiesList = activities.ToList();
-            if (!activitiesList.Any())
+            if (items == null) throw new ArgumentNullException(nameof(items));
+            var itemsList = items.ToList();
+            if (!itemsList.Any())
             {
-                _logger?.LogInformation("No activities to generate summary for.");
+                _logger?.LogInformation("No items to generate summary for.");
                 return Array.Empty<GroupedActivity>();
             }
 
-            var activitiesByDate = activitiesList
+            var itemsByDate = itemsList
                 .GroupBy(a => DateOnly.FromDateTime(a.StartDate.Date))
                 .OrderBy(g => g.Key);
 
             var result = new List<GroupedActivity>();
 
-            foreach (var dailyActivities in activitiesByDate)
+            foreach (var dailyItems in itemsByDate)
             {
-                var date = dailyActivities.Key;
+                var date = dailyItems.Key;
                 var groups = new Dictionary<string, GroupedActivity>();
-                foreach (var activity in dailyActivities)
+                foreach (var item in dailyItems)
                 {
-                    var description = activity.GetDescription();
+                    var description = item.GetDescription();
                     var match = JiraKeyRegex.Match(description);
                     var key = match.Success ? match.Value : "No Jira Key";
                     if (!groups.TryGetValue(key, out var group))
@@ -45,7 +45,7 @@ namespace TrackYourDay.Core.Insights.Analytics
                         group = GroupedActivity.CreateEmptyWithDescriptionForDate(date, key);
                         groups[key] = group;
                     }
-                    group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
+                    group.Include(item.Guid, new TimePeriod(item.StartDate, item.EndDate));
                 }
                 result.AddRange(groups.Values);
             }

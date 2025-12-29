@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Immutable;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.ApplicationTrackers.Breaks.Events;
+using TrackYourDay.Core.ApplicationTrackers.MsTeams;
+using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using TrackYourDay.Core.SystemTrackers;
 using System.Collections.Concurrent;
 
@@ -16,6 +18,8 @@ namespace TrackYourDay.Core.Insights.Analytics
         private readonly IPublisher publisher;
         private readonly ConcurrentBag<EndedActivity> _activities = new();
         private readonly ConcurrentBag<EndedBreak> _breaks = new();
+        private readonly ConcurrentBag<EndedMeeting> _meetings = new();
+        private readonly ConcurrentBag<UserTask> _userTasks = new();
         private ISummaryStrategy _summaryStrategy;
 
         public ActivitiesAnalyser(IClock clock, IPublisher publisher, ILogger<ActivitiesAnalyser> logger, ISummaryStrategy summaryStrategy)
@@ -43,9 +47,29 @@ namespace TrackYourDay.Core.Insights.Analytics
             _breaks.Add(endedBreak);
         }
 
+        public void Analyse(EndedMeeting endedMeeting)
+        {
+            if (endedMeeting == null) throw new ArgumentNullException(nameof(endedMeeting));
+            _meetings.Add(endedMeeting);
+        }
+
+        public void Analyse(UserTask userTask)
+        {
+            if (userTask == null) throw new ArgumentNullException(nameof(userTask));
+            if (userTask.EndDate.HasValue)
+            {
+                _userTasks.Add(userTask);
+            }
+        }
+
         public IReadOnlyCollection<GroupedActivity> GetGroupedActivities()
         {
-            var groupedActivities = _summaryStrategy.Generate(_activities.ToList());
+            var allItems = new List<ITrackableItem>();
+            allItems.AddRange(_activities);
+            allItems.AddRange(_meetings);
+            allItems.AddRange(_userTasks.Where(t => t.EndDate.HasValue));
+
+            var groupedActivities = _summaryStrategy.Generate(allItems);
             foreach (var endedBreak in _breaks)
             {
                 var breakPeriod = TimePeriod.CreateFrom(endedBreak.BreakStartedAt, endedBreak.BreakEndedAt);
