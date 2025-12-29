@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using TrackYourDay.Core.ApplicationTrackers.MsTeams;
+using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using TrackYourDay.Core.Insights.Analytics;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Tests.TestHelpers;
@@ -26,6 +28,18 @@ namespace TrackYourDay.Tests.Insights.Analytics
         private EndedActivity CreateActivity(DateTime start, DateTime end, string description)
         {
             return new EndedActivity(start, end, new TestSystemState(description));
+        }
+
+        private EndedMeeting CreateMeeting(DateTime start, DateTime end, string title)
+        {
+            return new EndedMeeting(Guid.NewGuid(), start, end, title);
+        }
+
+        private UserTask CreateUserTask(DateTime start, DateTime end, string description)
+        {
+            var task = UserTask.StartTask(start, description);
+            task.EndTask(end);
+            return task;
         }
 
         [Fact]
@@ -243,6 +257,185 @@ namespace TrackYourDay.Tests.Insights.Analytics
             result.Should().ContainSingle();
             result.First().Description.Should().Be("Single Activity");
             result.First().Duration.Should().Be(TimeSpan.FromHours(1));
+        }
+
+        [Fact]
+        public void GivenMixedActivitiesAndMeetings_WhenGenerateIsCalled_ThenGroupsByName()
+        {
+            // Given
+            var now = DateTime.Now;
+            var items = new List<ITrackableItem>
+            {
+                CreateActivity(now.AddHours(-3), now.AddHours(-2.5), "Coding"),
+                CreateMeeting(now.AddHours(-2.5), now.AddHours(-2), "Daily Standup"),
+                CreateActivity(now.AddHours(-2), now.AddHours(-1.5), "Coding"),
+                CreateMeeting(now.AddHours(-1.5), now.AddHours(-1), "Sprint Planning"),
+                CreateActivity(now.AddHours(-1), now, "Coding")
+            };
+
+            // When
+            var result = _sut.Generate(items);
+
+            // Then
+            result.Should().HaveCount(3);
+            result.Should().Contain(g => g.Description == "Coding" && g.Duration == TimeSpan.FromHours(2));
+            result.Should().Contain(g => g.Description == "Daily Standup" && g.Duration == TimeSpan.FromMinutes(30));
+            result.Should().Contain(g => g.Description == "Sprint Planning" && g.Duration == TimeSpan.FromMinutes(30));
+        }
+
+        [Fact]
+        public void GivenMixedActivitiesAndUserTasks_WhenGenerateIsCalled_ThenGroupsByName()
+        {
+            // Given
+            var now = DateTime.Now;
+            var items = new List<ITrackableItem>
+            {
+                CreateActivity(now.AddHours(-3), now.AddHours(-2), "Feature Development"),
+                CreateUserTask(now.AddHours(-2), now.AddHours(-1.5), "Code Review"),
+                CreateActivity(now.AddHours(-1.5), now.AddHours(-1), "Feature Development"),
+                CreateUserTask(now.AddHours(-1), now.AddHours(-0.5), "Code Review"),
+                CreateActivity(now.AddHours(-0.5), now, "Testing")
+            };
+
+            // When
+            var result = _sut.Generate(items);
+
+            // Then
+            result.Should().HaveCount(3);
+            result.Should().Contain(g => g.Description == "Feature Development" && g.Duration == TimeSpan.FromHours(1.5));
+            result.Should().Contain(g => g.Description == "Code Review" && g.Duration == TimeSpan.FromHours(1));
+            result.Should().Contain(g => g.Description == "Testing" && g.Duration == TimeSpan.FromMinutes(30));
+        }
+
+        [Fact]
+        public void GivenMixedActivitiesMeetingsAndUserTasks_WhenGenerateIsCalled_ThenGroupsByName()
+        {
+            // Given
+            var now = DateTime.Now;
+            var items = new List<ITrackableItem>
+            {
+                CreateActivity(now.AddHours(-4), now.AddHours(-3.5), "Development"),
+                CreateMeeting(now.AddHours(-3.5), now.AddHours(-3), "Team Sync"),
+                CreateUserTask(now.AddHours(-3), now.AddHours(-2.5), "Development"),
+                CreateActivity(now.AddHours(-2.5), now.AddHours(-2), "Testing"),
+                CreateMeeting(now.AddHours(-2), now.AddHours(-1.5), "Team Sync"),
+                CreateUserTask(now.AddHours(-1.5), now.AddHours(-1), "Testing"),
+                CreateActivity(now.AddHours(-1), now, "Development")
+            };
+
+            // When
+            var result = _sut.Generate(items);
+
+            // Then
+            result.Should().HaveCount(3);
+            result.Should().Contain(g => g.Description == "Development" && g.Duration == TimeSpan.FromHours(2));
+            result.Should().Contain(g => g.Description == "Team Sync" && g.Duration == TimeSpan.FromHours(1));
+            result.Should().Contain(g => g.Description == "Testing" && g.Duration == TimeSpan.FromHours(1));
+        }
+
+        [Fact]
+        public void GivenOnlyMeetings_WhenGenerateIsCalled_ThenGroupsByMeetingTitle()
+        {
+            // Given
+            var now = DateTime.Now;
+            var items = new List<ITrackableItem>
+            {
+                CreateMeeting(now.AddHours(-3), now.AddHours(-2.5), "Daily Standup"),
+                CreateMeeting(now.AddHours(-2.5), now.AddHours(-2), "Sprint Planning"),
+                CreateMeeting(now.AddHours(-2), now.AddHours(-1.5), "Daily Standup"),
+                CreateMeeting(now.AddHours(-1.5), now.AddHours(-1), "Retrospective")
+            };
+
+            // When
+            var result = _sut.Generate(items);
+
+            // Then
+            result.Should().HaveCount(3);
+            result.Should().Contain(g => g.Description == "Daily Standup" && g.Duration == TimeSpan.FromHours(1));
+            result.Should().Contain(g => g.Description == "Sprint Planning" && g.Duration == TimeSpan.FromMinutes(30));
+            result.Should().Contain(g => g.Description == "Retrospective" && g.Duration == TimeSpan.FromMinutes(30));
+        }
+
+        [Fact]
+        public void GivenOnlyUserTasks_WhenGenerateIsCalled_ThenGroupsByTaskDescription()
+        {
+            // Given
+            var now = DateTime.Now;
+            var items = new List<ITrackableItem>
+            {
+                CreateUserTask(now.AddHours(-3), now.AddHours(-2.5), "Bug Fix"),
+                CreateUserTask(now.AddHours(-2.5), now.AddHours(-2), "Documentation"),
+                CreateUserTask(now.AddHours(-2), now.AddHours(-1.5), "Bug Fix"),
+                CreateUserTask(now.AddHours(-1.5), now.AddHours(-1), "Documentation"),
+                CreateUserTask(now.AddHours(-1), now, "Bug Fix")
+            };
+
+            // When
+            var result = _sut.Generate(items);
+
+            // Then
+            result.Should().HaveCount(2);
+            result.Should().Contain(g => g.Description == "Bug Fix" && g.Duration == TimeSpan.FromHours(2));
+            result.Should().Contain(g => g.Description == "Documentation" && g.Duration == TimeSpan.FromHours(1));
+        }
+
+        [Fact]
+        public void GivenMeetingWithDescription_WhenGenerateIsCalled_ThenUsesDescriptionOverTitle()
+        {
+            // Given
+            var now = DateTime.Now;
+            var meeting = CreateMeeting(now.AddHours(-1), now, "Original Title");
+            meeting.Describe("Custom Description");
+            var items = new List<ITrackableItem> { meeting };
+
+            // When
+            var result = _sut.Generate(items);
+
+            // Then
+            result.Should().ContainSingle();
+            result.First().Description.Should().Be("Custom Description");
+        }
+
+        [Fact]
+        public void GivenMultipleMeetingsWithSameCustomDescription_WhenGenerateIsCalled_ThenGroupsTogether()
+        {
+            // Given
+            var now = DateTime.Now;
+            var meeting1 = CreateMeeting(now.AddHours(-2), now.AddHours(-1.5), "Title A");
+            meeting1.Describe("Project Discussion");
+            var meeting2 = CreateMeeting(now.AddHours(-1.5), now.AddHours(-1), "Title B");
+            meeting2.Describe("Project Discussion");
+            var items = new List<ITrackableItem> { meeting1, meeting2 };
+
+            // When
+            var result = _sut.Generate(items);
+
+            // Then
+            result.Should().ContainSingle();
+            result.First().Description.Should().Be("Project Discussion");
+            result.First().Duration.Should().Be(TimeSpan.FromHours(1));
+        }
+
+        [Fact]
+        public void GivenMixedItemsWithSameDescription_WhenGenerateIsCalled_ThenGroupsAllTogether()
+        {
+            // Given
+            var now = DateTime.Now;
+            var items = new List<ITrackableItem>
+            {
+                CreateActivity(now.AddHours(-3), now.AddHours(-2.5), "Project Work"),
+                CreateMeeting(now.AddHours(-2.5), now.AddHours(-2), "Project Work"),
+                CreateUserTask(now.AddHours(-2), now.AddHours(-1.5), "Project Work"),
+                CreateActivity(now.AddHours(-1.5), now.AddHours(-1), "Project Work")
+            };
+
+            // When
+            var result = _sut.Generate(items);
+
+            // Then
+            result.Should().ContainSingle();
+            result.First().Description.Should().Be("Project Work");
+            result.First().Duration.Should().Be(TimeSpan.FromHours(2));
         }
     }
 }
