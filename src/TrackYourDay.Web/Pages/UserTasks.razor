@@ -18,7 +18,7 @@ else
                 </ToolBarContent>
                 <Columns>
                     <PropertyColumn Property="x => x.StartDate" Title="Start Date" Filterable="true" />
-                    <PropertyColumn Property="x => x.EndDate.Value" Title="End Date" Filterable="false" />
+                    <PropertyColumn Property="x => x.EndDate" Title="End Date" Filterable="false" />
                     <PropertyColumn Property="x => x.GetDuration()" Title="Duration" Filterable="true" SortBy="@_sortByDuration" />
                     <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
                 </Columns>
@@ -41,12 +41,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        this.endedUserTasks  = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
+        this.endedUserTasks  = this.userTaskService.GetAllTasks().Where(t => t.IsCompleted).OrderByDescending(userTask => userTask.StartDate);
     }
 
     private void UserTaskEnded()
     {
-        this.endedUserTasks = this.userTaskService.GetAllTasks().Where(t => t.EndDate is not null).OrderByDescending(userTask => userTask.StartDate);
+        this.endedUserTasks = this.userTaskService.GetAllTasks().Where(t => t.IsCompleted).OrderByDescending(userTask => userTask.StartDate);
 
     }
 

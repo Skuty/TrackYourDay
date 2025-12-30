@@ -1,22 +1,47 @@
-﻿namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
+﻿using TrackYourDay.Core.Insights.Analytics;
+
+namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 {
-    public record class EndedMeeting (Guid Guid, DateTime StartDate, DateTime EndDate, string Title)
+    /// <summary>
+    /// Represents a completed MS Teams meeting.
+    /// </summary>
+    public sealed class EndedMeeting : TrackedActivity
     {
-        public string Description { get; private set; } = string.Empty;
-
-        public TimeSpan GetDuration()
+        public string Title { get; init; }
+        
+        /// <summary>
+        /// Custom description that overrides the meeting title.
+        /// </summary>
+        public string? CustomDescription { get; private set; }
+        
+        public EndedMeeting(Guid guid, DateTime startDate, DateTime endDate, string title)
+            : base(guid, startDate, endDate)
         {
-            return EndDate - StartDate;
+            if (string.IsNullOrWhiteSpace(title))
+                throw new ArgumentException("Meeting title cannot be empty", nameof(title));
+            
+            Title = title;
         }
-
-        public string GetDescription()
+        
+        public override string GetDescription()
         {
-            return !string.IsNullOrWhiteSpace(Description) ? Description : Title;
+            return !string.IsNullOrWhiteSpace(CustomDescription) ? CustomDescription : Title;
         }
-
-        public void Describe(string description)
+        
+        /// <summary>
+        /// Sets a custom description that overrides the meeting title.
+        /// </summary>
+        public void SetCustomDescription(string description)
         {
-            Description = description;
+            if (string.IsNullOrWhiteSpace(description))
+                throw new ArgumentException("Description cannot be empty", nameof(description));
+            
+            CustomDescription = description;
         }
+        
+        /// <summary>
+        /// Checks if the meeting has been customized with a description.
+        /// </summary>
+        public bool HasCustomDescription => !string.IsNullOrWhiteSpace(CustomDescription);
     }
 }

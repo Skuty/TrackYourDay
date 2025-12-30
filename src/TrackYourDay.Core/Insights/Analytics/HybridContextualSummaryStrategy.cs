@@ -45,62 +45,62 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public string StrategyName => "Hybrid Contextual Groups";
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<EndedActivity> activities)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackedActivity> items)
         {
-            if (activities == null) throw new ArgumentNullException(nameof(activities));
+            if (items == null) throw new ArgumentNullException(nameof(items));
             
-            var activitiesList = activities.ToList();
-            if (!activitiesList.Any())
+            var itemsList = items.ToList();
+            if (!itemsList.Any())
             {
-                _logger.LogInformation("No activities to generate summary for.");
+                _logger.LogInformation("No items to generate summary for.");
                 return Array.Empty<GroupedActivity>();
             }
 
-            // Group activities by date
-            var activitiesByDate = activitiesList
+            // Group items by date
+            var itemsByDate = itemsList
                 .GroupBy(a => DateOnly.FromDateTime(a.StartDate.Date))
                 .OrderBy(g => g.Key);
 
             var result = new List<GroupedActivity>();
 
-            foreach (var dailyActivities in activitiesByDate)
+            foreach (var dailyItems in itemsByDate)
             {
-                var date = dailyActivities.Key;
-                var sortedActivities = dailyActivities.OrderBy(a => a.StartDate).ToList();
+                var date = dailyItems.Key;
+                var sortedItems = dailyItems.OrderBy(a => a.StartDate).ToList();
                 
-                var groups = ProcessActivitiesWithHybridApproach(sortedActivities, date);
+                var groups = ProcessItemsWithHybridApproach(sortedItems, date);
                 result.AddRange(groups);
             }
 
             return result.AsReadOnly();
         }
 
-        private List<GroupedActivity> ProcessActivitiesWithHybridApproach(
-            List<EndedActivity> activities,
+        private List<GroupedActivity> ProcessItemsWithHybridApproach(
+            List<TrackedActivity> items,
             DateOnly date)
         {
-            var activityGroups = new List<ActivityGroup>();
+            var itemGroups = new List<ActivityGroup>();
 
-            foreach (var activity in activities)
+            foreach (var item in items)
             {
-                var description = activity.GetDescription();
+                var description = item.GetDescription();
                 
                 // Step 1: Check for Jira key (highest priority)
                 var jiraKey = ExtractJiraKey(description);
                 
                 if (jiraKey != null)
                 {
-                    AddToJiraGroup(activityGroups, activity, jiraKey, date);
+                    AddToJiraGroup(itemGroups, item, jiraKey, date);
                 }
                 else
                 {
                     // Step 2: Try to merge with existing groups using multiple criteria
-                    var matchedGroup = FindBestMatchingGroup(activityGroups, activity);
+                    var matchedGroup = FindBestMatchingGroup(itemGroups, item);
                     
                     if (matchedGroup != null)
                     {
-                        matchedGroup.AddActivity(activity);
-                        _logger.LogDebug("Merged activity '{Description}' into existing group '{Group}'",
+                        matchedGroup.AddItem(item);
+                        _logger.LogDebug("Merged item '{Description}' into existing group '{Group}'",
                             description, matchedGroup.Description);
                     }
                     else
@@ -108,18 +108,18 @@ namespace TrackYourDay.Core.Insights.Analytics
                         // Step 3: Create new group
                         var context = DetermineContext(description);
                         var groupDescription = CreateGroupDescription(description, context);
-                        activityGroups.Add(new ActivityGroup(groupDescription, activity, date));
+                        itemGroups.Add(new ActivityGroup(groupDescription, item, date));
                     }
                 }
             }
 
             // Convert ActivityGroups to GroupedActivities
-            return activityGroups.Select(ag => ag.ToGroupedActivity()).ToList();
+            return itemGroups.Select(ag => ag.ToGroupedActivity()).ToList();
         }
 
         private void AddToJiraGroup(
             List<ActivityGroup> groups,
-            EndedActivity activity,
+            TrackedActivity item,
             string jiraKey,
             DateOnly date)
         {
@@ -127,21 +127,21 @@ namespace TrackYourDay.Core.Insights.Analytics
             
             if (existingGroup != null)
             {
-                existingGroup.AddActivity(activity);
+                existingGroup.AddItem(item);
             }
             else
             {
-                var description = $"{jiraKey}: {activity.GetDescription()}";
-                groups.Add(new ActivityGroup(description, activity, date, jiraKey));
+                var description = $"{jiraKey}: {item.GetDescription()}";
+                groups.Add(new ActivityGroup(description, item, date, jiraKey));
             }
         }
 
-        private ActivityGroup? FindBestMatchingGroup(List<ActivityGroup> groups, EndedActivity activity)
+        private ActivityGroup? FindBestMatchingGroup(List<ActivityGroup> groups, TrackedActivity item)
         {
             if (!groups.Any())
                 return null;
 
-            var description = activity.GetDescription();
+            var description = item.GetDescription();
             var candidates = new List<(ActivityGroup Group, float Score)>();
 
             foreach (var group in groups)
@@ -157,7 +157,7 @@ namespace TrackYourDay.Core.Insights.Analytics
                 score += semanticScore * 0.4f;
 
                 // Criterion 2: Temporal proximity (session detection)
-                var temporalScore = CalculateTemporalProximity(activity, group);
+                var temporalScore = CalculateTemporalProximity(item, group);
                 score += temporalScore * 0.3f;
 
                 // Criterion 3: Context similarity
@@ -194,16 +194,16 @@ namespace TrackYourDay.Core.Insights.Analytics
             return (2.0f * commonWords) / (words1.Count + words2.Count);
         }
 
-        private float CalculateTemporalProximity(EndedActivity activity, ActivityGroup group)
+        private float CalculateTemporalProximity(TrackedActivity item, ActivityGroup group)
         {
-            // Check if this activity is close in time to the last activity in the group
-            var lastActivity = group.GetLastActivity();
-            if (lastActivity == null)
+            // Check if this item is close in time to the last item in the group
+            var lastItem = group.GetLastItem();
+            if (lastItem == null)
                 return 0f;
 
-            var timeDiff = (activity.StartDate - lastActivity.EndDate).TotalMinutes;
+            var timeDiff = (item.StartDate - lastItem.EndDate).TotalMinutes;
             
-            // Activities must be in chronological order and within session gap
+            // Items must be in chronological order and within session gap
             if (timeDiff < 0 || timeDiff > SessionGapMinutes)
                 return 0f;
 
@@ -281,44 +281,44 @@ namespace TrackYourDay.Core.Insights.Analytics
         /// </summary>
         private class ActivityGroup
         {
-            private readonly List<EndedActivity> _activities = new();
+            private readonly List<TrackedActivity> _items = new();
             private readonly DateOnly _date;
 
             public string Description { get; private set; }
             public string? JiraKey { get; }
 
-            public ActivityGroup(string description, EndedActivity firstActivity, DateOnly date, string? jiraKey = null)
+            public ActivityGroup(string description, TrackedActivity firstItem, DateOnly date, string? jiraKey = null)
             {
                 Description = description;
                 JiraKey = jiraKey;
                 _date = date;
-                _activities.Add(firstActivity);
+                _items.Add(firstItem);
             }
 
-            public void AddActivity(EndedActivity activity)
+            public void AddItem(TrackedActivity item)
             {
-                _activities.Add(activity);
+                _items.Add(item);
                 
                 // Update description to be more representative
                 // Keep the longest or most detailed description
-                if (activity.GetDescription().Length > Description.Length && JiraKey == null)
+                if (item.GetDescription().Length > Description.Length && JiraKey == null)
                 {
-                    Description = activity.GetDescription();
+                    Description = item.GetDescription();
                 }
             }
 
-            public EndedActivity? GetLastActivity()
+            public TrackedActivity? GetLastItem()
             {
-                return _activities.LastOrDefault();
+                return _items.LastOrDefault();
             }
 
             public GroupedActivity ToGroupedActivity()
             {
                 var grouped = GroupedActivity.CreateEmptyWithDescriptionForDate(_date, Description);
                 
-                foreach (var activity in _activities)
+                foreach (var item in _items)
                 {
-                    grouped.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
+                    grouped.Include(item.Guid, new TimePeriod(item.StartDate, item.EndDate));
                 }
                 
                 return grouped;

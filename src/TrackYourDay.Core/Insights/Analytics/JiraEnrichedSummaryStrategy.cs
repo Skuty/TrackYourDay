@@ -36,14 +36,14 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public string StrategyName => "Jira-Enriched Activity Groups";
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<EndedActivity> activities)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackedActivity> items)
         {
-            if (activities == null) throw new ArgumentNullException(nameof(activities));
+            if (items == null) throw new ArgumentNullException(nameof(items));
             
-            var activitiesList = activities.ToList();
-            if (!activitiesList.Any())
+            var itemsList = items.ToList();
+            if (!itemsList.Any())
             {
-                _logger.LogInformation("No activities to generate summary for.");
+                _logger.LogInformation("No items to generate summary for.");
                 return Array.Empty<GroupedActivity>();
             }
 
@@ -51,39 +51,39 @@ namespace TrackYourDay.Core.Insights.Analytics
             var jiraActivities = _jiraTracker.GetJiraActivities().ToList();
             _logger.LogInformation("Retrieved {Count} Jira activities for enrichment", jiraActivities.Count);
 
-            // Group activities by date
-            var activitiesByDate = activitiesList
+            // Group items by date
+            var itemsByDate = itemsList
                 .GroupBy(a => DateOnly.FromDateTime(a.StartDate.Date))
                 .OrderBy(g => g.Key);
 
             var result = new List<GroupedActivity>();
 
-            foreach (var dailyActivities in activitiesByDate)
+            foreach (var dailyItems in itemsByDate)
             {
-                var date = dailyActivities.Key;
+                var date = dailyItems.Key;
                 var dailyJiraActivities = jiraActivities
                     .Where(ja => DateOnly.FromDateTime(ja.OccurrenceDate) == date)
                     .ToList();
 
-                var groups = ProcessDailyActivities(dailyActivities.ToList(), dailyJiraActivities, date);
+                var groups = ProcessDailyItems(dailyItems.ToList(), dailyJiraActivities, date);
                 result.AddRange(groups.Values);
             }
 
             return result.AsReadOnly();
         }
 
-        private Dictionary<string, GroupedActivity> ProcessDailyActivities(
-            List<EndedActivity> activities,
+        private Dictionary<string, GroupedActivity> ProcessDailyItems(
+            List<TrackedActivity> items,
             List<JiraActivity> jiraActivities,
             DateOnly date)
         {
             var groups = new Dictionary<string, GroupedActivity>();
-            var unmatchedActivities = new List<EndedActivity>();
+            var unmatchedItems = new List<TrackedActivity>();
 
-            // First pass: Match activities with explicit Jira keys
-            foreach (var activity in activities)
+            // First pass: Match items with explicit Jira keys
+            foreach (var item in items)
             {
-                var description = activity.GetDescription();
+                var description = item.GetDescription();
                 var match = JiraKeyRegex.Match(description);
                 
                 if (match.Success)
@@ -96,55 +96,55 @@ namespace TrackYourDay.Core.Insights.Analytics
                         group = GroupedActivity.CreateEmptyWithDescriptionForDate(date, enrichedDescription);
                         groups[jiraKey] = group;
                     }
-                    group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
+                    group.Include(item.Guid, new TimePeriod(item.StartDate, item.EndDate));
                 }
                 else
                 {
-                    unmatchedActivities.Add(activity);
+                    unmatchedItems.Add(item);
                 }
             }
 
-            // Second pass: Try to match unmatched activities using semantic similarity and temporal proximity
-            foreach (var activity in unmatchedActivities)
+            // Second pass: Try to match unmatched items using semantic similarity and temporal proximity
+            foreach (var item in unmatchedItems)
             {
-                var matchedJiraKey = FindBestJiraMatch(activity, jiraActivities);
+                var matchedJiraKey = FindBestJiraMatch(item, jiraActivities);
                 
                 if (matchedJiraKey != null)
                 {
-                    var enrichedDescription = GetEnrichedDescription(matchedJiraKey, activity.GetDescription(), jiraActivities);
+                    var enrichedDescription = GetEnrichedDescription(matchedJiraKey, item.GetDescription(), jiraActivities);
                     
                     if (!groups.TryGetValue(matchedJiraKey, out var group))
                     {
                         group = GroupedActivity.CreateEmptyWithDescriptionForDate(date, enrichedDescription);
                         groups[matchedJiraKey] = group;
                     }
-                    group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
+                    group.Include(item.Guid, new TimePeriod(item.StartDate, item.EndDate));
                     
-                    _logger.LogDebug("Matched activity '{Description}' to Jira {Key} via similarity/temporal matching",
-                        activity.GetDescription(), matchedJiraKey);
+                    _logger.LogDebug("Matched item '{Description}' to Jira {Key} via similarity/temporal matching",
+                        item.GetDescription(), matchedJiraKey);
                 }
                 else
                 {
                     // No Jira match found - group under original description
-                    var key = $"Other: {activity.GetDescription()}";
+                    var key = $"Other: {item.GetDescription()}";
                     if (!groups.TryGetValue(key, out var group))
                     {
-                        group = GroupedActivity.CreateEmptyWithDescriptionForDate(date, activity.GetDescription());
+                        group = GroupedActivity.CreateEmptyWithDescriptionForDate(date, item.GetDescription());
                         groups[key] = group;
                     }
-                    group.Include(activity.Guid, new TimePeriod(activity.StartDate, activity.EndDate));
+                    group.Include(item.Guid, new TimePeriod(item.StartDate, item.EndDate));
                 }
             }
 
             return groups;
         }
 
-        private string? FindBestJiraMatch(EndedActivity activity, List<JiraActivity> jiraActivities)
+        private string? FindBestJiraMatch(TrackedActivity item, List<JiraActivity> jiraActivities)
         {
             if (!jiraActivities.Any())
                 return null;
 
-            var activityDescription = activity.GetDescription();
+            var itemDescription = item.GetDescription();
             var bestMatch = jiraActivities
                 .Select(ja =>
                 {
@@ -154,10 +154,10 @@ namespace TrackYourDay.Core.Insights.Analytics
                         return (JiraKey: (string?)null, Score: 0f);
 
                     // Calculate semantic similarity
-                    var semanticScore = CalculateSemanticSimilarity(activityDescription, ja.Description);
+                    var semanticScore = CalculateSemanticSimilarity(itemDescription, ja.Description);
                     
                     // Calculate temporal proximity score
-                    var timeDiff = Math.Abs((activity.StartDate - ja.OccurrenceDate).TotalMinutes);
+                    var timeDiff = Math.Abs((item.StartDate - ja.OccurrenceDate).TotalMinutes);
                     var temporalScore = timeDiff <= TemporalWindowMinutes 
                         ? 1.0f - (float)(timeDiff / TemporalWindowMinutes) 
                         : 0f;

@@ -31,13 +31,13 @@
         public UserTask StartTask(DateTime startDate, string description)
         {
             // Ensure no active task exists
-            if (_tasks.Any(t => t.EndDate == null))
+            if (_tasks.Any(t => !t.IsCompleted))
             {
                 throw new InvalidOperationException("There is already an active task");
             }
 
             // Create new task
-            var task = UserTask.StartTask(startDate, description);
+            var task = UserTask.Start(startDate, description);
             _tasks.Add(task);
 
             return task;
@@ -48,13 +48,13 @@
         {
             var task = GetTaskById(taskId);
 
-            task.EndTask(endDate);
+            task.Complete(endDate);
         }
 
         // Get the currently active task, if any
         public UserTask GetActiveTask()
         {
-            return _tasks.FirstOrDefault(t => t.EndDate == null);
+            return _tasks.FirstOrDefault(t => !t.IsCompleted);
         }
     }
 }

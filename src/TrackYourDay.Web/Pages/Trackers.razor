@@ -188,7 +188,7 @@
             new() { Title = "End", PropertyExpression = x => x.EndDate },
             new() { Title = "Duration", PropertyExpression = x => x.GetDuration() },
             new() { Title = "Title", PropertyExpression = x => x.Title },
-            new() { Title = "Description", PropertyExpression = x => x.Description }
+            new() { Title = "Description", PropertyExpression = x => x.CustomDescription ?? "" }
         };
 
         gitlabActivityColumns = new()
