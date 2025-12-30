@@ -56,7 +56,7 @@ namespace TrackYourDay.Core.Insights.Analytics
         public void Analyse(UserTask userTask)
         {
             if (userTask == null) throw new ArgumentNullException(nameof(userTask));
-            if (userTask.EndDate.HasValue)
+            if (userTask.IsCompleted)
             {
                 _userTasks.Add(userTask);
             }
@@ -64,10 +64,10 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public IReadOnlyCollection<GroupedActivity> GetGroupedActivities()
         {
-            var allItems = new List<ITrackableItem>();
+            var allItems = new List<TrackableItem>();
             allItems.AddRange(_activities);
             allItems.AddRange(_meetings);
-            allItems.AddRange(_userTasks.Where(t => t.EndDate.HasValue));
+            allItems.AddRange(_userTasks.Where(t => t.IsCompleted));
 
             var groupedActivities = _summaryStrategy.Generate(allItems);
             foreach (var endedBreak in _breaks)

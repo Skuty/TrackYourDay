@@ -3,16 +3,20 @@ using TrackYourDay.Core.SystemTrackers.SystemStates;
 
 namespace TrackYourDay.Core.SystemTrackers
 {
-    public record class EndedActivity(DateTime StartDate, DateTime EndDate, SystemState ActivityType) : ITrackableItem
+    /// <summary>
+    /// Represents a completed system-level activity (app focus, window changes, etc.).
+    /// </summary>
+    public sealed class EndedActivity : TrackableItem
     {
-        public Guid Guid { get; init; } = Guid.NewGuid();
-
-        public TimeSpan GetDuration()
+        public SystemState ActivityType { get; init; }
+        
+        public EndedActivity(DateTime startDate, DateTime endDate, SystemState activityType)
+            : base(Guid.NewGuid(), startDate, endDate)
         {
-            return EndDate - StartDate;
+            ActivityType = activityType ?? throw new ArgumentNullException(nameof(activityType));
         }
-
-        public string GetDescription()
+        
+        public override string GetDescription()
         {
             return ActivityType.ActivityDescription;
         }

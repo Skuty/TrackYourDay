@@ -36,7 +36,7 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public string StrategyName => "Jira-Enriched Activity Groups";
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<ITrackableItem> items)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackableItem> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
             
@@ -73,12 +73,12 @@ namespace TrackYourDay.Core.Insights.Analytics
         }
 
         private Dictionary<string, GroupedActivity> ProcessDailyItems(
-            List<ITrackableItem> items,
+            List<TrackableItem> items,
             List<JiraActivity> jiraActivities,
             DateOnly date)
         {
             var groups = new Dictionary<string, GroupedActivity>();
-            var unmatchedItems = new List<ITrackableItem>();
+            var unmatchedItems = new List<TrackableItem>();
 
             // First pass: Match items with explicit Jira keys
             foreach (var item in items)
@@ -139,7 +139,7 @@ namespace TrackYourDay.Core.Insights.Analytics
             return groups;
         }
 
-        private string? FindBestJiraMatch(ITrackableItem item, List<JiraActivity> jiraActivities)
+        private string? FindBestJiraMatch(TrackableItem item, List<JiraActivity> jiraActivities)
         {
             if (!jiraActivities.Any())
                 return null;

@@ -19,7 +19,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.UserTasks
             Assert.NotNull(task);
             Assert.Equal(startDate, task.StartDate);
             Assert.Equal(description, task.Description);
-            Assert.Null(task.EndDate);
+            Assert.False(task.IsCompleted);
         }
 
         [Fact]
@@ -51,6 +51,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.UserTasks
             // Assert
             var endedTask = taskService.GetTaskById(task.Guid);
             Assert.Equal(endDate, endedTask.EndDate);
+            Assert.True(endedTask.IsCompleted);
         }
 
         [Fact]
@@ -95,7 +96,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.UserTasks
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
                 taskService.EndTask(task.Guid, endDate.AddMinutes(5)));
-            Assert.Equal("Can't end ended task", exception.Message);
+            Assert.Equal("Task is already completed", exception.Message);
         }
     }
 }

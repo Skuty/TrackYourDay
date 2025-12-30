@@ -37,8 +37,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
 
         private UserTask CreateUserTask(DateTime start, DateTime end, string description)
         {
-            var task = UserTask.StartTask(start, description);
-            task.EndTask(end);
+            var task = UserTask.Start(start, description);
+            task.Complete(end);
             return task;
         }
 
@@ -264,7 +264,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
         {
             // Given
             var now = DateTime.Now;
-            var items = new List<ITrackableItem>
+            var items = new List<TrackableItem>
             {
                 CreateActivity(now.AddHours(-3), now.AddHours(-2.5), "Coding"),
                 CreateMeeting(now.AddHours(-2.5), now.AddHours(-2), "Daily Standup"),
@@ -288,7 +288,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
         {
             // Given
             var now = DateTime.Now;
-            var items = new List<ITrackableItem>
+            var items = new List<TrackableItem>
             {
                 CreateActivity(now.AddHours(-3), now.AddHours(-2), "Feature Development"),
                 CreateUserTask(now.AddHours(-2), now.AddHours(-1.5), "Code Review"),
@@ -312,7 +312,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
         {
             // Given
             var now = DateTime.Now;
-            var items = new List<ITrackableItem>
+            var items = new List<TrackableItem>
             {
                 CreateActivity(now.AddHours(-4), now.AddHours(-3.5), "Development"),
                 CreateMeeting(now.AddHours(-3.5), now.AddHours(-3), "Team Sync"),
@@ -338,7 +338,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
         {
             // Given
             var now = DateTime.Now;
-            var items = new List<ITrackableItem>
+            var items = new List<TrackableItem>
             {
                 CreateMeeting(now.AddHours(-3), now.AddHours(-2.5), "Daily Standup"),
                 CreateMeeting(now.AddHours(-2.5), now.AddHours(-2), "Sprint Planning"),
@@ -361,7 +361,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
         {
             // Given
             var now = DateTime.Now;
-            var items = new List<ITrackableItem>
+            var items = new List<TrackableItem>
             {
                 CreateUserTask(now.AddHours(-3), now.AddHours(-2.5), "Bug Fix"),
                 CreateUserTask(now.AddHours(-2.5), now.AddHours(-2), "Documentation"),
@@ -385,8 +385,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
             // Given
             var now = DateTime.Now;
             var meeting = CreateMeeting(now.AddHours(-1), now, "Original Title");
-            meeting.Describe("Custom Description");
-            var items = new List<ITrackableItem> { meeting };
+            meeting.SetCustomDescription("Custom Description");
+            var items = new List<TrackableItem> { meeting };
 
             // When
             var result = _sut.Generate(items);
@@ -402,10 +402,10 @@ namespace TrackYourDay.Tests.Insights.Analytics
             // Given
             var now = DateTime.Now;
             var meeting1 = CreateMeeting(now.AddHours(-2), now.AddHours(-1.5), "Title A");
-            meeting1.Describe("Project Discussion");
+            meeting1.SetCustomDescription("Project Discussion");
             var meeting2 = CreateMeeting(now.AddHours(-1.5), now.AddHours(-1), "Title B");
-            meeting2.Describe("Project Discussion");
-            var items = new List<ITrackableItem> { meeting1, meeting2 };
+            meeting2.SetCustomDescription("Project Discussion");
+            var items = new List<TrackableItem> { meeting1, meeting2 };
 
             // When
             var result = _sut.Generate(items);
@@ -421,7 +421,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
         {
             // Given
             var now = DateTime.Now;
-            var items = new List<ITrackableItem>
+            var items = new List<TrackableItem>
             {
                 CreateActivity(now.AddHours(-3), now.AddHours(-2.5), "Project Work"),
                 CreateMeeting(now.AddHours(-2.5), now.AddHours(-2), "Project Work"),

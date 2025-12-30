@@ -82,10 +82,10 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
 
             // When
             var endedMeeting = this.msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
-            endedMeeting.Describe("Discussed project requirements");
+            endedMeeting.SetCustomDescription("Discussed project requirements");
 
             // Then
-            Assert.Equal("Discussed project requirements", endedMeeting.Description);
+            Assert.Equal("Discussed project requirements", endedMeeting.CustomDescription);
             Assert.Equal("Discussed project requirements", endedMeeting.GetDescription());
         }
 
@@ -103,7 +103,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
             var endedMeeting = this.msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
 
             // Then
-            Assert.Equal(string.Empty, endedMeeting.Description);
+            Assert.Null(endedMeeting.CustomDescription);
             Assert.Equal("Test meeting", endedMeeting.GetDescription());
         }
     }

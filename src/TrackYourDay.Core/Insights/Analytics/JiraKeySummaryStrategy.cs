@@ -15,7 +15,7 @@ namespace TrackYourDay.Core.Insights.Analytics
             _logger = logger;
         }
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<ITrackableItem> items)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackableItem> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
             var itemsList = items.ToList();

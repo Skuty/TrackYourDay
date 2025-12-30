@@ -2,66 +2,100 @@
 
 namespace TrackYourDay.Core.ApplicationTrackers.UserTasks
 {
-    public class UserTask : ITrackableItem
+    /// <summary>
+    /// Represents a user-defined task that can be started and ended manually.
+    /// Supports ongoing tasks (not yet ended).
+    /// </summary>
+    public sealed class UserTask : TrackableItem
     {
-        public Guid Guid { get; init; }
-
-        public DateTime StartDate { get; init; }
-
-        public DateTime? EndDate { get; private set; }
-
-        public string Description { get; private set; }
-
-        DateTime ITrackableItem.EndDate => EndDate ?? DateTime.Now;
-
-        public static UserTask StartTask(DateTime startDate, string description)
+        private DateTime? _endDate;
+        private string _description;
+        
+        public string Description
         {
-            var task = new UserTask()
+            get => _description;
+            private set
             {
-                Guid = Guid.NewGuid(),
-                StartDate = startDate,
-            };
-
-            task.SetDescription(description);
-
-            return task;
-        }
-
-        public void SetDescription(string description)
-        {
-            if (string.IsNullOrEmpty(description))
-            {
-                throw new ArgumentNullException("description");
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("Description cannot be empty", nameof(value));
+                _description = value;
             }
-
+        }
+        
+        /// <summary>
+        /// Override to support nullable end date for ongoing tasks.
+        /// Returns DateTime.Now if task is not yet ended.
+        /// </summary>
+        public override DateTime EndDate => _endDate ?? DateTime.Now;
+        
+        /// <summary>
+        /// Indicates whether the task has been completed.
+        /// </summary>
+        public bool IsCompleted => _endDate.HasValue;
+        
+        /// <summary>
+        /// Factory method to start a new task.
+        /// </summary>
+        public static UserTask Start(DateTime startDate, string description)
+        {
+            return new UserTask(startDate, description);
+        }
+        
+        private UserTask(DateTime startDate, string description) : base()
+        {
+            StartDate = startDate;
             Description = description;
+            _endDate = null;
         }
-
-        public void EndTask(DateTime endDate)
-        {
-            if (EndDate is not null)
-            {
-                throw new InvalidOperationException("Can't end ended task");
-            }
-
-            if (endDate <= StartDate)
-            {
-                throw new ArgumentException($"Have to later than {StartDate}", nameof(endDate));
-            }
-
-            EndDate = endDate;
-        }
-
-        public TimeSpan GetDuration()
-        {
-            return EndDate is not null 
-                ? TimeSpan.FromTicks(EndDate.Value.Ticks - StartDate.Ticks) 
-                : TimeSpan.FromTicks(DateTime.Now.Ticks - StartDate.Ticks);
-        }
-
-        public string GetDescription()
+        
+        public override string GetDescription()
         {
             return Description;
+        }
+        
+        /// <summary>
+        /// Override to handle ongoing tasks (returns current duration if not ended).
+        /// </summary>
+        public override TimeSpan GetDuration()
+        {
+            var endTime = _endDate ?? DateTime.Now;
+            return endTime - StartDate;
+        }
+        
+        /// <summary>
+        /// Updates the task description.
+        /// </summary>
+        public void UpdateDescription(string newDescription)
+        {
+            if (IsCompleted)
+                throw new InvalidOperationException("Cannot update description of a completed task");
+            
+            if (string.IsNullOrWhiteSpace(newDescription))
+                throw new ArgumentException("Description cannot be empty", nameof(newDescription));
+            
+            _description = newDescription;
+        }
+        
+        /// <summary>
+        /// Marks the task as completed.
+        /// </summary>
+        public void Complete(DateTime endDate)
+        {
+            if (IsCompleted)
+                throw new InvalidOperationException("Task is already completed");
+            
+            if (endDate <= StartDate)
+                throw new ArgumentException($"End date must be after start date ({StartDate})", nameof(endDate));
+            
+            _endDate = endDate;
+        }
+        
+        /// <summary>
+        /// Completes the task with the current time.
+        /// </summary>
+        public void CompleteNow()
+        {
+            Complete(DateTime.Now);
         }
     }
 }

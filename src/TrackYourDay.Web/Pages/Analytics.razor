@@ -105,7 +105,7 @@
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
         
         // Collect all trackable items for the date range
-        var allItems = new List<ITrackableItem>();
+        var allItems = new List<TrackableItem>();
         
         // Get activities from the repository
         var activities = activityRepository.Find(
@@ -123,7 +123,7 @@
         
         // Get user tasks from the service
         var userTasks = userTaskService.GetAllTasks()
-            .Where(t => t.EndDate.HasValue && 
+            .Where(t => t.IsCompleted && 
                        DateOnly.FromDateTime(t.StartDate) >= DateOnly.FromDateTime(startDate.Value) &&
                        DateOnly.FromDateTime(t.StartDate) <= DateOnly.FromDateTime(endDate.Value));
         allItems.AddRange(userTasks);

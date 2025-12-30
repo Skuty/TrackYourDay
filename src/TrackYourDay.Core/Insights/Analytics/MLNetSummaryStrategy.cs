@@ -58,7 +58,7 @@ namespace TrackYourDay.Core.Insights.Analytics
             _textFeaturizer = textPipeline.Fit(emptyData);
         }
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<ITrackableItem> items)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackableItem> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -91,7 +91,7 @@ namespace TrackYourDay.Core.Insights.Analytics
             return result.AsReadOnly();
         }
 
-        private Dictionary<string, GroupedActivity> ProcessItems(List<ITrackableItem> items)
+        private Dictionary<string, GroupedActivity> ProcessItems(List<TrackableItem> items)
         {
             var groups = new Dictionary<string, GroupedActivity>();
             var date = DateOnly.FromDateTime(items.First().StartDate);
