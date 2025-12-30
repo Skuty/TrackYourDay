@@ -45,7 +45,7 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public string StrategyName => "Hybrid Contextual Groups";
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackableItem> items)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackedActivity> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
             
@@ -76,7 +76,7 @@ namespace TrackYourDay.Core.Insights.Analytics
         }
 
         private List<GroupedActivity> ProcessItemsWithHybridApproach(
-            List<TrackableItem> items,
+            List<TrackedActivity> items,
             DateOnly date)
         {
             var itemGroups = new List<ActivityGroup>();
@@ -119,7 +119,7 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         private void AddToJiraGroup(
             List<ActivityGroup> groups,
-            TrackableItem item,
+            TrackedActivity item,
             string jiraKey,
             DateOnly date)
         {
@@ -136,7 +136,7 @@ namespace TrackYourDay.Core.Insights.Analytics
             }
         }
 
-        private ActivityGroup? FindBestMatchingGroup(List<ActivityGroup> groups, TrackableItem item)
+        private ActivityGroup? FindBestMatchingGroup(List<ActivityGroup> groups, TrackedActivity item)
         {
             if (!groups.Any())
                 return null;
@@ -194,7 +194,7 @@ namespace TrackYourDay.Core.Insights.Analytics
             return (2.0f * commonWords) / (words1.Count + words2.Count);
         }
 
-        private float CalculateTemporalProximity(TrackableItem item, ActivityGroup group)
+        private float CalculateTemporalProximity(TrackedActivity item, ActivityGroup group)
         {
             // Check if this item is close in time to the last item in the group
             var lastItem = group.GetLastItem();
@@ -281,13 +281,13 @@ namespace TrackYourDay.Core.Insights.Analytics
         /// </summary>
         private class ActivityGroup
         {
-            private readonly List<TrackableItem> _items = new();
+            private readonly List<TrackedActivity> _items = new();
             private readonly DateOnly _date;
 
             public string Description { get; private set; }
             public string? JiraKey { get; }
 
-            public ActivityGroup(string description, TrackableItem firstItem, DateOnly date, string? jiraKey = null)
+            public ActivityGroup(string description, TrackedActivity firstItem, DateOnly date, string? jiraKey = null)
             {
                 Description = description;
                 JiraKey = jiraKey;
@@ -295,7 +295,7 @@ namespace TrackYourDay.Core.Insights.Analytics
                 _items.Add(firstItem);
             }
 
-            public void AddItem(TrackableItem item)
+            public void AddItem(TrackedActivity item)
             {
                 _items.Add(item);
                 
@@ -307,7 +307,7 @@ namespace TrackYourDay.Core.Insights.Analytics
                 }
             }
 
-            public TrackableItem? GetLastItem()
+            public TrackedActivity? GetLastItem()
             {
                 return _items.LastOrDefault();
             }

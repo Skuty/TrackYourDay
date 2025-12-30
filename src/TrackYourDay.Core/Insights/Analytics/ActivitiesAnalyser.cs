@@ -64,7 +64,7 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public IReadOnlyCollection<GroupedActivity> GetGroupedActivities()
         {
-            var allItems = new List<TrackableItem>();
+            var allItems = new List<TrackedActivity>();
             allItems.AddRange(_activities);
             allItems.AddRange(_meetings);
             allItems.AddRange(_userTasks.Where(t => t.IsCompleted));

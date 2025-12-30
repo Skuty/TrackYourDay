@@ -1,10 +1,10 @@
 namespace TrackYourDay.Core.Insights.Analytics
 {
     /// <summary>
-    /// Base class for all trackable items (activities, meetings, tasks).
+    /// Base class for all tracked activities (system activities, meetings, tasks).
     /// Provides common time-tracking functionality.
     /// </summary>
-    public abstract class TrackableItem
+    public abstract class TrackedActivity
     {
         public Guid Guid { get; init; }
         public DateTime StartDate { get; init; }
@@ -38,7 +38,7 @@ namespace TrackYourDay.Core.Insights.Analytics
         /// <summary>
         /// Checks if this item overlaps with another item in time.
         /// </summary>
-        public bool OverlapsWith(TrackableItem other)
+        public bool OverlapsWith(TrackedActivity other)
         {
             if (other == null) throw new ArgumentNullException(nameof(other));
             return StartDate < other.EndDate && EndDate > other.StartDate;
@@ -52,12 +52,12 @@ namespace TrackYourDay.Core.Insights.Analytics
             return StartDate < periodEnd && EndDate > periodStart;
         }
         
-        protected TrackableItem()
+        protected TrackedActivity()
         {
             Guid = Guid.NewGuid();
         }
         
-        protected TrackableItem(Guid guid, DateTime startDate, DateTime endDate)
+        protected TrackedActivity(Guid guid, DateTime startDate, DateTime endDate)
         {
             Guid = guid;
             StartDate = startDate;

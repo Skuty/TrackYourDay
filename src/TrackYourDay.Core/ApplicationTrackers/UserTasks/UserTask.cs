@@ -6,7 +6,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.UserTasks
     /// Represents a user-defined task that can be started and ended manually.
     /// Supports ongoing tasks (not yet ended).
     /// </summary>
-    public sealed class UserTask : TrackableItem
+    public sealed class UserTask : TrackedActivity
     {
         private DateTime? _endDate;
         private string _description;

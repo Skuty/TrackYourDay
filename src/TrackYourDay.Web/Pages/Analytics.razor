@@ -1,4 +1,4 @@
-﻿@page "/analytics"
+@page "/analytics"
 @using TrackYourDay.Core.Insights.Analytics
 @using TrackYourDay.Core.SystemTrackers
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams
@@ -105,7 +105,7 @@
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
         
         // Collect all trackable items for the date range
-        var allItems = new List<TrackableItem>();
+        var allItems = new List<TrackedActivity>();
         
         // Get activities from the repository
         var activities = activityRepository.Find(

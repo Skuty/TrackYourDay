@@ -27,7 +27,7 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public string StrategyName => "Context Based Groups";
 
-        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackableItem> items)
+        public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackedActivity> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
             var itemsList = items.ToList();

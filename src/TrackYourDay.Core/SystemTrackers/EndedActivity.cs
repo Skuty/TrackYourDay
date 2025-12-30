@@ -6,7 +6,7 @@ namespace TrackYourDay.Core.SystemTrackers
     /// <summary>
     /// Represents a completed system-level activity (app focus, window changes, etc.).
     /// </summary>
-    public sealed class EndedActivity : TrackableItem
+    public sealed class EndedActivity : TrackedActivity
     {
         public SystemState ActivityType { get; init; }
         

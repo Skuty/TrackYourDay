@@ -5,7 +5,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
     /// <summary>
     /// Represents a completed MS Teams meeting.
     /// </summary>
-    public sealed class EndedMeeting : TrackableItem
+    public sealed class EndedMeeting : TrackedActivity
     {
         public string Title { get; init; }
         
