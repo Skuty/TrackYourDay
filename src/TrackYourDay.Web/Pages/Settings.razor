@@ -24,6 +24,7 @@
         </MudText>
         <MudTextField @bind-Value="gitLabApiUrl" Label="GitLab API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="gitLabApiKey" Label="GitLab API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CheckGitLabConnection" Class="mt-2">Check Connection</MudButton>
     </MudTabPanel>
     <MudTabPanel Text="Jira Integration">
         <MudText>
@@ -31,6 +32,7 @@
         </MudText>
         <MudTextField @bind-Value="jiraApiUrl" Label="Jira API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="jiraApiKey" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CheckJiraConnection" Class="mt-2">Check Connection</MudButton>
     </MudTabPanel>
     <MudTabPanel Text="Database Management">
         <MudText Typo="Typo.h6">Storage Overview</MudText>
@@ -81,6 +83,23 @@
     </DialogActions>
 </MudDialog>
 
+<MudDialog @bind-IsVisible="isConnectionCheckDialogVisible">
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@(connectionCheckSuccess ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error)" 
+                     Class="mr-3" 
+                     Color="@(connectionCheckSuccess ? Color.Success : Color.Error)" /> 
+            Connection Check
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText>@connectionCheckMessage</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="HideConnectionCheckDialog">OK</MudButton>
+    </DialogActions>
+</MudDialog>
+
 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettings">Save</MudButton>
 
 @code {
@@ -102,6 +121,12 @@
     [Inject]
     private IHistoricalDataRepository<EndedMeeting> meetingRepository { get; init; }
 
+    [Inject]
+    private IGitLabActivityService gitLabActivityService { get; init; }
+    
+    [Inject]
+    private IJiraActivityService jiraActivityService { get; init; }
+
     private int minutesOfNoActivityToStartBreak = 5;
     private bool isSettingsSavedDialogVisible;
     private bool isClearDatabaseDialogVisible;
@@ -117,6 +142,10 @@
     private int activitiesCount;
     private int breaksCount;
     private int meetingsCount;
+    
+    private bool isConnectionCheckDialogVisible;
+    private bool connectionCheckSuccess;
+    private string connectionCheckMessage = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -129,6 +158,9 @@
     
     private void ShowClearDatabaseDialog() => isClearDatabaseDialogVisible = true;
     private void HideClearDatabaseDialog() => isClearDatabaseDialogVisible = false;
+    
+    private void ShowConnectionCheckDialog() => isConnectionCheckDialogVisible = true;
+    private void HideConnectionCheckDialog() => isConnectionCheckDialogVisible = false;
 
     private void LoadSettings()
     {
@@ -194,5 +226,33 @@
         this.jiraSettingsService.PersistSettings();
 
         this.ShowSettingsSavedDialog();
+    }
+    
+    private void CheckGitLabConnection()
+    {
+        this.gitLabSettingsService.UpdateSettings(this.gitLabApiUrl, this.gitLabApiKey);
+        var gitLabClient = GitLabRestApiClientFactory.Create(this.gitLabSettingsService.GetSettings());
+        var tempGitLabService = new GitLabActivityService(gitLabClient, null);
+        
+        connectionCheckSuccess = tempGitLabService.CheckConnection();
+        connectionCheckMessage = connectionCheckSuccess 
+            ? "Successfully connected to GitLab!" 
+            : "Failed to connect to GitLab. Please check your API URL and API Key.";
+        
+        ShowConnectionCheckDialog();
+    }
+    
+    private void CheckJiraConnection()
+    {
+        this.jiraSettingsService.UpdateSettings(this.jiraApiUrl, this.jiraApiKey);
+        var jiraClient = JiraRestApiClientFactory.Create(this.jiraSettingsService.GetSettings());
+        var tempJiraService = new JiraActivityService(jiraClient, null);
+        
+        connectionCheckSuccess = tempJiraService.CheckConnection();
+        connectionCheckMessage = connectionCheckSuccess 
+            ? "Successfully connected to Jira!" 
+            : "Failed to connect to Jira. Please check your API URL and API Key.";
+        
+        ShowConnectionCheckDialog();
     }
 }

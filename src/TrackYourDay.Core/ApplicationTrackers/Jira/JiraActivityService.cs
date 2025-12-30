@@ -7,6 +7,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     public interface IJiraActivityService
     {
         List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate);
+        bool CheckConnection();
     }
 
     public class JiraActivityService : IJiraActivityService
@@ -80,6 +81,20 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 this.logger.LogError(e, "Error while fetching Jira activities");
                 this.stopFetchingDueToFailedRequests = true;
                 return new List<JiraActivity>();
+            }
+        }
+
+        public bool CheckConnection()
+        {
+            try
+            {
+                var user = this.jiraRestApiClient.GetCurrentUser();
+                return user != null && !string.IsNullOrEmpty(user.DisplayName) && user.DisplayName != "Not recognized";
+            }
+            catch (Exception e)
+            {
+                this.logger.LogError(e, "Error while checking Jira connection");
+                return false;
             }
         }
 

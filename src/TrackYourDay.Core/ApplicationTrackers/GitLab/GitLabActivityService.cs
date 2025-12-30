@@ -60,6 +60,20 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             return this.gitlabActivities;
         }
 
+        public bool CheckConnection()
+        {
+            try
+            {
+                var user = this.gitLabRestApiClient.GetCurrentUser();
+                return user != null && user.Id > 0 && user.Username != "Not recognized";
+            }
+            catch (Exception e)
+            {
+                this.logger?.LogError(e, "Error while checking GitLab connection");
+                return false;
+            }
+        }
+
         private List<GitLabActivity> MapGitLabEventToGitLabActivity(GitLabEvent gitlabEvent)
         {
             if (gitlabEvent == null)
