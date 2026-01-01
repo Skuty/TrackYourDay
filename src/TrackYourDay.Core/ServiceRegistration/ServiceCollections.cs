@@ -16,6 +16,7 @@ using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Core.SystemTrackers.ActivityRecognizing;
 using TrackYourDay.Core.Versioning;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
+using TrackYourDay.Core.LlmPrompts;
 
 namespace TrackYourDay.Core.ServiceRegistration
 {
@@ -219,6 +220,15 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddTransient<INotificationHandler<ApplicationTrackers.Breaks.Events.BreakEndedEvent>, PersistEndedBreakHandler>();
             services.AddTransient<INotificationHandler<ApplicationTrackers.MsTeams.PublicEvents.MeetingEndedEvent>, PersistEndedMeetingHandler>();
             services.AddTransient<INotificationHandler<ApplicationTrackers.GitLab.PublicEvents.GitLabActivityDiscoveredEvent>, PersistGitLabActivityHandler>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddLlmPromptServices(this IServiceCollection services)
+        {
+            services.AddSingleton<ILlmPromptTemplateRepository, SqliteLlmPromptTemplateRepository>();
+            services.AddSingleton<ILlmPromptService, LlmPromptService>();
+            services.AddSingleton<ITemplateManagementService, TemplateManagementService>();
 
             return services;
         }
