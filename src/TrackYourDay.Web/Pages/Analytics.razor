@@ -6,63 +6,204 @@
 @using TrackYourDay.Core
 @using TrackYourDay.Core.Persistence
 @using TrackYourDay.Core.Persistence.Specifications
+@using TrackYourDay.Core.LlmPrompts
+@using Microsoft.JSInterop
 @inject ActivitiesAnalyser activitiesAnalyser
 @inject IServiceProvider serviceProvider
 @inject IHistoricalDataRepository<EndedActivity> activityRepository
 @inject IHistoricalDataRepository<EndedMeeting> meetingRepository
 @inject UserTaskService userTaskService
 @inject IClock clock
+@inject ILlmPromptService llmPromptService
+@inject IJSRuntime jsRuntime
+@inject ISnackbar snackbar
 
-<MudStack Spacing="2">
-    <MudGrid>
-        <MudItem xs="3">
-            <MudDatePicker Label="Start Date" @bind-Date="startDate" />
-        </MudItem>
-        <MudItem xs="3">
-            <MudDatePicker Label="End Date" @bind-Date="endDate" />
-        </MudItem>
-        <MudItem xs="4">
-            <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
-                @foreach (var strategy in availableStrategies)
+<MudTabs Elevation="2" Rounded="true" Centered="false" Class="my-6">
+    <MudTabPanel Icon="@Icons.Material.Filled.PieChart" Text="Activity Summary">
+        <MudStack Spacing="2" Class="pa-4">
+            <MudGrid>
+                <MudItem xs="3">
+                    <MudDatePicker Label="Start Date" @bind-Date="startDate" />
+                </MudItem>
+                <MudItem xs="3">
+                    <MudDatePicker Label="End Date" @bind-Date="endDate" />
+                </MudItem>
+                <MudItem xs="4">
+                    <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
+                        @foreach (var strategy in availableStrategies)
+                        {
+                            <MudSelectItem Value="@strategy.Key">@strategy.Value.StrategyName</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateSummary">Generate</MudButton>
+                </MudItem>
+            </MudGrid>
+            
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Warning">@errorMessage</MudAlert>
+            }
+            <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
+                <ToolBarContent>
+                    <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <Columns>
+                    <PropertyColumn Property="x => x.Date.ToShortDateString()" Title="Date" Filterable="false" />
+                    <PropertyColumn Property="x => x.Duration" Title="Duration" Filterable="true" SortBy="@_sortByDuration"/>
+                    <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="GroupedActivity" />
+                </PagerContent>
+            </MudDataGrid>
+        </MudStack>
+    </MudTabPanel>
+
+    <MudTabPanel Icon="@Icons.Material.Filled.SmartToy" Text="LLM Analysis">
+        <MudStack Spacing="3" Class="pa-4">
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">
+                <MudIcon Icon="@Icons.Material.Filled.WarningAmber" Class="mr-2" />
+                Review prompt before sharing with external services. Ensure no confidential data is included.
+            </MudAlert>
+
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.body2" Class="mb-2">Date Range</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudDatePicker Label="Start Date" 
+                                   @bind-Date="llmStartDate" 
+                                   MaxDate="clock.Now.Date" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudDatePicker Label="End Date" 
+                                   @bind-Date="llmEndDate" 
+                                   MaxDate="clock.Now.Date" />
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="string" 
+                               @bind-Value="selectedTemplateKey" 
+                               Label="Prompt Template" 
+                               Variant="Variant.Outlined"
+                               Placeholder="Select a template">
+                        @foreach (var template in availableTemplates)
+                        {
+                            <MudSelectItem Value="@template.TemplateKey">@template.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            @if (showMultiDayWarning)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Dense="true">
+                    LLM prompts work best for single-day analysis. Consider selecting one day at a time for better results.
+                </MudAlert>
+            }
+
+            @if (!string.IsNullOrEmpty(llmErrorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@llmErrorMessage</MudAlert>
+            }
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       OnClick="GeneratePrompt"
+                       Disabled="isGenerating">
+                @if (isGenerating)
                 {
-                    <MudSelectItem Value="@strategy.Key">@strategy.Value.StrategyName</MudSelectItem>
+                    <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                    <span>Generating...</span>
                 }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="2">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GenerateSummary">Generate</MudButton>
-        </MudItem>
-    </MudGrid>
-    
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <MudAlert Severity="Severity.Warning">@errorMessage</MudAlert>
-    }
-    <MudDataGrid T="GroupedActivity" Items="@groupedActivities" SortMode="SortMode.Multiple" Filterable="true" QuickFilter="@_quickFilter" Hideable="false">
-        <ToolBarContent>
-            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        </ToolBarContent>
-        <Columns>
-            <PropertyColumn Property="x => x.Date.ToShortDateString()" Title="Date" Filterable="false" />
-            <PropertyColumn Property="x => x.Duration" Title="Duration" Filterable="true" SortBy="@_sortByDuration"/>
-            <PropertyColumn Property="x => x.Description" Title="Description" Filterable="true" SortBy="@_sortByDescritpion" />
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="GroupedActivity" />
-        </PagerContent>
-    </MudDataGrid>    
-</MudStack>
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Class="mr-2" />
+                    <span>Generate Prompt</span>
+                }
+            </MudButton>
+
+            @if (!string.IsNullOrEmpty(generatedPrompt))
+            {
+                <MudPaper Elevation="2" Class="pa-4">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6">Generated Prompt</MudText>
+                            <MudText Typo="Typo.body2" Color="@GetCharCountColor()">
+                                @characterCount characters @(characterCount > 10000 ? "(⚠️ Large prompt)" : "")
+                            </MudText>
+                        </MudStack>
+
+                        <MudTextField T="string" 
+                                      Value="@generatedPrompt" 
+                                      Lines="20"
+                                      Variant="Variant.Outlined"
+                                      ReadOnly="true"
+                                      Class="prompt-preview"
+                                      aria-label="Generated prompt content" />
+
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Secondary" 
+                                       OnClick="CopyToClipboard"
+                                       Disabled="isCopying">
+                                @if (isCopying)
+                                {
+                                    <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Class="mr-2" />
+                                }
+                                Copy to Clipboard
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Secondary" 
+                                       OnClick="DownloadPrompt">
+                                <MudIcon Icon="@Icons.Material.Filled.Download" Class="mr-2" />
+                                Download Prompt
+                            </MudButton>
+                        </MudStack>
+
+                        @if (characterCount > 50000)
+                        {
+                            <MudAlert Severity="Severity.Warning" Dense="true">
+                                Large prompt detected. Consider downloading instead of copying to avoid browser limitations.
+                            </MudAlert>
+                        }
+                    </MudStack>
+                </MudPaper>
+            }
+        </MudStack>
+    </MudTabPanel>
+</MudTabs>
 
 @code {
+    // Activity Summary tab state
     private List<GroupedActivity>? groupedActivities = null;
     private string selectedStrategy = "Choose strategy";
-    private Dictionary<string, ISummaryStrategy> availableStrategies;
+    private Dictionary<string, ISummaryStrategy> availableStrategies = new();
     private DateTime? startDate;
     private DateTime? endDate;
     private string errorMessage = string.Empty;
+    private string _searchString = string.Empty;
 
-    protected override async Task OnInitializedAsync()
+    // LLM Analysis tab state
+    private List<LlmPromptTemplate> availableTemplates = new();
+    private string? selectedTemplateKey;
+    private DateTime? llmStartDate;
+    private DateTime? llmEndDate;
+    private string generatedPrompt = string.Empty;
+    private string llmErrorMessage = string.Empty;
+    private bool isGenerating = false;
+    private bool isCopying = false;
+    private int characterCount = 0;
+    private bool showMultiDayWarning = false;
+
+    protected override void OnInitialized()
     {
         var strategies = ActivitiesAnalyser.GetAvailableStrategies(serviceProvider);
         availableStrategies = strategies.ToDictionary(s => s.GetType().Name, s => s);
@@ -70,8 +211,27 @@
         // Set default dates to today
         startDate = clock.Now.Date;
         endDate = clock.Now.Date;
-        
-        // Do not generate summary on load
+        llmStartDate = clock.Now.Date;
+        llmEndDate = clock.Now.Date;
+
+        LoadTemplates();
+    }
+
+    private void LoadTemplates()
+    {
+        try
+        {
+            availableTemplates = llmPromptService.GetActiveTemplates().ToList();
+            
+            if (!availableTemplates.Any())
+            {
+                llmErrorMessage = "No prompt templates available. Please contact support.";
+            }
+        }
+        catch (Exception ex)
+        {
+            llmErrorMessage = $"Failed to load templates: {ex.Message}";
+        }
     }
 
     private async Task GenerateSummary()
@@ -135,9 +295,137 @@
         
         await InvokeAsync(StateHasChanged);
     }
-    
-    private string _searchString;
 
+    private async Task GeneratePrompt()
+    {
+        llmErrorMessage = string.Empty;
+        generatedPrompt = string.Empty;
+        characterCount = 0;
+        showMultiDayWarning = false;
+
+        if (!ValidatePromptInputs())
+        {
+            return;
+        }
+
+        // Check for multi-day selection
+        if (llmStartDate!.Value.Date != llmEndDate!.Value.Date)
+        {
+            showMultiDayWarning = true;
+        }
+
+        isGenerating = true;
+
+        try
+        {
+            await Task.Delay(50); // Allow UI to update
+
+            var start = DateOnly.FromDateTime(llmStartDate.Value);
+            var end = DateOnly.FromDateTime(llmEndDate.Value);
+            
+            generatedPrompt = llmPromptService.GeneratePrompt(selectedTemplateKey!, start, end);
+            characterCount = generatedPrompt.Length;
+
+            snackbar.Add("Prompt generated successfully", Severity.Success);
+        }
+        catch (InvalidOperationException ex)
+        {
+            llmErrorMessage = ex.Message;
+            snackbar.Add($"Generation failed: {ex.Message}", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            llmErrorMessage = $"Unexpected error: {ex.Message}";
+            snackbar.Add("Failed to generate prompt", Severity.Error);
+        }
+        finally
+        {
+            isGenerating = false;
+        }
+    }
+
+    private bool ValidatePromptInputs()
+    {
+        if (llmStartDate == null)
+        {
+            llmErrorMessage = "Please select a start date.";
+            return false;
+        }
+
+        if (llmEndDate == null)
+        {
+            llmErrorMessage = "Please select an end date.";
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(selectedTemplateKey))
+        {
+            llmErrorMessage = "Please select a prompt template.";
+            return false;
+        }
+
+        if (llmStartDate.Value > llmEndDate.Value)
+        {
+            llmErrorMessage = "Start date must be before or equal to end date.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task CopyToClipboard()
+    {
+        if (string.IsNullOrEmpty(generatedPrompt))
+        {
+            return;
+        }
+
+        isCopying = true;
+
+        try
+        {
+            await jsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", generatedPrompt);
+            snackbar.Add("Prompt copied to clipboard", Severity.Success);
+        }
+        catch (Exception)
+        {
+            snackbar.Add("Failed to copy. Please select and copy manually.", Severity.Warning);
+        }
+        finally
+        {
+            isCopying = false;
+        }
+    }
+
+    private async Task DownloadPrompt()
+    {
+        if (string.IsNullOrEmpty(generatedPrompt))
+        {
+            return;
+        }
+
+        try
+        {
+            var filename = $"llm-prompt-{selectedTemplateKey}-{DateTime.Now:yyyy-MM-dd}.txt";
+            var bytes = System.Text.Encoding.UTF8.GetBytes(generatedPrompt);
+            var base64 = Convert.ToBase64String(bytes);
+            
+            await jsRuntime.InvokeVoidAsync("downloadFile", filename, base64);
+            snackbar.Add("Prompt downloaded successfully", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            snackbar.Add($"Download failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private Color GetCharCountColor()
+    {
+        if (characterCount > 50000) return Color.Error;
+        if (characterCount > 10000) return Color.Warning;
+        return Color.Default;
+    }
+    
     private Func<GroupedActivity, object> _sortByDuration => x => x.Duration;
     private Func<GroupedActivity, object> _sortByDescritpion => x => x.Description;
     private Func<GroupedActivity, bool> _quickFilter => x =>

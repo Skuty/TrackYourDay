@@ -38,6 +38,18 @@
         }
     </script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>
+        // Helper function for downloading text files
+        window.downloadFile = function (filename, base64Content) {
+            const bytes = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
+            const blob = new Blob([bytes], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        };
+    </script>
 </body>
 
 </html>

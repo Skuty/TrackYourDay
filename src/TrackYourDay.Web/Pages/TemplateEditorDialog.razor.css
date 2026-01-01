@@ -1,0 +1,5 @@
+.monospace-input textarea {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}

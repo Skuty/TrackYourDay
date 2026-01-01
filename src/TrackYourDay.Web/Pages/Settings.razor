@@ -45,6 +45,9 @@
         <MudText Typo="Typo.body2" Color="Color.Warning">Warning: This action cannot be undone!</MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ShowClearDatabaseDialog" Class="mt-2">Clear Database</MudButton>
     </MudTabPanel>
+    <MudTabPanel Text="LLM Prompt Templates" Icon="@Icons.Material.Filled.TextSnippet">
+        <TemplateManagement />
+    </MudTabPanel>
 </MudTabs>
 
 <MudDialog @bind-IsVisible="isSettingsSavedDialogVisible">
