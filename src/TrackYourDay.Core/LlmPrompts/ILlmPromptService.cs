@@ -9,8 +9,9 @@ public interface ILlmPromptService
     /// <summary>
     /// Generates prompt for date range using specified template.
     /// </summary>
+    /// <param name="includeJiraIssues">When true, includes user's related Jira issues in the prompt</param>
     /// <exception cref="InvalidOperationException">No activities found or template invalid</exception>
-    string GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate);
+    string GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate, bool includeJiraIssues = true);
 
     /// <summary>
     /// Returns active templates ordered by DisplayOrder for dropdown.

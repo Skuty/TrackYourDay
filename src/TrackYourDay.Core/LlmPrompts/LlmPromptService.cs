@@ -2,6 +2,7 @@
 using System.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using TrackYourDay.Core.Insights.Analytics;
@@ -18,12 +19,13 @@ public class LlmPromptService(
     IHistoricalDataRepository<EndedMeeting> meetingRepository,
     UserTaskService userTaskService,
     ActivityNameSummaryStrategy summaryStrategy,
+    IJiraActivityService jiraActivityService,
     ILogger<LlmPromptService> logger) : ILlmPromptService
 {
     private const int AverageRowBytes = 80;
     private const string KeyPrefix = "llm_template:";
 
-    public string GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate)
+    public string GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate, bool includeJiraIssues = true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(templateKey);
         if (startDate > endDate)
@@ -40,10 +42,20 @@ public class LlmPromptService(
             throw new InvalidOperationException($"No activities found for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
         var markdown = SerializeToMarkdown(activities);
+        
+        if (includeJiraIssues)
+        {
+            var jiraIssuesMarkdown = GetJiraIssuesMarkdown(startDate, endDate);
+            if (!string.IsNullOrEmpty(jiraIssuesMarkdown))
+            {
+                markdown = $"{markdown}\n\n{jiraIssuesMarkdown}";
+            }
+        }
+        
         var rendered = template.SystemPrompt.Replace(LlmPromptTemplate.Placeholder, markdown);
 
-        logger.LogInformation("Generated prompt for {TemplateKey}: {CharCount} characters, {ActivityCount} activities",
-            templateKey, rendered.Length, activities.Count);
+        logger.LogInformation("Generated prompt for {TemplateKey}: {CharCount} characters, {ActivityCount} activities, JiraIssues={IncludeJira}",
+            templateKey, rendered.Length, activities.Count, includeJiraIssues);
 
         return rendered;
     }
@@ -109,4 +121,42 @@ public class LlmPromptService(
     }
 
     private static string GetStorageKey(string templateKey) => $"{KeyPrefix}{templateKey}";
+
+    private string GetJiraIssuesMarkdown(DateOnly startDate, DateOnly endDate)
+    {
+        try
+        {
+            var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
+            var jiraActivities = jiraActivityService.GetActivitiesUpdatedAfter(startDateTime)
+                .Where(a => DateOnly.FromDateTime(a.OccurrenceDate) >= startDate 
+                         && DateOnly.FromDateTime(a.OccurrenceDate) <= endDate)
+                .OrderBy(a => a.OccurrenceDate)
+                .ToList();
+
+            if (jiraActivities.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var sb = new StringBuilder(jiraActivities.Count * AverageRowBytes + 200);
+            sb.AppendLine("## Related Jira Issues");
+            sb.AppendLine();
+            sb.AppendLine("| Date       | Jira Activity Description |");
+            sb.AppendLine("|------------|---------------------------|");
+            
+            foreach (var activity in jiraActivities)
+            {
+                var description = EscapeMarkdown(activity.Description);
+                sb.AppendLine($"| {activity.OccurrenceDate:yyyy-MM-dd} | {description} |");
+            }
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to fetch Jira issues for date range {StartDate} to {EndDate}", 
+                startDate, endDate);
+            return string.Empty;
+        }
+    }
 }
