@@ -59,7 +59,6 @@ public class LlmPromptTemplateTests
         // Given
         var template = new LlmPromptTemplate
         {
-            Id = 1,
             TemplateKey = "test",
             Name = "Test",
             SystemPrompt = "Before {ACTIVITY_DATA_PLACEHOLDER} after",
@@ -82,7 +81,6 @@ public class LlmPromptTemplateTests
         // Given
         var template = new LlmPromptTemplate
         {
-            Id = 1,
             TemplateKey = "test",
             Name = "Test",
             SystemPrompt = "No placeholder here",

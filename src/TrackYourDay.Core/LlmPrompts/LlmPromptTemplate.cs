@@ -6,7 +6,6 @@ namespace TrackYourDay.Core.LlmPrompts;
 /// </summary>
 public sealed record LlmPromptTemplate
 {
-    public required int Id { get; init; }
     public required string TemplateKey { get; init; }
     public required string Name { get; init; }
     public required string SystemPrompt { get; init; }

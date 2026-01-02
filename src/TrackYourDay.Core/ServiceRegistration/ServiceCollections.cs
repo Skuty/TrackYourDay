@@ -226,7 +226,7 @@ namespace TrackYourDay.Core.ServiceRegistration
 
         public static IServiceCollection AddLlmPromptServices(this IServiceCollection services)
         {
-            services.AddSingleton<ILlmPromptTemplateRepository, SqliteLlmPromptTemplateRepository>();
+            services.AddSingleton<LlmPromptTemplateStore>();
             services.AddSingleton<ILlmPromptService, LlmPromptService>();
             services.AddSingleton<ITemplateManagementService, TemplateManagementService>();
 
