@@ -7,13 +7,13 @@ namespace TrackYourDay.MAUI
     public partial class App : Application
     {
         private readonly ISchedulerFactory schedulerFactory;
-        public App(ISchedulerFactory schedulerFactory, TrackYourDay.Core.LlmPrompts.LlmPromptTemplateStore templateStore, ILogger<App> logger)
+        public App(ISchedulerFactory schedulerFactory, TrackYourDay.Core.LlmPrompts.ITemplateManagementService templateManagementService, ILogger<App> logger)
         {
             InitializeComponent();
             MainPage = new MainPage();
 
             this.schedulerFactory = schedulerFactory;
-            templateStore.SeedDefaultTemplates();
+            templateManagementService.SeedDefaultTemplates();
         }
 
         protected override void OnStart()

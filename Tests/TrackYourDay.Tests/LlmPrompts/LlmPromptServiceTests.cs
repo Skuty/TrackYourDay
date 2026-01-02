@@ -35,8 +35,7 @@ public class LlmPromptServiceTests
 
         mockSettings.Setup(r => r.GetSetting("llm_template:test")).Returns(JsonConvert.SerializeObject(template));
 
-        var store = new LlmPromptTemplateStore(mockSettings.Object, Mock.Of<ILogger<LlmPromptTemplateStore>>());
-        var sut = new LlmPromptService(store, mockActivityRepo.Object, mockMeetingRepo.Object, userTaskService, strategy, Mock.Of<ILogger<LlmPromptService>>());
+        var sut = new LlmPromptService(mockSettings.Object, mockActivityRepo.Object, mockMeetingRepo.Object, userTaskService, strategy, Mock.Of<ILogger<LlmPromptService>>());
 
         var endedActivity = new EndedActivity(DateTime.Today.AddHours(9), DateTime.Today.AddHours(10), new FocusOnApplicationState("Test Activity"));
         mockActivityRepo.Setup(r => r.Find(It.IsAny<ISpecification<EndedActivity>>())).Returns(new[] { endedActivity });
@@ -54,9 +53,8 @@ public class LlmPromptServiceTests
     {
         var mockSettings = new Mock<IGenericSettingsRepository>();
         mockSettings.Setup(r => r.GetSetting(It.IsAny<string>())).Returns((string?)null);
-        var store = new LlmPromptTemplateStore(mockSettings.Object, Mock.Of<ILogger<LlmPromptTemplateStore>>());
         var strategy = new ActivityNameSummaryStrategy(Mock.Of<ILogger<ActivityNameSummaryStrategy>>());
-        var sut = new LlmPromptService(store, Mock.Of<IHistoricalDataRepository<EndedActivity>>(), Mock.Of<IHistoricalDataRepository<EndedMeeting>>(),
+        var sut = new LlmPromptService(mockSettings.Object, Mock.Of<IHistoricalDataRepository<EndedActivity>>(), Mock.Of<IHistoricalDataRepository<EndedMeeting>>(),
             new UserTaskService(), strategy, Mock.Of<ILogger<LlmPromptService>>());
 
         var act = () => sut.GeneratePrompt("nonexistent", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));

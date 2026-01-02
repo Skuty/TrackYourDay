@@ -13,9 +13,8 @@ public class TemplateManagementServiceTests
     public void GivenValidTemplate_WhenSaving_ThenSavesToStore()
     {
         var mockSettings = new Mock<IGenericSettingsRepository>();
-        var mockLogger = new Mock<ILogger<LlmPromptTemplateStore>>();
-        var store = new LlmPromptTemplateStore(mockSettings.Object, mockLogger.Object);
-        var sut = new TemplateManagementService(store, Mock.Of<ILogger<TemplateManagementService>>());
+        var mockLogger = new Mock<ILogger<TemplateManagementService>>();
+        var sut = new TemplateManagementService(mockSettings.Object, mockLogger.Object);
 
         mockSettings.Setup(r => r.GetSetting(It.IsAny<string>())).Returns((string?)null);
 
@@ -31,8 +30,7 @@ public class TemplateManagementServiceTests
     public void GivenInvalidTemplateKey_WhenSaving_ThenThrowsArgumentException(string key, string name, string prompt, int order)
     {
         var mockSettings = new Mock<IGenericSettingsRepository>();
-        var store = new LlmPromptTemplateStore(mockSettings.Object, Mock.Of<ILogger<LlmPromptTemplateStore>>());
-        var sut = new TemplateManagementService(store, Mock.Of<ILogger<TemplateManagementService>>());
+        var sut = new TemplateManagementService(mockSettings.Object, Mock.Of<ILogger<TemplateManagementService>>());
 
         var act = () => sut.SaveTemplate(key, name, prompt, order);
 
@@ -43,8 +41,7 @@ public class TemplateManagementServiceTests
     public void GivenPromptWithoutPlaceholder_WhenSaving_ThenThrowsArgumentException()
     {
         var mockSettings = new Mock<IGenericSettingsRepository>();
-        var store = new LlmPromptTemplateStore(mockSettings.Object, Mock.Of<ILogger<LlmPromptTemplateStore>>());
-        var sut = new TemplateManagementService(store, Mock.Of<ILogger<TemplateManagementService>>());
+        var sut = new TemplateManagementService(mockSettings.Object, Mock.Of<ILogger<TemplateManagementService>>());
 
         var act = () => sut.SaveTemplate("test", "Test Template", "Content without placeholder but long enough to pass length validation of at least 100 characters required", 1);
 
@@ -55,8 +52,7 @@ public class TemplateManagementServiceTests
     public void GivenValidPrompt_WhenGeneratingPreview_ThenReturnsPreviewWithSampleData()
     {
         var mockSettings = new Mock<IGenericSettingsRepository>();
-        var store = new LlmPromptTemplateStore(mockSettings.Object, Mock.Of<ILogger<LlmPromptTemplateStore>>());
-        var sut = new TemplateManagementService(store, Mock.Of<ILogger<TemplateManagementService>>());
+        var sut = new TemplateManagementService(mockSettings.Object, Mock.Of<ILogger<TemplateManagementService>>());
 
         var result = sut.GeneratePreview("Analyze: {ACTIVITY_DATA_PLACEHOLDER}");
 

@@ -28,4 +28,5 @@ public interface ITemplateManagementService
     /// Generates preview using hardcoded sample activities.
     /// </summary>
     string GeneratePreview(string systemPrompt);
+    void SeedDefaultTemplates();
 }

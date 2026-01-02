@@ -1,17 +1,19 @@
 // src/TrackYourDay.Core/LlmPrompts/LlmPromptService.cs
 using System.Text;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using TrackYourDay.Core.Insights.Analytics;
 using TrackYourDay.Core.Persistence;
 using TrackYourDay.Core.Persistence.Specifications;
+using TrackYourDay.Core.Settings;
 using TrackYourDay.Core.SystemTrackers;
 
 namespace TrackYourDay.Core.LlmPrompts;
 
 public class LlmPromptService(
-    LlmPromptTemplateStore templateStore,
+    IGenericSettingsRepository settingsRepository,
     IHistoricalDataRepository<EndedActivity> activityRepository,
     IHistoricalDataRepository<EndedMeeting> meetingRepository,
     UserTaskService userTaskService,
@@ -19,6 +21,7 @@ public class LlmPromptService(
     ILogger<LlmPromptService> logger) : ILlmPromptService
 {
     private const int AverageRowBytes = 80;
+    private const string KeyPrefix = "llm_template:";
 
     public string GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate)
     {
@@ -26,7 +29,7 @@ public class LlmPromptService(
         if (startDate > endDate)
             throw new ArgumentException("Start date must not be after end date", nameof(startDate));
 
-        var template = templateStore.GetByKey(templateKey) 
+        var template = GetTemplateByKey(templateKey) 
             ?? throw new InvalidOperationException($"Template '{templateKey}' not found");
 
         if (!template.HasValidPlaceholder())
@@ -45,7 +48,27 @@ public class LlmPromptService(
         return rendered;
     }
 
-    public IReadOnlyList<LlmPromptTemplate> GetActiveTemplates() => templateStore.GetActiveTemplates();
+    public IReadOnlyList<LlmPromptTemplate> GetActiveTemplates()
+    {
+        var templates = new List<LlmPromptTemplate>();
+        var keys = settingsRepository.GetAllKeys()
+            .Where(k => k.StartsWith(KeyPrefix));
+
+        foreach (var key in keys)
+        {
+            var json = settingsRepository.GetSetting(key);
+            if (json != null)
+            {
+                var template = JsonConvert.DeserializeObject<LlmPromptTemplate>(json);
+                if (template != null && template.IsActive)
+                {
+                    templates.Add(template);
+                }
+            }
+        }
+
+        return templates.OrderBy(t => t.DisplayOrder).ToList();
+    }
 
     private IReadOnlyCollection<GroupedActivity> GetActivitiesForDateRange(DateOnly startDate, DateOnly endDate)
     {
@@ -77,4 +100,13 @@ public class LlmPromptService(
 
     private static string EscapeMarkdown(string text) 
         => text.Replace("|", "\\|").Replace("\n", " ").Replace("\r", "");
+
+    private LlmPromptTemplate? GetTemplateByKey(string templateKey)
+    {
+        var key = GetStorageKey(templateKey);
+        var json = settingsRepository.GetSetting(key);
+        return json != null ? JsonConvert.DeserializeObject<LlmPromptTemplate>(json) : null;
+    }
+
+    private static string GetStorageKey(string templateKey) => $"{KeyPrefix}{templateKey}";
 }
