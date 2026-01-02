@@ -47,6 +47,8 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddTrackers();
 
+            builder.Services.AddLlmPromptServices();
+
             builder.Services.AddCoreNotifications();
 
             builder.Services.AddMauiNotifications();
