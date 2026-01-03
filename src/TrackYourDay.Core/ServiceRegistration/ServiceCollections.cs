@@ -115,6 +115,7 @@ namespace TrackYourDay.Core.ServiceRegistration
 
             services.AddSingleton<IJiraActivityService, JiraActivityService>();
             services.AddSingleton<JiraTracker>();
+            services.AddSingleton<IJiraActivityProvider>(sp => sp.GetRequiredService<JiraTracker>());
 
             services.AddSingleton<JiraKeySummaryStrategy>(serviceProvider =>
                 new JiraKeySummaryStrategy(
@@ -220,6 +221,15 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddTransient<INotificationHandler<ApplicationTrackers.MsTeams.PublicEvents.MeetingEndedEvent>, PersistEndedMeetingHandler>();
             services.AddTransient<INotificationHandler<ApplicationTrackers.GitLab.PublicEvents.GitLabActivityDiscoveredEvent>, PersistGitLabActivityHandler>();
 
+            return services;
+        }
+
+        public static IServiceCollection AddPromptGenerationServices(this IServiceCollection services)
+        {
+            services.AddSingleton<Services.PromptGeneration.IPromptTemplateProvider, Services.PromptGeneration.PromptTemplateProvider>();
+            services.AddScoped<Services.PromptGeneration.IActivityPromptService, Services.PromptGeneration.ActivityPromptService>();
+            services.AddScoped<Services.PromptGeneration.IPromptGeneratorService, Services.PromptGeneration.PromptGeneratorService>();
+            
             return services;
         }
     }

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
-    public class JiraTracker
+    public class JiraTracker : IJiraActivityProvider
     {
         private readonly IJiraActivityService jiraActivityService;
         private readonly IClock clock;

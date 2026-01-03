@@ -49,6 +49,8 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddCoreNotifications();
 
+            builder.Services.AddPromptGenerationServices();
+
             builder.Services.AddMauiNotifications();
 
             builder.Services.AddEventHandlingForBlazorUIComponents();

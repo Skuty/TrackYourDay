@@ -1,0 +1,132 @@
+@page "/ai-prompt-generator"
+@using TrackYourDay.Core.Services.PromptGeneration
+@inject IPromptGeneratorService PromptGenerator
+@inject IPromptTemplateProvider TemplateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>AI Prompt Generator - TrackYourDay</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">AI Prompt Generator</MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">
+        Generate structured prompts to feed external LLMs for work day summarization.
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4">
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudDatePicker Label="Select Date"
+                               @bind-Date="_selectedDate"
+                               MaxDate="DateTime.Today"
+                               Editable="true"
+                               DateFormat="yyyy-MM-dd" />
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudSelect T="PromptTemplate"
+                           Label="Prompt Template"
+                           @bind-Value="_selectedTemplate"
+                           Variant="Variant.Outlined">
+                    @foreach (var (template, displayName) in _availableTemplates)
+                    {
+                        <MudSelectItem T="PromptTemplate" Value="template">@displayName</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+        </MudGrid>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="GeneratePromptAsync"
+                   Disabled="_isGenerating"
+                   Class="mt-4">
+            @if (_isGenerating)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Generating...</span>
+            }
+            else
+            {
+                <span>Generate Prompt</span>
+            }
+        </MudButton>
+    </MudPaper>
+
+    @if (!string.IsNullOrEmpty(_generatedPrompt))
+    {
+        <MudPaper Class="pa-4">
+            <MudText Typo="Typo.h6" Class="mb-2">Generated Prompt</MudText>
+            <MudTextField T="string"
+                          Value="_generatedPrompt"
+                          Variant="Variant.Outlined"
+                          Lines="25"
+                          ReadOnly="true"
+                          Class="mb-4" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       OnClick="CopyToClipboardAsync"
+                       StartIcon="@Icons.Material.Filled.ContentCopy">
+                Copy to Clipboard
+            </MudButton>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private DateTime? _selectedDate = DateTime.Today;
+    private PromptTemplate _selectedTemplate = PromptTemplate.DetailedSummaryWithTimeAllocation;
+    private IReadOnlyDictionary<PromptTemplate, string> _availableTemplates = null!;
+    private string _generatedPrompt = string.Empty;
+    private bool _isGenerating;
+
+    protected override void OnInitialized()
+    {
+        _availableTemplates = TemplateProvider.GetAvailableTemplates();
+    }
+
+    private async Task GeneratePromptAsync()
+    {
+        if (_selectedDate is null)
+        {
+            Snackbar.Add("Please select a date", Severity.Warning);
+            return;
+        }
+
+        _isGenerating = true;
+        _generatedPrompt = string.Empty;
+
+        try
+        {
+            var date = DateOnly.FromDateTime(_selectedDate.Value);
+            _generatedPrompt = PromptGenerator.GeneratePrompt(date, _selectedTemplate);
+
+            if (string.IsNullOrWhiteSpace(_generatedPrompt) || _generatedPrompt.Contains("(No activities recorded)"))
+            {
+                Snackbar.Add("No activities found for the selected date", Severity.Info);
+                return;
+            }
+
+            Snackbar.Add("Prompt generated successfully", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error generating prompt: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isGenerating = false;
+        }
+    }
+
+    private async Task CopyToClipboardAsync()
+    {
+        try
+        {
+            Snackbar.Add("Please select the text above and copy it manually (Ctrl+A, Ctrl+C)", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to copy: {ex.Message}", Severity.Error);
+        }
+    }
+}
