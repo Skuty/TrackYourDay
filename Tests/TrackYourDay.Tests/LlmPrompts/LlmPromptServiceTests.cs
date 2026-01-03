@@ -77,7 +77,7 @@ public class LlmPromptServiceTests
     }
 
     [Fact]
-    public void GivenJiraIssuesExist_WhenGeneratingPromptWithJiraEnabled_ThenIncludesJiraIssues()
+    public void GivenJiraIssuesExist_WhenGeneratingPrompt_ThenIncludesJiraIssues()
     {
         // Given
         var mockSettings = new Mock<IGenericSettingsRepository>();
@@ -112,7 +112,7 @@ public class LlmPromptServiceTests
         mockMeetingRepo.Setup(r => r.Find(It.IsAny<ISpecification<EndedMeeting>>())).Returns(Array.Empty<EndedMeeting>());
 
         // When
-        var result = sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today), includeJiraIssues: true);
+        var result = sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
 
         // Then
         result.Should().Contain("Related Jira Issues");
@@ -123,7 +123,7 @@ public class LlmPromptServiceTests
     }
 
     [Fact]
-    public void GivenJiraIssuesExist_WhenGeneratingPromptWithJiraDisabled_ThenExcludesJiraIssues()
+    public void GivenNoJiraIssuesExist_WhenGeneratingPrompt_ThenExcludesJiraSection()
     {
         // Given
         var mockSettings = new Mock<IGenericSettingsRepository>();
@@ -141,12 +141,7 @@ public class LlmPromptServiceTests
         };
 
         mockSettings.Setup(r => r.GetSetting("llm_template:test")).Returns(JsonConvert.SerializeObject(template));
-
-        var jiraActivities = new List<JiraActivity>
-        {
-            new(DateTime.Today.AddHours(9), "Created Issue PROJ-123 in Project: Implement feature")
-        };
-        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).Returns(jiraActivities);
+        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).Returns([]);
 
         var sut = new LlmPromptService(mockSettings.Object, mockActivityRepo.Object, mockMeetingRepo.Object,
             userTaskService, strategy, mockJiraService.Object, Mock.Of<ILogger<LlmPromptService>>());
@@ -157,11 +152,10 @@ public class LlmPromptServiceTests
         mockMeetingRepo.Setup(r => r.Find(It.IsAny<ISpecification<EndedMeeting>>())).Returns(Array.Empty<EndedMeeting>());
 
         // When
-        var result = sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today), includeJiraIssues: false);
+        var result = sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
 
         // Then
         result.Should().NotContain("Related Jira Issues");
-        result.Should().NotContain("PROJ-123");
     }
 
     [Fact]

@@ -25,7 +25,7 @@ public class LlmPromptService(
     private const int AverageRowBytes = 80;
     private const string KeyPrefix = "llm_template:";
 
-    public string GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate, bool includeJiraIssues = true)
+    public string GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(templateKey);
         if (startDate > endDate)
@@ -42,20 +42,17 @@ public class LlmPromptService(
             throw new InvalidOperationException($"No activities found for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
         var markdown = SerializeToMarkdown(activities);
+        var jiraIssuesMarkdown = GetJiraIssuesMarkdown(startDate, endDate);
         
-        if (includeJiraIssues)
+        if (!string.IsNullOrEmpty(jiraIssuesMarkdown))
         {
-            var jiraIssuesMarkdown = GetJiraIssuesMarkdown(startDate, endDate);
-            if (!string.IsNullOrEmpty(jiraIssuesMarkdown))
-            {
-                markdown = $"{markdown}\n\n{jiraIssuesMarkdown}";
-            }
+            markdown = $"{markdown}\n\n{jiraIssuesMarkdown}";
         }
         
         var rendered = template.SystemPrompt.Replace(LlmPromptTemplate.Placeholder, markdown);
 
-        logger.LogInformation("Generated prompt for {TemplateKey}: {CharCount} characters, {ActivityCount} activities, JiraIssues={IncludeJira}",
-            templateKey, rendered.Length, activities.Count, includeJiraIssues);
+        logger.LogInformation("Generated prompt for {TemplateKey}: {CharCount} characters, {ActivityCount} activities",
+            templateKey, rendered.Length, activities.Count);
 
         return rendered;
     }
