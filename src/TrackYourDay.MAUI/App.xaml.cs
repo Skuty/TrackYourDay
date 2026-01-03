@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Quartz;
 using TrackYourDay.MAUI.MauiPages;
 
@@ -7,12 +7,13 @@ namespace TrackYourDay.MAUI
     public partial class App : Application
     {
         private readonly ISchedulerFactory schedulerFactory;
-        public App(ISchedulerFactory schedulerFactory, ILogger<App> logger)
+        public App(ISchedulerFactory schedulerFactory, TrackYourDay.Core.LlmPrompts.ITemplateManagementService templateManagementService, ILogger<App> logger)
         {
             InitializeComponent();
             MainPage = new MainPage();
 
             this.schedulerFactory = schedulerFactory;
+            templateManagementService.SeedDefaultTemplates();
         }
 
         protected override void OnStart()

@@ -1,0 +1,283 @@
+@using TrackYourDay.Core.LlmPrompts
+@inject ITemplateManagementService templateService
+@inject IDialogService dialogService
+@inject ISnackbar snackbar
+
+<MudStack Spacing="3">
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h6">LLM Prompt Templates</MudText>
+        <MudStack Row="true" Spacing="2">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       OnClick="CreateNewTemplate"
+                       StartIcon="@Icons.Material.Filled.Add">
+                Create Template
+            </MudButton>
+            <MudButton Variant="Variant.Outlined" 
+                       Color="Color.Secondary" 
+                       OnClick="ShowRestoreDefaultsDialog"
+                       StartIcon="@Icons.Material.Filled.RestorePage">
+                Restore Defaults
+            </MudButton>
+        </MudStack>
+    </MudStack>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+    }
+
+    <MudDataGrid T="LlmPromptTemplate" 
+                 Items="@templates" 
+                 Filterable="true"
+                 QuickFilter="@QuickFilter"
+                 Dense="true"
+                 Hover="true">
+        <ToolBarContent>
+            <MudTextField @bind-Value="searchString" 
+                          Placeholder="Search templates..." 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          IconSize="Size.Medium" 
+                          Immediate="true"
+                          Class="mt-0" />
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.TemplateKey" Title="Key" />
+            <PropertyColumn Property="x => x.Name" Title="Name" />
+            <PropertyColumn Property="x => x.DisplayOrder" Title="Order" />
+            <TemplateColumn Title="Status">
+                <CellTemplate>
+                    @if (context.Item.IsActive)
+                    {
+                        <MudChip Size="Size.Small" Color="Color.Success">Active</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip Size="Size.Small" Color="Color.Default">Inactive</MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+            <PropertyColumn Property="x => x.UpdatedAt" Title="Last Modified" Format="yyyy-MM-dd HH:mm" />
+            <TemplateColumn Title="Actions" Sortable="false">
+                <CellTemplate>
+                    <MudStack Row="true" Spacing="1">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                       Size="Size.Small" 
+                                       Color="Color.Primary"
+                                       OnClick="@(() => EditTemplate(context.Item))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" 
+                                       Size="Size.Small" 
+                                       Color="Color.Info"
+                                       OnClick="@(() => DuplicateTemplate(context.Item))" />
+                        @if (context.Item.IsActive)
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.VisibilityOff" 
+                                           Size="Size.Small" 
+                                           Color="Color.Warning"
+                                           OnClick="@(() => DeactivateTemplate(context.Item))" />
+                        }
+                        else
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Restore" 
+                                           Size="Size.Small" 
+                                           Color="Color.Success"
+                                           OnClick="@(() => RestoreTemplate(context.Item))" />
+                        }
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                       Size="Size.Small" 
+                                       Color="Color.Error"
+                                       OnClick="@(() => ShowDeleteDialog(context.Item))" />
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="LlmPromptTemplate" PageSizeOptions="new int[] { 10, 25, 50 }" />
+        </PagerContent>
+    </MudDataGrid>
+</MudStack>
+
+@code {
+    private List<LlmPromptTemplate> templates = new();
+    private string searchString = string.Empty;
+    private string errorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        LoadTemplates();
+    }
+
+    private void LoadTemplates()
+    {
+        try
+        {
+            templates = templateService.GetAllTemplates().ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load templates: {ex.Message}";
+        }
+    }
+
+    private Func<LlmPromptTemplate, bool> QuickFilter => template =>
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        if (template.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (template.TemplateKey.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+    private async Task CreateNewTemplate()
+    {
+        var parameters = new DialogParameters
+        {
+            { "IsEditMode", false }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = await dialogService.ShowAsync<TemplateEditorDialog>("Create New Template", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            LoadTemplates();
+            snackbar.Add("Template created successfully", Severity.Success);
+        }
+    }
+
+    private async Task EditTemplate(LlmPromptTemplate template)
+    {
+        var parameters = new DialogParameters
+        {
+            { "IsEditMode", true },
+            { "TemplateKey", template.TemplateKey },
+            { "TemplateName", template.Name },
+            { "SystemPrompt", template.SystemPrompt },
+            { "DisplayOrder", template.DisplayOrder },
+            { "IsActive", template.IsActive }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = await dialogService.ShowAsync<TemplateEditorDialog>($"Edit Template: {template.Name}", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            LoadTemplates();
+            snackbar.Add("Template updated successfully", Severity.Success);
+        }
+    }
+
+    private async Task DuplicateTemplate(LlmPromptTemplate template)
+    {
+        var newKey = $"{template.TemplateKey}-copy";
+        var newName = $"{template.Name} (Copy)";
+        var newOrder = templates.Max(t => t.DisplayOrder) + 1;
+
+        var parameters = new DialogParameters
+        {
+            { "IsEditMode", false },
+            { "TemplateKey", newKey },
+            { "TemplateName", newName },
+            { "SystemPrompt", template.SystemPrompt },
+            { "DisplayOrder", newOrder }
+        };
+
+        var options = new DialogOptions 
+        { 
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = await dialogService.ShowAsync<TemplateEditorDialog>("Duplicate Template", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            LoadTemplates();
+            snackbar.Add("Template duplicated successfully", Severity.Success);
+        }
+    }
+
+    private void DeactivateTemplate(LlmPromptTemplate template)
+    {
+        try
+        {
+            templateService.DeleteTemplate(template.TemplateKey);
+            LoadTemplates();
+            snackbar.Add("Template deactivated", Severity.Info);
+        }
+        catch (InvalidOperationException ex)
+        {
+            snackbar.Add(ex.Message, Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            snackbar.Add($"Failed to deactivate template: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void RestoreTemplate(LlmPromptTemplate template)
+    {
+        try
+        {
+            templateService.RestoreTemplate(template.TemplateKey);
+            LoadTemplates();
+            snackbar.Add("Template restored", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            snackbar.Add($"Failed to restore template: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ShowDeleteDialog(LlmPromptTemplate template)
+    {
+        var result = await dialogService.ShowMessageBox(
+            "Delete Template",
+            $"Are you sure you want to permanently delete '{template.Name}'? This action cannot be undone.",
+            yesText: "Delete",
+            cancelText: "Cancel"
+        );
+
+        if (result == true)
+        {
+            DeactivateTemplate(template);
+        }
+    }
+
+    private async Task ShowRestoreDefaultsDialog()
+    {
+        var result = await dialogService.ShowMessageBox(
+            "Restore Default Templates",
+            "This will restore the 3 default templates if they have been deleted. Existing custom templates will not be affected. Continue?",
+            yesText: "Restore",
+            cancelText: "Cancel"
+        );
+
+        if (result == true)
+        {
+            snackbar.Add("Feature not yet implemented. Default templates are automatically seeded on first run.", Severity.Info);
+        }
+    }
+}

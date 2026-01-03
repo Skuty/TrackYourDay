@@ -1,0 +1,266 @@
+@using TrackYourDay.Core.LlmPrompts
+@using System.Text.RegularExpressions
+@inject ITemplateManagementService templateService
+@inject ISnackbar snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="templateKey" 
+                          Label="Template Key" 
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          ReadOnly="IsEditMode"
+                          HelperText="Lowercase alphanumeric and hyphens only (e.g., 'my-custom-template')"
+                          Error="@(!string.IsNullOrEmpty(templateKeyError))"
+                          ErrorText="@templateKeyError" />
+
+            <MudTextField @bind-Value="templateName" 
+                          Label="Template Name" 
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          HelperText="Display name shown in dropdown (5-100 characters)"
+                          Error="@(!string.IsNullOrEmpty(templateNameError))"
+                          ErrorText="@templateNameError" />
+
+            <MudTextField @bind-Value="systemPrompt" 
+                          Label="System Prompt" 
+                          Variant="Variant.Outlined"
+                          Lines="15"
+                          Required="true"
+                          Class="monospace-input"
+                          @oninput="OnSystemPromptInput"
+                          HelperText="@($"Must contain {{{ACTIVITY_DATA_PLACEHOLDER}}} placeholder. {characterCount} characters")"
+                          Error="@(!string.IsNullOrEmpty(systemPromptError))"
+                          ErrorText="@systemPromptError" />
+
+            <MudNumericField @bind-Value="displayOrder" 
+                             Label="Display Order" 
+                             Variant="Variant.Outlined"
+                             Min="1"
+                             Required="true"
+                             HelperText="Lower numbers appear first in dropdown" />
+
+            @if (IsEditMode)
+            {
+                <MudCheckBox @bind-Checked="isActive" Label="Active" Color="Color.Primary" />
+            }
+
+            <MudStack Row="true" Spacing="2">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Info" 
+                           OnClick="ShowPreview"
+                           StartIcon="@Icons.Material.Filled.Visibility">
+                    Preview with Sample Data
+                </MudButton>
+                
+                @if (characterCount > 10000)
+                {
+                    <MudChip Size="Size.Small" Color="Color.Warning">Large prompt</MudChip>
+                }
+            </MudStack>
+
+            @if (showPreview)
+            {
+                <MudPaper Elevation="2" Class="pa-3">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Preview:</MudText>
+                    <MudTextField Value="@previewContent" 
+                                  Lines="10" 
+                                  Variant="Variant.Outlined"
+                                  ReadOnly="true"
+                                  Class="monospace-input" />
+                </MudPaper>
+            }
+
+            @if (!string.IsNullOrEmpty(generalError))
+            {
+                <MudAlert Severity="Severity.Error">@generalError</MudAlert>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   OnClick="Save"
+                   Disabled="isSaving">
+            @if (isSaving)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+            }
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public bool IsEditMode { get; set; }
+    [Parameter] public string TemplateKey { get; set; } = string.Empty;
+    [Parameter] public string TemplateName { get; set; } = string.Empty;
+    [Parameter] public string SystemPrompt { get; set; } = string.Empty;
+    [Parameter] public int DisplayOrder { get; set; } = 1;
+    [Parameter] public bool IsActive { get; set; } = true;
+
+    private const string ACTIVITY_DATA_PLACEHOLDER = "{ACTIVITY_DATA_PLACEHOLDER}";
+    
+    private string templateKey = string.Empty;
+    private string templateName = string.Empty;
+    private string systemPrompt = string.Empty;
+    private int displayOrder = 1;
+    private bool isActive = true;
+    
+    private string templateKeyError = string.Empty;
+    private string templateNameError = string.Empty;
+    private string systemPromptError = string.Empty;
+    private string generalError = string.Empty;
+    
+    private bool showPreview = false;
+    private string previewContent = string.Empty;
+    private bool isSaving = false;
+    private int characterCount = 0;
+
+    protected override void OnInitialized()
+    {
+        templateKey = TemplateKey;
+        templateName = TemplateName;
+        systemPrompt = SystemPrompt;
+        displayOrder = DisplayOrder;
+        isActive = IsActive;
+        
+        UpdateCharacterCount();
+    }
+
+    private void UpdateCharacterCount()
+    {
+        characterCount = systemPrompt?.Length ?? 0;
+    }
+
+    private void OnSystemPromptInput(ChangeEventArgs e)
+    {
+        systemPrompt = e.Value?.ToString() ?? string.Empty;
+        UpdateCharacterCount();
+    }
+
+    private bool ValidateInputs()
+    {
+        var isValid = true;
+        
+        templateKeyError = string.Empty;
+        templateNameError = string.Empty;
+        systemPromptError = string.Empty;
+        generalError = string.Empty;
+
+        // Validate template key
+        if (string.IsNullOrWhiteSpace(templateKey))
+        {
+            templateKeyError = "Template key is required";
+            isValid = false;
+        }
+        else if (templateKey.Length < 3 || templateKey.Length > 50)
+        {
+            templateKeyError = "Template key must be 3-50 characters";
+            isValid = false;
+        }
+        else if (!Regex.IsMatch(templateKey, @"^[a-z0-9-]+$"))
+        {
+            templateKeyError = "Template key must be lowercase alphanumeric with hyphens only";
+            isValid = false;
+        }
+
+        // Validate template name
+        if (string.IsNullOrWhiteSpace(templateName))
+        {
+            templateNameError = "Template name is required";
+            isValid = false;
+        }
+        else if (templateName.Length < 5 || templateName.Length > 100)
+        {
+            templateNameError = "Template name must be 5-100 characters";
+            isValid = false;
+        }
+
+        // Validate system prompt
+        if (string.IsNullOrWhiteSpace(systemPrompt))
+        {
+            systemPromptError = "System prompt is required";
+            isValid = false;
+        }
+        else if (systemPrompt.Length < 100 || systemPrompt.Length > 10000)
+        {
+            systemPromptError = "System prompt must be 100-10,000 characters";
+            isValid = false;
+        }
+        else if (!systemPrompt.Contains(ACTIVITY_DATA_PLACEHOLDER))
+        {
+            systemPromptError = $"System prompt must contain {ACTIVITY_DATA_PLACEHOLDER} placeholder";
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    private void ShowPreview()
+    {
+        UpdateCharacterCount();
+        
+        if (string.IsNullOrWhiteSpace(systemPrompt))
+        {
+            snackbar.Add("Please enter a system prompt first", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            previewContent = templateService.GeneratePreview(systemPrompt);
+            showPreview = true;
+        }
+        catch (Exception ex)
+        {
+            snackbar.Add($"Preview failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task Save()
+    {
+        UpdateCharacterCount();
+        
+        if (!ValidateInputs())
+        {
+            return;
+        }
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(50); // Allow UI to update
+
+            templateService.SaveTemplate(templateKey, templateName, systemPrompt, displayOrder);
+            
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (ArgumentException ex)
+        {
+            generalError = ex.Message;
+            snackbar.Add($"Validation error: {ex.Message}", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            generalError = $"Failed to save template: {ex.Message}";
+            snackbar.Add(generalError, Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
