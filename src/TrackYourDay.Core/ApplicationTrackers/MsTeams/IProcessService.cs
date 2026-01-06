@@ -13,7 +13,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
         public IEnumerable<IProcess> GetProcesses()
         {
             return Process.GetProcesses()
-                          .Select(p => new ProcessInfo
+                          .Select(p => new ProcessSnapshot
                           {
                               ProcessName = p.ProcessName,
                               MainWindowTitle = p.MainWindowTitle
@@ -27,7 +27,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
         string MainWindowTitle { get; }
     }
 
-    public class ProcessInfo : IProcess
+    public class ProcessSnapshot : IProcess
     {
         public string ProcessName { get; set; }
         public string MainWindowTitle { get; set; }

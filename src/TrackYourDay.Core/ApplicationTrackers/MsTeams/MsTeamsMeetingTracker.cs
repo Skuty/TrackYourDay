@@ -1,66 +1,68 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.PublicEvents;
+using TrackYourDay.Core.ApplicationTrackers.MsTeams.State;
 
 namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 {
     public class MsTeamsMeetingTracker
     {
-        private IClock clock;
-        private IPublisher publisher;
-        private IMeetingDiscoveryStrategy meetingDiscoveryStrategy;
-        private ILogger<MsTeamsMeetingTracker> logger;
-        private StartedMeeting ongoingMeeting;
-        private List<EndedMeeting> endedMeetings;
+        private readonly IClock _clock;
+        private readonly IPublisher _publisher;
+        private readonly IMeetingDiscoveryStrategy _meetingDiscoveryStrategy;
+        private readonly IMeetingStateCache _stateCache;
+        private readonly ILogger<MsTeamsMeetingTracker> _logger;
+        private readonly List<EndedMeeting> _endedMeetings;
 
-        public MsTeamsMeetingTracker(IClock clock, IPublisher publisher, IMeetingDiscoveryStrategy meetingDiscoveryStrategy, ILogger<MsTeamsMeetingTracker> logger)
+        public MsTeamsMeetingTracker(
+            IClock clock, 
+            IPublisher publisher, 
+            IMeetingDiscoveryStrategy meetingDiscoveryStrategy,
+            IMeetingStateCache stateCache,
+            ILogger<MsTeamsMeetingTracker> logger)
         {
-            this.clock = clock;
-            this.publisher = publisher;
-            this.meetingDiscoveryStrategy = meetingDiscoveryStrategy;
-            this.logger = logger;
-            this.endedMeetings = new List<EndedMeeting>();
+            _clock = clock;
+            _publisher = publisher;
+            _meetingDiscoveryStrategy = meetingDiscoveryStrategy;
+            _stateCache = stateCache;
+            _logger = logger;
+            _endedMeetings = new List<EndedMeeting>();
         }
 
         public void RecognizeActivity()
         {
-            var recognizedMeeting = this.meetingDiscoveryStrategy.RecognizeMeeting();
+            var recognizedMeeting = _meetingDiscoveryStrategy.RecognizeMeeting();
+            var ongoingMeeting = _stateCache.GetOngoingMeeting();
 
-            if (this.ongoingMeeting is null
-                && recognizedMeeting is StartedMeeting newMeeting)
+            if (ongoingMeeting is null && recognizedMeeting is StartedMeeting newMeeting)
             {
-                this.ongoingMeeting = newMeeting;
-                this.publisher.Publish(new MeetingStartedEvent(Guid.NewGuid(), newMeeting), CancellationToken.None);
-                this.logger.LogInformation("Meeting started: {0}", newMeeting);
+                _stateCache.SetOngoingMeeting(newMeeting);
+                _publisher.Publish(new MeetingStartedEvent(Guid.NewGuid(), newMeeting), CancellationToken.None);
+                _logger.LogInformation("Meeting started: {MeetingTitle}", newMeeting.Title);
                 return;
             }
-            if (this.ongoingMeeting is not null
-                && recognizedMeeting is StartedMeeting ongoingMeeting
+
+            if (ongoingMeeting is not null 
+                && recognizedMeeting is StartedMeeting 
                 && recognizedMeeting.Title == ongoingMeeting.Title)
             {
                 return;
             }
 
-            if (this.ongoingMeeting is not null
-                && recognizedMeeting is null)
+            if (ongoingMeeting is not null && recognizedMeeting is null)
             {
-                var endedMeeting = this.ongoingMeeting.End(this.clock.Now);
-                this.ongoingMeeting = null;
-
-                this.endedMeetings.Add(endedMeeting);
-                
-                this.publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), CancellationToken.None);
-                this.logger.LogInformation("Meeting ended: {0}", endedMeeting);
-
+                var endedMeeting = ongoingMeeting.End(_clock.Now);
+                _stateCache.ClearMeetingState();
+                _endedMeetings.Add(endedMeeting);
+                _publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), CancellationToken.None);
+                _logger.LogInformation("Meeting ended: {MeetingTitle}", endedMeeting.Title);
                 return;
             }
-
-            return;
         }
 
         public IReadOnlyCollection<EndedMeeting> GetEndedMeetings()
         {
-            return this.endedMeetings.AsReadOnly();
+            return _endedMeetings.AsReadOnly();
         }
     }
 }
