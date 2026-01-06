@@ -46,126 +46,155 @@
         </MudAlert>
     }
 
-    <MudDataGrid T="MeetingRecognitionRule" 
-                 Items="@rules" 
-                 Dense="true"
-                 Hover="true"
-                 Loading="@isLoading"
-                 ReadOnly="false"
-                 EditMode="DataGridEditMode.Cell">
-        <Columns>
-            <PropertyColumn Property="x => x.Priority" Title="Priority" Sortable="false">
-                <CellTemplate>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudText>@context.Item.Priority</MudText>
-                        <MudStack Spacing="0">
-                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" 
-                                           Size="Size.Small" 
-                                           OnClick="@(() => MovePriorityUp(context.Item))"
-                                           Disabled="@(context.Item.Priority == 1)" />
-                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" 
-                                           Size="Size.Small" 
-                                           OnClick="@(() => MovePriorityDown(context.Item))"
-                                           Disabled="@(context.Item.Priority == rules.Count)" />
+    <MudDropContainer T="MeetingRecognitionRule" 
+                      Items="@rules" 
+                      ItemsSelector="@((item, dropzone) => true)"
+                      ItemDropped="OnItemDropped"
+                      Class="d-flex flex-column">
+        <ChildContent>
+            <MudPaper Elevation="0" Class="pa-2 mb-2" Style="background-color: var(--mud-palette-background-grey);">
+                <MudGrid Spacing="2">
+                    <MudItem xs="1">
+                        <MudText Typo="Typo.subtitle2">Priority</MudText>
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudText Typo="Typo.subtitle2">Criteria</MudText>
+                    </MudItem>
+                    <MudItem xs="3">
+                        <MudText Typo="Typo.subtitle2">Process Pattern</MudText>
+                    </MudItem>
+                    <MudItem xs="3">
+                        <MudText Typo="Typo.subtitle2">Window Pattern</MudText>
+                    </MudItem>
+                    <MudItem xs="1">
+                        <MudText Typo="Typo.subtitle2">Exclusions</MudText>
+                    </MudItem>
+                    <MudItem xs="1">
+                        <MudText Typo="Typo.subtitle2">Matches</MudText>
+                    </MudItem>
+                    <MudItem xs="1">
+                        <MudText Typo="Typo.subtitle2" Align="Align.End">Actions</MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+            
+            <MudDropZone T="MeetingRecognitionRule" Identifier="rules-zone" Class="flex-grow-1">
+                @if (isLoading)
+                {
+                    <MudProgressLinear Indeterminate="true" />
+                }
+                else if (!rules.Any())
+                {
+                    <MudAlert Severity="Severity.Info">
+                        No rules configured. Click "Add Rule" to create your first meeting recognition rule.
+                    </MudAlert>
+                }
+            </MudDropZone>
+        </ChildContent>
+        <ItemRenderer>
+            <MudPaper Elevation="2" Class="pa-3 mb-2 mud-ripple draggable-rule" Style="cursor: grab;">
+                <MudGrid Spacing="2" Justify="Justify.SpaceBetween">
+                    <MudItem xs="1">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" />
+                            <MudText Typo="Typo.body1">@context.Priority</MudText>
+                            <MudStack Spacing="0">
+                                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" 
+                                               Size="Size.Small" 
+                                               OnClick="@(() => MovePriorityUp(context))"
+                                               Disabled="@(context.Priority == 1)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" 
+                                               Size="Size.Small" 
+                                               OnClick="@(() => MovePriorityDown(context))"
+                                               Disabled="@(context.Priority == rules.Count)" />
+                            </MudStack>
                         </MudStack>
-                    </MudStack>
-                </CellTemplate>
-            </PropertyColumn>
-            
-            <TemplateColumn Title="Criteria" Sortable="false">
-                <CellTemplate>
-                    <MudChip Size="Size.Small" Color="Color.Info">@GetCriteriaDisplay(context.Item.Criteria)</MudChip>
-                </CellTemplate>
-            </TemplateColumn>
-            
-            <TemplateColumn Title="Process Pattern" Sortable="false">
-                <CellTemplate>
-                    @if (context.Item.ProcessNamePattern != null)
-                    {
-                        <MudStack Spacing="0">
-                            <MudText Typo="Typo.body2" Class="text-truncate" Style="max-width: 200px;" title="@context.Item.ProcessNamePattern.Pattern">
-                                @context.Item.ProcessNamePattern.Pattern
-                            </MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                @GetMatchModeDisplay(context.Item.ProcessNamePattern.MatchMode)@(context.Item.ProcessNamePattern.CaseSensitive ? " (case-sensitive)" : "")
-                            </MudText>
-                        </MudStack>
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">—</MudText>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-            
-            <TemplateColumn Title="Window Pattern" Sortable="false">
-                <CellTemplate>
-                    @if (context.Item.WindowTitlePattern != null)
-                    {
-                        <MudStack Spacing="0">
-                            <MudText Typo="Typo.body2" Class="text-truncate" Style="max-width: 200px;" title="@context.Item.WindowTitlePattern.Pattern">
-                                @context.Item.WindowTitlePattern.Pattern
-                            </MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                @GetMatchModeDisplay(context.Item.WindowTitlePattern.MatchMode)@(context.Item.WindowTitlePattern.CaseSensitive ? " (case-sensitive)" : "")
-                            </MudText>
-                        </MudStack>
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">—</MudText>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-            
-            <TemplateColumn Title="Exclusions" Sortable="false">
-                <CellTemplate>
-                    @if (context.Item.Exclusions.Any())
-                    {
-                        <MudChip Size="Size.Small" Color="Color.Warning">@context.Item.Exclusions.Count</MudChip>
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.body2" Color="Color.Secondary">None</MudText>
-                    }
-                </CellTemplate>
-            </TemplateColumn>
-            
-            <TemplateColumn Title="Match Count" Sortable="false">
-                <CellTemplate>
-                    <MudStack Spacing="0">
-                        <MudText Typo="Typo.body2">@context.Item.MatchCount.ToString("N0")</MudText>
-                        @if (context.Item.LastMatchedAt.HasValue)
+                    </MudItem>
+                    
+                    <MudItem xs="2">
+                        <MudChip Size="Size.Small" Color="Color.Info">@GetCriteriaDisplay(context.Criteria)</MudChip>
+                    </MudItem>
+                    
+                    <MudItem xs="3">
+                        @if (context.ProcessNamePattern != null)
                         {
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                @FormatRelativeTime(context.Item.LastMatchedAt.Value)
-                            </MudText>
+                            <MudStack Spacing="0">
+                                <MudText Typo="Typo.body2" Class="text-truncate" Style="max-width: 250px;" title="@context.ProcessNamePattern.Pattern">
+                                    @context.ProcessNamePattern.Pattern
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @GetMatchModeDisplay(context.ProcessNamePattern.MatchMode)@(context.ProcessNamePattern.CaseSensitive ? " (case-sensitive)" : "")
+                                </MudText>
+                            </MudStack>
                         }
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-            
-            <TemplateColumn Title="Actions" Sortable="false">
-                <CellTemplate>
-                    <MudStack Row="true" Spacing="1">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
-                                       Size="Size.Small" 
-                                       Color="Color.Primary"
-                                       OnClick="@(() => EditRule(context.Item))" />
-                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" 
-                                       Size="Size.Small" 
-                                       Color="Color.Info"
-                                       OnClick="@(() => DuplicateRule(context.Item))" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
-                                       Size="Size.Small" 
-                                       Color="Color.Error"
-                                       OnClick="@(() => ShowDeleteDialog(context.Item))"
-                                       Disabled="@(rules.Count == 1)" />
-                    </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-    </MudDataGrid>
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">—</MudText>
+                        }
+                    </MudItem>
+                    
+                    <MudItem xs="3">
+                        @if (context.WindowTitlePattern != null)
+                        {
+                            <MudStack Spacing="0">
+                                <MudText Typo="Typo.body2" Class="text-truncate" Style="max-width: 250px;" title="@context.WindowTitlePattern.Pattern">
+                                    @context.WindowTitlePattern.Pattern
+                                </MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @GetMatchModeDisplay(context.WindowTitlePattern.MatchMode)@(context.WindowTitlePattern.CaseSensitive ? " (case-sensitive)" : "")
+                                </MudText>
+                            </MudStack>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">—</MudText>
+                        }
+                    </MudItem>
+                    
+                    <MudItem xs="1">
+                        @if (context.Exclusions.Any())
+                        {
+                            <MudChip Size="Size.Small" Color="Color.Warning">@context.Exclusions.Count</MudChip>
+                        }
+                        else
+                        {
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">None</MudText>
+                        }
+                    </MudItem>
+                    
+                    <MudItem xs="1">
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.body2">@context.MatchCount.ToString("N0")</MudText>
+                            @if (context.LastMatchedAt.HasValue)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @FormatRelativeTime(context.LastMatchedAt.Value)
+                                </MudText>
+                            }
+                        </MudStack>
+                    </MudItem>
+                    
+                    <MudItem xs="1">
+                        <MudStack Row="true" Spacing="1" Justify="Justify.FlexEnd">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                           Size="Size.Small" 
+                                           Color="Color.Primary"
+                                           OnClick="@(() => EditRule(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.ContentCopy" 
+                                           Size="Size.Small" 
+                                           Color="Color.Info"
+                                           OnClick="@(() => DuplicateRule(context))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                           Size="Size.Small" 
+                                           Color="Color.Error"
+                                           OnClick="@(() => ShowDeleteDialog(context))"
+                                           Disabled="@(rules.Count == 1)" />
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </ItemRenderer>
+    </MudDropContainer>
 </MudStack>
 
 @code {
@@ -349,6 +378,28 @@
         {
             rules[i] = rules[i] with { Priority = i + 1 };
         }
+    }
+
+    private void OnItemDropped(MudItemDropInfo<MeetingRecognitionRule> dropInfo)
+    {
+        if (dropInfo.Item == null) return;
+
+        var item = dropInfo.Item;
+        rules.Remove(item);
+        
+        // Insert at new position based on drop index
+        var newIndex = dropInfo.IndexInZone;
+        if (newIndex >= rules.Count)
+        {
+            rules.Add(item);
+        }
+        else
+        {
+            rules.Insert(newIndex, item);
+        }
+        
+        ReorderPriorities();
+        SaveRules();
     }
 
     private void SaveRules()
