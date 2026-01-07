@@ -68,16 +68,6 @@ public class HttpLoggingHandler : DelegatingHandler
                 durationMs,
                 exception.Message);
         }
-        else if (response?.IsSuccessStatusCode == true)
-        {
-            _logger.LogInformation(
-                "{ServiceName} HTTP {Method} {Uri} completed with status {StatusCode} in {DurationMs}ms",
-                _serviceName,
-                method,
-                uri,
-                statusCodeInt,
-                durationMs);
-        }
         else
         {
             _logger.LogInformation(

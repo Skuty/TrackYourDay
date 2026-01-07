@@ -21,26 +21,14 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         public GitLabRestApiClient(string url, string apiKey, ILogger? logger = null)
         {
             var handler = new HttpClientHandler();
-            
-            if (logger != null)
+            HttpMessageHandler finalHandler = logger != null
+                ? new HttpLoggingHandler(logger, "GitLab") { InnerHandler = handler }
+                : handler;
+
+            this.httpClient = new HttpClient(finalHandler)
             {
-                var loggingHandler = new HttpLoggingHandler(logger, "GitLab")
-                {
-                    InnerHandler = handler
-                };
-                this.httpClient = new HttpClient(loggingHandler)
-                {
-                    BaseAddress = new Uri(url)
-                };
-            }
-            else
-            {
-                this.httpClient = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(url)
-                };
-            }
-            
+                BaseAddress = new Uri(url)
+            };
             this.httpClient.DefaultRequestHeaders.Add("PRIVATE-TOKEN", apiKey);
         }
 

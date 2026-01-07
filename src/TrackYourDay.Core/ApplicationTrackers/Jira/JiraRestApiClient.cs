@@ -21,26 +21,14 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         public JiraRestApiClient(string url, string personalAccessToken, ILogger? logger = null)
         {
             var handler = new HttpClientHandler();
-            
-            if (logger != null)
+            HttpMessageHandler finalHandler = logger != null
+                ? new HttpLoggingHandler(logger, "Jira") { InnerHandler = handler }
+                : handler;
+
+            this.httpClient = new HttpClient(finalHandler)
             {
-                var loggingHandler = new HttpLoggingHandler(logger, "Jira")
-                {
-                    InnerHandler = handler
-                };
-                this.httpClient = new HttpClient(loggingHandler)
-                {
-                    BaseAddress = new Uri(url)
-                };
-            }
-            else
-            {
-                this.httpClient = new HttpClient(handler)
-                {
-                    BaseAddress = new Uri(url)
-                };
-            }
-            
+                BaseAddress = new Uri(url)
+            };
             this.httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {personalAccessToken}");
         }
 
