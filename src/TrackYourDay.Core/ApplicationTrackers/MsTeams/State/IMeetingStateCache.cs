@@ -36,4 +36,16 @@ public interface IMeetingStateCache
     /// Thread-safe.
     /// </summary>
     void ClearMeetingState();
+
+    /// <summary>
+    /// Gets the pending end meeting awaiting confirmation.
+    /// Thread-safe.
+    /// </summary>
+    PendingEndMeeting? GetPendingEndMeeting();
+
+    /// <summary>
+    /// Sets the pending end meeting.
+    /// Thread-safe.
+    /// </summary>
+    void SetPendingEndMeeting(PendingEndMeeting? pending);
 }

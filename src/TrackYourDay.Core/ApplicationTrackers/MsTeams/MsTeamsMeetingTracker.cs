@@ -33,7 +33,35 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
         {
             var recognizedMeeting = _meetingDiscoveryStrategy.RecognizeMeeting();
             var ongoingMeeting = _stateCache.GetOngoingMeeting();
+            var pendingEnd = _stateCache.GetPendingEndMeeting();
 
+            // Handle pending end confirmation
+            if (pendingEnd != null)
+            {
+                // Meeting recognized again - cancel pending end
+                if (recognizedMeeting is StartedMeeting && recognizedMeeting.Title == pendingEnd.Meeting.Title)
+                {
+                    _stateCache.SetPendingEndMeeting(null);
+                    _logger.LogInformation("Meeting end cancelled - meeting still active: {MeetingTitle}", pendingEnd.Meeting.Title);
+                    return;
+                }
+
+                // Pending end expired - auto-confirm
+                if (pendingEnd.IsExpired(_clock))
+                {
+                    var endedMeeting = pendingEnd.Meeting.End(_clock.Now);
+                    _stateCache.ClearMeetingState();
+                    _endedMeetings.Add(endedMeeting);
+                    _publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), CancellationToken.None);
+                    _logger.LogInformation("Meeting auto-confirmed ended after timeout: {MeetingTitle}", endedMeeting.Title);
+                    return;
+                }
+
+                // Still waiting for confirmation
+                return;
+            }
+
+            // No meeting ongoing, new meeting detected
             if (ongoingMeeting is null && recognizedMeeting is StartedMeeting newMeeting)
             {
                 _stateCache.SetOngoingMeeting(newMeeting);
@@ -42,6 +70,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
                 return;
             }
 
+            // Ongoing meeting still recognized
             if (ongoingMeeting is not null 
                 && recognizedMeeting is StartedMeeting 
                 && recognizedMeeting.Title == ongoingMeeting.Title)
@@ -49,13 +78,18 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
                 return;
             }
 
+            // Ongoing meeting no longer detected - request confirmation
             if (ongoingMeeting is not null && recognizedMeeting is null)
             {
-                var endedMeeting = ongoingMeeting.End(_clock.Now);
-                _stateCache.ClearMeetingState();
-                _endedMeetings.Add(endedMeeting);
-                _publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), CancellationToken.None);
-                _logger.LogInformation("Meeting ended: {MeetingTitle}", endedMeeting.Title);
+                var pending = new PendingEndMeeting
+                {
+                    Meeting = ongoingMeeting,
+                    DetectedAt = _clock.Now
+                };
+                _stateCache.SetPendingEndMeeting(pending);
+                _stateCache.SetOngoingMeeting(null);
+                _publisher.Publish(new MeetingEndConfirmationRequestedEvent(Guid.NewGuid(), pending), CancellationToken.None);
+                _logger.LogInformation("Meeting end detected, awaiting confirmation: {MeetingTitle}", ongoingMeeting.Title);
                 return;
             }
         }

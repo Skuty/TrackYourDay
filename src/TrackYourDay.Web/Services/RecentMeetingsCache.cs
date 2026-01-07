@@ -10,6 +10,7 @@ namespace TrackYourDay.Web.Services;
 public sealed class RecentMeetingsCache : IRecentMeetingsCache
 {
     private readonly ConcurrentDictionary<Guid, CacheEntry> _cache = new();
+    private readonly ConcurrentDictionary<Guid, PendingCacheEntry> _pendingCache = new();
     private readonly TimeSpan _expirationWindow;
 
     public RecentMeetingsCache(TimeSpan? expirationWindow = null)
@@ -50,6 +51,31 @@ public sealed class RecentMeetingsCache : IRecentMeetingsCache
         _cache.TryRemove(meetingGuid, out _);
     }
 
+    public void AddPending(PendingEndMeeting pending)
+    {
+        if (pending == null) throw new ArgumentNullException(nameof(pending));
+
+        var entry = new PendingCacheEntry(pending, DateTime.UtcNow.Add(_expirationWindow));
+        _pendingCache.TryAdd(pending.Meeting.Guid, entry);
+
+        CleanupExpiredPending();
+    }
+
+    public PendingEndMeeting? GetPending(Guid meetingGuid)
+    {
+        if (_pendingCache.TryGetValue(meetingGuid, out var entry))
+        {
+            if (DateTime.UtcNow <= entry.ExpiresAt)
+            {
+                return entry.Pending;
+            }
+
+            _pendingCache.TryRemove(meetingGuid, out _);
+        }
+
+        return null;
+    }
+
     private void CleanupExpired()
     {
         var now = DateTime.UtcNow;
@@ -64,5 +90,20 @@ public sealed class RecentMeetingsCache : IRecentMeetingsCache
         }
     }
 
+    private void CleanupExpiredPending()
+    {
+        var now = DateTime.UtcNow;
+        var expiredKeys = _pendingCache
+            .Where(kvp => now > kvp.Value.ExpiresAt)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var key in expiredKeys)
+        {
+            _pendingCache.TryRemove(key, out _);
+        }
+    }
+
     private sealed record CacheEntry(EndedMeeting Meeting, DateTime ExpiresAt);
+    private sealed record PendingCacheEntry(PendingEndMeeting Pending, DateTime ExpiresAt);
 }

@@ -9,6 +9,7 @@ public sealed class MeetingStateCache : IMeetingStateCache
     private readonly object _lock = new();
     private StartedMeeting? _ongoingMeeting;
     private Guid? _matchedRuleId;
+    private PendingEndMeeting? _pendingEndMeeting;
 
     public StartedMeeting? GetOngoingMeeting()
     {
@@ -48,6 +49,23 @@ public sealed class MeetingStateCache : IMeetingStateCache
         {
             _ongoingMeeting = null;
             _matchedRuleId = null;
+            _pendingEndMeeting = null;
+        }
+    }
+
+    public PendingEndMeeting? GetPendingEndMeeting()
+    {
+        lock (_lock)
+        {
+            return _pendingEndMeeting;
+        }
+    }
+
+    public void SetPendingEndMeeting(PendingEndMeeting? pending)
+    {
+        lock (_lock)
+        {
+            _pendingEndMeeting = pending;
         }
     }
 }

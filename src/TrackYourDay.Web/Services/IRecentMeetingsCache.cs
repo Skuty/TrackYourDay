@@ -22,4 +22,14 @@ public interface IRecentMeetingsCache
     /// Removes a meeting from the cache after it's been processed.
     /// </summary>
     void Remove(Guid meetingGuid);
+
+    /// <summary>
+    /// Adds a pending end meeting to the cache for confirmation dialogs.
+    /// </summary>
+    void AddPending(PendingEndMeeting pending);
+
+    /// <summary>
+    /// Retrieves a pending meeting by its GUID. Returns null if not found or expired.
+    /// </summary>
+    PendingEndMeeting? GetPending(Guid meetingGuid);
 }

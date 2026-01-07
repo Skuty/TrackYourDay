@@ -1,0 +1,112 @@
+@page "/MeetingEndConfirmation/{MeetingGuidString}"
+
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams.Commands
+@using TrackYourDay.Core.MAUIProxy
+@using TrackYourDay.Web.Services
+@using MediatR
+
+@inject IMediator mediator
+@inject IRecentMeetingsCache recentMeetingsCache
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
+    @if (pendingMeeting != null)
+    {
+        <MudPaper Class="pa-6" Elevation="3">
+            <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4" Color="Color.Warning">
+                Did this meeting end?
+            </MudText>
+
+            <MudText Typo="Typo.body1" Class="mb-2">
+                <strong>Meeting:</strong> @pendingMeeting.Meeting.Title
+            </MudText>
+
+            <MudText Typo="Typo.body1" Class="mb-4">
+                <strong>Duration:</strong> @((int)pendingMeeting.Meeting.GetDuration(clock).TotalMinutes) minutes
+            </MudText>
+
+            <MudGrid>
+                <MudItem xs="6">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Success" 
+                               FullWidth="true" 
+                               OnClick="ConfirmEnd"
+                               Disabled="isProcessing">
+                        Yes, it ended
+                    </MudButton>
+                </MudItem>
+                <MudItem xs="6">
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Default" 
+                               FullWidth="true" 
+                               OnClick="DismissDialog"
+                               Disabled="isProcessing">
+                        No, still ongoing
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-3">@errorMessage</MudAlert>
+            }
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Warning">Pending meeting not found</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string MeetingGuidString { get; set; } = string.Empty;
+
+    [CascadingParameter(Name = "ParentMauiWindowId")]
+    public Guid ParentMauiWindowId { get; set; }
+
+    [Inject]
+    private TrackYourDay.Core.IClock clock { get; set; } = default!;
+
+    private PendingEndMeeting? pendingMeeting;
+    private string errorMessage = string.Empty;
+    private bool isProcessing;
+
+    protected override void OnInitialized()
+    {
+        if (Guid.TryParse(MeetingGuidString, out var meetingGuid))
+        {
+            pendingMeeting = recentMeetingsCache.GetPending(meetingGuid);
+        }
+    }
+
+    private async Task ConfirmEnd()
+    {
+        if (pendingMeeting == null || isProcessing)
+            return;
+
+        isProcessing = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            await mediator.Send(new ConfirmMeetingEndCommand(pendingMeeting.Meeting.Guid));
+            await CloseWindow();
+        }
+        catch (Exception)
+        {
+            errorMessage = "An error occurred while confirming the meeting end. Please try again.";
+            isProcessing = false;
+        }
+    }
+
+    private async Task DismissDialog()
+    {
+        await CloseWindow();
+    }
+
+    private async Task CloseWindow()
+    {
+        await mediator.Send(new CloseWindowCommand(ParentMauiWindowId));
+    }
+}
