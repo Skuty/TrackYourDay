@@ -1,4 +1,5 @@
 ﻿using TrackYourDay.Web.Events;
+using TrackYourDay.Web.Services;
 
 namespace TrackYourDay.Web.ServiceRegistration
 {
@@ -7,6 +8,7 @@ namespace TrackYourDay.Web.ServiceRegistration
         public static IServiceCollection AddEventHandlingForBlazorUIComponents(this IServiceCollection services)
         {
             services.AddSingleton<EventWrapperForComponents>();
+            services.AddSingleton<IRecentMeetingsCache, RecentMeetingsCache>();
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<EventWrapperForComponents>());
 
             return services;

@@ -1,10 +1,12 @@
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams.Configuration
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams.Persistence
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams.RuleEngine
 @inject IMeetingRuleRepository ruleRepository
 @inject IProcessService processService
 @inject IDialogService dialogService
 @inject ISnackbar snackbar
+@inject IMeetingRuleEngine ruleEngine
 
 <MudStack Spacing="3">
     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
@@ -42,7 +44,40 @@
     @if (!string.IsNullOrEmpty(successMessage))
     {
         <MudAlert Severity="Severity.Success" ShowCloseIcon="true" CloseIconClicked="@(() => successMessage = string.Empty)">
-            @errorMessage
+            @successMessage
+        </MudAlert>
+    }
+    
+    @if (currentMeetingStatus != null)
+    {
+        <MudAlert Severity="@(currentMeetingStatus.IsInMeeting ? Severity.Success : Severity.Info)" 
+                  Icon="@(currentMeetingStatus.IsInMeeting ? Icons.Material.Filled.Videocam : Icons.Material.Filled.VideocamOff)">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudStack Spacing="0">
+                    @if (currentMeetingStatus.IsInMeeting)
+                    {
+                        <MudText Typo="Typo.body1"><strong>Active Meeting Detected</strong></MudText>
+                        <MudText Typo="Typo.body2">@currentMeetingStatus.MeetingTitle</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Started @FormatRelativeTime(currentMeetingStatus.StartTime) • Matched by Rule #@currentMeetingStatus.MatchedRulePriority
+                        </MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body1">No meeting currently active</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            @(currentMeetingStatus.TotalProcessCount) process(es) evaluated, but no rules match
+                        </MudText>
+                    }
+                </MudStack>
+                <MudButton Variant="Variant.Text" 
+                           Size="Size.Small"
+                           OnClick="RefreshMeetingStatus"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           Disabled="isRefreshingStatus">
+                    Refresh
+                </MudButton>
+            </MudStack>
         </MudAlert>
     }
 
@@ -200,12 +235,15 @@
 @code {
     private List<MeetingRecognitionRule> rules = new();
     private bool isLoading = true;
+    private bool isRefreshingStatus = false;
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
+    private MeetingStatus? currentMeetingStatus;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         LoadRules();
+        await RefreshMeetingStatus();
     }
 
     private void LoadRules()
@@ -445,16 +483,81 @@
         _ => mode.ToString()
     };
 
+    private async Task RefreshMeetingStatus()
+    {
+        isRefreshingStatus = true;
+        try
+        {
+            await Task.Run(() =>
+            {
+                var allProcesses = processService.GetProcesses()
+                    .Select(p => new ProcessInfo(p.ProcessName, p.MainWindowTitle))
+                    .ToList();
+
+                if (allProcesses.Count == 0 || rules.Count == 0)
+                {
+                    currentMeetingStatus = new MeetingStatus
+                    {
+                        IsInMeeting = false,
+                        TotalProcessCount = allProcesses.Count
+                    };
+                    return;
+                }
+
+                var match = ruleEngine.EvaluateRules(rules.AsReadOnly(), allProcesses, null);
+                
+                if (match != null)
+                {
+                    var matchedRule = rules.FirstOrDefault(r => r.Id == match.MatchedRuleId);
+                    currentMeetingStatus = new MeetingStatus
+                    {
+                        IsInMeeting = true,
+                        MeetingTitle = match.WindowTitle,
+                        StartTime = match.MatchedAt,
+                        MatchedRulePriority = matchedRule?.Priority ?? 0,
+                        TotalProcessCount = allProcesses.Count
+                    };
+                }
+                else
+                {
+                    currentMeetingStatus = new MeetingStatus
+                    {
+                        IsInMeeting = false,
+                        TotalProcessCount = allProcesses.Count
+                    };
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to check meeting status: {ex.Message}";
+        }
+        finally
+        {
+            isRefreshingStatus = false;
+            StateHasChanged();
+        }
+    }
+
     private string FormatRelativeTime(DateTime utcTime)
     {
         var now = DateTime.UtcNow;
         var diff = now - utcTime;
 
-        if (diff.TotalMinutes < 1) return "Just now";
+        if (diff.TotalMinutes < 1) return "just now";
         if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
         if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
         if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
         
         return utcTime.ToLocalTime().ToString("MMM dd");
+    }
+    
+    private class MeetingStatus
+    {
+        public bool IsInMeeting { get; set; }
+        public string MeetingTitle { get; set; } = string.Empty;
+        public DateTime StartTime { get; set; }
+        public int MatchedRulePriority { get; set; }
+        public int TotalProcessCount { get; set; }
     }
 }

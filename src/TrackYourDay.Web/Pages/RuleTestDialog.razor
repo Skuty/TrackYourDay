@@ -20,7 +20,7 @@
                     <MudStack Spacing="0">
                         <MudText Typo="Typo.h6">Test Results</MudText>
                         <MudText Typo="Typo.body2" Color="Color.Secondary">
-                            Found @teamsProcesses.Count MS Teams process(es)
+                            Found @allProcesses.Count process(es) to evaluate
                         </MudText>
                     </MudStack>
                     <MudButton Variant="Variant.Outlined" 
@@ -36,10 +36,10 @@
                     <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
                 }
 
-                @if (teamsProcesses.Count == 0)
+                @if (allProcesses.Count == 0)
                 {
-                    <MudAlert Severity="Severity.Warning">
-                        No MS Teams processes are currently running. Start Teams to test your rules.
+                    <MudAlert Severity="Severity.Info">
+                        No processes are currently running to test against your rules.
                     </MudAlert>
                 }
                 else
@@ -147,7 +147,7 @@
 
     private bool isLoading = true;
     private string errorMessage = string.Empty;
-    private List<ProcessInfo> teamsProcesses = new();
+    private List<ProcessInfo> allProcesses = new();
     private List<ProcessTestResult> testResults = new();
 
     protected override async Task OnInitializedAsync()
@@ -169,17 +169,13 @@
             {
                 try
                 {
-                    // Get all processes
-                    var allProcesses = processService.GetProcesses();
-                    
-                    // Filter to MS Teams processes (case-insensitive)
-                    teamsProcesses = allProcesses
-                        .Where(p => p.ProcessName.Contains("teams", StringComparison.OrdinalIgnoreCase))
+                    // Get all processes - no filtering, let rules decide
+                    allProcesses = processService.GetProcesses()
                         .Select(p => new ProcessInfo(p.ProcessName, p.MainWindowTitle))
                         .ToList();
 
                     // Test each process against rules
-                    foreach (var process in teamsProcesses)
+                    foreach (var process in allProcesses)
                     {
                         var match = ruleEngine.EvaluateRules(
                             Rules,

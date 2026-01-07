@@ -70,4 +70,35 @@ namespace TrackYourDay.Core.Persistence.Specifications
             return entityDate >= startDate && entityDate <= endDate;
         }
     }
+    
+    /// <summary>
+    /// Specification for finding an EndedMeeting by its unique GUID.
+    /// </summary>
+    public class MeetingByGuidSpecification : ISpecification<EndedMeeting>
+    {
+        private readonly Guid guid;
+
+        public MeetingByGuidSpecification(Guid guid)
+        {
+            this.guid = guid;
+        }
+
+        public string GetSqlWhereClause()
+        {
+            return "json_extract(DataJson, '$.Guid') = @guid";
+        }
+
+        public Dictionary<string, object> GetSqlParameters()
+        {
+            return new Dictionary<string, object>
+            {
+                { "@guid", guid.ToString() }
+            };
+        }
+
+        public bool IsSatisfiedBy(EndedMeeting entity)
+        {
+            return entity.Guid == guid;
+        }
+    }
 }
