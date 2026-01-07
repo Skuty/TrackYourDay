@@ -18,14 +18,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         private readonly HttpClient httpClient;
         private const int PAGE_LIMIT = 100; // GitLab API supports up to 100 items per page
 
-        public GitLabRestApiClient(string url, string apiKey, ILogger? logger = null)
+        public GitLabRestApiClient(string url, string apiKey, ILogger logger)
         {
             var handler = new HttpClientHandler();
-            HttpMessageHandler finalHandler = logger != null
-                ? new HttpLoggingHandler(logger, "GitLab") { InnerHandler = handler }
-                : handler;
+            var loggingHandler = new HttpLoggingHandler(logger, "GitLab") { InnerHandler = handler };
 
-            this.httpClient = new HttpClient(finalHandler)
+            this.httpClient = new HttpClient(loggingHandler)
             {
                 BaseAddress = new Uri(url)
             };
@@ -137,7 +135,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
     public class GitLabRestApiClientFactory
     {
-        public static IGitLabRestApiClient Create(GitLabSettings settings, ILogger? logger = null)
+        public static IGitLabRestApiClient Create(GitLabSettings settings, ILogger logger)
         {
             if (string.IsNullOrEmpty(settings.ApiUrl))
             {

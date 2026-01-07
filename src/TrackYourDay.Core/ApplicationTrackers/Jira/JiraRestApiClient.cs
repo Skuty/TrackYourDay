@@ -18,14 +18,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     {
         private readonly HttpClient httpClient;
 
-        public JiraRestApiClient(string url, string personalAccessToken, ILogger? logger = null)
+        public JiraRestApiClient(string url, string personalAccessToken, ILogger logger)
         {
             var handler = new HttpClientHandler();
-            HttpMessageHandler finalHandler = logger != null
-                ? new HttpLoggingHandler(logger, "Jira") { InnerHandler = handler }
-                : handler;
+            var loggingHandler = new HttpLoggingHandler(logger, "Jira") { InnerHandler = handler };
 
-            this.httpClient = new HttpClient(finalHandler)
+            this.httpClient = new HttpClient(loggingHandler)
             {
                 BaseAddress = new Uri(url)
             };
@@ -203,7 +201,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     }
     public class JiraRestApiClientFactory
     {
-        public static IJiraRestApiClient Create(JiraSettings settings, ILogger? logger = null)
+        public static IJiraRestApiClient Create(JiraSettings settings, ILogger logger)
         {
             if (string.IsNullOrEmpty(settings.ApiUrl))
             {

@@ -1,4 +1,6 @@
 ﻿using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Moq;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
@@ -13,7 +15,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
 
         public GitLabRestApiClientTests()
         {
-            this.client = new GitLabRestApiClient("https://gitlab.com", "");
+            var mockLogger = new Mock<ILogger<GitLabRestApiClient>>();
+            this.client = new GitLabRestApiClient("https://gitlab.com", "", mockLogger.Object);
         }
 
         [Fact]
