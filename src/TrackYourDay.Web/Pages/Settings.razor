@@ -6,6 +6,7 @@
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams
 @using TrackYourDay.Core.SystemTrackers
 @using TrackYourDay.Core.Persistence
+@using Microsoft.Extensions.Logging
 
 <h1>Settings</h1>
 
@@ -129,6 +130,9 @@
     
     [Inject]
     private IJiraActivityService jiraActivityService { get; init; }
+    
+    [Inject]
+    private ILogger<Settings> logger { get; init; }
 
     private int minutesOfNoActivityToStartBreak = 5;
     private bool isSettingsSavedDialogVisible;
@@ -234,7 +238,7 @@
     private void CheckGitLabConnection()
     {
         this.gitLabSettingsService.UpdateSettings(this.gitLabApiUrl, this.gitLabApiKey);
-        var gitLabClient = GitLabRestApiClientFactory.Create(this.gitLabSettingsService.GetSettings());
+        var gitLabClient = GitLabRestApiClientFactory.Create(this.gitLabSettingsService.GetSettings(), logger);
         var tempGitLabService = new GitLabActivityService(gitLabClient, null);
         
         connectionCheckSuccess = tempGitLabService.CheckConnection();
@@ -248,7 +252,7 @@
     private void CheckJiraConnection()
     {
         this.jiraSettingsService.UpdateSettings(this.jiraApiUrl, this.jiraApiKey);
-        var jiraClient = JiraRestApiClientFactory.Create(this.jiraSettingsService.GetSettings());
+        var jiraClient = JiraRestApiClientFactory.Create(this.jiraSettingsService.GetSettings(), logger);
         var tempJiraService = new JiraActivityService(jiraClient, null);
         
         connectionCheckSuccess = tempJiraService.CheckConnection();
