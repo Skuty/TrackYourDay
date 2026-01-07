@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
 
@@ -12,7 +13,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
         public JiraRestApiClientTests()
         {
-            this.jiraRestApiClient = new JiraRestApiClient("https://sampleUrl", "sampleKey");
+            var mockLogger = new Mock<ILogger<JiraRestApiClient>>();
+            this.jiraRestApiClient = new JiraRestApiClient("https://sampleUrl", "sampleKey", mockLogger.Object);
         }
 
         [Fact]

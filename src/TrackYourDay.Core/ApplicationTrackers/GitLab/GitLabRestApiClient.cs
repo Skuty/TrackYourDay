@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
@@ -17,9 +18,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         private readonly HttpClient httpClient;
         private const int PAGE_LIMIT = 100; // GitLab API supports up to 100 items per page
 
-        public GitLabRestApiClient(string url, string apiKey)
+        public GitLabRestApiClient(string url, string apiKey, ILogger logger)
         {
-            this.httpClient = new HttpClient
+            var handler = new HttpClientHandler();
+            var loggingHandler = new HttpLoggingHandler(logger, "GitLab") { InnerHandler = handler };
+
+            this.httpClient = new HttpClient(loggingHandler)
             {
                 BaseAddress = new Uri(url)
             };
@@ -131,14 +135,14 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
     public class GitLabRestApiClientFactory
     {
-        public static IGitLabRestApiClient Create(GitLabSettings settings)
+        public static IGitLabRestApiClient Create(GitLabSettings settings, ILogger logger)
         {
             if (string.IsNullOrEmpty(settings.ApiUrl))
             {
                 return new NullGitLabRestApiClient();
             }
 
-            return new GitLabRestApiClient(settings.ApiUrl, settings.ApiKey);
+            return new GitLabRestApiClient(settings.ApiUrl, settings.ApiKey, logger);
         }
     }
 

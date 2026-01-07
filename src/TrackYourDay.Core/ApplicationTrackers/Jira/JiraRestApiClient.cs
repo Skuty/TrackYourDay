@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Globalization;
+using Microsoft.Extensions.Logging;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
@@ -17,9 +18,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     {
         private readonly HttpClient httpClient;
 
-        public JiraRestApiClient(string url, string personalAccessToken)
+        public JiraRestApiClient(string url, string personalAccessToken, ILogger logger)
         {
-            this.httpClient = new HttpClient
+            var handler = new HttpClientHandler();
+            var loggingHandler = new HttpLoggingHandler(logger, "Jira") { InnerHandler = handler };
+
+            this.httpClient = new HttpClient(loggingHandler)
             {
                 BaseAddress = new Uri(url)
             };
@@ -197,14 +201,14 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     }
     public class JiraRestApiClientFactory
     {
-        public static IJiraRestApiClient Create(JiraSettings settings)
+        public static IJiraRestApiClient Create(JiraSettings settings, ILogger logger)
         {
             if (string.IsNullOrEmpty(settings.ApiUrl))
             {
                 return new NullJiraRestApiClient();
             }
 
-            return new JiraRestApiClient(settings.ApiUrl, settings.ApiKey);
+            return new JiraRestApiClient(settings.ApiUrl, settings.ApiKey, logger);
         }
     }
 
