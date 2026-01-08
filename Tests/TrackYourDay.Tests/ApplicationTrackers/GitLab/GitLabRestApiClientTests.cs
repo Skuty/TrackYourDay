@@ -20,23 +20,23 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void WhenGettingUserForSuppliedCredentials_ThenAuthenticatedUserDetailsAreReturned()
+        public async Task WhenGettingUserForSuppliedCredentials_ThenAuthenticatedUserDetailsAreReturned()
         {
             // When
-            var user = this.client.GetCurrentUser();
+            var user = await this.client.GetCurrentUser();
 
             // Then
             Assert.NotNull(user);
         }
 
         [Fact]
-        public void GivenUserIsAuthenticated_WhenGettingEventsOfUser_ThenListOfEventsIsReturned()
+        public async Task GivenUserIsAuthenticated_WhenGettingEventsOfUser_ThenListOfEventsIsReturned()
         {
             // Given
-            var user = this.client.GetCurrentUser();
+            var user = await this.client.GetCurrentUser();
 
             // When
-            var events = this.client.GetUserEvents(new GitLabUserId(user.Id), this.startingDate);
+            var events = await this.client.GetUserEvents(new GitLabUserId(user.Id), this.startingDate);
 
             // Then
             Assert.NotNull(events);
@@ -44,13 +44,13 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenUserIsAuthenticated_WhenGettingEventsContaningNote_ThenNoteDetailsAreSerializedProperly()
+        public async Task GivenUserIsAuthenticated_WhenGettingEventsContaningNote_ThenNoteDetailsAreSerializedProperly()
         {
             // Given
-            var user = this.client.GetCurrentUser();
+            var user = await this.client.GetCurrentUser();
 
             // When
-            var events = this.client.GetUserEvents(new GitLabUserId(user.Id), this.startingDate);
+            var events = await this.client.GetUserEvents(new GitLabUserId(user.Id), this.startingDate);
             var eventWithNote = events.FirstOrDefault(e => e.TargetType == "Note");
 
             // Then
@@ -58,13 +58,13 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenUserIsAuthenticated_WhenGettingEventsContaningPush_ThenPushDetailsAreSerializedProperly()
+        public async Task GivenUserIsAuthenticated_WhenGettingEventsContaningPush_ThenPushDetailsAreSerializedProperly()
         {
             // Given
-            var user = this.client.GetCurrentUser();
+            var user = await this.client.GetCurrentUser();
 
             // When
-            var events = this.client.GetUserEvents(new GitLabUserId(user.Id), this.startingDate);
+            var events = await this.client.GetUserEvents(new GitLabUserId(user.Id), this.startingDate);
             var eventWithPush = events.FirstOrDefault(e => e.Action.Contains("pushed"));
 
             // Then
@@ -72,13 +72,13 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenUserIsAuthenticated_WhenGettingGitLabProject_ThenProjectIsSerializedProperly()
+        public async Task GivenUserIsAuthenticated_WhenGettingGitLabProject_ThenProjectIsSerializedProperly()
         {
             // Given
-            var user = this.client.GetCurrentUser();
+            var user = await this.client.GetCurrentUser();
 
             // When
-            var project = this.client.GetProject(new GitLabProjectId(this.projectId));
+            var project = await this.client.GetProject(new GitLabProjectId(this.projectId));
 
             // Then
             Assert.NotNull(project);
@@ -86,13 +86,13 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenUserIsAuthenticated_WhenGettingGitLabCommits_ThenCommitsAreSerializedProperly()
+        public async Task GivenUserIsAuthenticated_WhenGettingGitLabCommits_ThenCommitsAreSerializedProperly()
         {
             // Given
-            var user = this.client.GetCurrentUser();
+            var user = await this.client.GetCurrentUser();
 
             // When
-            var commits = this.client.GetCommits(new GitLabProjectId(this.projectId), new GitLabRefName(this.refName), this.startingDate);
+            var commits = await this.client.GetCommits(new GitLabProjectId(this.projectId), new GitLabRefName(this.refName), this.startingDate);
             
             // Then
             Assert.NotNull(commits);

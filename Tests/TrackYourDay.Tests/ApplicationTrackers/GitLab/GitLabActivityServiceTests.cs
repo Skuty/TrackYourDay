@@ -16,7 +16,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             this.gitLabApiClient = new Mock<IGitLabRestApiClient>();
             this.gitLabActivityService = new GitLabActivityService(this.gitLabApiClient.Object, null);
             var gitlabUser = JsonSerializer.Deserialize<GitLabUser>(this.GetResponseFor_GetCurrentUser());
-            this.gitLabApiClient.Setup(x => x.GetCurrentUser()).Returns(gitlabUser);
+            this.gitLabApiClient.Setup(x => x.GetCurrentUser()).ReturnsAsync(gitlabUser);
         }
 
         [Fact]
@@ -25,7 +25,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_OpenedMergeRequest());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -42,15 +42,15 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_PushedTwoCommits());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             var gitLabProject = JsonSerializer.Deserialize<GitLabProject>(this.GetResponseForProject());
             this.gitLabApiClient.Setup(gitLabApiClient => gitLabApiClient.GetProject(It.IsAny<GitLabProjectId>()))
-                .Returns(gitLabProject);
+                .ReturnsAsync(gitLabProject);
 
             var gitLabCommits = JsonSerializer.Deserialize<List<GitLabCommit>>(this.GetResponseWith2CommitsRelatedToMergeRequest());
             this.gitLabApiClient.Setup(x => x.GetCommitsByShaRange(It.IsAny<GitLabProjectId>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(gitLabCommits);
+                .ReturnsAsync(gitLabCommits);
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -75,11 +75,11 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseForPushedNew());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             var gitLabProject = JsonSerializer.Deserialize<GitLabProject>(this.GetResponseForProject());
             this.gitLabApiClient.Setup(gitLabApiClient => gitLabApiClient.GetProject(It.IsAny<GitLabProjectId>()))
-                .Returns(gitLabProject);
+                .ReturnsAsync(gitLabProject);
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -96,11 +96,11 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseForDeleted());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             var gitLabProject = JsonSerializer.Deserialize<GitLabProject>(this.GetResponseForProject());
             this.gitLabApiClient.Setup(gitLabApiClient => gitLabApiClient.GetProject(It.IsAny<GitLabProjectId>()))
-                .Returns(gitLabProject);
+                .ReturnsAsync(gitLabProject);
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -117,7 +117,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_MergedMergeRequest());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -133,7 +133,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_ApprovedMergeRequest());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -149,7 +149,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_OpenedIssue());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -165,7 +165,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_ClosedIssue());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -181,7 +181,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CommentOnMergeRequest());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -198,7 +198,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CommentOnIssue());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -215,7 +215,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CreatedWikiPage());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -231,7 +231,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CreatedMilestone());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();
@@ -247,15 +247,15 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given - Simulate a push with 10 commits
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_PushedMultipleCommits());
             this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
-                .Returns(new List<GitLabEvent> { gitLabEvent });
+                .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             var gitLabProject = JsonSerializer.Deserialize<GitLabProject>(this.GetResponseForProject());
             this.gitLabApiClient.Setup(gitLabApiClient => gitLabApiClient.GetProject(It.IsAny<GitLabProjectId>()))
-                .Returns(gitLabProject);
+                .ReturnsAsync(gitLabProject);
 
             var gitLabCommits = JsonSerializer.Deserialize<List<GitLabCommit>>(this.GetResponseWithMultipleCommits());
             this.gitLabApiClient.Setup(x => x.GetCommitsByShaRange(It.IsAny<GitLabProjectId>(), It.IsAny<string>(), It.IsAny<string>()))
-                .Returns(gitLabCommits);
+                .ReturnsAsync(gitLabCommits);
 
             // When
             var activities = this.gitLabActivityService.GetTodayActivities();

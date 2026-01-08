@@ -18,12 +18,12 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GetCurrentUser_ShouldReturnUserDetails()
+        public async Task GetCurrentUser_ShouldReturnUserDetails()
         {
             // Arrange
 
             // Act
-            var user = this.jiraRestApiClient.GetCurrentUser();
+            var user = await this.jiraRestApiClient.GetCurrentUser();
 
             // Assert
             user.Should().NotBeNull();
@@ -32,13 +32,13 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GetUserIssues_ShouldReturnIssues()
+        public async Task GetUserIssues_ShouldReturnIssues()
         {
             // Arrange
-            var user = this.jiraRestApiClient.GetCurrentUser();
+            var user = await this.jiraRestApiClient.GetCurrentUser();
 
             // Act
-            var issues = this.jiraRestApiClient.GetUserIssues(user, DateTime.Today.AddDays(-30));
+            var issues = await this.jiraRestApiClient.GetUserIssues(user, DateTime.Today.AddDays(-30));
 
             // Assert
             issues.Should().NotBeNull();

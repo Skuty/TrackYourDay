@@ -37,12 +37,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             {
                 if (this.userId == null)
                 {
-                    var user = this.gitLabRestApiClient.GetCurrentUser();
+                    var user = this.gitLabRestApiClient.GetCurrentUser().GetAwaiter().GetResult();
                     this.userId = new GitLabUserId(user.Id);
                     this.userEmail = user.Email;
                 }
 
-                var events = this.gitLabRestApiClient.GetUserEvents(new GitLabUserId(this.userId.Id), DateOnly.FromDateTime(DateTime.Today));
+                var events = this.gitLabRestApiClient.GetUserEvents(new GitLabUserId(this.userId.Id), DateOnly.FromDateTime(DateTime.Today)).GetAwaiter().GetResult();
 
                 foreach (var gitlabEvent in events)
                 {
@@ -60,11 +60,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             return this.gitlabActivities;
         }
 
-        public bool CheckConnection()
+        public async Task<bool> CheckConnection()
         {
             try
             {
-                var user = this.gitLabRestApiClient.GetCurrentUser();
+                var user = await this.gitLabRestApiClient.GetCurrentUser();
                 return user != null && user.Id > 0 && user.Username != "Not recognized";
             }
             catch (Exception e)
@@ -126,7 +126,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
         private List<GitLabActivity> MapPushEvent(GitLabEvent gitlabEvent)
         {
-            var project = this.gitLabRestApiClient.GetProject(new GitLabProjectId(gitlabEvent.ProjectId));
+            var project = this.gitLabRestApiClient.GetProject(new GitLabProjectId(gitlabEvent.ProjectId)).GetAwaiter().GetResult();
             var projectName = project.NameWithNamespace;
             var branchName = gitlabEvent.PushData.Ref;
 
@@ -166,20 +166,24 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             if (!string.IsNullOrEmpty(commitFrom) && !string.IsNullOrEmpty(commitTo))
             {
                 // Use the SHA range from the push event to get exact commits
-                commits = this.gitLabRestApiClient.GetCommitsByShaRange(
+                var allCommits = this.gitLabRestApiClient.GetCommitsByShaRange(
                     new GitLabProjectId(gitlabEvent.ProjectId), 
                     commitFrom, 
                     commitTo)
+                    .GetAwaiter().GetResult();
+                commits = allCommits
                     .Where(c => c.AuthorEmail == this.userEmail)
                     .ToList();
             }
             else
             {
                 // Fallback to date-based fetch if no SHA range available
-                commits = this.gitLabRestApiClient.GetCommits(
+                var allCommits = this.gitLabRestApiClient.GetCommits(
                     new GitLabProjectId(gitlabEvent.ProjectId), 
                     new GitLabRefName(branchName), 
                     DateOnly.FromDateTime(DateTime.Today))
+                    .GetAwaiter().GetResult();
+                commits = allCommits
                     .Where(c => c.AuthorEmail == this.userEmail)
                     .ToList();
             }
