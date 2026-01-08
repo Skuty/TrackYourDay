@@ -235,13 +235,13 @@
         this.ShowSettingsSavedDialog();
     }
     
-    private void CheckGitLabConnection()
+    private async Task CheckGitLabConnection()
     {
         this.gitLabSettingsService.UpdateSettings(this.gitLabApiUrl, this.gitLabApiKey);
         var gitLabClient = GitLabRestApiClientFactory.Create(this.gitLabSettingsService.GetSettings(), logger);
         var tempGitLabService = new GitLabActivityService(gitLabClient, null);
         
-        connectionCheckSuccess = tempGitLabService.CheckConnection();
+        connectionCheckSuccess = await tempGitLabService.CheckConnection();
         connectionCheckMessage = connectionCheckSuccess 
             ? "Successfully connected to GitLab!" 
             : "Failed to connect to GitLab. Please check your API URL and API Key.";
@@ -249,13 +249,13 @@
         ShowConnectionCheckDialog();
     }
     
-    private void CheckJiraConnection()
+    private async Task CheckJiraConnection()
     {
         this.jiraSettingsService.UpdateSettings(this.jiraApiUrl, this.jiraApiKey);
         var jiraClient = JiraRestApiClientFactory.Create(this.jiraSettingsService.GetSettings(), logger);
         var tempJiraService = new JiraActivityService(jiraClient, null);
         
-        connectionCheckSuccess = tempJiraService.CheckConnection();
+        connectionCheckSuccess = await tempJiraService.CheckConnection();
         connectionCheckMessage = connectionCheckSuccess 
             ? "Successfully connected to Jira!" 
             : "Failed to connect to Jira. Please check your API URL and API Key.";

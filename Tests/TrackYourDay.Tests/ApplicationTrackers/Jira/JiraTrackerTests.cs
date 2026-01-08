@@ -33,9 +33,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             };
 
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(It.IsAny<JiraUser>(), It.IsAny<DateTime>()))
-                .Returns(newJiraIssues);
+                .ReturnsAsync(newJiraIssues);
             this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs(It.IsAny<string>(), It.IsAny<DateTime>()))
-                .Returns(new List<JiraWorklogResponse>());
+                .ReturnsAsync(new List<JiraWorklogResponse>());
 
             this.clockMock.Setup(clock => clock.Now).Returns(new DateTime(2000, 01, 01, 15, 00, 00));
 
@@ -60,9 +60,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             };
 
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(It.IsAny<JiraUser>(), It.IsAny<DateTime>()))
-                .Returns(oldJiraIssues);
+                .ReturnsAsync(oldJiraIssues);
             this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs(It.IsAny<string>(), It.IsAny<DateTime>()))
-                .Returns(new List<JiraWorklogResponse>());
+                .ReturnsAsync(new List<JiraWorklogResponse>());
             this.clockMock.Setup(clock => clock.Now).Returns(new DateTime(2000, 01, 01, 15, 00, 00));
             this.jiraTracker.RecognizeActivity();
 

@@ -20,7 +20,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.currentUser = new JiraUser("test-user-name", "test-user");  // Name, DisplayName
 
             // Setup default current user
-            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).Returns(currentUser);
+            this.jiraRestApiClientMock.Setup(client => client.GetCurrentUser()).ReturnsAsync(currentUser);
         }
 
         private JiraIssueFieldsResponse CreateIssueFields(
@@ -70,7 +70,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 new JiraIssueResponse("PROJ-1", "1", CreateIssueFields("Test Issue", new DateTime(2000, 01, 01, 10, 00, 00)), changelog)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
             var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
@@ -107,7 +107,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 new JiraIssueResponse("PROJ-1", "1", CreateIssueFields("Test Issue", new DateTime(2000, 01, 01, 10, 00, 00)), changelog)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
             var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
@@ -131,7 +131,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                     null)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
             var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
@@ -164,7 +164,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                     null)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
             var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
@@ -200,8 +200,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 )
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
-            this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).Returns(worklogs);
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).ReturnsAsync(worklogs);
 
             // When
             var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
@@ -237,8 +237,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 )
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
-            this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).Returns(worklogs);
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).ReturnsAsync(worklogs);
 
             // When
             var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
@@ -279,8 +279,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 new JiraWorklogResponse("1", new JiraUserResponse("test-user"), "Work done", new DateTime(2000, 01, 01, 12, 00, 00), "1h", 3600)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
-            this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).Returns(worklogs);
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).ReturnsAsync(worklogs);
 
             // When
             var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
@@ -319,7 +319,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                     changelog)
             };
 
-            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).Returns(issues);
+            this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
             var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);

@@ -7,7 +7,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     public interface IJiraActivityService
     {
         List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate);
-        bool CheckConnection();
+        Task<bool> CheckConnection();
     }
 
     public class JiraActivityService : IJiraActivityService
@@ -34,10 +34,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             {
                 if (this.currentUser == null)
                 {
-                    this.currentUser = this.jiraRestApiClient.GetCurrentUser();
+                    this.currentUser = this.jiraRestApiClient.GetCurrentUser().GetAwaiter().GetResult();
                 }
 
-                var issues = this.jiraRestApiClient.GetUserIssues(this.currentUser, updateDate);
+                var issues = this.jiraRestApiClient.GetUserIssues(this.currentUser, updateDate).GetAwaiter().GetResult();
 
                 var activities = new List<JiraActivity>();
 
@@ -61,7 +61,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                     // Fetch and process worklogs for this issue
                     try
                     {
-                        var worklogs = this.jiraRestApiClient.GetIssueWorklogs(issue.Key, updateDate);
+                        var worklogs = this.jiraRestApiClient.GetIssueWorklogs(issue.Key, updateDate).GetAwaiter().GetResult();
                         var worklogActivities = worklogs
                             .Where(w => w.Author?.DisplayName == this.currentUser.DisplayName)
                             .Select(w => CreateWorklogActivity(issue, w))
@@ -84,11 +84,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
         }
 
-        public bool CheckConnection()
+        public async Task<bool> CheckConnection()
         {
             try
             {
-                var user = this.jiraRestApiClient.GetCurrentUser();
+                var user = await this.jiraRestApiClient.GetCurrentUser();
                 return user != null && !string.IsNullOrEmpty(user.DisplayName) && user.DisplayName != "Not recognized";
             }
             catch (Exception e)

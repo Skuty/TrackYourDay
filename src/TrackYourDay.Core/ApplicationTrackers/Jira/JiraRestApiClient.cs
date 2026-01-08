@@ -7,11 +7,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
     public interface IJiraRestApiClient
     {
-        JiraUser GetCurrentUser();
+        Task<JiraUser> GetCurrentUser();
 
-        List<JiraIssueResponse> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate);
+        Task<List<JiraIssueResponse>> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate);
 
-        List<JiraWorklogResponse> GetIssueWorklogs(string issueKey, DateTime startingFromDate);
+        Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate);
     }
 
     public class JiraRestApiClient : IJiraRestApiClient
@@ -30,19 +30,19 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             this.httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {personalAccessToken}");
         }
 
-        public JiraUser GetCurrentUser()
+        public async Task<JiraUser> GetCurrentUser()
         {
-            var response = httpClient.GetAsync("/rest/api/2/myself").Result;
+            var response = await httpClient.GetAsync("/rest/api/2/myself");
             response.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
+            var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<JiraUser>(content);
         }
 
-        public List<JiraIssueResponse> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
+        public async Task<List<JiraIssueResponse>> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
         {
-            var response = httpClient.GetAsync($"/rest/api/2/search?jql=assignee=alalak AND updated>={startingFromDate:yyyy-MM-dd}&expand=changelog").Result;
+            var response = await httpClient.GetAsync($"/rest/api/2/search?jql=assignee=alalak AND updated>={startingFromDate:yyyy-MM-dd}&expand=changelog");
             response.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
+            var content = await response.Content.ReadAsStringAsync();
 
             var options = new JsonSerializerOptions
             {
@@ -55,11 +55,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             return searchResult?.Issues ?? new List<JiraIssueResponse>();
         }
 
-        public List<JiraWorklogResponse> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
+        public async Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
         {
-            var response = httpClient.GetAsync($"/rest/api/2/issue/{issueKey}/worklog").Result;
+            var response = await httpClient.GetAsync($"/rest/api/2/issue/{issueKey}/worklog");
             response.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
+            var content = await response.Content.ReadAsStringAsync();
 
             var options = new JsonSerializerOptions
             {
@@ -214,12 +214,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
     public class NullJiraRestApiClient : IJiraRestApiClient
     {
-        public JiraUser GetCurrentUser() => new JiraUser("Not recognized", "Not recognized");
+        public Task<JiraUser> GetCurrentUser() => Task.FromResult(new JiraUser("Not recognized", "Not recognized"));
 
-        public List<JiraIssueResponse> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
-            => new List<JiraIssueResponse>();
+        public Task<List<JiraIssueResponse>> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
+            => Task.FromResult(new List<JiraIssueResponse>());
 
-        public List<JiraWorklogResponse> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
-            => new List<JiraWorklogResponse>();
+        public Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
+            => Task.FromResult(new List<JiraWorklogResponse>());
     }
 }

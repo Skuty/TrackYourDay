@@ -6,11 +6,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
     public interface IGitLabRestApiClient
     {
-        GitLabUser GetCurrentUser();
-        List<GitLabEvent> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate);
-        GitLabProject GetProject(GitLabProjectId projectId);
-        List<GitLabCommit> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate);
-        List<GitLabCommit> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha);
+        Task<GitLabUser> GetCurrentUser();
+        Task<List<GitLabEvent>> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate);
+        Task<GitLabProject> GetProject(GitLabProjectId projectId);
+        Task<List<GitLabCommit>> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate);
+        Task<List<GitLabCommit>> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha);
     }
 
     public class GitLabRestApiClient : IGitLabRestApiClient
@@ -30,16 +30,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             this.httpClient.DefaultRequestHeaders.Add("PRIVATE-TOKEN", apiKey);
         }
 
-        public GitLabUser GetCurrentUser()
+        public async Task<GitLabUser> GetCurrentUser()
         {
-            var response = httpClient.GetAsync($"/api/v4/user").Result;
+            var response = await httpClient.GetAsync($"/api/v4/user");
             response.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
+            var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<GitLabUser>(content);
         }
 
         //TODO: implement stream reading approach with last readed event, use Id property
-        public List<GitLabEvent> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate)
+        public async Task<List<GitLabEvent>> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate)
         {
             var allEvents = new List<GitLabEvent>();
             int page = 1;
@@ -47,9 +47,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             do
             {
-                var response = httpClient.GetAsync($"/api/v4/users/{userId.Id}/events?per_page={PAGE_LIMIT}&page={page}&after={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}").Result;
+                var response = await httpClient.GetAsync($"/api/v4/users/{userId.Id}/events?per_page={PAGE_LIMIT}&page={page}&after={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}");
                 response.EnsureSuccessStatusCode();
-                var content = response.Content.ReadAsStringAsync().Result;
+                var content = await response.Content.ReadAsStringAsync();
                 var events = JsonSerializer.Deserialize<List<GitLabEvent>>(content) ?? new List<GitLabEvent>();
 
                 allEvents.AddRange(events);
@@ -60,36 +60,36 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             return allEvents;
         }
 
-        public GitLabProject GetProject(GitLabProjectId projectId)
+        public async Task<GitLabProject> GetProject(GitLabProjectId projectId)
         {
-            var response = httpClient.GetAsync($"/api/v4/projects/{projectId.Id}").Result;
+            var response = await httpClient.GetAsync($"/api/v4/projects/{projectId.Id}");
             response.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
+            var content = await response.Content.ReadAsStringAsync();
 
             return JsonSerializer.Deserialize<GitLabProject>(content);
         }
 
-        public List<GitLabCommit> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
+        public async Task<List<GitLabCommit>> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
         {
-            var response = httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/commits?ref_name={refName.Name}&since={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}").Result;
+            var response = await httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/commits?ref_name={refName.Name}&since={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}");
             response.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
+            var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<List<GitLabCommit>>(content) ?? new List<GitLabCommit>();
         }
 
-        public List<GitLabCommit> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha)
+        public async Task<List<GitLabCommit>> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha)
         {
             // Use GitLab's compare API to get commits between two SHAs
-            var response = httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/compare?from={commitFromSha}&to={commitToSha}").Result;
+            var response = await httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/compare?from={commitFromSha}&to={commitToSha}");
             response.EnsureSuccessStatusCode();
-            var content = response.Content.ReadAsStringAsync().Result;
+            var content = await response.Content.ReadAsStringAsync();
             var comparison = JsonSerializer.Deserialize<GitLabComparison>(content);
             return comparison?.Commits ?? new List<GitLabCommit>();
         }
     }
     public class NullGitLabRestApiClient : IGitLabRestApiClient
     {
-        public GitLabUser GetCurrentUser() => new(
+        public Task<GitLabUser> GetCurrentUser() => Task.FromResult(new GitLabUser(
             Id: 0,
             Username: "Not recognized",
             Email: string.Empty,
@@ -118,19 +118,19 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             CanCreateGroup: null,
             CanCreateProject: null,
             TwoFactorEnabled: null,
-            External: null);
+            External: null));
 
-        public List<GitLabEvent> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate)
-            => new();
+        public Task<List<GitLabEvent>> GetUserEvents(GitLabUserId userId, DateOnly startingFromDate)
+            => Task.FromResult(new List<GitLabEvent>());
 
-        public GitLabProject GetProject(GitLabProjectId projectId)
+        public Task<GitLabProject> GetProject(GitLabProjectId projectId)
             => throw new NotSupportedException("GitLab is not configured");
 
-        public List<GitLabCommit> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
-            => new();
+        public Task<List<GitLabCommit>> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
+            => Task.FromResult(new List<GitLabCommit>());
 
-        public List<GitLabCommit> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha)
-            => new();
+        public Task<List<GitLabCommit>> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha)
+            => Task.FromResult(new List<GitLabCommit>());
     }
 
     public class GitLabRestApiClientFactory
