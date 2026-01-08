@@ -166,22 +166,24 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             if (!string.IsNullOrEmpty(commitFrom) && !string.IsNullOrEmpty(commitTo))
             {
                 // Use the SHA range from the push event to get exact commits
-                commits = this.gitLabRestApiClient.GetCommitsByShaRange(
+                var allCommits = this.gitLabRestApiClient.GetCommitsByShaRange(
                     new GitLabProjectId(gitlabEvent.ProjectId), 
                     commitFrom, 
                     commitTo)
-                    .GetAwaiter().GetResult()
+                    .GetAwaiter().GetResult();
+                commits = allCommits
                     .Where(c => c.AuthorEmail == this.userEmail)
                     .ToList();
             }
             else
             {
                 // Fallback to date-based fetch if no SHA range available
-                commits = this.gitLabRestApiClient.GetCommits(
+                var allCommits = this.gitLabRestApiClient.GetCommits(
                     new GitLabProjectId(gitlabEvent.ProjectId), 
                     new GitLabRefName(branchName), 
                     DateOnly.FromDateTime(DateTime.Today))
-                    .GetAwaiter().GetResult()
+                    .GetAwaiter().GetResult();
+                commits = allCommits
                     .Where(c => c.AuthorEmail == this.userEmail)
                     .ToList();
             }
