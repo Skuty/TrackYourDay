@@ -74,7 +74,7 @@ jobs:
             MINOR=$((MINOR + 1))
             PATCH=0
             echo "Breaking change detected - bumping minor version"
-          elif echo "$COMMIT_MSG" | grep -qiE "^feat[\(:][^!]"; then
+          elif echo "$COMMIT_MSG" | grep -qiE "^feat[\(:]"; then
             # Feature - bump minor
             MINOR=$((MINOR + 1))
             PATCH=0
@@ -156,18 +156,6 @@ jobs:
           directory: 'src\TrackYourDay.MAUI\bin\Release\net9.0-windows10.0.22000.0\win-x64'
           filename: 'TrackYourDay_v${{ needs.calculate-version.outputs.version }}.zip'
           exclusions: '*.git*'
-
-      - name: Create tag
-        run: git tag v${{ needs.calculate-version.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push tag
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: 'main'
-          tags: true
 
       - name: Create Release
         uses: ncipollo/release-action@v1
