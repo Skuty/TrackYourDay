@@ -48,7 +48,9 @@ namespace TrackYourDay.Core.Insights.Analytics
             }
 
             // Get Jira activities for enrichment
-            var jiraActivities = _jiraTracker.GetJiraActivities().ToList();
+            // Note: This uses GetAwaiter().GetResult() but the actual HTTP calls are made asynchronously
+            // by JiraTracker.RecognizeActivity() which caches results, so this won't block on I/O
+            var jiraActivities = _jiraTracker.GetJiraActivities().GetAwaiter().GetResult().ToList();
             _logger.LogInformation("Retrieved {Count} Jira activities for enrichment", jiraActivities.Count);
 
             // Group items by date

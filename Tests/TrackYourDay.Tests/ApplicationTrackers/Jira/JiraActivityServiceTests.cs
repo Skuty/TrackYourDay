@@ -48,7 +48,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenIssueWithStatusChangeByCurrentUser_WhenGettingActivities_ThenReturnStatusChangeActivity()
+        public async Task GivenIssueWithStatusChangeByCurrentUser_WhenGettingActivities_ThenReturnStatusChangeActivity()
         {
             // Given
             var updateDate = new DateTime(2000, 01, 01);
@@ -73,7 +73,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+            var activities = await this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
 
             // Then
             activities.Should().NotBeNull();
@@ -85,7 +85,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenIssueWithStatusChangeByOtherUser_WhenGettingActivities_ThenReturnNoActivities()
+        public async Task GivenIssueWithStatusChangeByOtherUser_WhenGettingActivities_ThenReturnNoActivities()
         {
             // Given
             var updateDate = new DateTime(2000, 01, 01);
@@ -110,7 +110,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+            var activities = await this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
 
             // Then
             activities.Should().NotBeNull();
@@ -118,7 +118,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenIssueCreatedByCurrentUser_WhenGettingActivities_ThenReturnIssueCreationActivity()
+        public async Task GivenIssueCreatedByCurrentUser_WhenGettingActivities_ThenReturnIssueCreationActivity()
         {
             // Given
             var updateDate = new DateTime(2000, 01, 01);
@@ -134,7 +134,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+            var activities = await this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
 
             // Then
             activities.Should().NotBeNull();
@@ -145,7 +145,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenSubtaskCreatedByCurrentUser_WhenGettingActivities_ThenReturnSubtaskCreationWithParent()
+        public async Task GivenSubtaskCreatedByCurrentUser_WhenGettingActivities_ThenReturnSubtaskCreationWithParent()
         {
             // Given
             var updateDate = new DateTime(2000, 01, 01);
@@ -167,7 +167,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+            var activities = await this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
 
             // Then
             activities.Should().NotBeNull();
@@ -178,7 +178,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenWorklogByCurrentUser_WhenGettingActivities_ThenReturnWorklogActivity()
+        public async Task GivenWorklogByCurrentUser_WhenGettingActivities_ThenReturnWorklogActivity()
         {
             // Given
             var updateDate = new DateTime(2000, 01, 01);
@@ -204,7 +204,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).ReturnsAsync(worklogs);
 
             // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+            var activities = await this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
 
             // Then
             activities.Should().NotBeNull();
@@ -215,7 +215,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenWorklogByOtherUser_WhenGettingActivities_ThenReturnNoWorklogActivity()
+        public async Task GivenWorklogByOtherUser_WhenGettingActivities_ThenReturnNoWorklogActivity()
         {
             // Given
             var updateDate = new DateTime(2000, 01, 01);
@@ -241,7 +241,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).ReturnsAsync(worklogs);
 
             // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+            var activities = await this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
 
             // Then
             activities.Should().NotBeNull();
@@ -249,7 +249,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenMultipleActivitiesByCurrentUser_WhenGettingActivities_ThenReturnAllActivitiesSortedByDate()
+        public async Task GivenMultipleActivitiesByCurrentUser_WhenGettingActivities_ThenReturnAllActivitiesSortedByDate()
         {
             // Given
             var updateDate = new DateTime(2000, 01, 01);
@@ -283,7 +283,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs("PROJ-1", updateDate)).ReturnsAsync(worklogs);
 
             // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+            var activities = await this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
 
             // Then
             activities.Should().NotBeNull();
@@ -294,7 +294,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenIssueWithProjectAndIssueTypeInfo_WhenGettingActivities_ThenIncludeContextInDescription()
+        public async Task GivenIssueWithProjectAndIssueTypeInfo_WhenGettingActivities_ThenIncludeContextInDescription()
         {
             // Given
             var updateDate = new DateTime(2000, 01, 01);
@@ -322,7 +322,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.jiraRestApiClientMock.Setup(client => client.GetUserIssues(currentUser, updateDate)).ReturnsAsync(issues);
 
             // When
-            var activities = this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
+            var activities = await this.jiraActivityService.GetActivitiesUpdatedAfter(updateDate);
 
             // Then
             activities.Should().NotBeNull();

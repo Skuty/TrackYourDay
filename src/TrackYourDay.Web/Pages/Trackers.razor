@@ -101,13 +101,13 @@
     {
         selectedDate = clock.Now.Date;
         InitializeColumns();
-        RefreshData();
+        _ = RefreshData(); // Fire and forget - don't block initialization
     }
 
     private void OnDateChanged(DateTime? date)
     {
         selectedDate = date ?? clock.Now.Date;
-        RefreshData();
+        _ = RefreshData(); // Fire and forget
     }
 
     private bool IsToday()
@@ -115,7 +115,7 @@
         return selectedDate.HasValue && selectedDate.Value.Date == clock.Now.Date;
     }
 
-    private void RefreshData()
+    private async Task RefreshData()
     {
         if (selectedDate == null) return;
 
@@ -142,7 +142,7 @@
             .ToList();
 
         // For Jira activities, filter by date (in-memory only, fetched from API)
-        jiraActivities = jiraTracker.GetJiraActivities()
+        jiraActivities = (await jiraTracker.GetJiraActivities())
             .Where(a => DateOnly.FromDateTime(a.OccurrenceDate) == dateOnly)
             .ToList();
 

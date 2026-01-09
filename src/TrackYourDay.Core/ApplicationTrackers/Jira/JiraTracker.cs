@@ -18,26 +18,26 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             this.jiraActivities = new List<JiraActivity>();
         }
 
-        public void RecognizeActivity()
+        public async Task RecognizeActivity()
         {
             if (this.lastFetchedDate == null)
             {
-                var todayActivities = this.jiraActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
+                var todayActivities = await this.jiraActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
                 this.jiraActivities.AddRange(todayActivities);
                 this.lastFetchedDate = this.clock.Now;
             }
 
             if (lastFetchedDate.Value < this.clock.Now.AddMinutes(-5))
             {
-                var newActivities = this.jiraActivityService.GetActivitiesUpdatedAfter(this.lastFetchedDate.Value);
+                var newActivities = await this.jiraActivityService.GetActivitiesUpdatedAfter(this.lastFetchedDate.Value);
                 this.jiraActivities.AddRange(newActivities);
                 this.lastFetchedDate = this.clock.Now;
             }
         }
 
-        public IReadOnlyCollection<JiraActivity> GetJiraActivities()
+        public async Task<IReadOnlyCollection<JiraActivity>> GetJiraActivities()
         {
-            this.RecognizeActivity();
+            await this.RecognizeActivity();
             return this.jiraActivities;
         }
     }

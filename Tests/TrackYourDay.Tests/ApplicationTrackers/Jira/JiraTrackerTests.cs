@@ -23,7 +23,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenNoActivitiesWereTrackedAndThereAreJiraActivitiesWaiting_WhenGetingJiraActivities_ThenTrackerShouldReturnOnlyNewActivities()
+        public async Task GivenNoActivitiesWereTrackedAndThereAreJiraActivitiesWaiting_WhenGetingJiraActivities_ThenTrackerShouldReturnOnlyNewActivities()
         {
             // Given
             var newJiraIssues = new List<JiraIssueResponse>
@@ -40,8 +40,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.clockMock.Setup(clock => clock.Now).Returns(new DateTime(2000, 01, 01, 15, 00, 00));
 
             // When
-            this.jiraTracker.RecognizeActivity(); //TODO: This probably should be exposed somewhere in act or arrange?
-            var result = this.jiraTracker.GetJiraActivities();
+            await this.jiraTracker.RecognizeActivity(); //TODO: This probably should be exposed somewhere in act or arrange?
+            var result = await this.jiraTracker.GetJiraActivities();
 
             // Then
             result.Should().NotBeNull();
@@ -50,7 +50,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public void GivenTwoActivitiesWereTrackedAndThereTwoMoreActivitiesWaiting_WhenGetingJiraActivities_ThenTrackerShouldReturnFourActivities()
+        public async Task GivenTwoActivitiesWereTrackedAndThereTwoMoreActivitiesWaiting_WhenGetingJiraActivities_ThenTrackerShouldReturnFourActivities()
         {
             // Given
             var oldJiraIssues = new List<JiraIssueResponse>
@@ -64,7 +64,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.jiraRestApiClientMock.Setup(client => client.GetIssueWorklogs(It.IsAny<string>(), It.IsAny<DateTime>()))
                 .ReturnsAsync(new List<JiraWorklogResponse>());
             this.clockMock.Setup(clock => clock.Now).Returns(new DateTime(2000, 01, 01, 15, 00, 00));
-            this.jiraTracker.RecognizeActivity();
+            await this.jiraTracker.RecognizeActivity();
 
             var newJiraIssues = new List<JiraIssueResponse>
             {
@@ -75,8 +75,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             this.clockMock.Setup(clock => clock.Now).Returns(new DateTime(2000, 01, 01, 16, 00, 00));
 
             // When
-            this.jiraTracker.RecognizeActivity();
-            var result = this.jiraTracker.GetJiraActivities();
+            await this.jiraTracker.RecognizeActivity();
+            var result = await this.jiraTracker.GetJiraActivities();
 
             // Then
             result.Should().NotBeNull();
