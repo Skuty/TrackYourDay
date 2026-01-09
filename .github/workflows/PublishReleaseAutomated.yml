@@ -66,14 +66,19 @@ jobs:
           # Determine version bump based on conventional commit prefix
           # feat: → bump minor
           # fix: → bump patch
-          # feat! or fix! or BREAKING CHANGE → bump minor (since major stays at 1)
+          # feat! or fix! or BREAKING CHANGE: → bump minor (since major stays at 1)
           # chore:, docs:, style:, refactor:, test:, perf: → bump patch
 
-          if echo "$COMMIT_MSG" | grep -qiE "^(feat!|fix!|BREAKING CHANGE)"; then
+          if echo "$COMMIT_MSG" | grep -qiE "^(feat!|fix!)"; then
             # Breaking change - bump minor (since major always stays at 1)
             MINOR=$((MINOR + 1))
             PATCH=0
             echo "Breaking change detected - bumping minor version"
+          elif echo "$COMMIT_MSG" | grep -qE "BREAKING CHANGE:"; then
+            # Breaking change in body/footer - bump minor
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            echo "Breaking change detected in commit body - bumping minor version"
           elif echo "$COMMIT_MSG" | grep -qiE "^feat[\(:]"; then
             # Feature - bump minor
             MINOR=$((MINOR + 1))
@@ -99,7 +104,7 @@ jobs:
 
             # Find the highest pre-release number for this version
             PRERELEASE_NUM=1
-            EXISTING_PRERELEASE=$(git tag -l "v${NEW_VERSION}-${PRERELEASE_TAG}.*" | sort -V | tail -n 1)
+            EXISTING_PRERELEASE=$(git tag -l "v${NEW_VERSION}-${PRERELEASE_TAG}.[0-9]*" | sort -V | tail -n 1)
             if [ -n "$EXISTING_PRERELEASE" ]; then
               EXISTING_NUM=$(echo "$EXISTING_PRERELEASE" | sed -n "s/.*-${PRERELEASE_TAG}\.\([0-9]*\)/\1/p")
               if [ -n "$EXISTING_NUM" ]; then
