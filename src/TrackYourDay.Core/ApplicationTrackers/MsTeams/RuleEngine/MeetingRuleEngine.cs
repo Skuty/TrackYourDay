@@ -41,7 +41,7 @@ public sealed class MeetingRuleEngine : IMeetingRuleEngine
             var match = EvaluateRule(rule, processList);
             if (match is not null)
             {
-                _logger.LogInformation("Rule {RuleId} (Priority {Priority}) matched process: {ProcessName}, window: {WindowTitle}",
+                _logger.LogDebug("Rule {RuleId} (Priority {Priority}) matched process: {ProcessName}, window: {WindowTitle}",
                     rule.Id, rule.Priority, match.ProcessName, match.WindowTitle);
                 return match;
             }
@@ -85,14 +85,13 @@ public sealed class MeetingRuleEngine : IMeetingRuleEngine
 
         foreach (var exclusion in rule.Exclusions)
         {
-            var targetString = exclusion.MatchMode == PatternMatchMode.Regex || 
-                             rule.Criteria == MatchingCriteria.WindowTitleOnly
-                ? process.MainWindowTitle
-                : process.ProcessName;
-
-            if (exclusion.Matches(targetString, _logger))
+            var excludedByProcess = exclusion.Matches(process.ProcessName, _logger);
+            var excludedByWindow = exclusion.Matches(process.MainWindowTitle, _logger);
+            
+            if (excludedByProcess || excludedByWindow)
             {
-                _logger.LogDebug("Rule {RuleId} excluded by pattern: {Pattern}", rule.Id, exclusion.Pattern);
+                _logger.LogDebug("Rule {RuleId} excluded by pattern: {Pattern} (ProcessMatch: {ProcessMatch}, WindowMatch: {WindowMatch})", 
+                    rule.Id, exclusion.Pattern, excludedByProcess, excludedByWindow);
                 return false;
             }
         }

@@ -7,6 +7,7 @@
 @inject IDialogService dialogService
 @inject ISnackbar snackbar
 @inject IMeetingRuleEngine ruleEngine
+@implements IDisposable
 
 <MudStack Spacing="3">
     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
@@ -239,6 +240,7 @@
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
     private MeetingStatus? currentMeetingStatus;
+    private CancellationTokenSource? _refreshCts;
 
     protected override async Task OnInitializedAsync()
     {
@@ -485,14 +487,23 @@
 
     private async Task RefreshMeetingStatus()
     {
+        _refreshCts?.Cancel();
+        _refreshCts?.Dispose();
+        _refreshCts = new CancellationTokenSource();
+        var token = _refreshCts.Token;
+        
         isRefreshingStatus = true;
         try
         {
             await Task.Run(() =>
             {
+                token.ThrowIfCancellationRequested();
+                
                 var allProcesses = processService.GetProcesses()
                     .Select(p => new ProcessInfo(p.ProcessName, p.MainWindowTitle))
                     .ToList();
+
+                token.ThrowIfCancellationRequested();
 
                 if (allProcesses.Count == 0 || rules.Count == 0)
                 {
@@ -506,15 +517,27 @@
 
                 var match = ruleEngine.EvaluateRules(rules.AsReadOnly(), allProcesses, null);
                 
+                token.ThrowIfCancellationRequested();
+                
                 if (match != null)
                 {
                     var matchedRule = rules.FirstOrDefault(r => r.Id == match.MatchedRuleId);
+                    if (matchedRule == null)
+                    {
+                        currentMeetingStatus = new MeetingStatus
+                        {
+                            IsInMeeting = false,
+                            TotalProcessCount = allProcesses.Count
+                        };
+                        return;
+                    }
+                    
                     currentMeetingStatus = new MeetingStatus
                     {
                         IsInMeeting = true,
                         MeetingTitle = match.WindowTitle,
                         StartTime = match.MatchedAt,
-                        MatchedRulePriority = matchedRule?.Priority ?? 0,
+                        MatchedRulePriority = matchedRule.Priority,
                         TotalProcessCount = allProcesses.Count
                     };
                 }
@@ -526,7 +549,11 @@
                         TotalProcessCount = allProcesses.Count
                     };
                 }
-            });
+            }, token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when navigation occurs
         }
         catch (Exception ex)
         {
@@ -550,6 +577,12 @@
         if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
         
         return utcTime.ToLocalTime().ToString("MMM dd");
+    }
+    
+    public void Dispose()
+    {
+        _refreshCts?.Cancel();
+        _refreshCts?.Dispose();
     }
     
     private class MeetingStatus

@@ -7,12 +7,23 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams.Persistence;
 /// <summary>
 /// Persists meeting recognition rules using IGenericSettingsService.
 /// Handles JSON serialization, default rule creation, and match count updates.
+/// Thread-safe with locking and caching. Implements write-behind pattern for match count updates.
 /// </summary>
-public sealed class MeetingRuleRepository : IMeetingRuleRepository
+public sealed class MeetingRuleRepository : IMeetingRuleRepository, IDisposable
 {
     private const string SettingsKey = "MeetingRecognitionRules.v1";
+    private const int CacheTtlSeconds = 5;
+    private const int FlushIntervalMilliseconds = 60_000;
+    
     private readonly IGenericSettingsService _settingsService;
     private readonly ILogger<MeetingRuleRepository> _logger;
+    private readonly object _lock = new();
+    private readonly System.Timers.Timer _flushTimer;
+    private readonly Dictionary<Guid, (long count, DateTime timestamp)> _pendingMatchUpdates = new();
+    
+    private IReadOnlyList<MeetingRecognitionRule>? _cachedRules;
+    private DateTime _lastCacheTime = DateTime.MinValue;
+    private bool _disposed;
 
     public MeetingRuleRepository(
         IGenericSettingsService settingsService,
@@ -20,72 +31,128 @@ public sealed class MeetingRuleRepository : IMeetingRuleRepository
     {
         _settingsService = settingsService;
         _logger = logger;
+        
+        _flushTimer = new System.Timers.Timer(FlushIntervalMilliseconds);
+        _flushTimer.Elapsed += (_, _) => FlushPendingMatchUpdates();
+        _flushTimer.AutoReset = true;
+        _flushTimer.Start();
     }
 
     public IReadOnlyList<MeetingRecognitionRule> GetAllRules()
     {
-        try
+        lock (_lock)
         {
-            var rules = _settingsService.GetSetting<List<MeetingRecognitionRule>>(SettingsKey);
-            
-            if (rules is null || rules.Count == 0)
+            if (_cachedRules is not null && (DateTime.UtcNow - _lastCacheTime).TotalSeconds < CacheTtlSeconds)
             {
-                _logger.LogInformation("No rules found, creating default rule");
-                var defaultRule = CreateDefaultRule();
-                SaveRules([defaultRule]);
-                return [defaultRule];
+                return _cachedRules;
             }
 
-            var sortedRules = rules.OrderBy(r => r.Priority).ToList();
-            
-            for (int i = 0; i < sortedRules.Count; i++)
+            try
             {
-                var rule = sortedRules[i];
-                var updatedRule = rule;
+                var rules = _settingsService.GetSetting<List<MeetingRecognitionRule>>(SettingsKey);
+                
+                if (rules is null || rules.Count == 0)
+                {
+                    _logger.LogInformation("No rules found, creating default rule");
+                    var defaultRule = CreateDefaultRule();
+                    SaveRulesInternal([defaultRule]);
+                    _cachedRules = [defaultRule];
+                    _lastCacheTime = DateTime.UtcNow;
+                    return _cachedRules;
+                }
 
-                if (rule.ProcessNamePattern?.MatchMode == PatternMatchMode.Regex && rule.ProcessNamePattern.CompiledRegex is null)
+                var compiledRules = CompileRegexPatterns(rules);
+                
+                _cachedRules = compiledRules;
+                _lastCacheTime = DateTime.UtcNow;
+                return _cachedRules;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to load rules, returning default rule");
+                var defaultRule = CreateDefaultRule();
+                _cachedRules = [defaultRule];
+                _lastCacheTime = DateTime.UtcNow;
+                return _cachedRules;
+            }
+        }
+    }
+
+    private IReadOnlyList<MeetingRecognitionRule> CompileRegexPatterns(List<MeetingRecognitionRule> rules)
+    {
+        var compiledRules = new List<MeetingRecognitionRule>(rules.Count);
+        
+        foreach (var rule in rules)
+        {
+            var updatedRule = rule;
+
+            if (rule.ProcessNamePattern?.MatchMode == PatternMatchMode.Regex && rule.ProcessNamePattern.CompiledRegex is null)
+            {
+                try
                 {
                     var recompiled = PatternDefinition.CreateRegexPattern(rule.ProcessNamePattern.Pattern, rule.ProcessNamePattern.CaseSensitive);
                     updatedRule = updatedRule with { ProcessNamePattern = recompiled };
                 }
+                catch (ArgumentException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to compile process name regex for rule {RuleId}, pattern will not match", rule.Id);
+                }
+            }
 
-                if (rule.WindowTitlePattern?.MatchMode == PatternMatchMode.Regex && rule.WindowTitlePattern.CompiledRegex is null)
+            if (rule.WindowTitlePattern?.MatchMode == PatternMatchMode.Regex && rule.WindowTitlePattern.CompiledRegex is null)
+            {
+                try
                 {
                     var recompiled = PatternDefinition.CreateRegexPattern(rule.WindowTitlePattern.Pattern, rule.WindowTitlePattern.CaseSensitive);
                     updatedRule = updatedRule with { WindowTitlePattern = recompiled };
                 }
-
-                if (rule.Exclusions.Any(e => e.MatchMode == PatternMatchMode.Regex && e.CompiledRegex is null))
+                catch (ArgumentException ex)
                 {
-                    var recompiledExclusions = new List<PatternDefinition>();
-                    foreach (var exclusion in rule.Exclusions)
+                    _logger.LogWarning(ex, "Failed to compile window title regex for rule {RuleId}, pattern will not match", rule.Id);
+                }
+            }
+
+            if (rule.Exclusions.Any(e => e.MatchMode == PatternMatchMode.Regex && e.CompiledRegex is null))
+            {
+                var recompiledExclusions = new List<PatternDefinition>();
+                foreach (var exclusion in rule.Exclusions)
+                {
+                    if (exclusion.MatchMode == PatternMatchMode.Regex && exclusion.CompiledRegex is null)
                     {
-                        if (exclusion.MatchMode == PatternMatchMode.Regex && exclusion.CompiledRegex is null)
+                        try
                         {
                             recompiledExclusions.Add(PatternDefinition.CreateRegexPattern(exclusion.Pattern, exclusion.CaseSensitive));
                         }
-                        else
+                        catch (ArgumentException ex)
                         {
+                            _logger.LogWarning(ex, "Failed to compile exclusion regex for rule {RuleId}, pattern: {Pattern}", rule.Id, exclusion.Pattern);
                             recompiledExclusions.Add(exclusion);
                         }
                     }
-                    updatedRule = updatedRule with { Exclusions = recompiledExclusions };
+                    else
+                    {
+                        recompiledExclusions.Add(exclusion);
+                    }
                 }
-
-                sortedRules[i] = updatedRule;
+                updatedRule = updatedRule with { Exclusions = recompiledExclusions };
             }
 
-            return sortedRules;
+            compiledRules.Add(updatedRule);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to load rules, returning default rule");
-            var defaultRule = CreateDefaultRule();
-            return [defaultRule];
-        }
+
+        return compiledRules.OrderBy(r => r.Priority).ToList();
     }
 
     public void SaveRules(IReadOnlyList<MeetingRecognitionRule> rules)
+    {
+        lock (_lock)
+        {
+            SaveRulesInternal(rules);
+            _cachedRules = null;
+        }
+    }
+
+    private void SaveRulesInternal(IReadOnlyList<MeetingRecognitionRule> rules)
     {
         if (rules is null)
             throw new ArgumentNullException(nameof(rules));
@@ -94,12 +161,17 @@ public sealed class MeetingRuleRepository : IMeetingRuleRepository
         if (priorities.Distinct().Count() != priorities.Count)
             throw new ArgumentException("Rule priorities must be unique", nameof(rules));
 
+        var ids = rules.Select(r => r.Id).ToList();
+        if (ids.Distinct().Count() != ids.Count)
+            throw new ArgumentException("Rule IDs must be unique", nameof(rules));
+
         foreach (var rule in rules)
         {
             rule.Validate();
         }
 
-        _settingsService.SetSetting(SettingsKey, rules.ToList());
+        var sortedRules = rules.OrderBy(r => r.Priority).ToList();
+        _settingsService.SetSetting(SettingsKey, sortedRules);
         _settingsService.PersistSettings();
         
         _logger.LogInformation("Saved {RuleCount} rules", rules.Count);
@@ -107,17 +179,63 @@ public sealed class MeetingRuleRepository : IMeetingRuleRepository
 
     public void IncrementMatchCount(Guid ruleId, DateTime matchedAt)
     {
-        var rules = GetAllRules().ToList();
-        var ruleIndex = rules.FindIndex(r => r.Id == ruleId);
-        
-        if (ruleIndex == -1)
+        lock (_lock)
         {
-            _logger.LogWarning("Rule {RuleId} not found for match count increment", ruleId);
-            return;
+            if (_pendingMatchUpdates.ContainsKey(ruleId))
+            {
+                var existing = _pendingMatchUpdates[ruleId];
+                _pendingMatchUpdates[ruleId] = (existing.count + 1, matchedAt);
+            }
+            else
+            {
+                _pendingMatchUpdates[ruleId] = (1, matchedAt);
+            }
         }
+    }
 
-        rules[ruleIndex] = rules[ruleIndex].IncrementMatchCount(matchedAt);
-        SaveRules(rules);
+    private void FlushPendingMatchUpdates()
+    {
+        lock (_lock)
+        {
+            if (_pendingMatchUpdates.Count == 0)
+                return;
+
+            try
+            {
+                var rules = GetAllRules().ToList();
+                var hasChanges = false;
+
+                foreach (var (ruleId, update) in _pendingMatchUpdates)
+                {
+                    var ruleIndex = rules.FindIndex(r => r.Id == ruleId);
+                    
+                    if (ruleIndex == -1)
+                    {
+                        _logger.LogWarning("Rule {RuleId} not found for match count flush", ruleId);
+                        continue;
+                    }
+
+                    var currentRule = rules[ruleIndex];
+                    rules[ruleIndex] = currentRule with
+                    {
+                        MatchCount = currentRule.MatchCount + update.count,
+                        LastMatchedAt = update.timestamp
+                    };
+                    hasChanges = true;
+                }
+
+                if (hasChanges)
+                {
+                    SaveRulesInternal(rules);
+                    _pendingMatchUpdates.Clear();
+                    _logger.LogDebug("Flushed match count updates for {UpdateCount} rules", _pendingMatchUpdates.Count);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to flush pending match count updates");
+            }
+        }
     }
 
     public MeetingRecognitionRule CreateDefaultRule()
@@ -138,5 +256,19 @@ public sealed class MeetingRuleRepository : IMeetingRuleRepository
             MatchCount = 0,
             LastMatchedAt = null
         };
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        lock (_lock)
+        {
+            _flushTimer?.Stop();
+            FlushPendingMatchUpdates();
+            _flushTimer?.Dispose();
+            _disposed = true;
+        }
     }
 }

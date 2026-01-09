@@ -49,28 +49,32 @@ public sealed class ConfigurableMeetingDiscoveryStrategy : IMeetingDiscoveryStra
             .ToList();
 
         var ongoingMeetingRuleId = _stateCache.GetMatchedRuleId();
+        var ongoingMeeting = _stateCache.GetOngoingMeeting();
+        
         var match = _ruleEngine.EvaluateRules(rules, processes, ongoingMeetingRuleId);
 
-        if (match != null)
+        if (match is not null)
         {
+            if (ongoingMeeting is not null && ongoingMeetingRuleId == match.MatchedRuleId)
+            {
+                return ongoingMeeting;
+            }
+            
             if (ongoingMeetingRuleId != match.MatchedRuleId)
             {
                 _ruleRepository.IncrementMatchCount(match.MatchedRuleId, match.MatchedAt);
                 _stateCache.SetMatchedRuleId(match.MatchedRuleId);
             }
 
-            var ongoingMeeting = _stateCache.GetOngoingMeeting();
-            if (ongoingMeeting != null && ongoingMeetingRuleId == match.MatchedRuleId)
-            {
-                return ongoingMeeting;
-            }
-
-            return new StartedMeeting(Guid.NewGuid(), match.MatchedAt, match.WindowTitle);
+            var newMeeting = new StartedMeeting(Guid.NewGuid(), match.MatchedAt, match.WindowTitle);
+            _stateCache.SetOngoingMeeting(newMeeting);
+            return newMeeting;
         }
 
-        if (ongoingMeetingRuleId != null)
+        if (ongoingMeetingRuleId is not null)
         {
             _stateCache.SetMatchedRuleId(null);
+            _stateCache.SetOngoingMeeting(null);
         }
 
         return null;
