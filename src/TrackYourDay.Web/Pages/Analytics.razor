@@ -264,12 +264,6 @@
 
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
         
-        // Pre-fetch Jira data asynchronously if using JiraEnrichedSummaryStrategy
-        if (strategyInstance is JiraEnrichedSummaryStrategy jiraStrategy)
-        {
-            await jiraStrategy.PreloadJiraActivitiesAsync();
-        }
-        
         // Collect all trackable items for the date range
         var allItems = new List<TrackedActivity>();
         
