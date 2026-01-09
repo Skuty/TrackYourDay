@@ -11,7 +11,7 @@ public interface ILlmPromptService
     /// Includes related Jira issues in the prompt.
     /// </summary>
     /// <exception cref="InvalidOperationException">No activities found or template invalid</exception>
-    string GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate);
+    Task<string> GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate);
 
     /// <summary>
     /// Returns active templates ordered by DisplayOrder for dropdown.

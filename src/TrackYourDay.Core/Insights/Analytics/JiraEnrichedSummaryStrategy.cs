@@ -26,6 +26,9 @@ namespace TrackYourDay.Core.Insights.Analytics
         // Minimum word overlap score to consider activity related to Jira issue
         private const float MinimumSimilarityThreshold = 0.3f;
 
+        // Cached Jira activities
+        private List<JiraActivity>? _cachedJiraActivities;
+
         public JiraEnrichedSummaryStrategy(
             JiraTracker jiraTracker,
             ILogger<JiraEnrichedSummaryStrategy> logger)
@@ -35,6 +38,16 @@ namespace TrackYourDay.Core.Insights.Analytics
         }
 
         public string StrategyName => "Jira-Enriched Activity Groups";
+
+        /// <summary>
+        /// Pre-fetches Jira activities asynchronously. Call this before Generate() to avoid blocking.
+        /// </summary>
+        public async Task PreloadJiraActivitiesAsync()
+        {
+            var activities = await _jiraTracker.GetJiraActivities();
+            _cachedJiraActivities = activities.ToList();
+            _logger.LogInformation("Preloaded {Count} Jira activities", _cachedJiraActivities.Count);
+        }
 
         public IReadOnlyCollection<GroupedActivity> Generate(IEnumerable<TrackedActivity> items)
         {
@@ -47,8 +60,9 @@ namespace TrackYourDay.Core.Insights.Analytics
                 return Array.Empty<GroupedActivity>();
             }
 
-            // Get Jira activities for enrichment
-            var jiraActivities = _jiraTracker.GetJiraActivities().ToList();
+            // Use cached Jira activities or fetch synchronously if not preloaded
+            // Note: Synchronous fetch may cause UI blocking. Always call PreloadJiraActivitiesAsync() before Generate()
+            var jiraActivities = _cachedJiraActivities ?? _jiraTracker.GetJiraActivities().GetAwaiter().GetResult().ToList();
             _logger.LogInformation("Retrieved {Count} Jira activities for enrichment", jiraActivities.Count);
 
             // Group items by date

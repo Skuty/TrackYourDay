@@ -6,7 +6,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
     public interface IJiraActivityService
     {
-        List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate);
+        Task<List<JiraActivity>> GetActivitiesUpdatedAfter(DateTime updateDate);
         Task<bool> CheckConnection();
     }
 
@@ -23,7 +23,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             this.logger = logger;
         }
 
-        public List<JiraActivity> GetActivitiesUpdatedAfter(DateTime updateDate)
+        public async Task<List<JiraActivity>> GetActivitiesUpdatedAfter(DateTime updateDate)
         {
             if (this.stopFetchingDueToFailedRequests)
             {
@@ -34,10 +34,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             {
                 if (this.currentUser == null)
                 {
-                    this.currentUser = this.jiraRestApiClient.GetCurrentUser().GetAwaiter().GetResult();
+                    this.currentUser = await this.jiraRestApiClient.GetCurrentUser();
                 }
 
-                var issues = this.jiraRestApiClient.GetUserIssues(this.currentUser, updateDate).GetAwaiter().GetResult();
+                var issues = await this.jiraRestApiClient.GetUserIssues(this.currentUser, updateDate);
 
                 var activities = new List<JiraActivity>();
 
@@ -61,7 +61,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                     // Fetch and process worklogs for this issue
                     try
                     {
-                        var worklogs = this.jiraRestApiClient.GetIssueWorklogs(issue.Key, updateDate).GetAwaiter().GetResult();
+                        var worklogs = await this.jiraRestApiClient.GetIssueWorklogs(issue.Key, updateDate);
                         var worklogActivities = worklogs
                             .Where(w => w.Author?.DisplayName == this.currentUser.DisplayName)
                             .Select(w => CreateWorklogActivity(issue, w))

@@ -264,6 +264,12 @@
 
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
         
+        // Pre-fetch Jira data asynchronously if using JiraEnrichedSummaryStrategy
+        if (strategyInstance is JiraEnrichedSummaryStrategy jiraStrategy)
+        {
+            await jiraStrategy.PreloadJiraActivitiesAsync();
+        }
+        
         // Collect all trackable items for the date range
         var allItems = new List<TrackedActivity>();
         
@@ -323,7 +329,7 @@
             var start = DateOnly.FromDateTime(llmStartDate.Value);
             var end = DateOnly.FromDateTime(llmEndDate.Value);
             
-            generatedPrompt = llmPromptService.GeneratePrompt(selectedTemplateKey!, start, end);
+            generatedPrompt = await llmPromptService.GeneratePrompt(selectedTemplateKey!, start, end);
             characterCount = generatedPrompt.Length;
 
             snackbar.Add("Prompt generated successfully", Severity.Success);

@@ -25,7 +25,7 @@ public class LlmPromptService(
     private const int AverageRowBytes = 80;
     private const string KeyPrefix = "llm_template:";
 
-    public string GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate)
+    public async Task<string> GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(templateKey);
         if (startDate > endDate)
@@ -42,7 +42,7 @@ public class LlmPromptService(
             throw new InvalidOperationException($"No activities found for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
 
         var markdown = SerializeToMarkdown(activities);
-        var jiraIssuesMarkdown = GetJiraIssuesMarkdown(startDate, endDate);
+        var jiraIssuesMarkdown = await GetJiraIssuesMarkdown(startDate, endDate);
         
         if (!string.IsNullOrEmpty(jiraIssuesMarkdown))
         {
@@ -119,12 +119,12 @@ public class LlmPromptService(
 
     private static string GetStorageKey(string templateKey) => $"{KeyPrefix}{templateKey}";
 
-    private string GetJiraIssuesMarkdown(DateOnly startDate, DateOnly endDate)
+    private async Task<string> GetJiraIssuesMarkdown(DateOnly startDate, DateOnly endDate)
     {
         try
         {
             var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
-            var jiraActivities = jiraActivityService.GetActivitiesUpdatedAfter(startDateTime)
+            var jiraActivities = (await jiraActivityService.GetActivitiesUpdatedAfter(startDateTime))
                 .Where(a => DateOnly.FromDateTime(a.OccurrenceDate) >= startDate 
                          && DateOnly.FromDateTime(a.OccurrenceDate) <= endDate)
                 .OrderBy(a => a.OccurrenceDate)

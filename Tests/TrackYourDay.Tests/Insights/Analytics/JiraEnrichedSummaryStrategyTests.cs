@@ -44,7 +44,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             // Given
             var activities = new List<EndedActivity>();
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
-                .Returns(new List<JiraActivity>());
+                .ReturnsAsync(new List<JiraActivity>());
 
             // When
             var result = _sut.Generate(activities);
@@ -73,7 +73,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
-                .Returns(jiraActivities);
+                .ReturnsAsync(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -100,7 +100,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
-                .Returns(jiraActivities);
+                .ReturnsAsync(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -128,7 +128,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
-                .Returns(jiraActivities);
+                .ReturnsAsync(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -151,7 +151,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
-                .Returns(new List<JiraActivity>());
+                .ReturnsAsync(new List<JiraActivity>());
 
             // When
             var result = _sut.Generate(activities);
@@ -184,7 +184,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
-                .Returns(jiraActivities);
+                .ReturnsAsync(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -216,7 +216,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
-                .Returns(jiraActivities);
+                .ReturnsAsync(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);
@@ -244,7 +244,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
-                .Returns(jiraActivities);
+                .ReturnsAsync(jiraActivities);
 
             // When
             var result = _sut.Generate(activities);

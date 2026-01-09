@@ -19,7 +19,7 @@ namespace TrackYourDay.Tests.LlmPrompts;
 public class LlmPromptServiceTests
 {
     [Fact]
-    public void GivenValidTemplate_WhenGeneratingPrompt_ThenReturnsPromptWithActivityData()
+    public async Task GivenValidTemplate_WhenGeneratingPrompt_ThenReturnsPromptWithActivityData()
     {
         // Given
         var mockSettings = new Mock<IGenericSettingsRepository>();
@@ -37,7 +37,7 @@ public class LlmPromptServiceTests
         };
 
         mockSettings.Setup(r => r.GetSetting("llm_template:test")).Returns(JsonConvert.SerializeObject(template));
-        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).Returns([]);
+        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).ReturnsAsync([]);
 
         var sut = new LlmPromptService(mockSettings.Object, mockActivityRepo.Object, mockMeetingRepo.Object, 
             userTaskService, strategy, mockJiraService.Object, Mock.Of<ILogger<LlmPromptService>>());
@@ -48,7 +48,7 @@ public class LlmPromptServiceTests
         mockMeetingRepo.Setup(r => r.Find(It.IsAny<ISpecification<EndedMeeting>>())).Returns(Array.Empty<EndedMeeting>());
 
         // When
-        var result = sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
+        var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
 
         // Then
         result.Should().NotBeNullOrEmpty();
@@ -57,7 +57,7 @@ public class LlmPromptServiceTests
     }
 
     [Fact]
-    public void GivenNonExistentTemplate_WhenGeneratingPrompt_ThenThrowsInvalidOperationException()
+    public async Task GivenNonExistentTemplate_WhenGeneratingPrompt_ThenThrowsInvalidOperationException()
     {
         // Given
         var mockSettings = new Mock<IGenericSettingsRepository>();
@@ -70,14 +70,14 @@ public class LlmPromptServiceTests
             mockJiraService.Object, Mock.Of<ILogger<LlmPromptService>>());
 
         // When
-        var act = () => sut.GeneratePrompt("nonexistent", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
+        var act = async () => await sut.GeneratePrompt("nonexistent", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
 
         // Then
-        act.Should().Throw<InvalidOperationException>().WithMessage("*not found*");
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*not found*");
     }
 
     [Fact]
-    public void GivenJiraIssuesExist_WhenGeneratingPrompt_ThenIncludesJiraIssues()
+    public async Task GivenJiraIssuesExist_WhenGeneratingPrompt_ThenIncludesJiraIssues()
     {
         // Given
         var mockSettings = new Mock<IGenericSettingsRepository>();
@@ -101,7 +101,7 @@ public class LlmPromptServiceTests
             new(DateTime.Today.AddHours(9), "Created Issue PROJ-123 in Project: Implement feature"),
             new(DateTime.Today.AddHours(14), "Logged 2h on Issue PROJ-456 in Project: Bug fix")
         };
-        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).Returns(jiraActivities);
+        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).ReturnsAsync(jiraActivities);
 
         var sut = new LlmPromptService(mockSettings.Object, mockActivityRepo.Object, mockMeetingRepo.Object,
             userTaskService, strategy, mockJiraService.Object, Mock.Of<ILogger<LlmPromptService>>());
@@ -112,7 +112,7 @@ public class LlmPromptServiceTests
         mockMeetingRepo.Setup(r => r.Find(It.IsAny<ISpecification<EndedMeeting>>())).Returns(Array.Empty<EndedMeeting>());
 
         // When
-        var result = sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
+        var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
 
         // Then
         result.Should().Contain("Related Jira Issues");
@@ -123,7 +123,7 @@ public class LlmPromptServiceTests
     }
 
     [Fact]
-    public void GivenNoJiraIssuesExist_WhenGeneratingPrompt_ThenExcludesJiraSection()
+    public async Task GivenNoJiraIssuesExist_WhenGeneratingPrompt_ThenExcludesJiraSection()
     {
         // Given
         var mockSettings = new Mock<IGenericSettingsRepository>();
@@ -141,7 +141,7 @@ public class LlmPromptServiceTests
         };
 
         mockSettings.Setup(r => r.GetSetting("llm_template:test")).Returns(JsonConvert.SerializeObject(template));
-        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).Returns([]);
+        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).ReturnsAsync([]);
 
         var sut = new LlmPromptService(mockSettings.Object, mockActivityRepo.Object, mockMeetingRepo.Object,
             userTaskService, strategy, mockJiraService.Object, Mock.Of<ILogger<LlmPromptService>>());
@@ -152,14 +152,14 @@ public class LlmPromptServiceTests
         mockMeetingRepo.Setup(r => r.Find(It.IsAny<ISpecification<EndedMeeting>>())).Returns(Array.Empty<EndedMeeting>());
 
         // When
-        var result = sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
+        var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
 
         // Then
         result.Should().NotContain("Related Jira Issues");
     }
 
     [Fact]
-    public void GivenJiraServiceThrowsException_WhenGeneratingPrompt_ThenContinuesWithoutJiraIssues()
+    public async Task GivenJiraServiceThrowsException_WhenGeneratingPrompt_ThenContinuesWithoutJiraIssues()
     {
         // Given
         var mockSettings = new Mock<IGenericSettingsRepository>();
@@ -189,7 +189,7 @@ public class LlmPromptServiceTests
         mockMeetingRepo.Setup(r => r.Find(It.IsAny<ISpecification<EndedMeeting>>())).Returns(Array.Empty<EndedMeeting>());
 
         // When
-        var result = sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
+        var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
 
         // Then
         result.Should().NotBeNullOrEmpty();
@@ -198,7 +198,7 @@ public class LlmPromptServiceTests
     }
 
     [Fact]
-    public void GivenJiraIssuesOutsideDateRange_WhenGeneratingPrompt_ThenFiltersOutThoseIssues()
+    public async Task GivenJiraIssuesOutsideDateRange_WhenGeneratingPrompt_ThenFiltersOutThoseIssues()
     {
         // Given
         var mockSettings = new Mock<IGenericSettingsRepository>();
@@ -223,7 +223,7 @@ public class LlmPromptServiceTests
             new(DateTime.Today.AddHours(9), "Created Issue PROJ-123 in Project: Implement feature"),
             new(DateTime.Today.AddDays(7), "Future issue PROJ-888 next week")
         };
-        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).Returns(jiraActivities);
+        mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).ReturnsAsync(jiraActivities);
 
         var sut = new LlmPromptService(mockSettings.Object, mockActivityRepo.Object, mockMeetingRepo.Object,
             userTaskService, strategy, mockJiraService.Object, Mock.Of<ILogger<LlmPromptService>>());
@@ -234,7 +234,7 @@ public class LlmPromptServiceTests
         mockMeetingRepo.Setup(r => r.Find(It.IsAny<ISpecification<EndedMeeting>>())).Returns(Array.Empty<EndedMeeting>());
 
         // When
-        var result = sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
+        var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today), DateOnly.FromDateTime(DateTime.Today));
 
         // Then
         result.Should().Contain("PROJ-123");
