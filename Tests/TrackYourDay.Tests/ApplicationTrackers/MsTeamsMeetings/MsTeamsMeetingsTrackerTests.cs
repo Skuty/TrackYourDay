@@ -77,22 +77,25 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
             _msTeamsMeetingsTracker.RecognizeActivity();
 
             // Then
-            _publisherMock.Verify(x => x.Publish(It.IsAny<MeetingEndedEvent>(), CancellationToken.None), Times.Once);
-            _stateCacheMock.Verify(x => x.ClearMeetingState(), Times.Once);
+            _publisherMock.Verify(x => x.Publish(It.IsAny<MeetingEndConfirmationRequestedEvent>(), CancellationToken.None), Times.Once);
+            _stateCacheMock.Verify(x => x.SetPendingEndMeeting(It.IsAny<PendingEndMeeting>()), Times.Once);
+            _stateCacheMock.Verify(x => x.SetOngoingMeeting(null), Times.Once);
         }
 
         [Fact]
-        public void GivenEndedMeeting_WhenSettingDescription_ThenDescriptionIsSet()
+        public async Task GivenEndedMeeting_WhenSettingDescription_ThenDescriptionIsSet()
         {
             // Given
             var meetingGuid = Guid.NewGuid();
             var meeting = new StartedMeeting(meetingGuid, _clock.Now, "Test meeting");
             _stateCacheMock.Setup(x => x.GetOngoingMeeting()).Returns(meeting);
+            _stateCacheMock.Setup(x => x.GetPendingEndMeeting()).Returns((PendingEndMeeting?)null);
             _meetingDiscoveryStrategyMock.Setup(x => x.RecognizeMeeting()).Returns(meeting);
             _msTeamsMeetingsTracker.RecognizeActivity();
             
-            _meetingDiscoveryStrategyMock.Setup(x => x.RecognizeMeeting()).Returns((StartedMeeting?)null);
-            _msTeamsMeetingsTracker.RecognizeActivity();
+            var pending = new PendingEndMeeting { Meeting = meeting, DetectedAt = _clock.Now };
+            _stateCacheMock.Setup(x => x.GetPendingEndMeeting()).Returns(pending);
+            await _msTeamsMeetingsTracker.ConfirmMeetingEndAsync(meetingGuid);
 
             // When
             var endedMeeting = _msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
@@ -104,17 +107,19 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
         }
 
         [Fact]
-        public void GivenEndedMeetingWithoutDescription_WhenGettingDescription_ThenReturnsMeetingTitle()
+        public async Task GivenEndedMeetingWithoutDescription_WhenGettingDescription_ThenReturnsMeetingTitle()
         {
             // Given
             var meetingGuid = Guid.NewGuid();
             var meeting = new StartedMeeting(meetingGuid, _clock.Now, "Test meeting");
             _stateCacheMock.Setup(x => x.GetOngoingMeeting()).Returns(meeting);
+            _stateCacheMock.Setup(x => x.GetPendingEndMeeting()).Returns((PendingEndMeeting?)null);
             _meetingDiscoveryStrategyMock.Setup(x => x.RecognizeMeeting()).Returns(meeting);
             _msTeamsMeetingsTracker.RecognizeActivity();
             
-            _meetingDiscoveryStrategyMock.Setup(x => x.RecognizeMeeting()).Returns((StartedMeeting?)null);
-            _msTeamsMeetingsTracker.RecognizeActivity();
+            var pending = new PendingEndMeeting { Meeting = meeting, DetectedAt = _clock.Now };
+            _stateCacheMock.Setup(x => x.GetPendingEndMeeting()).Returns(pending);
+            await _msTeamsMeetingsTracker.ConfirmMeetingEndAsync(meetingGuid);
 
             // When
             var endedMeeting = _msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);

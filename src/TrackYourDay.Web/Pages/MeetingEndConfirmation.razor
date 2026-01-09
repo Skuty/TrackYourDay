@@ -1,12 +1,12 @@
 @page "/MeetingEndConfirmation/{MeetingGuidString}"
 
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams
-@using TrackYourDay.Core.ApplicationTrackers.MsTeams.Commands
 @using TrackYourDay.Core.MAUIProxy
 @using TrackYourDay.Web.Services
 @using MediatR
 
 @inject IMediator mediator
+@inject IMsTeamsMeetingService meetingService
 @inject IRecentMeetingsCache recentMeetingsCache
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
@@ -90,7 +90,7 @@
 
         try
         {
-            await mediator.Send(new ConfirmMeetingEndCommand(pendingMeeting.Meeting.Guid));
+            await meetingService.ConfirmMeetingEndAsync(pendingMeeting.Meeting.Guid);
             await CloseWindow();
         }
         catch (Exception)

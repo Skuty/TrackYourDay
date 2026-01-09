@@ -5,7 +5,7 @@ using TrackYourDay.Core.ApplicationTrackers.MsTeams.State;
 
 namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 {
-    public class MsTeamsMeetingTracker
+    public class MsTeamsMeetingTracker : IMsTeamsMeetingService
     {
         private readonly IClock _clock;
         private readonly IPublisher _publisher;
@@ -27,6 +27,36 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
             _stateCache = stateCache;
             _logger = logger;
             _endedMeetings = new List<EndedMeeting>();
+        }
+
+        public async Task ConfirmMeetingEndAsync(Guid meetingGuid, CancellationToken cancellationToken = default)
+        {
+            var pending = _stateCache.GetPendingEndMeeting();
+
+            if (pending == null || pending.Meeting.Guid != meetingGuid)
+            {
+                _logger.LogWarning("No pending meeting found for Guid: {MeetingGuid}", meetingGuid);
+                return;
+            }
+
+            var endedMeeting = pending.Meeting.End(_clock.Now);
+            _stateCache.ClearMeetingState();
+            _endedMeetings.Add(endedMeeting);
+
+            await _publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), cancellationToken)
+                .ConfigureAwait(false);
+
+            _logger.LogInformation("Meeting confirmed ended: {MeetingTitle}", endedMeeting.Title);
+        }
+
+        public StartedMeeting? GetOngoingMeeting()
+        {
+            return _stateCache.GetOngoingMeeting();
+        }
+
+        public PendingEndMeeting? GetPendingEndMeeting()
+        {
+            return _stateCache.GetPendingEndMeeting();
         }
 
         public void RecognizeActivity()
