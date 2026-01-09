@@ -11,8 +11,8 @@ TrackYourDay uses an automated release workflow that calculates version numbers 
 ### When Releases Happen
 
 Releases are automatically created when:
-- Code is pushed to the `main` branch (typically after merging a Pull Request)
-- The workflow can also be triggered manually with pre-release options
+- Code is pushed to the `main` branch (typically after merging a Pull Request) - **these are always pre-releases**
+- The workflow can also be triggered manually to create either pre-release or regular (stable) releases
 
 ### Version Calculation
 
@@ -44,28 +44,33 @@ The workflow analyzes the most recent commit message to determine how to bump th
 ### How It Works
 
 1. **Checkout**: The workflow checks out the repository with full git history
-2. **Fetch Tags**: All existing version tags are retrieved
-3. **Parse Latest Version**: The most recent version tag is parsed (e.g., `v1.42.2`)
+2. **Fetch Tags**: All existing version tags are retrieved and validated
+3. **Parse Latest Version**: The most recent valid version tag is parsed (e.g., `v1.42.2`)
 4. **Analyze Commit**: The latest commit message is examined for conventional commit prefixes
 5. **Calculate New Version**: Based on the prefix, the appropriate version component is bumped
-6. **Build & Test**: The application is built and all tests are run
-7. **Create Release**: A new GitHub release is created with the calculated version
+6. **Determine Release Type**: Automatic releases (push to main) are always pre-releases with `-alpha.x` suffix
+7. **Build & Test**: The application is built and all tests are run
+8. **Create Release**: A new GitHub release is created with the calculated version
 
-## Manual Pre-release Creation
+## Manual Release Creation
 
-To create a pre-release version:
+To create a release manually (pre-release or regular):
 
 1. Go to **Actions** tab in GitHub
 2. Select **Publish Release Automated** workflow
 3. Click **Run workflow**
-4. Check **"Is this a pre-release version?"**
-5. Enter a pre-release tag (e.g., `alpha`, `beta`, `rc`)
+4. To create a **pre-release**:
+   - Check **"Is this a pre-release version?"**
+   - Enter a pre-release tag (e.g., `alpha`, `beta`, `rc`)
+5. To create a **regular (stable) release**:
+   - Leave **"Is this a pre-release version?"** unchecked
 6. Click **Run workflow**
 
 The workflow will:
 - Calculate the next version as usual
-- Append the pre-release suffix (e.g., `1.43.0-alpha.1`)
-- Mark the release as a pre-release in GitHub
+- For pre-releases: append the pre-release suffix (e.g., `1.43.0-beta.1`)
+- For regular releases: use the version without suffix (e.g., `1.43.0`)
+- Mark the release appropriately in GitHub
 
 ### Pre-release Numbering
 

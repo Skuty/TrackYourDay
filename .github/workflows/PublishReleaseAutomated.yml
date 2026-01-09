@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch all history for all tags
 
@@ -35,11 +35,13 @@ jobs:
           # Fetch all tags
           git fetch --tags
 
-          # Get the latest tag
-          LATEST_TAG=$(git tag --sort=-version:refname | head -n 1)
-          echo "Latest tag: $LATEST_TAG"
+          # Get the latest valid tag matching v1.x.y or v1.x.y-prerelease.n
+          LATEST_TAG=$(git tag --sort=-version:refname \
+            | grep -E '^v1\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+\.[0-9]+)?$' \
+            | head -n 1 || true)
+          echo "Latest valid tag: $LATEST_TAG"
 
-          # If no tags exist, start with 1.0.0
+          # If no valid tags exist, start with 1.0.0
           if [ -z "$LATEST_TAG" ]; then
             MAJOR=1
             MINOR=0
@@ -52,6 +54,13 @@ jobs:
 
             # Split version into components
             IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+
+            # Validate that we have exactly three numeric components
+            if [ -z "$MAJOR" ] || [ -z "$MINOR" ] || [ -z "$PATCH" ] || \
+               ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]] || ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
+              echo "Error: Malformed version tag '$LATEST_TAG'. Expected format 'vMAJOR.MINOR.PATCH' (e.g., v1.2.3)." >&2
+              exit 1
+            fi
 
             # Ensure major is always 1
             MAJOR=1
@@ -74,17 +83,17 @@ jobs:
             MINOR=$((MINOR + 1))
             PATCH=0
             echo "Breaking change detected - bumping minor version"
-          elif echo "$COMMIT_MSG" | grep -qE "BREAKING CHANGE:"; then
+          elif echo "$COMMIT_MSG" | grep -qiE "BREAKING CHANGE:"; then
             # Breaking change in body/footer - bump minor
             MINOR=$((MINOR + 1))
             PATCH=0
             echo "Breaking change detected in commit body - bumping minor version"
-          elif echo "$COMMIT_MSG" | grep -qiE "^feat[:(]"; then
+          elif echo "$COMMIT_MSG" | grep -qiE '^feat(\(.+\))?:'; then
             # Feature - bump minor
             MINOR=$((MINOR + 1))
             PATCH=0
             echo "Feature detected - bumping minor version"
-          elif echo "$COMMIT_MSG" | grep -qiE "^(fix|chore|docs|style|refactor|test|perf)[:(]"; then
+          elif echo "$COMMIT_MSG" | grep -qiE '^(fix|chore|docs|style|refactor|test|perf)(\(.+\))?:'; then
             # Fix or other - bump patch
             PATCH=$((PATCH + 1))
             echo "Fix/patch detected - bumping patch version"
@@ -97,23 +106,41 @@ jobs:
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 
           # Handle pre-release
+          # Automatic releases (push to main) are always pre-releases
+          # Regular releases are only created via manual workflow trigger
           IS_PRERELEASE="false"
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Automatic release - always pre-release
             IS_PRERELEASE="true"
-            PRERELEASE_TAG="${{ github.event.inputs.prerelease_tag }}"
+            PRERELEASE_TAG="alpha"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual trigger
+            if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
+              IS_PRERELEASE="true"
+              PRERELEASE_TAG="${{ github.event.inputs.prerelease_tag }}"
+            else
+              # Regular release via manual trigger
+              IS_PRERELEASE="false"
+            fi
+          fi
 
+          # Add pre-release suffix if needed
+          if [ "$IS_PRERELEASE" = "true" ]; then
             # Find the highest pre-release number for this version
             PRERELEASE_NUM=1
             EXISTING_PRERELEASE=$(git tag -l "v${NEW_VERSION}-${PRERELEASE_TAG}.[0-9]*" | sort -V | tail -n 1)
             if [ -n "$EXISTING_PRERELEASE" ]; then
-              EXISTING_NUM=$(echo "$EXISTING_PRERELEASE" | sed -n "s/.*-${PRERELEASE_TAG}\.\([0-9]*\)/\1/p")
-              if [ -n "$EXISTING_NUM" ]; then
+              # Extract the numeric suffix after the last dot (e.g., v1.2.3-alpha.4 -> 4)
+              EXISTING_NUM="${EXISTING_PRERELEASE##*.}"
+              if echo "$EXISTING_NUM" | grep -Eq '^[0-9]+$'; then
                 PRERELEASE_NUM=$((EXISTING_NUM + 1))
               fi
             fi
 
             NEW_VERSION="${NEW_VERSION}-${PRERELEASE_TAG}.${PRERELEASE_NUM}"
             echo "Pre-release version: $NEW_VERSION"
+          else
+            echo "Regular release version: $NEW_VERSION"
           fi
 
           echo "New version: $NEW_VERSION"
@@ -126,7 +153,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Update Assembly version
         uses: managedcode/MAUIAppVersion@v1
