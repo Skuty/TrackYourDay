@@ -1,0 +1,190 @@
+name: Publish Release Automated
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'Is this a pre-release version?'
+        type: boolean
+        required: false
+        default: false
+      prerelease_tag:
+        description: 'Pre-release tag (e.g., alpha, beta, rc)'
+        required: false
+        default: 'alpha'
+
+jobs:
+  calculate-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for all tags
+      
+      - name: Calculate version
+        id: version
+        run: |
+          # Fetch all tags
+          git fetch --tags
+          
+          # Get the latest tag
+          LATEST_TAG=$(git tag --sort=-version:refname | head -n 1)
+          echo "Latest tag: $LATEST_TAG"
+          
+          # If no tags exist, start with 1.0.0
+          if [ -z "$LATEST_TAG" ]; then
+            MAJOR=1
+            MINOR=0
+            PATCH=0
+          else
+            # Parse the latest tag (remove 'v' prefix if present)
+            VERSION=${LATEST_TAG#v}
+            # Remove any pre-release suffix (e.g., -alpha.1)
+            BASE_VERSION=${VERSION%%-*}
+            
+            # Split version into components
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
+            
+            # Ensure major is always 1
+            MAJOR=1
+          fi
+          
+          echo "Current version: $MAJOR.$MINOR.$PATCH"
+          
+          # Get the commit message (either from the last commit or PR title)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Commit message: $COMMIT_MSG"
+          
+          # Determine version bump based on conventional commit prefix
+          # feat: → bump minor
+          # fix: → bump patch
+          # feat! or fix! or BREAKING CHANGE → bump minor (since major stays at 1)
+          # chore:, docs:, style:, refactor:, test:, perf: → bump patch
+          
+          if echo "$COMMIT_MSG" | grep -qiE "^(feat!|fix!|BREAKING CHANGE)"; then
+            # Breaking change - bump minor (since major always stays at 1)
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            echo "Breaking change detected - bumping minor version"
+          elif echo "$COMMIT_MSG" | grep -qiE "^feat[\(:][^!]"; then
+            # Feature - bump minor
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            echo "Feature detected - bumping minor version"
+          elif echo "$COMMIT_MSG" | grep -qiE "^(fix|chore|docs|style|refactor|test|perf)[\(:]"; then
+            # Fix or other - bump patch
+            PATCH=$((PATCH + 1))
+            echo "Fix/patch detected - bumping patch version"
+          else
+            # Default to patch bump
+            PATCH=$((PATCH + 1))
+            echo "No conventional commit prefix detected - bumping patch version"
+          fi
+          
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          
+          # Handle pre-release
+          IS_PRERELEASE="false"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
+            IS_PRERELEASE="true"
+            PRERELEASE_TAG="${{ github.event.inputs.prerelease_tag }}"
+            
+            # Find the highest pre-release number for this version
+            PRERELEASE_NUM=1
+            EXISTING_PRERELEASE=$(git tag -l "v${NEW_VERSION}-${PRERELEASE_TAG}.*" | sort -V | tail -n 1)
+            if [ -n "$EXISTING_PRERELEASE" ]; then
+              EXISTING_NUM=$(echo "$EXISTING_PRERELEASE" | sed -n "s/.*-${PRERELEASE_TAG}\.\([0-9]*\)/\1/p")
+              if [ -n "$EXISTING_NUM" ]; then
+                PRERELEASE_NUM=$((EXISTING_NUM + 1))
+              fi
+            fi
+            
+            NEW_VERSION="${NEW_VERSION}-${PRERELEASE_TAG}.${PRERELEASE_NUM}"
+            echo "Pre-release version: $NEW_VERSION"
+          fi
+          
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+  build-and-publish:
+    needs: calculate-version
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Update Assembly version
+        uses: managedcode/MAUIAppVersion@v1
+        with:
+          csproj: 'src\TrackYourDay.MAUI\TrackYourDay.MAUI.csproj'
+          version: ${{ github.run_number }}
+          displayVersion: ${{ needs.calculate-version.outputs.version }}
+      
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      
+      - name: Install MAUI workloads
+        run: dotnet workload install maui
+      
+      - name: Restore dependencies
+        run: dotnet restore
+      
+      - name: Build
+        run: dotnet build --configuration Release
+      
+      - name: Test
+        run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
+        env:
+          VSTEST_LOG_PATH: test_results.xml
+      
+      - name: Archive build output
+        uses: thedoctor0/zip-release@0.7.1
+        with:
+          type: 'zip'
+          directory: 'src\TrackYourDay.MAUI\bin\Release\net9.0-windows10.0.22000.0\win-x64'
+          filename: 'TrackYourDay_v${{ needs.calculate-version.outputs.version }}.zip'
+          exclusions: '*.git*'
+      
+      - name: Create tag
+        run: git tag v${{ needs.calculate-version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Push tag
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: 'main'
+          tags: true
+      
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'src\TrackYourDay.MAUI\bin\Release\net9.0-windows10.0.22000.0\win-x64\TrackYourDay_v${{ needs.calculate-version.outputs.version }}.zip'
+          artifactErrorsFailBuild: true
+          prerelease: ${{ needs.calculate-version.outputs.is_prerelease }}
+          tag: v${{ needs.calculate-version.outputs.version }}
+          artifactContentType: application/zip
+          body: |
+            ## TrackYourDay v${{ needs.calculate-version.outputs.version }}
+            
+            This release was automatically created based on conventional commit messages.
+            
+            ### Installation
+            1. Download the ZIP file below
+            2. Extract to your local drive
+            3. Run TrackYourDay.MAUI.exe
+            
+            For more information, see the [README](https://github.com/Skuty/TrackYourDay#readme).
