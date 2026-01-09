@@ -79,12 +79,12 @@ jobs:
             MINOR=$((MINOR + 1))
             PATCH=0
             echo "Breaking change detected in commit body - bumping minor version"
-          elif echo "$COMMIT_MSG" | grep -qiE "^feat[\(:]"; then
+          elif echo "$COMMIT_MSG" | grep -qiE "^feat[:(]"; then
             # Feature - bump minor
             MINOR=$((MINOR + 1))
             PATCH=0
             echo "Feature detected - bumping minor version"
-          elif echo "$COMMIT_MSG" | grep -qiE "^(fix|chore|docs|style|refactor|test|perf)[\(:]"; then
+          elif echo "$COMMIT_MSG" | grep -qiE "^(fix|chore|docs|style|refactor|test|perf)[:(]"; then
             # Fix or other - bump patch
             PATCH=$((PATCH + 1))
             echo "Fix/patch detected - bumping patch version"
