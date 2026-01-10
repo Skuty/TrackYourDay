@@ -1,0 +1,243 @@
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams.Configuration
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams.RuleEngine
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams
+@inject IProcessService processService
+@inject IMeetingRuleEngine ruleEngine
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            @if (isLoading)
+            {
+                <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-6">
+                    <MudProgressCircular Indeterminate="true" />
+                    <MudText>Testing rules against running processes...</MudText>
+                </MudStack>
+            }
+            else
+            {
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.h6">Test Results</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Found @allProcesses.Count process(es) to evaluate
+                        </MudText>
+                    </MudStack>
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Primary" 
+                               OnClick="RunTest"
+                               StartIcon="@Icons.Material.Filled.Refresh">
+                        Refresh
+                    </MudButton>
+                </MudStack>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
+                }
+
+                @if (allProcesses.Count == 0)
+                {
+                    <MudAlert Severity="Severity.Info">
+                        No processes are currently running to test against your rules.
+                    </MudAlert>
+                }
+                else
+                {
+                    <MudDataGrid T="ProcessTestResult" 
+                                 Items="@testResults" 
+                                 Dense="true"
+                                 Hover="true">
+                        <Columns>
+                            <PropertyColumn Property="x => x.ProcessName" Title="Process Name" />
+                            <PropertyColumn Property="x => x.WindowTitle" Title="Window Title">
+                                <CellTemplate>
+                                    @if (string.IsNullOrEmpty(context.Item.WindowTitle))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">(empty)</MudText>
+                                    }
+                                    else
+                                    {
+                                        <MudText Typo="Typo.body2" Class="text-truncate" Style="max-width: 400px;" title="@context.Item.WindowTitle">
+                                            @context.Item.WindowTitle
+                                        </MudText>
+                                    }
+                                </CellTemplate>
+                            </PropertyColumn>
+                            <TemplateColumn Title="Matched By" Sortable="false">
+                                <CellTemplate>
+                                    @if (context.Item.MatchedRuleId.HasValue)
+                                    {
+                                        var matchedRule = Rules.FirstOrDefault(r => r.Id == context.Item.MatchedRuleId);
+                                        if (matchedRule != null)
+                                        {
+                                            <MudChip Size="Size.Small" Color="Color.Success">
+                                                Rule #@matchedRule.Priority
+                                            </MudChip>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <MudChip Size="Size.Small" Color="Color.Default">
+                                            No match
+                                        </MudChip>
+                                    }
+                                </CellTemplate>
+                            </TemplateColumn>
+                        </Columns>
+                    </MudDataGrid>
+
+                    <MudDivider />
+
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.subtitle2">Rule Match Summary</MudText>
+                        
+                        @foreach (var rule in Rules)
+                        {
+                            var matchCount = testResults.Count(r => r.MatchedRuleId == rule.Id);
+                            var hasMatch = matchCount > 0;
+                            
+                            <MudPaper Elevation="1" Class="pa-2">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                        @if (hasMatch)
+                                        {
+                                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" />
+                                        }
+                                        else
+                                        {
+                                            <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" />
+                                        }
+                                        
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.body1">Rule #@rule.Priority</MudText>
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                @GetRuleSummary(rule)
+                                            </MudText>
+                                        </MudStack>
+                                    </MudStack>
+                                    
+                                    <MudChip Size="Size.Small" Color="@(hasMatch ? Color.Success : Color.Default)">
+                                        @matchCount match@(matchCount != 1 ? "es" : "")
+                                    </MudChip>
+                                </MudStack>
+                            </MudPaper>
+                        }
+                        
+                        @if (testResults.Any(r => !r.MatchedRuleId.HasValue))
+                        {
+                            <MudAlert Severity="Severity.Info" Dense="true">
+                                @testResults.Count(r => !r.MatchedRuleId.HasValue) process(es) did not match any rule.
+                            </MudAlert>
+                        }
+                    </MudStack>
+                }
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public IReadOnlyList<MeetingRecognitionRule> Rules { get; set; } = Array.Empty<MeetingRecognitionRule>();
+
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+    private List<ProcessInfo> allProcesses = new();
+    private List<ProcessTestResult> testResults = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RunTest();
+    }
+
+    private async Task RunTest()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        testResults.Clear();
+        StateHasChanged();
+
+        try
+        {
+            // Run in background to avoid UI blocking
+            await Task.Run(() =>
+            {
+                try
+                {
+                    // Get all processes - no filtering, let rules decide
+                    allProcesses = processService.GetProcesses()
+                        .Select(p => new ProcessInfo(p.ProcessName, p.MainWindowTitle))
+                        .ToList();
+
+                    // Test each process against rules
+                    foreach (var process in allProcesses)
+                    {
+                        var match = ruleEngine.EvaluateRules(
+                            Rules,
+                            new[] { process },
+                            ongoingMeetingRuleId: null);
+
+                        testResults.Add(new ProcessTestResult
+                        {
+                            ProcessName = process.ProcessName,
+                            WindowTitle = process.MainWindowTitle,
+                            MatchedRuleId = match?.MatchedRuleId
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessage = $"Failed to test rules: {ex.Message}";
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Test execution failed: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetRuleSummary(MeetingRecognitionRule rule)
+    {
+        var parts = new List<string>();
+
+        if (rule.ProcessNamePattern != null)
+        {
+            parts.Add($"Process: {rule.ProcessNamePattern.Pattern}");
+        }
+
+        if (rule.WindowTitlePattern != null)
+        {
+            parts.Add($"Window: {rule.WindowTitlePattern.Pattern}");
+        }
+
+        if (rule.Exclusions.Any())
+        {
+            parts.Add($"{rule.Exclusions.Count} exclusion(s)");
+        }
+
+        return string.Join(" | ", parts);
+    }
+
+    private void Close()
+    {
+        MudDialog.Close();
+    }
+
+    private class ProcessTestResult
+    {
+        public string ProcessName { get; set; } = string.Empty;
+        public string WindowTitle { get; set; } = string.Empty;
+        public Guid? MatchedRuleId { get; set; }
+    }
+}

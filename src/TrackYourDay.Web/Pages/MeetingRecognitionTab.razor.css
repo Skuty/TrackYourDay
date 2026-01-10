@@ -1,0 +1,33 @@
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.monospace-input {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+.draggable-rule {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.draggable-rule:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.draggable-rule:active {
+    cursor: grabbing !important;
+    opacity: 0.7;
+}
+
+::deep .mud-drop-zone {
+    min-height: 100px;
+}
+
+::deep .mud-drop-item-dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+}

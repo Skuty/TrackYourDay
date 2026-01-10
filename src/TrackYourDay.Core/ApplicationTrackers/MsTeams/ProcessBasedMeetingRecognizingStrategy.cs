@@ -3,6 +3,10 @@ using System.Diagnostics;
 
 namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 {
+    /// <summary>
+    /// Legacy meeting recognition strategy (hardcoded Polish exclusions).
+    /// </summary>
+    [Obsolete("Use ConfigurableMeetingDiscoveryStrategy for rule-based meeting recognition")]
     public class ProcessBasedMeetingRecognizingStrategy : IMeetingDiscoveryStrategy
     {
         private readonly ILogger<ProcessBasedMeetingRecognizingStrategy> logger;

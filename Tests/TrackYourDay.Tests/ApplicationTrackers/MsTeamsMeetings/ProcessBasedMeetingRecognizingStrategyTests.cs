@@ -28,9 +28,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
         public void GivenProcessNameAndWindowTitleMatchesTeamsMeeting_WhenAttemptingToRecognizeMeeting_ThenMeetingIsRecognized(string processName, string windowTitle)
         {
             // Arrange
-            this.mockProcessService.Setup(x => x.GetProcesses()).Returns(new List<ProcessInfo>
+            this.mockProcessService.Setup(x => x.GetProcesses()).Returns(new List<IProcess>
             {
-                new ProcessInfo
+                new ProcessSnapshot
                 {
                     ProcessName = processName,
                     MainWindowTitle = windowTitle
@@ -56,9 +56,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
         public void GivenProcessNameAndWindowTitleDoesNotMatchesTeamsMeeting_WhenAttemptingToRecognizeMeeting_ThenMeetingIsNotRecognized(string processName, string windowTitle)
         {
             // Arrange
-            this.mockProcessService.Setup(x => x.GetProcesses()).Returns(new List<ProcessInfo>
+            this.mockProcessService.Setup(x => x.GetProcesses()).Returns(new List<IProcess>
             {
-                new ProcessInfo
+                new ProcessSnapshot
                 {
                     ProcessName = processName,
                     MainWindowTitle = windowTitle
