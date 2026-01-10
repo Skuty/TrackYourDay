@@ -46,7 +46,7 @@ When changes are merged to the `main` branch, the GitHub Actions workflow automa
 1. Analyzes the commit message for conventional commit prefixes
 2. Calculates the next version number
 3. Builds and tests the application
-4. Creates a new **pre-release** with the appropriate version tag (e.g., `1.43.0-alpha.1`)
+4. Creates a new **pre-release** with the appropriate version tag (e.g., `1.43.0`)
 
 **Note:** Automatic releases are always marked as pre-releases. To create a regular (stable) release, manually trigger the workflow without the pre-release option.
 
@@ -61,16 +61,16 @@ The major version is always **1**. The minor and patch versions are calculated b
 
 ### Pre-release Versions
 
-- **Automatic releases** (push to main): Always created as pre-releases with `-alpha.x` suffix
+- **Automatic releases** (push to main): Always created as pre-releases (marked with pre-release flag in GitHub)
 - **Manual releases**: Can be created as either pre-release or regular (stable) release by triggering the workflow manually
-- Pre-release versions follow the format: `1.x.y-alpha.z` or `1.x.y-beta.z`
+- All versions follow the standard semantic versioning format: `1.x.y`
 
 ### Examples
 
 Starting from base version `1.42.2`:
-- Commit: `feat: add new activity tracker` → Version: 1.43.0-alpha.1 (pre-release)
-- Commit: `fix: resolve UI deadlock issue` → Version: 1.42.3-alpha.1 (pre-release)
-- Commit: `chore: update dependencies` → Version: 1.42.3-alpha.2 (pre-release)
+- Commit: `feat: add new activity tracker` → Version: 1.43.0 (marked as pre-release)
+- Commit: `fix: resolve UI deadlock issue` → Version: 1.42.3 (marked as pre-release)
+- Manual trigger without pre-release option: → Version: 1.43.0 (stable release)
 
 ## Contribution
 

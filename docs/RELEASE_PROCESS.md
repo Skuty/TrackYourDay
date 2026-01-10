@@ -39,7 +39,7 @@ The workflow analyzes the most recent commit message to determine how to bump th
 1. **Major version is always 1** - The major version will not change
 2. **Minor version bumps** reset the patch version to 0 (e.g., 1.42.5 → 1.43.0)
 3. **Patch version bumps** increment the patch number (e.g., 1.42.5 → 1.42.6)
-4. **Pre-release versions** include a suffix like `-alpha.1` or `-beta.2`
+4. **Pre-release status** is indicated by a boolean flag in GitHub releases, not by version suffix
 
 ### How It Works
 
@@ -48,9 +48,9 @@ The workflow analyzes the most recent commit message to determine how to bump th
 3. **Parse Latest Version**: The most recent valid version tag is parsed (e.g., `v1.42.2`)
 4. **Analyze Commit**: The latest commit message is examined for conventional commit prefixes
 5. **Calculate New Version**: Based on the prefix, the appropriate version component is bumped
-6. **Determine Release Type**: Automatic releases (push to main) are always pre-releases with `-alpha.x` suffix
+6. **Determine Release Type**: Automatic releases (push to main) are always marked as pre-releases
 7. **Build & Test**: The application is built and all tests are run
-8. **Create Release**: A new GitHub release is created with the calculated version
+8. **Create Release**: A new GitHub release is created with the calculated version and pre-release flag
 
 ## Manual Release Creation
 
@@ -61,23 +61,22 @@ To create a release manually (pre-release or regular):
 3. Click **Run workflow**
 4. To create a **pre-release**:
    - Check **"Is this a pre-release version?"**
-   - Enter a pre-release tag (e.g., `alpha`, `beta`, `rc`)
 5. To create a **regular (stable) release**:
    - Leave **"Is this a pre-release version?"** unchecked
 6. Click **Run workflow**
 
 The workflow will:
-- Calculate the next version as usual
-- For pre-releases: append the pre-release suffix (e.g., `1.43.0-beta.1`)
-- For regular releases: use the version without suffix (e.g., `1.43.0`)
-- Mark the release appropriately in GitHub
+- Calculate the next version as usual (e.g., `1.43.0`)
+- Mark the release as pre-release or stable based on your selection
+- Create a GitHub release with the appropriate flag
 
-### Pre-release Numbering
+### Version Tagging
 
-If multiple pre-releases are created for the same version, the number is automatically incremented:
-- First pre-release: `1.43.0-alpha.1`
-- Second pre-release: `1.43.0-alpha.2`
-- Third pre-release: `1.43.0-alpha.3`
+All versions use the same tagging format: `v1.x.y`
+
+The pre-release status is determined by:
+- **Automatic releases** (push to main): Always marked as pre-release in GitHub
+- **Manual releases**: Marked based on the workflow input parameter
 
 ## Writing Good Commit Messages
 

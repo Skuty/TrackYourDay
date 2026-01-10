@@ -11,10 +11,6 @@ on:
         type: boolean
         required: false
         default: false
-      prerelease_tag:
-        description: 'Pre-release tag (e.g., alpha, beta, rc)'
-        required: false
-        default: 'alpha'
 
 jobs:
   calculate-version:
@@ -35,9 +31,9 @@ jobs:
           # Fetch all tags
           git fetch --tags
 
-          # Get the latest valid tag matching v1.x.y or v1.x.y-prerelease.n
+          # Get the latest valid tag matching v1.x.y
           LATEST_TAG=$(git tag --sort=-version:refname \
-            | grep -E '^v1\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+\.[0-9]+)?$' \
+            | grep -E '^v1\.[0-9]+\.[0-9]+$' \
             | head -n 1 || true)
           echo "Latest valid tag: $LATEST_TAG"
 
@@ -49,8 +45,7 @@ jobs:
           else
             # Parse the latest tag (remove 'v' prefix if present)
             VERSION=${LATEST_TAG#v}
-            # Remove any pre-release suffix (e.g., -alpha.1)
-            BASE_VERSION=${VERSION%%-*}
+            BASE_VERSION=${VERSION}
 
             # Split version into components
             IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE_VERSION"
@@ -112,38 +107,18 @@ jobs:
           if [ "${{ github.event_name }}" = "push" ]; then
             # Automatic release - always pre-release
             IS_PRERELEASE="true"
-            PRERELEASE_TAG="alpha"
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Manual trigger
+            # Manual trigger - use the input parameter
             if [ "${{ github.event.inputs.prerelease }}" = "true" ]; then
               IS_PRERELEASE="true"
-              PRERELEASE_TAG="${{ github.event.inputs.prerelease_tag }}"
             else
               # Regular release via manual trigger
               IS_PRERELEASE="false"
             fi
           fi
 
-          # Add pre-release suffix if needed
-          if [ "$IS_PRERELEASE" = "true" ]; then
-            # Find the highest pre-release number for this version
-            PRERELEASE_NUM=1
-            EXISTING_PRERELEASE=$(git tag -l "v${NEW_VERSION}-${PRERELEASE_TAG}.[0-9]*" | sort -V | tail -n 1)
-            if [ -n "$EXISTING_PRERELEASE" ]; then
-              # Extract the numeric suffix after the last dot (e.g., v1.2.3-alpha.4 -> 4)
-              EXISTING_NUM="${EXISTING_PRERELEASE##*.}"
-              if echo "$EXISTING_NUM" | grep -Eq '^[0-9]+$'; then
-                PRERELEASE_NUM=$((EXISTING_NUM + 1))
-              fi
-            fi
-
-            NEW_VERSION="${NEW_VERSION}-${PRERELEASE_TAG}.${PRERELEASE_NUM}"
-            echo "Pre-release version: $NEW_VERSION"
-          else
-            echo "Regular release version: $NEW_VERSION"
-          fi
-
           echo "New version: $NEW_VERSION"
+          echo "Pre-release: $IS_PRERELEASE"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
 
