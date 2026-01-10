@@ -65,13 +65,6 @@ The major version is always **1**. The minor and patch versions are calculated b
 - **Manual releases**: Can be created as either pre-release or regular (stable) release by triggering the workflow manually
 - All versions follow the standard semantic versioning format: `1.x.y`
 
-### Examples
-
-Starting from base version `1.42.2`:
-- Commit: `feat: add new activity tracker` → Version: 1.43.0 (marked as pre-release)
-- Commit: `fix: resolve UI deadlock issue` → Version: 1.42.3 (marked as pre-release)
-- Manual trigger without pre-release option: → Version: 1.43.0 (stable release)
-
 ## Contribution
 
 For Feature Requests, Bugs, Questions or any topic, please create an [Issue](https://github.com/Skuty/TrackYourDay/issues/new/choose).  
