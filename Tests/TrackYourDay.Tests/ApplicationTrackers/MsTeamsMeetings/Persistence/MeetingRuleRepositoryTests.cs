@@ -147,16 +147,20 @@ public class MeetingRuleRepositoryTests
         _settingsServiceMock.Setup(x => x.GetSetting<List<MeetingRecognitionRule>>(It.IsAny<string>(), It.IsAny<List<MeetingRecognitionRule>>()))
             .Returns(new List<MeetingRecognitionRule> { rule });
         var matchedAt = DateTime.UtcNow;
+        
+        List<MeetingRecognitionRule>? capturedRules = null;
+        _settingsServiceMock.Setup(x => x.SetSetting(It.IsAny<string>(), It.IsAny<List<MeetingRecognitionRule>>()))
+            .Callback<string, List<MeetingRecognitionRule>>((_, rules) => capturedRules = rules);
 
         // When
         _repository.IncrementMatchCount(ruleId, matchedAt);
+        _repository.Dispose();
 
         // Then
-        _settingsServiceMock.Verify(x => x.SetSetting("MeetingRecognitionRules.v1", 
-            It.Is<List<MeetingRecognitionRule>>(list => 
-                list[0].MatchCount == 6 && 
-                list[0].LastMatchedAt == matchedAt)), 
-            Times.Once);
+        _settingsServiceMock.Verify(x => x.SetSetting("MeetingRecognitionRules.v1", It.IsAny<List<MeetingRecognitionRule>>()), Times.Once);
+        capturedRules.Should().NotBeNull();
+        capturedRules![0].MatchCount.Should().Be(6);
+        capturedRules[0].LastMatchedAt.Should().Be(matchedAt);
     }
 
     [Fact]
