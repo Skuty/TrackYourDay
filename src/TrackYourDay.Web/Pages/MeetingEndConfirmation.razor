@@ -96,13 +96,13 @@
             {
                 try
                 {
-                    await Task.Delay(TimeSpan.FromMinutes(2), _timeoutCts.Token);
+                    await Task.Delay(TimeSpan.FromMinutes(10), _timeoutCts.Token);
                     
                     await InvokeAsync(async () =>
                     {
                         if (!_userResponded)
                         {
-                            await ConfirmEnd();
+                            await StillOngoing();
                         }
                     });
                 }
