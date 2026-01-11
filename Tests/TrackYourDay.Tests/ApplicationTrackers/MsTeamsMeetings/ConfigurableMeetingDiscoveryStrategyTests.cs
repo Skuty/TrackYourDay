@@ -6,7 +6,6 @@ using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.Configuration;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.Persistence;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.RuleEngine;
-using TrackYourDay.Core.ApplicationTrackers.MsTeams.State;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings;
 
@@ -16,8 +15,6 @@ public class ConfigurableMeetingDiscoveryStrategyTests
     private readonly Mock<IMeetingRuleEngine> _ruleEngineMock;
     private readonly Mock<IMeetingRuleRepository> _ruleRepositoryMock;
     private readonly Mock<IProcessService> _processServiceMock;
-    private readonly Mock<IMeetingStateCache> _stateCacheMock;
-    private readonly Mock<IClock> _clockMock;
     private readonly Mock<ILogger<ConfigurableMeetingDiscoveryStrategy>> _loggerMock;
     private readonly ConfigurableMeetingDiscoveryStrategy _strategy;
     private readonly DateTime _now;
@@ -27,18 +24,13 @@ public class ConfigurableMeetingDiscoveryStrategyTests
         _ruleEngineMock = new Mock<IMeetingRuleEngine>();
         _ruleRepositoryMock = new Mock<IMeetingRuleRepository>();
         _processServiceMock = new Mock<IProcessService>();
-        _stateCacheMock = new Mock<IMeetingStateCache>();
-        _clockMock = new Mock<IClock>();
         _loggerMock = new Mock<ILogger<ConfigurableMeetingDiscoveryStrategy>>();
         _now = DateTime.UtcNow;
-        _clockMock.Setup(x => x.Now).Returns(_now);
 
         _strategy = new ConfigurableMeetingDiscoveryStrategy(
             _ruleEngineMock.Object,
             _ruleRepositoryMock.Object,
             _processServiceMock.Object,
-            _stateCacheMock.Object,
-            _clockMock.Object,
             _loggerMock.Object);
     }
 
@@ -49,10 +41,11 @@ public class ConfigurableMeetingDiscoveryStrategyTests
         _ruleRepositoryMock.Setup(x => x.GetAllRules()).Returns([]);
 
         // When
-        var result = _strategy.RecognizeMeeting();
+        var (meeting, ruleId) = _strategy.RecognizeMeeting(null, null);
 
         // Then
-        result.Should().BeNull();
+        meeting.Should().BeNull();
+        ruleId.Should().BeNull();
     }
 
     [Fact]
@@ -66,10 +59,11 @@ public class ConfigurableMeetingDiscoveryStrategyTests
             .Returns((MeetingMatch?)null);
 
         // When
-        var result = _strategy.RecognizeMeeting();
+        var (meeting, ruleId) = _strategy.RecognizeMeeting(null, null);
 
         // Then
-        result.Should().BeNull();
+        meeting.Should().BeNull();
+        ruleId.Should().BeNull();
     }
 
     [Fact]
@@ -79,8 +73,6 @@ public class ConfigurableMeetingDiscoveryStrategyTests
         var rule = CreateTestRule();
         _ruleRepositoryMock.Setup(x => x.GetAllRules()).Returns([rule]);
         _processServiceMock.Setup(x => x.GetProcesses()).Returns([new ProcessSnapshot { ProcessName = "ms-teams", MainWindowTitle = "Test Meeting" }]);
-        _stateCacheMock.Setup(x => x.GetMatchedRuleId()).Returns((Guid?)null);
-        _stateCacheMock.Setup(x => x.GetOngoingMeeting()).Returns((StartedMeeting?)null);
 
         var match = new MeetingMatch
         {
@@ -93,14 +85,14 @@ public class ConfigurableMeetingDiscoveryStrategyTests
             .Returns(match);
 
         // When
-        var result = _strategy.RecognizeMeeting();
+        var (meeting, ruleId) = _strategy.RecognizeMeeting(null, null);
 
         // Then
-        result.Should().NotBeNull();
-        result!.Title.Should().Be("Test Meeting");
-        result.StartDate.Should().Be(_now);
+        meeting.Should().NotBeNull();
+        meeting!.Title.Should().Be("Test Meeting");
+        meeting.StartDate.Should().Be(_now);
+        ruleId.Should().Be(rule.Id);
         _ruleRepositoryMock.Verify(x => x.IncrementMatchCount(rule.Id, _now), Times.Once);
-        _stateCacheMock.Verify(x => x.SetMatchedRuleId(rule.Id), Times.Once);
     }
 
     [Fact]
@@ -112,8 +104,6 @@ public class ConfigurableMeetingDiscoveryStrategyTests
         
         _ruleRepositoryMock.Setup(x => x.GetAllRules()).Returns([rule]);
         _processServiceMock.Setup(x => x.GetProcesses()).Returns([new ProcessSnapshot { ProcessName = "ms-teams", MainWindowTitle = "Test Meeting" }]);
-        _stateCacheMock.Setup(x => x.GetMatchedRuleId()).Returns(rule.Id);
-        _stateCacheMock.Setup(x => x.GetOngoingMeeting()).Returns(existingMeeting);
 
         var match = new MeetingMatch
         {
@@ -126,10 +116,11 @@ public class ConfigurableMeetingDiscoveryStrategyTests
             .Returns(match);
 
         // When
-        var result = _strategy.RecognizeMeeting();
+        var (meeting, ruleId) = _strategy.RecognizeMeeting(existingMeeting, rule.Id);
 
         // Then
-        result.Should().Be(existingMeeting);
+        meeting.Should().Be(existingMeeting);
+        ruleId.Should().Be(rule.Id);
         _ruleRepositoryMock.Verify(x => x.IncrementMatchCount(It.IsAny<Guid>(), It.IsAny<DateTime>()), Times.Never);
     }
 
@@ -143,8 +134,6 @@ public class ConfigurableMeetingDiscoveryStrategyTests
         
         _ruleRepositoryMock.Setup(x => x.GetAllRules()).Returns([rule1, rule2]);
         _processServiceMock.Setup(x => x.GetProcesses()).Returns([new ProcessSnapshot { ProcessName = "ms-teams", MainWindowTitle = "New Meeting" }]);
-        _stateCacheMock.Setup(x => x.GetMatchedRuleId()).Returns(rule1.Id);
-        _stateCacheMock.Setup(x => x.GetOngoingMeeting()).Returns(existingMeeting);
 
         var match = new MeetingMatch
         {
@@ -157,32 +146,33 @@ public class ConfigurableMeetingDiscoveryStrategyTests
             .Returns(match);
 
         // When
-        var result = _strategy.RecognizeMeeting();
+        var (meeting, ruleId) = _strategy.RecognizeMeeting(existingMeeting, rule1.Id);
 
         // Then
-        result.Should().NotBe(existingMeeting);
-        result!.Title.Should().Be("New Meeting");
+        meeting.Should().NotBe(existingMeeting);
+        meeting!.Title.Should().Be("New Meeting");
+        ruleId.Should().Be(rule2.Id);
         _ruleRepositoryMock.Verify(x => x.IncrementMatchCount(rule2.Id, _now), Times.Once);
-        _stateCacheMock.Verify(x => x.SetMatchedRuleId(rule2.Id), Times.Once);
     }
 
     [Fact]
-    public void GivenNoMatch_WhenOngoingMeetingExists_ThenClearsMatchedRuleId()
+    public void GivenNoMatch_WhenOngoingMeetingExists_ThenReturnsNull()
     {
         // Given
         var rule = CreateTestRule();
+        var existingMeeting = new StartedMeeting(Guid.NewGuid(), _now.AddMinutes(-5), "Existing Meeting");
+        
         _ruleRepositoryMock.Setup(x => x.GetAllRules()).Returns([rule]);
         _processServiceMock.Setup(x => x.GetProcesses()).Returns([]);
-        _stateCacheMock.Setup(x => x.GetMatchedRuleId()).Returns(rule.Id);
         _ruleEngineMock.Setup(x => x.EvaluateRules(It.IsAny<IReadOnlyList<MeetingRecognitionRule>>(), It.IsAny<IEnumerable<ProcessInfo>>(), rule.Id))
             .Returns((MeetingMatch?)null);
 
         // When
-        var result = _strategy.RecognizeMeeting();
+        var (meeting, ruleId) = _strategy.RecognizeMeeting(existingMeeting, rule.Id);
 
         // Then
-        result.Should().BeNull();
-        _stateCacheMock.Verify(x => x.SetMatchedRuleId(null), Times.Once);
+        meeting.Should().BeNull();
+        ruleId.Should().BeNull();
     }
 
     [Fact]
@@ -198,7 +188,6 @@ public class ConfigurableMeetingDiscoveryStrategyTests
             new ProcessSnapshot { ProcessName = "ms-teams", MainWindowTitle = "Meeting 2" }
         };
         _processServiceMock.Setup(x => x.GetProcesses()).Returns(mockProcesses);
-        _stateCacheMock.Setup(x => x.GetMatchedRuleId()).Returns((Guid?)null);
 
         ProcessInfo[]? capturedProcesses = null;
         _ruleEngineMock.Setup(x => x.EvaluateRules(
@@ -210,7 +199,7 @@ public class ConfigurableMeetingDiscoveryStrategyTests
             .Returns((MeetingMatch?)null);
 
         // When
-        _strategy.RecognizeMeeting();
+        _strategy.RecognizeMeeting(null, null);
 
         // Then
         capturedProcesses.Should().HaveCount(2);

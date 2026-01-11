@@ -1,132 +1,183 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.PublicEvents;
-using TrackYourDay.Core.ApplicationTrackers.MsTeams.State;
 
-namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
+namespace TrackYourDay.Core.ApplicationTrackers.MsTeams;
+
+/// <summary>
+/// Singleton tracker for MS Teams meeting lifecycle.
+/// Blocking state machine: PENDING state blocks all new meeting recognition.
+/// Auto-confirmation handled in UI layer (not Core).
+/// </summary>
+public sealed class MsTeamsMeetingTracker : IMsTeamsMeetingService
 {
-    public class MsTeamsMeetingTracker : IMsTeamsMeetingService
+    private readonly IClock _clock;
+    private readonly IPublisher _publisher;
+    private readonly IMeetingDiscoveryStrategy _meetingDiscoveryStrategy;
+    private readonly ILogger<MsTeamsMeetingTracker> _logger;
+    
+    // State fields (thread-safe via lock)
+    private readonly object _lock = new();
+    private StartedMeeting? _ongoingMeeting;
+    private PendingEndMeeting? _pendingEndMeeting;
+    private Guid? _matchedRuleId;
+    private readonly List<EndedMeeting> _endedMeetings = [];
+
+    public MsTeamsMeetingTracker(
+        IClock clock, 
+        IPublisher publisher, 
+        IMeetingDiscoveryStrategy meetingDiscoveryStrategy,
+        ILogger<MsTeamsMeetingTracker> logger)
     {
-        private readonly IClock _clock;
-        private readonly IPublisher _publisher;
-        private readonly IMeetingDiscoveryStrategy _meetingDiscoveryStrategy;
-        private readonly IMeetingStateCache _stateCache;
-        private readonly ILogger<MsTeamsMeetingTracker> _logger;
-        private readonly List<EndedMeeting> _endedMeetings;
+        _clock = clock;
+        _publisher = publisher;
+        _meetingDiscoveryStrategy = meetingDiscoveryStrategy;
+        _logger = logger;
+    }
 
-        public MsTeamsMeetingTracker(
-            IClock clock, 
-            IPublisher publisher, 
-            IMeetingDiscoveryStrategy meetingDiscoveryStrategy,
-            IMeetingStateCache stateCache,
-            ILogger<MsTeamsMeetingTracker> logger)
+    public void RecognizeActivity()
+    {
+        lock (_lock)
         {
-            _clock = clock;
-            _publisher = publisher;
-            _meetingDiscoveryStrategy = meetingDiscoveryStrategy;
-            _stateCache = stateCache;
-            _logger = logger;
-            _endedMeetings = new List<EndedMeeting>();
-        }
+            var pendingEnd = _pendingEndMeeting;
 
-        public async Task ConfirmMeetingEndAsync(Guid meetingGuid, CancellationToken cancellationToken = default)
-        {
-            var pending = _stateCache.GetPendingEndMeeting();
-
-            if (pending == null || pending.Meeting.Guid != meetingGuid)
-            {
-                _logger.LogWarning("No pending meeting found for Guid: {MeetingGuid}", meetingGuid);
-                return;
-            }
-
-            var endedMeeting = pending.Meeting.End(_clock.Now);
-            _stateCache.ClearMeetingState();
-            _endedMeetings.Add(endedMeeting);
-
-            await _publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), cancellationToken)
-                .ConfigureAwait(false);
-
-            _logger.LogInformation("Meeting confirmed ended: {MeetingTitle}", endedMeeting.Title);
-        }
-
-        public StartedMeeting? GetOngoingMeeting()
-        {
-            return _stateCache.GetOngoingMeeting();
-        }
-
-        public PendingEndMeeting? GetPendingEndMeeting()
-        {
-            return _stateCache.GetPendingEndMeeting();
-        }
-
-        public void RecognizeActivity()
-        {
-            var recognizedMeeting = _meetingDiscoveryStrategy.RecognizeMeeting();
-            var ongoingMeeting = _stateCache.GetOngoingMeeting();
-            var pendingEnd = _stateCache.GetPendingEndMeeting();
-
-            // Handle pending end confirmation
+            // PENDING STATE: Blocking behavior - do not recognize any new meetings
             if (pendingEnd != null)
             {
-                // Meeting recognized again - cancel pending end
-                if (recognizedMeeting is StartedMeeting && recognizedMeeting.Title == pendingEnd.Meeting.Title)
+                var (recognizedMeeting, _) = _meetingDiscoveryStrategy.RecognizeMeeting(_ongoingMeeting, _matchedRuleId);
+                
+                // Case A: Same meeting re-detected → Cancel pending end
+                if (recognizedMeeting != null && recognizedMeeting.Title == pendingEnd.Meeting.Title)
                 {
-                    _stateCache.SetPendingEndMeeting(null);
-                    _logger.LogInformation("Meeting end cancelled - meeting still active: {MeetingTitle}", pendingEnd.Meeting.Title);
+                    _pendingEndMeeting = null;
+                    _ongoingMeeting = pendingEnd.Meeting;
+                    _logger.LogInformation("Meeting end cancelled: {Title}", pendingEnd.Meeting.Title);
                     return;
                 }
-
-                // Pending end expired - auto-confirm
-                if (pendingEnd.IsExpired(_clock))
+                
+                // Case B: Different meeting detected → BLOCK (log warning)
+                if (recognizedMeeting != null && recognizedMeeting.Title != pendingEnd.Meeting.Title)
                 {
-                    var endedMeeting = pendingEnd.Meeting.End(_clock.Now);
-                    _stateCache.ClearMeetingState();
-                    _endedMeetings.Add(endedMeeting);
-                    _publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), CancellationToken.None);
-                    _logger.LogInformation("Meeting auto-confirmed ended after timeout: {MeetingTitle}", endedMeeting.Title);
+                    _logger.LogWarning(
+                        "New meeting '{NewTitle}' detected while awaiting confirmation for '{OldTitle}'. " +
+                        "New meeting ignored until user responds.",
+                        recognizedMeeting.Title,
+                        pendingEnd.Meeting.Title
+                    );
                     return;
                 }
-
-                // Still waiting for confirmation
+                
+                // Case C: No meeting detected → Continue waiting
                 return;
             }
 
-            // No meeting ongoing, new meeting detected
-            if (ongoingMeeting is null && recognizedMeeting is StartedMeeting newMeeting)
+            // Not in PENDING state - proceed with recognition
+            var (recognized, matchedRuleId) = _meetingDiscoveryStrategy.RecognizeMeeting(_ongoingMeeting, _matchedRuleId);
+            var ongoing = _ongoingMeeting;
+
+            // IDLE STATE: No ongoing meeting
+            if (ongoing == null && recognized != null)
             {
-                _stateCache.SetOngoingMeeting(newMeeting);
-                _publisher.Publish(new MeetingStartedEvent(Guid.NewGuid(), newMeeting), CancellationToken.None);
-                _logger.LogInformation("Meeting started: {MeetingTitle}", newMeeting.Title);
+                _ongoingMeeting = recognized;
+                _matchedRuleId = matchedRuleId;
+                _publisher.Publish(new MeetingStartedEvent(Guid.NewGuid(), recognized), CancellationToken.None);
+                _logger.LogInformation("Meeting started: {Title}", recognized.Title);
                 return;
             }
 
-            // Ongoing meeting still recognized
-            if (ongoingMeeting is not null 
-                && recognizedMeeting is StartedMeeting 
-                && recognizedMeeting.Title == ongoingMeeting.Title)
+            // ACTIVE STATE: Ongoing meeting continues
+            if (ongoing != null && recognized != null && recognized.Title == ongoing.Title)
             {
                 return;
             }
 
-            // Ongoing meeting no longer detected - request confirmation
-            if (ongoingMeeting is not null && recognizedMeeting is null)
+            // ACTIVE → PENDING: Meeting window closed
+            if (ongoing != null && recognized == null)
             {
                 var pending = new PendingEndMeeting
                 {
-                    Meeting = ongoingMeeting,
+                    Meeting = ongoing,
                     DetectedAt = _clock.Now
                 };
-                _stateCache.SetPendingEndMeeting(pending);
-                _stateCache.SetOngoingMeeting(null);
-                _publisher.Publish(new MeetingEndConfirmationRequestedEvent(Guid.NewGuid(), pending), CancellationToken.None);
-                _logger.LogInformation("Meeting end detected, awaiting confirmation: {MeetingTitle}", ongoingMeeting.Title);
-                return;
+                _pendingEndMeeting = pending;
+                _ongoingMeeting = null;
+                
+                _publisher.Publish(
+                    new MeetingEndConfirmationRequestedEvent(Guid.NewGuid(), pending),
+                    CancellationToken.None
+                );
+                
+                _logger.LogInformation("Meeting end detected, awaiting confirmation: {Title}", ongoing.Title);
             }
         }
+    }
 
-        public IReadOnlyCollection<EndedMeeting> GetEndedMeetings()
+    public async Task ConfirmMeetingEndAsync(
+        Guid meetingGuid,
+        string? customDescription = null,
+        CancellationToken cancellationToken = default)
+    {
+        EndedMeeting? endedMeeting;
+        
+        lock (_lock)
         {
-            return _endedMeetings.AsReadOnly();
+            var pending = _pendingEndMeeting;
+
+            if (pending == null || pending.Meeting.Guid != meetingGuid)
+            {
+                _logger.LogWarning("No pending meeting for Guid: {Guid}", meetingGuid);
+                return;
+            }
+
+            endedMeeting = pending.Meeting.End(_clock.Now);
+
+            if (!string.IsNullOrWhiteSpace(customDescription))
+            {
+                if (customDescription.Length > 500)
+                    throw new ArgumentException("Description cannot exceed 500 characters", nameof(customDescription));
+                
+                endedMeeting.SetCustomDescription(customDescription);
+            }
+
+            _pendingEndMeeting = null;
+            _ongoingMeeting = null;
+            _matchedRuleId = null;
+            _endedMeetings.Add(endedMeeting);
         }
+
+        await _publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), cancellationToken)
+            .ConfigureAwait(false);
+        
+        _logger.LogInformation("Meeting confirmed: {Description}", endedMeeting.GetDescription());
+    }
+
+    public void CancelPendingEnd(Guid meetingGuid)
+    {
+        lock (_lock)
+        {
+            var pending = _pendingEndMeeting;
+
+            if (pending?.Meeting.Guid == meetingGuid)
+            {
+                _ongoingMeeting = pending.Meeting;
+                _pendingEndMeeting = null;
+                _logger.LogInformation("Pending end cancelled: {Title}", pending.Meeting.Title);
+            }
+        }
+    }
+
+    public StartedMeeting? GetOngoingMeeting()
+    {
+        lock (_lock) return _ongoingMeeting;
+    }
+
+    public PendingEndMeeting? GetPendingEndMeeting()
+    {
+        lock (_lock) return _pendingEndMeeting;
+    }
+
+    public IReadOnlyCollection<EndedMeeting> GetEndedMeetings()
+    {
+        lock (_lock) return _endedMeetings.AsReadOnly();
     }
 }

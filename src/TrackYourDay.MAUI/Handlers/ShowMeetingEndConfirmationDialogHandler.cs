@@ -8,6 +8,7 @@ namespace TrackYourDay.MAUI.Handlers;
 
 /// <summary>
 /// Shows confirmation dialog when meeting end is detected and caches pending meeting.
+/// Window allows minimize and can be moved behind other windows.
 /// </summary>
 internal sealed class ShowMeetingEndConfirmationDialogHandler 
     : INotificationHandler<MeetingEndConfirmationRequestedEvent>
@@ -24,7 +25,7 @@ internal sealed class ShowMeetingEndConfirmationDialogHandler
         _cache.AddPending(notification.PendingMeeting);
         
         var path = $"/MeetingEndConfirmation/{notification.PendingMeeting.Meeting.Guid}";
-        MauiPageFactory.OpenWebPageInNewWindow(path, 500, 300);
+        MauiPageFactory.OpenWebPageInNewWindow(path, 600, 340, allowMinimize: true, alwaysOnTop: false);
 
         return Task.CompletedTask;
     }

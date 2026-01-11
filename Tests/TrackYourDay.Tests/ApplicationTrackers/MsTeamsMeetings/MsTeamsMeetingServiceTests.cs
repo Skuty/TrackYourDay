@@ -5,7 +5,6 @@ using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.PublicEvents;
-using TrackYourDay.Core.ApplicationTrackers.MsTeams.State;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings;
 
@@ -14,10 +13,9 @@ public sealed class MsTeamsMeetingServiceTests
 {
     private readonly Mock<IClock> _clockMock;
     private readonly Mock<IPublisher> _publisherMock;
-    private readonly IMeetingStateCache _stateCache;
     private readonly Mock<ILogger<MsTeamsMeetingTracker>> _loggerMock;
     private readonly Mock<IMeetingDiscoveryStrategy> _discoveryStrategyMock;
-    private readonly IMsTeamsMeetingService _service;
+    private readonly MsTeamsMeetingTracker _tracker;
 
     public MsTeamsMeetingServiceTests()
     {
@@ -25,15 +23,13 @@ public sealed class MsTeamsMeetingServiceTests
         _clockMock.Setup(x => x.Now).Returns(new DateTime(2026, 1, 7, 10, 30, 0));
         
         _publisherMock = new Mock<IPublisher>();
-        _stateCache = new MeetingStateCache();
         _loggerMock = new Mock<ILogger<MsTeamsMeetingTracker>>();
         _discoveryStrategyMock = new Mock<IMeetingDiscoveryStrategy>();
         
-        _service = new MsTeamsMeetingTracker(
+        _tracker = new MsTeamsMeetingTracker(
             _clockMock.Object,
             _publisherMock.Object,
             _discoveryStrategyMock.Object,
-            _stateCache,
             _loggerMock.Object);
     }
 
@@ -43,15 +39,22 @@ public sealed class MsTeamsMeetingServiceTests
         // Given
         var meetingGuid = Guid.NewGuid();
         var meeting = new StartedMeeting(meetingGuid, new DateTime(2026, 1, 7, 10, 0, 0), "Test Meeting");
-        var pending = new PendingEndMeeting
-        {
-            Meeting = meeting,
-            DetectedAt = new DateTime(2026, 1, 7, 10, 25, 0)
-        };
-        _stateCache.SetPendingEndMeeting(pending);
+        var matchedRuleId = Guid.NewGuid();
+        
+        _discoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _tracker.RecognizeActivity();
+        
+        _discoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns(((StartedMeeting?)null, (Guid?)null));
+        
+        _tracker.RecognizeActivity();
 
         // When
-        await _service.ConfirmMeetingEndAsync(meetingGuid);
+        await _tracker.ConfirmMeetingEndAsync(meetingGuid);
 
         // Then
         _publisherMock.Verify(
@@ -60,8 +63,8 @@ public sealed class MsTeamsMeetingServiceTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
         
-        _stateCache.GetPendingEndMeeting().Should().BeNull();
-        _stateCache.GetOngoingMeeting().Should().BeNull();
+        _tracker.GetPendingEndMeeting().Should().BeNull();
+        _tracker.GetOngoingMeeting().Should().BeNull();
     }
 
     [Fact]
@@ -71,7 +74,7 @@ public sealed class MsTeamsMeetingServiceTests
         var meetingGuid = Guid.NewGuid();
 
         // When
-        await _service.ConfirmMeetingEndAsync(meetingGuid);
+        await _tracker.ConfirmMeetingEndAsync(meetingGuid);
 
         // Then
         _publisherMock.Verify(
@@ -84,24 +87,31 @@ public sealed class MsTeamsMeetingServiceTests
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
-        var pending = new PendingEndMeeting
-        {
-            Meeting = meeting,
-            DetectedAt = _clockMock.Object.Now
-        };
-        _stateCache.SetPendingEndMeeting(pending);
+        var matchedRuleId = Guid.NewGuid();
+        
+        _discoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _tracker.RecognizeActivity();
+        
+        _discoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns(((StartedMeeting?)null, (Guid?)null));
+        
+        _tracker.RecognizeActivity();
 
         var differentGuid = Guid.NewGuid();
 
         // When
-        await _service.ConfirmMeetingEndAsync(differentGuid);
+        await _tracker.ConfirmMeetingEndAsync(differentGuid);
 
         // Then
         _publisherMock.Verify(
             x => x.Publish(It.IsAny<MeetingEndedEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
         
-        _stateCache.GetPendingEndMeeting().Should().NotBeNull();
+        _tracker.GetPendingEndMeeting().Should().NotBeNull();
     }
 
     [Fact]
@@ -109,13 +119,20 @@ public sealed class MsTeamsMeetingServiceTests
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
-        _stateCache.SetOngoingMeeting(meeting);
+        var matchedRuleId = Guid.NewGuid();
+        
+        _discoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _tracker.RecognizeActivity();
 
         // When
-        var result = _service.GetOngoingMeeting();
+        var result = _tracker.GetOngoingMeeting();
 
         // Then
-        result.Should().Be(meeting);
+        result.Should().NotBeNull();
+        result!.Guid.Should().Be(meeting.Guid);
     }
 
     [Fact]
@@ -123,17 +140,25 @@ public sealed class MsTeamsMeetingServiceTests
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
-        var pending = new PendingEndMeeting
-        {
-            Meeting = meeting,
-            DetectedAt = _clockMock.Object.Now
-        };
-        _stateCache.SetPendingEndMeeting(pending);
+        var matchedRuleId = Guid.NewGuid();
+        
+        _discoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _tracker.RecognizeActivity();
+        
+        _discoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns(((StartedMeeting?)null, (Guid?)null));
+        
+        _tracker.RecognizeActivity();
 
         // When
-        var result = _service.GetPendingEndMeeting();
+        var result = _tracker.GetPendingEndMeeting();
 
         // Then
-        result.Should().Be(pending);
+        result.Should().NotBeNull();
+        result!.Meeting.Guid.Should().Be(meeting.Guid);
     }
 }

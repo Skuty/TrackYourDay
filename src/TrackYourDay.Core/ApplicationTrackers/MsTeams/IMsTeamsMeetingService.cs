@@ -2,6 +2,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams;
 
 /// <summary>
 /// Service for managing MS Teams meeting lifecycle and confirmations.
+/// Singleton tracker with blocking state machine.
 /// </summary>
 public interface IMsTeamsMeetingService
 {
@@ -9,7 +10,16 @@ public interface IMsTeamsMeetingService
     /// Confirms that a pending meeting has ended.
     /// Publishes MeetingEndedEvent if successful.
     /// </summary>
-    Task ConfirmMeetingEndAsync(Guid meetingGuid, CancellationToken cancellationToken = default);
+    /// <param name="meetingGuid">GUID of the meeting to confirm.</param>
+    /// <param name="customDescription">Optional custom description that overrides meeting title.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task ConfirmMeetingEndAsync(Guid meetingGuid, string? customDescription = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cancels a pending end confirmation and returns meeting to ACTIVE state.
+    /// </summary>
+    /// <param name="meetingGuid">GUID of the meeting to cancel pending end.</param>
+    void CancelPendingEnd(Guid meetingGuid);
 
     /// <summary>
     /// Gets the currently ongoing meeting, or null if none active.
