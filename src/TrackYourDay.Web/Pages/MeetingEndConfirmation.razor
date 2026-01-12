@@ -2,16 +2,14 @@
 @implements IDisposable
 
 @using TrackYourDay.Core.MAUIProxy
-@using TrackYourDay.Web.Services
 @using MediatR
 
 @inject IMediator mediator
 @inject TrackYourDay.Core.ApplicationTrackers.MsTeams.IMsTeamsMeetingService meetingService
-@inject ActiveMeetingConfirmationsService confirmationsService
-@inject TrackYourDay.Core.IClock clock
+@inject NavigationManager navigationManager
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
-    @if (meetingData != null)
+    @if (!string.IsNullOrEmpty(meetingTitle))
     {
         <MudPaper Class="pa-6" Elevation="3">
             <MudStack Spacing="3">
@@ -21,13 +19,13 @@
 
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.body2">
-                        <strong>Meeting:</strong> @meetingData.MeetingTitle
+                        <strong>Meeting:</strong> @meetingTitle
                     </MudText>
                 </MudStack>
 
                 <MudTextField @bind-Value="customDescription"
                               Label="Description (optional)"
-                              Placeholder="@meetingData.MeetingTitle"
+                              Placeholder="@meetingTitle"
                               Variant="Variant.Outlined"
                               Lines="2"
                               Margin="Margin.Dense" />
@@ -68,8 +66,8 @@
     [CascadingParameter(Name = "ParentMauiWindowId")]
     public Guid ParentMauiWindowId { get; set; }
 
-    private MeetingConfirmationData? meetingData;
     private Guid meetingGuid;
+    private string? meetingTitle;
     private string? customDescription;
     private string errorMessage = string.Empty;
     private bool isProcessing;
@@ -80,13 +78,35 @@
     {
         if (Guid.TryParse(MeetingGuidString, out meetingGuid))
         {
-            meetingData = confirmationsService.Get(meetingGuid);
+            var uri = new Uri(navigationManager.Uri);
+            var query = uri.Query;
+            
+            if (!string.IsNullOrEmpty(query) && query.Contains("title="))
+            {
+                var titleParam = query.Split('&')
+                    .Select(p => p.TrimStart('?'))
+                    .FirstOrDefault(p => p.StartsWith("title="));
+                    
+                if (titleParam != null)
+                {
+                    meetingTitle = System.Web.HttpUtility.UrlDecode(titleParam.Substring("title=".Length));
+                }
+            }
+            
+            if (string.IsNullOrEmpty(meetingTitle))
+            {
+                var pending = meetingService.GetPendingEndMeeting();
+                if (pending != null && pending.Meeting.Guid == meetingGuid)
+                {
+                    meetingTitle = pending.Meeting.Title;
+                }
+            }
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && meetingData != null)
+        if (firstRender && !string.IsNullOrEmpty(meetingTitle))
         {
             _ = Task.Run(async () =>
             {
@@ -112,7 +132,7 @@
 
     private async Task ConfirmEnd()
     {
-        if (meetingData == null || isProcessing)
+        if (string.IsNullOrEmpty(meetingTitle) || isProcessing)
             return;
 
         _userResponded = true;
@@ -123,7 +143,6 @@
         try
         {
             await meetingService.ConfirmMeetingEndAsync(meetingGuid, customDescription);
-            confirmationsService.Remove(meetingGuid);
             await CloseWindow();
         }
         catch (Exception)
@@ -135,14 +154,13 @@
 
     private async Task StillOngoing()
     {
-        if (meetingData == null)
+        if (string.IsNullOrEmpty(meetingTitle))
             return;
 
         _userResponded = true;
         _timeoutCts.Cancel();
 
         meetingService.CancelPendingEnd(meetingGuid);
-        confirmationsService.Remove(meetingGuid);
         await CloseWindow();
     }
 
