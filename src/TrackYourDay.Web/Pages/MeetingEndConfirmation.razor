@@ -1,18 +1,17 @@
 @page "/MeetingEndConfirmation/{MeetingGuidString}"
 @implements IDisposable
 
-@using TrackYourDay.Core.ApplicationTrackers.MsTeams
 @using TrackYourDay.Core.MAUIProxy
 @using TrackYourDay.Web.Services
 @using MediatR
 
 @inject IMediator mediator
-@inject IMsTeamsMeetingService meetingService
-@inject IRecentMeetingsCache recentMeetingsCache
+@inject TrackYourDay.Core.ApplicationTrackers.MsTeams.IMsTeamsMeetingService meetingService
+@inject ActiveMeetingConfirmationsService confirmationsService
 @inject TrackYourDay.Core.IClock clock
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
-    @if (pendingMeeting != null)
+    @if (meetingData != null)
     {
         <MudPaper Class="pa-6" Elevation="3">
             <MudStack Spacing="3">
@@ -22,17 +21,17 @@
 
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.body2">
-                        <strong>Meeting:</strong> @pendingMeeting.Meeting.Title
+                        <strong>Meeting:</strong> @meetingData.MeetingTitle
                     </MudText>
 
                     <MudText Typo="Typo.body2">
-                        <strong>Duration:</strong> @((int)pendingMeeting.Meeting.GetDuration(clock).TotalMinutes) minutes
+                        <strong>Duration:</strong> @((int)(clock.Now - meetingData.StartDate).TotalMinutes) minutes
                     </MudText>
                 </MudStack>
 
                 <MudTextField @bind-Value="customDescription"
                               Label="Description (optional)"
-                              Placeholder="@pendingMeeting.Meeting.Title"
+                              Placeholder="@meetingData.MeetingTitle"
                               Variant="Variant.Outlined"
                               Lines="2"
                               Margin="Margin.Dense" />
@@ -62,7 +61,7 @@
     }
     else
     {
-        <MudAlert Severity="Severity.Warning">Meeting confirmation expired</MudAlert>
+        <MudAlert Severity="Severity.Warning">Meeting confirmation expired or already handled</MudAlert>
     }
 </MudContainer>
 
@@ -73,7 +72,8 @@
     [CascadingParameter(Name = "ParentMauiWindowId")]
     public Guid ParentMauiWindowId { get; set; }
 
-    private PendingEndMeeting? pendingMeeting;
+    private MeetingConfirmationData? meetingData;
+    private Guid meetingGuid;
     private string? customDescription;
     private string errorMessage = string.Empty;
     private bool isProcessing;
@@ -82,15 +82,15 @@
 
     protected override void OnInitialized()
     {
-        if (Guid.TryParse(MeetingGuidString, out var meetingGuid))
+        if (Guid.TryParse(MeetingGuidString, out meetingGuid))
         {
-            pendingMeeting = recentMeetingsCache.GetPending(meetingGuid);
+            meetingData = confirmationsService.Get(meetingGuid);
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && pendingMeeting != null)
+        if (firstRender && meetingData != null)
         {
             _ = Task.Run(async () =>
             {
@@ -116,7 +116,7 @@
 
     private async Task ConfirmEnd()
     {
-        if (pendingMeeting == null || isProcessing)
+        if (meetingData == null || isProcessing)
             return;
 
         _userResponded = true;
@@ -126,10 +126,8 @@
 
         try
         {
-            await meetingService.ConfirmMeetingEndAsync(
-                pendingMeeting.Meeting.Guid,
-                customDescription
-            );
+            await meetingService.ConfirmMeetingEndAsync(meetingGuid, customDescription);
+            confirmationsService.Remove(meetingGuid);
             await CloseWindow();
         }
         catch (Exception)
@@ -141,13 +139,14 @@
 
     private async Task StillOngoing()
     {
-        if (pendingMeeting == null)
+        if (meetingData == null)
             return;
 
         _userResponded = true;
         _timeoutCts.Cancel();
 
-        meetingService.CancelPendingEnd(pendingMeeting.Meeting.Guid);
+        meetingService.CancelPendingEnd(meetingGuid);
+        confirmationsService.Remove(meetingGuid);
         await CloseWindow();
     }
 

@@ -4,11 +4,10 @@
 @using TrackYourDay.Core.MAUIProxy
 @using TrackYourDay.Core.Persistence
 @using TrackYourDay.Core.Persistence.Specifications
-@using TrackYourDay.Web.Services
 @using MediatR
 
 @inject IMediator mediator
-@inject IRecentMeetingsCache recentMeetingsCache
+@inject IMsTeamsMeetingService meetingService
 @inject IHistoricalDataRepository<EndedMeeting> meetingRepository
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
@@ -84,10 +83,11 @@
     {
         if (Guid.TryParse(MeetingGuidString, out var meetingGuid))
         {
-            // Try cache first (fast path for recent meetings)
-            endedMeeting = recentMeetingsCache.Get(meetingGuid);
+            // Try tracker first (recent meetings still in memory)
+            endedMeeting = meetingService.GetEndedMeetings()
+                .FirstOrDefault(m => m.Guid == meetingGuid);
             
-            // Fallback to repository if not in cache (edge cases)
+            // Fallback to repository if not in tracker (edge cases)
             if (endedMeeting == null)
             {
                 var spec = new MeetingByGuidSpecification(meetingGuid);
@@ -109,9 +109,6 @@
                     // Update the persisted meeting with the new description
                     meetingRepository.Update(endedMeeting);
                 }
-                
-                // Remove from cache after processing
-                recentMeetingsCache.Remove(endedMeeting.Guid);
             }
             await CloseWindow();
         }
@@ -128,12 +125,6 @@
 
     private async Task Skip()
     {
-        // Remove from cache when user skips
-        if (endedMeeting != null)
-        {
-            recentMeetingsCache.Remove(endedMeeting.Guid);
-        }
-        
         await CloseWindow();
     }
 

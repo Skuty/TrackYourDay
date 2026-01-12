@@ -1,5 +1,4 @@
 using MediatR;
-using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.PublicEvents;
 using TrackYourDay.MAUI.MauiPages;
 using TrackYourDay.Web.Services;
@@ -7,24 +6,30 @@ using TrackYourDay.Web.Services;
 namespace TrackYourDay.MAUI.Handlers;
 
 /// <summary>
-/// Shows confirmation dialog when meeting end is detected and caches pending meeting.
-/// Window allows minimize and can be moved behind other windows.
+/// Shows confirmation dialog when meeting end is detected.
+/// Stores event data for UI consumption. Window allows minimize and can be moved behind other windows.
 /// </summary>
 internal sealed class ShowMeetingEndConfirmationDialogHandler 
     : INotificationHandler<MeetingEndConfirmationRequestedEvent>
 {
-    private readonly IRecentMeetingsCache _cache;
+    private readonly ActiveMeetingConfirmationsService _confirmationsService;
 
-    public ShowMeetingEndConfirmationDialogHandler(IRecentMeetingsCache cache)
+    public ShowMeetingEndConfirmationDialogHandler(ActiveMeetingConfirmationsService confirmationsService)
     {
-        _cache = cache;
+        _confirmationsService = confirmationsService;
     }
 
     public Task Handle(MeetingEndConfirmationRequestedEvent notification, CancellationToken cancellationToken)
     {
-        _cache.AddPending(notification.PendingMeeting);
+        var meeting = notification.PendingMeeting.Meeting;
         
-        var path = $"/MeetingEndConfirmation/{notification.PendingMeeting.Meeting.Guid}";
+        _confirmationsService.Store(
+            meeting.Guid, 
+            meeting.Title, 
+            meeting.StartDate, 
+            notification.PendingMeeting.DetectedAt);
+
+        var path = $"/MeetingEndConfirmation/{meeting.Guid}";
         MauiPageFactory.OpenWebPageInNewWindow(path, 600, 340, allowMinimize: true, alwaysOnTop: false);
 
         return Task.CompletedTask;
