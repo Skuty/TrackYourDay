@@ -23,10 +23,6 @@
                     <MudText Typo="Typo.body2">
                         <strong>Meeting:</strong> @meetingData.MeetingTitle
                     </MudText>
-
-                    <MudText Typo="Typo.body2">
-                        <strong>Duration:</strong> @((int)(clock.Now - meetingData.StartDate).TotalMinutes) minutes
-                    </MudText>
                 </MudStack>
 
                 <MudTextField @bind-Value="customDescription"

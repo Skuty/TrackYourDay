@@ -21,15 +21,11 @@ internal sealed class ShowMeetingEndConfirmationDialogHandler
 
     public Task Handle(MeetingEndConfirmationRequestedEvent notification, CancellationToken cancellationToken)
     {
-        var meeting = notification.PendingMeeting.Meeting;
-        
         _confirmationsService.Store(
-            meeting.Guid, 
-            meeting.Title, 
-            meeting.StartDate, 
-            notification.PendingMeeting.DetectedAt);
+            notification.MeetingGuid, 
+            notification.MeetingTitle);
 
-        var path = $"/MeetingEndConfirmation/{meeting.Guid}";
+        var path = $"/MeetingEndConfirmation/{notification.MeetingGuid}";
         MauiPageFactory.OpenWebPageInNewWindow(path, 600, 340, allowMinimize: true, alwaysOnTop: false);
 
         return Task.CompletedTask;

@@ -56,7 +56,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
         // Then
         _publisherMock.Verify(
             x => x.Publish(
-                It.Is<MeetingEndConfirmationRequestedEvent>(e => e.PendingMeeting.Meeting.Guid == meeting.Guid),
+                It.Is<MeetingEndConfirmationRequestedEvent>(e => e.MeetingGuid == meeting.Guid),
                 CancellationToken.None),
             Times.Once);
         

@@ -2,22 +2,22 @@ using System.Collections.Concurrent;
 
 namespace TrackYourDay.Web.Services;
 
-/// <summary>
-/// Stores meeting confirmation data for active popup windows.
-/// Scoped to pending confirmations only—cleared on user action.
-/// </summary>
-public sealed class ActiveMeetingConfirmationsService
-{
-    private readonly ConcurrentDictionary<Guid, MeetingConfirmationData> _active = new();
-
     /// <summary>
-    /// Stores meeting data when confirmation popup is opened.
+    /// Stores meeting confirmation data for active popup windows.
+    /// Scoped to pending confirmations only—cleared on user action.
     /// </summary>
-    public void Store(Guid meetingGuid, string meetingTitle, DateTime startDate, DateTime detectedAt)
+    public sealed class ActiveMeetingConfirmationsService
     {
-        var data = new MeetingConfirmationData(meetingGuid, meetingTitle, startDate, detectedAt);
-        _active.TryAdd(meetingGuid, data);
-    }
+        private readonly ConcurrentDictionary<Guid, MeetingConfirmationData> _active = new();
+
+        /// <summary>
+        /// Stores meeting data when confirmation popup is opened.
+        /// </summary>
+        public void Store(Guid meetingGuid, string meetingTitle)
+        {
+            var data = new MeetingConfirmationData(meetingGuid, meetingTitle);
+            _active.TryAdd(meetingGuid, data);
+        }
 
     /// <summary>
     /// Retrieves meeting data for active confirmation popup.
@@ -43,6 +43,4 @@ public sealed class ActiveMeetingConfirmationsService
 /// </summary>
 public sealed record MeetingConfirmationData(
     Guid MeetingGuid,
-    string MeetingTitle,
-    DateTime StartDate,
-    DateTime DetectedAt);
+    string MeetingTitle);

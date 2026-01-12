@@ -94,16 +94,19 @@ public sealed class MsTeamsMeetingTracker : IMsTeamsMeetingService
             // ACTIVE → PENDING: Meeting window closed
             if (ongoing != null && recognized == null)
             {
+                var detectedAt = _clock.Now;
                 var pending = new PendingEndMeeting
                 {
                     Meeting = ongoing,
-                    DetectedAt = _clock.Now
+                    DetectedAt = detectedAt
                 };
                 _pendingEndMeeting = pending;
                 _ongoingMeeting = null;
                 
                 _publisher.Publish(
-                    new MeetingEndConfirmationRequestedEvent(Guid.NewGuid(), pending),
+                    new MeetingEndConfirmationRequestedEvent(
+                        ongoing.Guid,
+                        ongoing.Title),
                     CancellationToken.None
                 );
                 
