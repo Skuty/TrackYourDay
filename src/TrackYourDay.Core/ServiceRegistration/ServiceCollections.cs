@@ -52,7 +52,6 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IMeetingRuleRepository, MeetingRuleRepository>();
             services.AddSingleton<IProcessService, WindowsProcessService>();
             services.AddSingleton<MsTeamsMeetingTracker>();
-            services.AddSingleton<IMsTeamsMeetingService>(sp => sp.GetRequiredService<MsTeamsMeetingTracker>());
             services.AddScoped<IMeetingDiscoveryStrategy, ConfigurableMeetingDiscoveryStrategy>();
             services.AddScoped<IMeetingRuleEngine, MeetingRuleEngine>();
 

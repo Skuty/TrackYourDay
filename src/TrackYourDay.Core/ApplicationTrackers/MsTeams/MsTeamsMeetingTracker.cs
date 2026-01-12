@@ -9,7 +9,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams;
 /// Blocking state machine: PENDING state blocks all new meeting recognition.
 /// Auto-confirmation handled in UI layer (not Core).
 /// </summary>
-public sealed class MsTeamsMeetingTracker : IMsTeamsMeetingService
+public sealed class MsTeamsMeetingTracker
 {
     private readonly IClock _clock;
     private readonly IPublisher _publisher;
