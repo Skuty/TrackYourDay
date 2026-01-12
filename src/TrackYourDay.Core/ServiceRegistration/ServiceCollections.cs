@@ -207,7 +207,7 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IHistoricalDataRepository<EndedMeeting>>(sp => 
                 new GenericDataRepository<EndedMeeting>(
                     sp.GetRequiredService<IClock>(),
-                    () => sp.GetRequiredService<MsTeamsMeetingTracker>().GetEndedMeetings()));
+                    null)); // Don't include tracker data - meetings are persisted immediately after confirmation
 
             services.AddSingleton<IHistoricalDataRepository<GitLabActivity>>(sp => 
                 new GenericDataRepository<GitLabActivity>(
