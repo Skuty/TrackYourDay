@@ -1,11 +1,12 @@
 @page "/MeetingEndConfirmation/{MeetingGuidString}"
 @implements IDisposable
 
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams
 @using TrackYourDay.Core.MAUIProxy
 @using MediatR
 
 @inject IMediator mediator
-@inject TrackYourDay.Core.ApplicationTrackers.MsTeams.MsTeamsMeetingTracker meetingService
+@inject MsTeamsMeetingTracker meetingService
 @inject NavigationManager navigationManager
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
