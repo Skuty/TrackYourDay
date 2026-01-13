@@ -1,12 +1,11 @@
 ﻿using Quartz;
-using Microsoft.Extensions.DependencyInjection;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 
 namespace TrackYourDay.MAUI.BackgroundJobs.ActivityTracking
 {
     internal class MsTeamsMeetingsTrackerJob : IJob
     {
-        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly MsTeamsMeetingTracker _tracker;
 
         internal static IJobDetail DefaultJobDetail => JobBuilder.Create<MsTeamsMeetingsTrackerJob>()
             .WithIdentity("MsTeamsMeetingsTracker", "Trackers")
@@ -20,16 +19,15 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ActivityTracking
                   .RepeatForever())
              .Build();
 
-        public MsTeamsMeetingsTrackerJob(IServiceScopeFactory scopeFactory)
+        public MsTeamsMeetingsTrackerJob(MsTeamsMeetingTracker tracker)
         {
-            _scopeFactory = scopeFactory;
+            _tracker = tracker;
         }
 
-        public async Task Execute(IJobExecutionContext context)
+        public Task Execute(IJobExecutionContext context)
         {
-            using var scope = _scopeFactory.CreateScope();
-            var tracker = scope.ServiceProvider.GetRequiredService<MsTeamsMeetingTracker>();
-            tracker.RecognizeActivity();
+            _tracker.RecognizeActivity();
+            return Task.CompletedTask;
         }
     }
 }
