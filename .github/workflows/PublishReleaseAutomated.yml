@@ -172,10 +172,14 @@ jobs:
           prerelease: ${{ needs.calculate-version.outputs.is_prerelease }}
           tag: v${{ needs.calculate-version.outputs.version }}
           artifactContentType: application/zip
+          generateReleaseNotes: true
+          commit: ${{ github.sha }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
           body: |
             ## TrackYourDay v${{ needs.calculate-version.outputs.version }}
 
-            This release was automatically created based on conventional commit messages.
+            This release was automatically created based on conventional commit messages from commit ${{ github.sha }}.
 
             ### Installation
             1. Download the ZIP file below
