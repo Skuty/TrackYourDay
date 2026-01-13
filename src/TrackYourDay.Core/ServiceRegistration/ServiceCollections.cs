@@ -5,6 +5,8 @@ using System.Diagnostics;
 using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
+using TrackYourDay.Core.ApplicationTrackers.MsTeams.Persistence;
+using TrackYourDay.Core.ApplicationTrackers.MsTeams.RuleEngine;
 using TrackYourDay.Core.ApplicationTrackers.UserTasks;
 using TrackYourDay.Core.Insights.Analytics;
 using TrackYourDay.Core.Insights.Workdays;
@@ -47,15 +49,11 @@ namespace TrackYourDay.Core.ServiceRegistration
                     logger);
             });
 
-            services.AddSingleton<MsTeamsMeetingTracker>(container =>
-            {
-                var clock = container.GetRequiredService<IClock>();
-                var publisher = container.GetRequiredService<IPublisher>();
-                var loggerForStrategy = container.GetRequiredService<ILogger<ProcessBasedMeetingRecognizingStrategy>>();
-                var meetingDiscoveryStrategy = new ProcessBasedMeetingRecognizingStrategy(loggerForStrategy, new WindowsProcessService());
-                var loggerForMs = container.GetRequiredService<ILogger<MsTeamsMeetingTracker>>();
-                return new MsTeamsMeetingTracker(clock, publisher, meetingDiscoveryStrategy, loggerForMs);
-            });
+            services.AddSingleton<IMeetingRuleRepository, MeetingRuleRepository>();
+            services.AddSingleton<IProcessService, WindowsProcessService>();
+            services.AddSingleton<MsTeamsMeetingTracker>();
+            services.AddScoped<IMeetingDiscoveryStrategy, ConfigurableMeetingDiscoveryStrategy>();
+            services.AddScoped<IMeetingRuleEngine, MeetingRuleEngine>();
 
             services.AddSingleton<BreakTracker>(serviceCollection => 
             {
@@ -210,18 +208,12 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IHistoricalDataRepository<EndedMeeting>>(sp => 
                 new GenericDataRepository<EndedMeeting>(
                     sp.GetRequiredService<IClock>(),
-                    () => sp.GetRequiredService<MsTeamsMeetingTracker>().GetEndedMeetings()));
+                    null)); // Don't include tracker data - meetings are persisted immediately after confirmation
 
             services.AddSingleton<IHistoricalDataRepository<GitLabActivity>>(sp => 
                 new GenericDataRepository<GitLabActivity>(
                     sp.GetRequiredService<IClock>(),
                     () => sp.GetRequiredService<GitLabTracker>().GetGitLabActivities()));
-
-            // Register persistence event handlers
-            services.AddTransient<INotificationHandler<SystemTrackers.Events.PeriodicActivityEndedEvent>, PersistEndedActivityHandler>();
-            services.AddTransient<INotificationHandler<ApplicationTrackers.Breaks.Events.BreakEndedEvent>, PersistEndedBreakHandler>();
-            services.AddTransient<INotificationHandler<ApplicationTrackers.MsTeams.PublicEvents.MeetingEndedEvent>, PersistEndedMeetingHandler>();
-            services.AddTransient<INotificationHandler<ApplicationTrackers.GitLab.PublicEvents.GitLabActivityDiscoveredEvent>, PersistGitLabActivityHandler>();
 
             return services;
         }

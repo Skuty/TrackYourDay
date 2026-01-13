@@ -5,17 +5,16 @@ namespace TrackYourDay.Web.Events
 {
     public class MeetingEndedEventHandler : INotificationHandler<MeetingEndedEvent>
     {
-        private readonly EventWrapperForComponents eventWrapperForComponents;
+        private readonly EventWrapperForComponents _eventWrapperForComponents;
 
         public MeetingEndedEventHandler(EventWrapperForComponents eventWrapperForComponents)
         {
-            this.eventWrapperForComponents = eventWrapperForComponents;
+            _eventWrapperForComponents = eventWrapperForComponents;
         }
 
         public Task Handle(MeetingEndedEvent notification, CancellationToken cancellationToken)
         {
-            this.eventWrapperForComponents.OperationalBarOnMeetingEnded(notification);
-
+            _eventWrapperForComponents.OperationalBarOnMeetingEnded(notification);
             return Task.CompletedTask;
         }
     }

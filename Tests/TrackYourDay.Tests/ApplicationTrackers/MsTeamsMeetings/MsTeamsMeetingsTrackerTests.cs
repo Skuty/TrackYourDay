@@ -6,105 +6,152 @@ using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.PublicEvents;
 using TrackYourDay.Core.SystemTrackers;
 
-namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings
+namespace TrackYourDay.Tests.ApplicationTrackers.MsTeamsMeetings;
+
+[Trait("Category", "Unit")]
+public class MsTeamsMeetingsTrackerTests
 {
-    [Trait("Category", "Unit")]
-    public class MsTeamsMeetingsTrackerTests
+    private readonly IClock _clock;
+    private readonly Mock<IPublisher> _publisherMock;
+    private readonly Mock<IMeetingDiscoveryStrategy> _meetingDiscoveryStrategyMock;
+    private readonly Mock<ILogger<MsTeamsMeetingTracker>> _loggerMock;
+    private readonly MsTeamsMeetingTracker _msTeamsMeetingsTracker;
+
+    public MsTeamsMeetingsTrackerTests()
     {
-        private IClock clock;
-        private Mock<IPublisher> publisherMock;
-        private Mock<IMeetingDiscoveryStrategy> meetingDiscoveryStrategy;
-        private Mock<ILogger<MsTeamsMeetingTracker>> loggerMock;
-        private MsTeamsMeetingTracker msTeamsMeetingsTracker;
+        _clock = new Clock();
+        _loggerMock = new Mock<ILogger<MsTeamsMeetingTracker>>();
+        _publisherMock = new Mock<IPublisher>();
+        _meetingDiscoveryStrategyMock = new Mock<IMeetingDiscoveryStrategy>();
+        _msTeamsMeetingsTracker = new MsTeamsMeetingTracker(
+            _clock, 
+            _publisherMock.Object, 
+            _meetingDiscoveryStrategyMock.Object,
+            _loggerMock.Object);
+    }
 
-        public MsTeamsMeetingsTrackerTests()
-        {
-            this.clock = new Clock();
-            this.loggerMock = new Mock<ILogger<MsTeamsMeetingTracker>>();
-            this.publisherMock = new Mock<IPublisher>();
-            this.meetingDiscoveryStrategy = new Mock<IMeetingDiscoveryStrategy>();
-            this.msTeamsMeetingsTracker = new MsTeamsMeetingTracker(this.clock, this.publisherMock.Object, this.meetingDiscoveryStrategy.Object, this.loggerMock.Object);
-        }
+    [Fact]
+    public void GivenMeetingIsNotStarted_WhenMeetingIsStarted_ThenMeetingStartedEventIsPublished()
+    {
+        // Given
+        var meeting = new StartedMeeting(Guid.NewGuid(), _clock.Now, "Test meeting");
+        var matchedRuleId = Guid.NewGuid();
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
 
-        [Fact]
-        public void GivenMeetingIsNotStarted_WhenMeetingIsStarted_ThenMeetingStartedEventIsPublished()
-        {
-            // Given
-            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
+        // When
+        _msTeamsMeetingsTracker.RecognizeActivity();
 
-            // When
-            this.msTeamsMeetingsTracker.RecognizeActivity();
+        // Then
+        _publisherMock.Verify(x => x.Publish(It.IsAny<MeetingStartedEvent>(), CancellationToken.None), Times.Once);
+    }
 
-            // Then
-            this.publisherMock.Verify(x => x.Publish(It.IsAny<MeetingStartedEvent>(), CancellationToken.None), Times.Once);
-        }
+    [Fact]
+    public void GivenMeetingIsOngoing_WhenSameMeetingRecognized_ThenMeetingStartedEventIsNotPublished()
+    {
+        // Given
+        var meeting = new StartedMeeting(Guid.NewGuid(), _clock.Now, "Test meeting");
+        var matchedRuleId = Guid.NewGuid();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _msTeamsMeetingsTracker.RecognizeActivity();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns((meeting, matchedRuleId));
 
-        [Fact]
-        public void GivenMeetingIsNotStarted_WhenMeetingIsStarted_ThenMeetingStartedEventIsNotPublished()
-        {
-            // Given
-            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
-            this.msTeamsMeetingsTracker.RecognizeActivity();
-            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
-            this.publisherMock.Invocations.Clear();
+        // When
+        _msTeamsMeetingsTracker.RecognizeActivity();
 
-            // When
-            this.msTeamsMeetingsTracker.RecognizeActivity();
+        // Then
+        _publisherMock.Verify(x => x.Publish(It.IsAny<MeetingStartedEvent>(), CancellationToken.None), Times.Once);
+    }
 
-            // Then
-            this.publisherMock.Verify(x => x.Publish(It.IsAny<MeetingStartedEvent>(), CancellationToken.None), Times.Never);
-        }
+    [Fact]
+    public void GivenMeetingIsStarted_WhenMeetingEnds_ThenMeetingEndConfirmationRequestedEventIsPublished()
+    {
+        // Given
+        var meeting = new StartedMeeting(Guid.NewGuid(), _clock.Now, "Test meeting");
+        var matchedRuleId = Guid.NewGuid();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _msTeamsMeetingsTracker.RecognizeActivity();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns(((StartedMeeting?)null, (Guid?)null));
 
-        [Fact]
-        public void GivenMeetingIsStarted_WhenMeetingEnds_ThenMeetingEndedEventIsPublished()
-        {
-            // Given
-            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(Guid.NewGuid(), this.clock.Now, "Test meeting"));
-            this.msTeamsMeetingsTracker.RecognizeActivity();
-            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns((StartedMeeting)null);
+        // When
+        _msTeamsMeetingsTracker.RecognizeActivity();
 
-            // When
-            this.msTeamsMeetingsTracker.RecognizeActivity();
+        // Then
+        _publisherMock.Verify(x => x.Publish(It.IsAny<MeetingEndConfirmationRequestedEvent>(), CancellationToken.None), Times.Once);
+    }
 
-            // Then
-            this.publisherMock.Verify(x => x.Publish(It.IsAny<MeetingEndedEvent>(), CancellationToken.None), Times.Once);
-        }
+    [Fact]
+    public async Task GivenEndedMeeting_WhenSettingDescription_ThenDescriptionIsSet()
+    {
+        // Given
+        var meetingGuid = Guid.NewGuid();
+        var meeting = new StartedMeeting(meetingGuid, _clock.Now, "Test meeting");
+        var matchedRuleId = Guid.NewGuid();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _msTeamsMeetingsTracker.RecognizeActivity();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns(((StartedMeeting?)null, (Guid?)null));
+        
+        _msTeamsMeetingsTracker.RecognizeActivity();
+        
+        await _msTeamsMeetingsTracker.ConfirmMeetingEndAsync(meetingGuid, "Discussed project requirements");
 
-        [Fact]
-        public void GivenEndedMeeting_WhenSettingDescription_ThenDescriptionIsSet()
-        {
-            // Given
-            var meetingGuid = Guid.NewGuid();
-            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(meetingGuid, this.clock.Now, "Test meeting"));
-            this.msTeamsMeetingsTracker.RecognizeActivity();
-            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns((StartedMeeting)null);
-            this.msTeamsMeetingsTracker.RecognizeActivity();
+        // When
+        var endedMeeting = _msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
 
-            // When
-            var endedMeeting = this.msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
-            endedMeeting.SetCustomDescription("Discussed project requirements");
+        // Then
+        Assert.Equal("Discussed project requirements", endedMeeting.CustomDescription);
+        Assert.Equal("Discussed project requirements", endedMeeting.GetDescription());
+    }
 
-            // Then
-            Assert.Equal("Discussed project requirements", endedMeeting.CustomDescription);
-            Assert.Equal("Discussed project requirements", endedMeeting.GetDescription());
-        }
+    [Fact]
+    public async Task GivenEndedMeetingWithoutDescription_WhenGettingDescription_ThenReturnsMeetingTitle()
+    {
+        // Given
+        var meetingGuid = Guid.NewGuid();
+        var meeting = new StartedMeeting(meetingGuid, _clock.Now, "Test meeting");
+        var matchedRuleId = Guid.NewGuid();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _msTeamsMeetingsTracker.RecognizeActivity();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns(((StartedMeeting?)null, (Guid?)null));
+        
+        _msTeamsMeetingsTracker.RecognizeActivity();
+        
+        await _msTeamsMeetingsTracker.ConfirmMeetingEndAsync(meetingGuid);
 
-        [Fact]
-        public void GivenEndedMeetingWithoutDescription_WhenGettingDescription_ThenReturnsMeetingTitle()
-        {
-            // Given
-            var meetingGuid = Guid.NewGuid();
-            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns(new StartedMeeting(meetingGuid, this.clock.Now, "Test meeting"));
-            this.msTeamsMeetingsTracker.RecognizeActivity();
-            this.meetingDiscoveryStrategy.Setup(x => x.RecognizeMeeting()).Returns((StartedMeeting)null);
-            this.msTeamsMeetingsTracker.RecognizeActivity();
+        // When
+        var endedMeeting = _msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
 
-            // When
-            var endedMeeting = this.msTeamsMeetingsTracker.GetEndedMeetings().First(m => m.Guid == meetingGuid);
-
-            // Then
-            Assert.Null(endedMeeting.CustomDescription);
-            Assert.Equal("Test meeting", endedMeeting.GetDescription());
-        }
+        // Then
+        Assert.Null(endedMeeting.CustomDescription);
+        Assert.Equal("Test meeting", endedMeeting.GetDescription());
     }
 }

@@ -19,4 +19,7 @@
       <_Parameter1>TrackYourDay.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Persistence\DatabaseMigrations\" />
+  </ItemGroup>
 </Project>

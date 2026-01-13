@@ -5,7 +5,7 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ActivityTracking
 {
     internal class MsTeamsMeetingsTrackerJob : IJob
     {
-        private readonly MsTeamsMeetingTracker tracker;
+        private readonly MsTeamsMeetingTracker _tracker;
 
         internal static IJobDetail DefaultJobDetail => JobBuilder.Create<MsTeamsMeetingsTrackerJob>()
             .WithIdentity("MsTeamsMeetingsTracker", "Trackers")
@@ -21,12 +21,13 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ActivityTracking
 
         public MsTeamsMeetingsTrackerJob(MsTeamsMeetingTracker tracker)
         {
-            this.tracker = tracker;
+            _tracker = tracker;
         }
 
-        public async Task Execute(IJobExecutionContext context)
+        public Task Execute(IJobExecutionContext context)
         {
-            this.tracker.RecognizeActivity();
+            _tracker.RecognizeActivity();
+            return Task.CompletedTask;
         }
     }
 }

@@ -3,10 +3,11 @@
 @using TrackYourDay.Core.ApplicationTrackers.MsTeams
 @using TrackYourDay.Core.MAUIProxy
 @using TrackYourDay.Core.Persistence
+@using TrackYourDay.Core.Persistence.Specifications
 @using MediatR
 
-@inject MsTeamsMeetingTracker meetingTracker
 @inject IMediator mediator
+@inject MsTeamsMeetingTracker meetingService
 @inject IHistoricalDataRepository<EndedMeeting> meetingRepository
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
@@ -82,7 +83,16 @@
     {
         if (Guid.TryParse(MeetingGuidString, out var meetingGuid))
         {
-            endedMeeting = meetingTracker.GetEndedMeetings().FirstOrDefault(m => m.Guid == meetingGuid);
+            // Try tracker first (recent meetings still in memory)
+            endedMeeting = meetingService.GetEndedMeetings()
+                .FirstOrDefault(m => m.Guid == meetingGuid);
+            
+            // Fallback to repository if not in tracker (edge cases)
+            if (endedMeeting == null)
+            {
+                var spec = new MeetingByGuidSpecification(meetingGuid);
+                endedMeeting = meetingRepository.Find(spec).FirstOrDefault();
+            }
         }
     }
 

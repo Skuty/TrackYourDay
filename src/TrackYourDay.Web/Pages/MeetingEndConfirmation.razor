@@ -1,0 +1,171 @@
+@page "/MeetingEndConfirmation/{MeetingGuidString}"
+@implements IDisposable
+
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams
+@using TrackYourDay.Core.MAUIProxy
+@using MediatR
+
+@inject IMediator mediator
+@inject MsTeamsMeetingTracker meetingService
+@inject NavigationManager navigationManager
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
+    @if (!string.IsNullOrEmpty(meetingTitle))
+    {
+        <MudPaper Class="pa-6" Elevation="3">
+            <MudStack Spacing="3">
+                <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Warning">
+                    Did this meeting end?
+                </MudText>
+
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.body2">
+                        <strong>Meeting:</strong> @meetingTitle
+                    </MudText>
+                </MudStack>
+
+                <MudTextField @bind-Value="customDescription"
+                              Label="Description (optional)"
+                              Placeholder="@meetingTitle"
+                              Variant="Variant.Outlined"
+                              Lines="2"
+                              Margin="Margin.Dense" />
+
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Success" 
+                               FullWidth="true" 
+                               OnClick="ConfirmEnd"
+                               Disabled="isProcessing">
+                        Confirm
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" 
+                               FullWidth="true" 
+                               OnClick="StillOngoing"
+                               Disabled="isProcessing">
+                        Still Ongoing
+                    </MudButton>
+                </MudStack>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@errorMessage</MudAlert>
+                }
+            </MudStack>
+        </MudPaper>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Warning">Meeting confirmation expired or already handled</MudAlert>
+    }
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string MeetingGuidString { get; set; } = string.Empty;
+
+    [CascadingParameter(Name = "ParentMauiWindowId")]
+    public Guid ParentMauiWindowId { get; set; }
+
+    private Guid meetingGuid;
+    private string? meetingTitle;
+    private string? customDescription;
+    private string errorMessage = string.Empty;
+    private bool isProcessing;
+    private bool _userResponded;
+    private CancellationTokenSource _timeoutCts = new();
+
+    protected override void OnInitialized()
+    {
+        if (Guid.TryParse(MeetingGuidString, out meetingGuid))
+        {
+            var uri = new Uri(navigationManager.Uri);
+            var query = uri.Query;
+            
+            if (!string.IsNullOrEmpty(query) && query.Contains("title="))
+            {
+                var titleParam = query.Split('&')
+                    .Select(p => p.TrimStart('?'))
+                    .FirstOrDefault(p => p.StartsWith("title="));
+                    
+                if (titleParam != null)
+                {
+                    meetingTitle = System.Web.HttpUtility.UrlDecode(titleParam.Substring("title=".Length));
+                }
+            }
+            
+
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrEmpty(meetingTitle))
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(10), _timeoutCts.Token);
+                    
+                    await InvokeAsync(async () =>
+                    {
+                        if (!_userResponded)
+                        {
+                            await StillOngoing();
+                        }
+                    });
+                }
+                catch (TaskCanceledException)
+                {
+                    // User responded before timeout
+                }
+            });
+        }
+    }
+
+    private async Task ConfirmEnd()
+    {
+        if (string.IsNullOrEmpty(meetingTitle) || isProcessing)
+            return;
+
+        _userResponded = true;
+        _timeoutCts.Cancel();
+        isProcessing = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            await meetingService.ConfirmMeetingEndAsync(meetingGuid, customDescription);
+            await CloseWindow();
+        }
+        catch (Exception)
+        {
+            errorMessage = "An error occurred while confirming the meeting end. Please try again.";
+            isProcessing = false;
+        }
+    }
+
+    private async Task StillOngoing()
+    {
+        if (string.IsNullOrEmpty(meetingTitle))
+            return;
+
+        _userResponded = true;
+        _timeoutCts.Cancel();
+
+        meetingService.CancelPendingEnd(meetingGuid);
+        await CloseWindow();
+    }
+
+    private async Task CloseWindow()
+    {
+        await mediator.Send(new CloseWindowCommand(ParentMauiWindowId));
+    }
+
+    public void Dispose()
+    {
+        _timeoutCts?.Cancel();
+        _timeoutCts?.Dispose();
+    }
+}

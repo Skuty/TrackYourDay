@@ -1,58 +1,70 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
+namespace TrackYourDay.Core.ApplicationTrackers.MsTeams;
+
+/// <summary>
+/// Legacy meeting recognition strategy (hardcoded Polish exclusions).
+/// </summary>
+[Obsolete("Use ConfigurableMeetingDiscoveryStrategy for rule-based meeting recognition")]
+public sealed class ProcessBasedMeetingRecognizingStrategy : IMeetingDiscoveryStrategy
 {
-    public class ProcessBasedMeetingRecognizingStrategy : IMeetingDiscoveryStrategy
+    private readonly ILogger<ProcessBasedMeetingRecognizingStrategy> _logger;
+    private readonly IProcessService _processService;
+
+    public ProcessBasedMeetingRecognizingStrategy(
+        ILogger<ProcessBasedMeetingRecognizingStrategy> logger,
+        IProcessService processService)
     {
-        private readonly ILogger<ProcessBasedMeetingRecognizingStrategy> logger;
-        private readonly IProcessService processService;
+        _logger = logger;
+        _processService = processService;
+    }
 
-        public ProcessBasedMeetingRecognizingStrategy(
-            ILogger<ProcessBasedMeetingRecognizingStrategy> logger,
-            IProcessService processService)
+    public (StartedMeeting? Meeting, Guid? MatchedRuleId) RecognizeMeeting(
+        StartedMeeting? currentMeeting,
+        Guid? currentMatchedRuleId)
+    {
+        var teamsProcesses = _processService.GetProcesses()
+            .Where(p => p.ProcessName.Contains("ms-teams", StringComparison.InvariantCulture));
+
+        foreach (var process in teamsProcesses)
         {
-            this.logger = logger;
-            this.processService = processService;
+            _logger.LogInformation("Found Teams process! Name: {ProcessName}, Title: {WindowTitle}",
+                process.ProcessName, process.MainWindowTitle);
         }
 
-        public StartedMeeting RecognizeMeeting()
+        foreach (var process in teamsProcesses)
         {
-            var teamsProcesses = processService.GetProcesses()
-                .Where(p => p.ProcessName.Contains("ms-teams", StringComparison.InvariantCulture));
-
-            foreach (var process in teamsProcesses)
+            if (IsWindowTitleMatchingTeamsMeeting(process.MainWindowTitle))
             {
-                logger.LogInformation("Found Teams process! Name: {0}, Title: {1}",
-                    process.ProcessName, process.MainWindowTitle);
-            }
-
-            foreach (var process in teamsProcesses)
-            {
-                if (this.IsWindowTitleMatchingTeamsMeeting(process.MainWindowTitle))
+                // If same meeting, return current
+                if (currentMeeting?.Title == process.MainWindowTitle)
                 {
-                    return new StartedMeeting(Guid.NewGuid(), DateTime.Now, process.MainWindowTitle);
+                    return (currentMeeting, currentMatchedRuleId);
                 }
+                
+                // New meeting
+                return (new StartedMeeting(Guid.NewGuid(), DateTime.Now, process.MainWindowTitle), null);
             }
-
-            return null;
         }
 
-        private bool IsWindowTitleMatchingTeamsMeeting(string windowTitle)
-        {
-            if (string.IsNullOrEmpty(windowTitle))
-                return false;
+        return (null, null);
+    }
 
-            if (!windowTitle.Contains("Microsoft Teams", StringComparison.InvariantCultureIgnoreCase))
-                return false;
+    private bool IsWindowTitleMatchingTeamsMeeting(string windowTitle)
+    {
+        if (string.IsNullOrEmpty(windowTitle))
+            return false;
 
-            // Exclude known non-meeting windows
-            if (windowTitle.StartsWith("Czat |", StringComparison.InvariantCultureIgnoreCase) ||
-                windowTitle.StartsWith("Aktywność |", StringComparison.InvariantCultureIgnoreCase) ||
-                windowTitle == "Microsoft Teams")
-                return false;
+        if (!windowTitle.Contains("Microsoft Teams", StringComparison.InvariantCultureIgnoreCase))
+            return false;
 
-            return true;
-        }
+        // Exclude known non-meeting windows
+        if (windowTitle.StartsWith("Czat |", StringComparison.InvariantCultureIgnoreCase) ||
+            windowTitle.StartsWith("Aktywność |", StringComparison.InvariantCultureIgnoreCase) ||
+            windowTitle == "Microsoft Teams")
+            return false;
+
+        return true;
     }
 }

@@ -1,0 +1,413 @@
+@using TrackYourDay.Core.ApplicationTrackers.MsTeams.Configuration
+@using System.Text.RegularExpressions
+@inject ISnackbar snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudSelect @bind-Value="criteria" 
+                       Label="Matching Criteria" 
+                       Variant="Variant.Outlined"
+                       Required="true"
+                       HelperText="Select which attributes must match">
+                <MudSelectItem Value="@MatchingCriteria.ProcessNameOnly">Process Name Only</MudSelectItem>
+                <MudSelectItem Value="@MatchingCriteria.WindowTitleOnly">Window Title Only</MudSelectItem>
+                <MudSelectItem Value="@MatchingCriteria.Both">Both (Process AND Window)</MudSelectItem>
+            </MudSelect>
+
+            @if (criteria == MatchingCriteria.ProcessNameOnly || criteria == MatchingCriteria.Both)
+            {
+                <MudPaper Elevation="2" Class="pa-3">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Process Name Pattern</MudText>
+                    
+                    <MudTextField @bind-Value="processPattern" 
+                                  Label="Pattern" 
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  Placeholder="e.g., ms-teams"
+                                  Error="@(!string.IsNullOrEmpty(processPatternError))"
+                                  ErrorText="@processPatternError" />
+                    
+                    <MudStack Row="true" Spacing="2" Class="mt-2">
+                        <MudSelect @bind-Value="processMatchMode" 
+                                   Label="Match Mode" 
+                                   Variant="Variant.Outlined"
+                                   Style="flex: 1;">
+                            <MudSelectItem Value="@PatternMatchMode.Contains">Contains</MudSelectItem>
+                            <MudSelectItem Value="@PatternMatchMode.StartsWith">Starts with</MudSelectItem>
+                            <MudSelectItem Value="@PatternMatchMode.EndsWith">Ends with</MudSelectItem>
+                            <MudSelectItem Value="@PatternMatchMode.Exact">Exact match</MudSelectItem>
+                            <MudSelectItem Value="@PatternMatchMode.Regex">Regular Expression</MudSelectItem>
+                        </MudSelect>
+                        
+                        <MudCheckBox @bind-Checked="processCaseSensitive" 
+                                     Label="Case Sensitive" 
+                                     Color="Color.Primary" />
+                    </MudStack>
+                    
+                    @if (processMatchMode == PatternMatchMode.Regex)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                            Regex patterns timeout after 2 seconds to prevent performance issues.
+                        </MudAlert>
+                    }
+                </MudPaper>
+            }
+
+            @if (criteria == MatchingCriteria.WindowTitleOnly || criteria == MatchingCriteria.Both)
+            {
+                <MudPaper Elevation="2" Class="pa-3">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Window Title Pattern</MudText>
+                    
+                    <MudTextField @bind-Value="windowPattern" 
+                                  Label="Pattern" 
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  Placeholder="e.g., Microsoft Teams"
+                                  Error="@(!string.IsNullOrEmpty(windowPatternError))"
+                                  ErrorText="@windowPatternError" />
+                    
+                    <MudStack Row="true" Spacing="2" Class="mt-2">
+                        <MudSelect @bind-Value="windowMatchMode" 
+                                   Label="Match Mode" 
+                                   Variant="Variant.Outlined"
+                                   Style="flex: 1;">
+                            <MudSelectItem Value="@PatternMatchMode.Contains">Contains</MudSelectItem>
+                            <MudSelectItem Value="@PatternMatchMode.StartsWith">Starts with</MudSelectItem>
+                            <MudSelectItem Value="@PatternMatchMode.EndsWith">Ends with</MudSelectItem>
+                            <MudSelectItem Value="@PatternMatchMode.Exact">Exact match</MudSelectItem>
+                            <MudSelectItem Value="@PatternMatchMode.Regex">Regular Expression</MudSelectItem>
+                        </MudSelect>
+                        
+                        <MudCheckBox @bind-Checked="windowCaseSensitive" 
+                                     Label="Case Sensitive" 
+                                     Color="Color.Primary" />
+                    </MudStack>
+                    
+                    @if (windowMatchMode == PatternMatchMode.Regex)
+                    {
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mt-2">
+                            Regex patterns timeout after 2 seconds to prevent performance issues.
+                        </MudAlert>
+                    }
+                </MudPaper>
+            }
+
+            <MudPaper Elevation="2" Class="pa-3">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                    <MudText Typo="Typo.subtitle2">Exclusion Patterns</MudText>
+                    <MudButton Variant="Variant.Text" 
+                               Color="Color.Primary" 
+                               OnClick="AddExclusion"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               Size="Size.Small">
+                        Add Exclusion
+                    </MudButton>
+                </MudStack>
+
+                @if (!exclusions.Any())
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        No exclusions defined. Exclusions prevent false positives by blocking specific patterns.
+                    </MudText>
+                }
+                else
+                {
+                    <MudStack Spacing="2">
+                        @foreach (var (exclusion, index) in exclusions.Select((e, i) => (e, i)))
+                        {
+                            <MudPaper Elevation="1" Class="pa-2">
+                                <MudStack Spacing="1">
+                                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                        <MudTextField @bind-Value="exclusion.Pattern" 
+                                                      Label="Pattern" 
+                                                      Variant="Variant.Outlined"
+                                                      Placeholder="Pattern to exclude"
+                                                      Dense="true"
+                                                      Style="flex: 1;" />
+                                        
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                       Size="Size.Small" 
+                                                       Color="Color.Error"
+                                                       OnClick="@(() => RemoveExclusion(index))" />
+                                    </MudStack>
+                                    
+                                    <MudStack Row="true" Spacing="2">
+                                        <MudSelect @bind-Value="exclusion.MatchMode" 
+                                                   Label="Match Mode" 
+                                                   Variant="Variant.Outlined"
+                                                   Dense="true"
+                                                   Style="flex: 1;">
+                                            <MudSelectItem Value="@PatternMatchMode.Contains">Contains</MudSelectItem>
+                                            <MudSelectItem Value="@PatternMatchMode.StartsWith">Starts with</MudSelectItem>
+                                            <MudSelectItem Value="@PatternMatchMode.EndsWith">Ends with</MudSelectItem>
+                                            <MudSelectItem Value="@PatternMatchMode.Exact">Exact match</MudSelectItem>
+                                            <MudSelectItem Value="@PatternMatchMode.Regex">Regular Expression</MudSelectItem>
+                                        </MudSelect>
+                                        
+                                        <MudCheckBox @bind-Checked="exclusion.CaseSensitive" 
+                                                     Label="Case Sensitive" 
+                                                     Color="Color.Primary"
+                                                     Dense="true" />
+                                    </MudStack>
+                                </MudStack>
+                            </MudPaper>
+                        }
+                    </MudStack>
+                }
+            </MudPaper>
+
+            @if (!string.IsNullOrEmpty(generalError))
+            {
+                <MudAlert Severity="Severity.Error">@generalError</MudAlert>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   OnClick="Save"
+                   Disabled="isSaving">
+            @if (isSaving)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+            }
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter] public bool IsEditMode { get; set; }
+    [Parameter] public MeetingRecognitionRule? Rule { get; set; }
+    [Parameter] public int Priority { get; set; } = 1;
+
+    private MatchingCriteria criteria = MatchingCriteria.Both;
+    
+    private string processPattern = string.Empty;
+    private PatternMatchMode processMatchMode = PatternMatchMode.Contains;
+    private bool processCaseSensitive = false;
+    
+    private string windowPattern = string.Empty;
+    private PatternMatchMode windowMatchMode = PatternMatchMode.Contains;
+    private bool windowCaseSensitive = false;
+    
+    private List<ExclusionPatternModel> exclusions = new();
+    
+    private string processPatternError = string.Empty;
+    private string windowPatternError = string.Empty;
+    private string generalError = string.Empty;
+    private bool isSaving = false;
+
+    protected override void OnInitialized()
+    {
+        if (Rule != null)
+        {
+            criteria = Rule.Criteria;
+            
+            if (Rule.ProcessNamePattern != null)
+            {
+                processPattern = Rule.ProcessNamePattern.Pattern;
+                processMatchMode = Rule.ProcessNamePattern.MatchMode;
+                processCaseSensitive = Rule.ProcessNamePattern.CaseSensitive;
+            }
+            
+            if (Rule.WindowTitlePattern != null)
+            {
+                windowPattern = Rule.WindowTitlePattern.Pattern;
+                windowMatchMode = Rule.WindowTitlePattern.MatchMode;
+                windowCaseSensitive = Rule.WindowTitlePattern.CaseSensitive;
+            }
+            
+            exclusions = Rule.Exclusions.Select(e => new ExclusionPatternModel
+            {
+                Pattern = e.Pattern,
+                MatchMode = e.MatchMode,
+                CaseSensitive = e.CaseSensitive
+            }).ToList();
+        }
+    }
+
+    private void AddExclusion()
+    {
+        exclusions.Add(new ExclusionPatternModel
+        {
+            Pattern = string.Empty,
+            MatchMode = PatternMatchMode.StartsWith,
+            CaseSensitive = false
+        });
+    }
+
+    private void RemoveExclusion(int index)
+    {
+        if (index >= 0 && index < exclusions.Count)
+        {
+            exclusions.RemoveAt(index);
+        }
+    }
+
+    private bool ValidateInputs()
+    {
+        var isValid = true;
+        processPatternError = string.Empty;
+        windowPatternError = string.Empty;
+        generalError = string.Empty;
+
+        // Validate process pattern if required
+        if (criteria == MatchingCriteria.ProcessNameOnly || criteria == MatchingCriteria.Both)
+        {
+            if (string.IsNullOrWhiteSpace(processPattern))
+            {
+                processPatternError = "Process pattern is required";
+                isValid = false;
+            }
+            else if (processMatchMode == PatternMatchMode.Regex)
+            {
+                try
+                {
+                    _ = new Regex(processPattern, RegexOptions.None, TimeSpan.FromSeconds(2));
+                }
+                catch (Exception ex)
+                {
+                    processPatternError = $"Invalid regex: {ex.Message}";
+                    isValid = false;
+                }
+            }
+        }
+
+        // Validate window pattern if required
+        if (criteria == MatchingCriteria.WindowTitleOnly || criteria == MatchingCriteria.Both)
+        {
+            if (string.IsNullOrWhiteSpace(windowPattern))
+            {
+                windowPatternError = "Window title pattern is required";
+                isValid = false;
+            }
+            else if (windowMatchMode == PatternMatchMode.Regex)
+            {
+                try
+                {
+                    _ = new Regex(windowPattern, RegexOptions.None, TimeSpan.FromSeconds(2));
+                }
+                catch (Exception ex)
+                {
+                    windowPatternError = $"Invalid regex: {ex.Message}";
+                    isValid = false;
+                }
+            }
+        }
+
+        // Validate exclusions
+        for (int i = 0; i < exclusions.Count; i++)
+        {
+            var exclusion = exclusions[i];
+            if (string.IsNullOrWhiteSpace(exclusion.Pattern))
+            {
+                generalError = $"Exclusion #{i + 1} pattern cannot be empty";
+                isValid = false;
+                break;
+            }
+            
+            if (exclusion.MatchMode == PatternMatchMode.Regex)
+            {
+                try
+                {
+                    _ = new Regex(exclusion.Pattern, RegexOptions.None, TimeSpan.FromSeconds(2));
+                }
+                catch (Exception ex)
+                {
+                    generalError = $"Exclusion #{i + 1} invalid regex: {ex.Message}";
+                    isValid = false;
+                    break;
+                }
+            }
+        }
+
+        return isValid;
+    }
+
+    private async Task Save()
+    {
+        if (!ValidateInputs())
+        {
+            return;
+        }
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(50); // Allow UI to update
+
+            PatternDefinition? processPatternDef = null;
+            if (criteria == MatchingCriteria.ProcessNameOnly || criteria == MatchingCriteria.Both)
+            {
+                processPatternDef = processMatchMode == PatternMatchMode.Regex
+                    ? PatternDefinition.CreateRegexPattern(processPattern, processCaseSensitive)
+                    : PatternDefinition.CreateStringPattern(processPattern, processMatchMode, processCaseSensitive);
+            }
+
+            PatternDefinition? windowPatternDef = null;
+            if (criteria == MatchingCriteria.WindowTitleOnly || criteria == MatchingCriteria.Both)
+            {
+                windowPatternDef = windowMatchMode == PatternMatchMode.Regex
+                    ? PatternDefinition.CreateRegexPattern(windowPattern, windowCaseSensitive)
+                    : PatternDefinition.CreateStringPattern(windowPattern, windowMatchMode, windowCaseSensitive);
+            }
+
+            var exclusionDefs = exclusions
+                .Where(e => !string.IsNullOrWhiteSpace(e.Pattern))
+                .Select(e => e.MatchMode == PatternMatchMode.Regex
+                    ? PatternDefinition.CreateRegexPattern(e.Pattern, e.CaseSensitive)
+                    : PatternDefinition.CreateStringPattern(e.Pattern, e.MatchMode, e.CaseSensitive))
+                .ToList();
+
+            var rule = new MeetingRecognitionRule
+            {
+                Id = Rule?.Id ?? Guid.NewGuid(),
+                Priority = Rule?.Priority ?? Priority,
+                Criteria = criteria,
+                ProcessNamePattern = processPatternDef,
+                WindowTitlePattern = windowPatternDef,
+                Exclusions = exclusionDefs,
+                MatchCount = Rule?.MatchCount ?? 0,
+                LastMatchedAt = Rule?.LastMatchedAt
+            };
+
+            rule.Validate();
+
+            MudDialog.Close(DialogResult.Ok(rule));
+        }
+        catch (ArgumentException ex)
+        {
+            generalError = ex.Message;
+            snackbar.Add($"Validation error: {ex.Message}", Severity.Error);
+        }
+        catch (Exception ex)
+        {
+            generalError = $"Failed to save rule: {ex.Message}";
+            snackbar.Add(generalError, Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private class ExclusionPatternModel
+    {
+        public string Pattern { get; set; } = string.Empty;
+        public PatternMatchMode MatchMode { get; set; }
+        public bool CaseSensitive { get; set; }
+    }
+}
