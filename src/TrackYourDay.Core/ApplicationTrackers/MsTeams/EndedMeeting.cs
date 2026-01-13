@@ -1,4 +1,5 @@
-﻿using TrackYourDay.Core.Insights.Analytics;
+﻿using Newtonsoft.Json;
+using TrackYourDay.Core.Insights.Analytics;
 
 namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
 {
@@ -11,7 +12,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams
         
         /// <summary>
         /// Custom description that overrides the meeting title.
+        /// JsonProperty attribute ensures serialization/deserialization works with private setter.
         /// </summary>
+        [JsonProperty]
         public string? CustomDescription { get; private set; }
         
         public EndedMeeting(Guid guid, DateTime startDate, DateTime endDate, string title)
