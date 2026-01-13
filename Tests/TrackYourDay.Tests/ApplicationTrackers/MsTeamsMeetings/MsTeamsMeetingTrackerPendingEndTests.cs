@@ -61,8 +61,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             Times.Once);
         
         _tracker.GetOngoingMeeting().Should().BeNull();
-        _tracker.GetPendingEndMeeting().Should().NotBeNull();
-        _tracker.GetPendingEndMeeting()!.Meeting.Guid.Should().Be(meeting.Guid);
+        _tracker.GetEndedMeetings().Should().BeEmpty();
     }
 
     [Fact]
@@ -93,7 +92,6 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
         _tracker.RecognizeActivity();
 
         // Then
-        _tracker.GetPendingEndMeeting().Should().BeNull();
         _tracker.GetOngoingMeeting().Should().NotBeNull();
         _publisherMock.Verify(
             x => x.Publish(It.IsAny<MeetingEndedEvent>(), CancellationToken.None),
@@ -128,8 +126,6 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
         _publisherMock.Verify(
             x => x.Publish(It.IsAny<MeetingEndedEvent>(), CancellationToken.None),
             Times.Never);
-        
-        _tracker.GetPendingEndMeeting().Should().NotBeNull();
     }
 
     [Fact]
@@ -160,8 +156,6 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
         _tracker.RecognizeActivity();
 
         // Then
-        _tracker.GetPendingEndMeeting().Should().NotBeNull();
-        _tracker.GetPendingEndMeeting()!.Meeting.Title.Should().Be("Test Meeting");
         _tracker.GetOngoingMeeting().Should().BeNull();
         
         _loggerMock.Verify(
@@ -207,7 +201,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
         
-        _tracker.GetPendingEndMeeting().Should().BeNull();
+        _tracker.GetOngoingMeeting().Should().BeNull();
     }
 
     [Fact]
@@ -233,7 +227,6 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
         _tracker.CancelPendingEnd(meeting.Guid);
 
         // Then
-        _tracker.GetPendingEndMeeting().Should().BeNull();
         _tracker.GetOngoingMeeting().Should().NotBeNull();
         _tracker.GetOngoingMeeting()!.Guid.Should().Be(meeting.Guid);
     }

@@ -19,7 +19,8 @@ public sealed class MsTeamsMeetingTracker
     // State fields (thread-safe via lock)
     private readonly object _lock = new();
     private StartedMeeting? _ongoingMeeting;
-    private PendingEndMeeting? _pendingEndMeeting;
+    private StartedMeeting? _pendingEndMeeting;
+    private DateTime? _pendingEndDetectedAt;
     private Guid? _matchedRuleId;
     private readonly List<EndedMeeting> _endedMeetings = [];
 
@@ -47,22 +48,23 @@ public sealed class MsTeamsMeetingTracker
                 var (recognizedMeeting, _) = _meetingDiscoveryStrategy.RecognizeMeeting(_ongoingMeeting, _matchedRuleId);
                 
                 // Case A: Same meeting re-detected → Cancel pending end
-                if (recognizedMeeting != null && recognizedMeeting.Title == pendingEnd.Meeting.Title)
+                if (recognizedMeeting != null && recognizedMeeting.Title == pendingEnd.Title)
                 {
                     _pendingEndMeeting = null;
-                    _ongoingMeeting = pendingEnd.Meeting;
-                    _logger.LogInformation("Meeting end cancelled: {Title}", pendingEnd.Meeting.Title);
+                    _pendingEndDetectedAt = null;
+                    _ongoingMeeting = pendingEnd;
+                    _logger.LogInformation("Meeting end cancelled: {Title}", pendingEnd.Title);
                     return;
                 }
                 
                 // Case B: Different meeting detected → BLOCK (log warning)
-                if (recognizedMeeting != null && recognizedMeeting.Title != pendingEnd.Meeting.Title)
+                if (recognizedMeeting != null && recognizedMeeting.Title != pendingEnd.Title)
                 {
                     _logger.LogWarning(
                         "New meeting '{NewTitle}' detected while awaiting confirmation for '{OldTitle}'. " +
                         "New meeting ignored until user responds.",
                         recognizedMeeting.Title,
-                        pendingEnd.Meeting.Title
+                        pendingEnd.Title
                     );
                     return;
                 }
@@ -94,13 +96,8 @@ public sealed class MsTeamsMeetingTracker
             // ACTIVE → PENDING: Meeting window closed
             if (ongoing != null && recognized == null)
             {
-                var detectedAt = _clock.Now;
-                var pending = new PendingEndMeeting
-                {
-                    Meeting = ongoing,
-                    DetectedAt = detectedAt
-                };
-                _pendingEndMeeting = pending;
+                _pendingEndMeeting = ongoing;
+                _pendingEndDetectedAt = _clock.Now;
                 _ongoingMeeting = null;
                 
                 _publisher.Publish(
@@ -126,13 +123,13 @@ public sealed class MsTeamsMeetingTracker
         {
             var pending = _pendingEndMeeting;
 
-            if (pending == null || pending.Meeting.Guid != meetingGuid)
+            if (pending == null || pending.Guid != meetingGuid)
             {
                 _logger.LogWarning("No pending meeting for Guid: {Guid}", meetingGuid);
                 return;
             }
 
-            endedMeeting = pending.Meeting.End(_clock.Now);
+            endedMeeting = pending.End(_clock.Now);
 
             if (!string.IsNullOrWhiteSpace(customDescription))
             {
@@ -143,6 +140,7 @@ public sealed class MsTeamsMeetingTracker
             }
 
             _pendingEndMeeting = null;
+            _pendingEndDetectedAt = null;
             _ongoingMeeting = null;
             _matchedRuleId = null;
             _endedMeetings.Add(endedMeeting);
@@ -160,11 +158,12 @@ public sealed class MsTeamsMeetingTracker
         {
             var pending = _pendingEndMeeting;
 
-            if (pending?.Meeting.Guid == meetingGuid)
+            if (pending?.Guid == meetingGuid)
             {
-                _ongoingMeeting = pending.Meeting;
+                _ongoingMeeting = pending;
                 _pendingEndMeeting = null;
-                _logger.LogInformation("Pending end cancelled: {Title}", pending.Meeting.Title);
+                _pendingEndDetectedAt = null;
+                _logger.LogInformation("Pending end cancelled: {Title}", pending.Title);
             }
         }
     }
@@ -172,11 +171,6 @@ public sealed class MsTeamsMeetingTracker
     public StartedMeeting? GetOngoingMeeting()
     {
         lock (_lock) return _ongoingMeeting;
-    }
-
-    public PendingEndMeeting? GetPendingEndMeeting()
-    {
-        lock (_lock) return _pendingEndMeeting;
     }
 
     public IReadOnlyCollection<EndedMeeting> GetEndedMeetings()

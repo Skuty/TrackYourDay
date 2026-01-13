@@ -63,7 +63,6 @@ public sealed class MsTeamsMeetingServiceTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
         
-        _tracker.GetPendingEndMeeting().Should().BeNull();
         _tracker.GetOngoingMeeting().Should().BeNull();
     }
 
@@ -110,8 +109,6 @@ public sealed class MsTeamsMeetingServiceTests
         _publisherMock.Verify(
             x => x.Publish(It.IsAny<MeetingEndedEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        
-        _tracker.GetPendingEndMeeting().Should().NotBeNull();
     }
 
     [Fact]
@@ -136,7 +133,7 @@ public sealed class MsTeamsMeetingServiceTests
     }
 
     [Fact]
-    public void GivenPendingEndMeeting_WhenGetPendingEndMeeting_ThenReturnsIt()
+    public void GivenPendingEndMeeting_WhenPublished_ThenEventContainsMeetingInfo()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
@@ -152,13 +149,16 @@ public sealed class MsTeamsMeetingServiceTests
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
+        // When
         _tracker.RecognizeActivity();
 
-        // When
-        var result = _tracker.GetPendingEndMeeting();
-
         // Then
-        result.Should().NotBeNull();
-        result!.Meeting.Guid.Should().Be(meeting.Guid);
+        _publisherMock.Verify(
+            x => x.Publish(
+                It.Is<MeetingEndConfirmationRequestedEvent>(e => 
+                    e.MeetingGuid == meeting.Guid && 
+                    e.MeetingTitle == "Test Meeting"),
+                CancellationToken.None),
+            Times.Once);
     }
 }

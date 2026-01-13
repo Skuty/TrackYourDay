@@ -94,14 +94,7 @@
                 }
             }
             
-            if (string.IsNullOrEmpty(meetingTitle))
-            {
-                var pending = meetingService.GetPendingEndMeeting();
-                if (pending != null && pending.Meeting.Guid == meetingGuid)
-                {
-                    meetingTitle = pending.Meeting.Title;
-                }
-            }
+
         }
     }
 
