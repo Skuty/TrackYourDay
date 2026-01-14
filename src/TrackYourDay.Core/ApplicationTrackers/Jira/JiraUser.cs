@@ -1,4 +1,4 @@
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
-    public record JiraUser(string Name, string DisplayName);
+    public record JiraUser(string Name, string DisplayName, string? AccountId = null);
 }

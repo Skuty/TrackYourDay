@@ -241,7 +241,13 @@
     private async Task CheckGitLabConnection()
     {
         this.gitLabSettingsService.UpdateSettings(this.gitLabApiUrl, this.gitLabApiKey);
-        var gitLabClient = GitLabRestApiClientFactory.Create(this.gitLabSettingsService.GetSettings(), logger);
+        var httpClient = new HttpClient
+        {
+            BaseAddress = new Uri(this.gitLabSettingsService.GetSettings().ApiUrl)
+        };
+        httpClient.DefaultRequestHeaders.Add("PRIVATE-TOKEN", this.gitLabSettingsService.GetSettings().ApiKey);
+        
+        var gitLabClient = new GitLabRestApiClient(httpClient);
         var tempGitLabService = new GitLabActivityService(gitLabClient, null);
         
         connectionCheckSuccess = await tempGitLabService.CheckConnection();
@@ -255,7 +261,13 @@
     private async Task CheckJiraConnection()
     {
         this.jiraSettingsService.UpdateSettings(this.jiraApiUrl, this.jiraApiKey);
-        var jiraClient = JiraRestApiClientFactory.Create(this.jiraSettingsService.GetSettings(), logger);
+        var httpClient = new HttpClient
+        {
+            BaseAddress = new Uri(this.jiraSettingsService.GetSettings().ApiUrl)
+        };
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {this.jiraSettingsService.GetSettings().ApiKey}");
+        
+        var jiraClient = new JiraRestApiClient(httpClient);
         var tempJiraService = new JiraActivityService(jiraClient, null);
         
         connectionCheckSuccess = await tempJiraService.CheckConnection();

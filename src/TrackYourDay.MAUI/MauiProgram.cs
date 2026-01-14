@@ -45,6 +45,10 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddRepositories();
 
+            builder.Services.AddExternalActivitiesPersistence();
+
+            builder.Services.AddExternalActivitiesHttpClients();
+
             builder.Services.AddTrackers();
 
             builder.Services.AddLlmPromptServices();

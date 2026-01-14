@@ -18,8 +18,20 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         {
             var apiUrl = settingsService.GetEncryptedSetting(API_URL_KEY, string.Empty);
             var apiKey = settingsService.GetEncryptedSetting(API_KEY_KEY, string.Empty);
+            var enabled = settingsService.GetSetting("Jira.Enabled", false);
+            var fetchInterval = settingsService.GetSetting("Jira.FetchIntervalMinutes", 15);
+            var cbThreshold = settingsService.GetSetting("Jira.CircuitBreakerThreshold", 5);
+            var cbDuration = settingsService.GetSetting("Jira.CircuitBreakerDurationMinutes", 5);
 
-            return new JiraSettings(apiUrl, apiKey);
+            return new JiraSettings
+            {
+                ApiUrl = apiUrl,
+                ApiKey = apiKey,
+                Enabled = enabled,
+                FetchIntervalMinutes = fetchInterval,
+                CircuitBreakerThreshold = cbThreshold,
+                CircuitBreakerDurationMinutes = cbDuration
+            };
         }
 
         public void UpdateSettings(string apiUrl, string apiKey)

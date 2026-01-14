@@ -15,24 +15,17 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
     public class GitLabRestApiClient : IGitLabRestApiClient
     {
-        private readonly HttpClient httpClient;
+        private readonly HttpClient _httpClient;
         private const int PAGE_LIMIT = 100; // GitLab API supports up to 100 items per page
 
-        public GitLabRestApiClient(string url, string apiKey, ILogger logger)
+        public GitLabRestApiClient(HttpClient httpClient)
         {
-            var handler = new HttpClientHandler();
-            var loggingHandler = new HttpLoggingHandler(logger, "GitLab") { InnerHandler = handler };
-
-            this.httpClient = new HttpClient(loggingHandler)
-            {
-                BaseAddress = new Uri(url)
-            };
-            this.httpClient.DefaultRequestHeaders.Add("PRIVATE-TOKEN", apiKey);
+            _httpClient = httpClient;
         }
 
         public async Task<GitLabUser> GetCurrentUser()
         {
-            var response = await httpClient.GetAsync($"/api/v4/user");
+            var response = await _httpClient.GetAsync($"/api/v4/user");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<GitLabUser>(content);
@@ -47,7 +40,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             do
             {
-                var response = await httpClient.GetAsync($"/api/v4/users/{userId.Id}/events?per_page={PAGE_LIMIT}&page={page}&after={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}");
+                var response = await _httpClient.GetAsync($"/api/v4/users/{userId.Id}/events?per_page={PAGE_LIMIT}&page={page}&after={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}");
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
                 var events = JsonSerializer.Deserialize<List<GitLabEvent>>(content) ?? new List<GitLabEvent>();
@@ -62,7 +55,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
         public async Task<GitLabProject> GetProject(GitLabProjectId projectId)
         {
-            var response = await httpClient.GetAsync($"/api/v4/projects/{projectId.Id}");
+            var response = await _httpClient.GetAsync($"/api/v4/projects/{projectId.Id}");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
 
@@ -71,7 +64,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
         public async Task<List<GitLabCommit>> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
         {
-            var response = await httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/commits?ref_name={refName.Name}&since={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}");
+            var response = await _httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/commits?ref_name={refName.Name}&since={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<List<GitLabCommit>>(content) ?? new List<GitLabCommit>();
@@ -80,7 +73,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         public async Task<List<GitLabCommit>> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha)
         {
             // Use GitLab's compare API to get commits between two SHAs
-            var response = await httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/compare?from={commitFromSha}&to={commitToSha}");
+            var response = await _httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/compare?from={commitFromSha}&to={commitToSha}");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
             var comparison = JsonSerializer.Deserialize<GitLabComparison>(content);
@@ -135,14 +128,15 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
     public class GitLabRestApiClientFactory
     {
-        public static IGitLabRestApiClient Create(GitLabSettings settings, ILogger logger)
+        public static IGitLabRestApiClient Create(GitLabSettings settings, IHttpClientFactory httpClientFactory)
         {
             if (string.IsNullOrEmpty(settings.ApiUrl))
             {
                 return new NullGitLabRestApiClient();
             }
 
-            return new GitLabRestApiClient(settings.ApiUrl, settings.ApiKey, logger);
+            var httpClient = httpClientFactory.CreateClient("GitLab");
+            return new GitLabRestApiClient(httpClient);
         }
     }
 

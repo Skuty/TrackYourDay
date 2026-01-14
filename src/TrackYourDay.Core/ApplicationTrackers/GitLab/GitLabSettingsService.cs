@@ -18,8 +18,20 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         {
             var apiUrl = settingsService.GetEncryptedSetting(API_URL_KEY, string.Empty);
             var apiKey = settingsService.GetEncryptedSetting(API_KEY_KEY, string.Empty);
+            var enabled = settingsService.GetSetting("GitLab.Enabled", false);
+            var fetchInterval = settingsService.GetSetting("GitLab.FetchIntervalMinutes", 15);
+            var cbThreshold = settingsService.GetSetting("GitLab.CircuitBreakerThreshold", 5);
+            var cbDuration = settingsService.GetSetting("GitLab.CircuitBreakerDurationMinutes", 5);
 
-            return new GitLabSettings(apiUrl, apiKey);
+            return new GitLabSettings
+            {
+                ApiUrl = apiUrl,
+                ApiKey = apiKey,
+                Enabled = enabled,
+                FetchIntervalMinutes = fetchInterval,
+                CircuitBreakerThreshold = cbThreshold,
+                CircuitBreakerDurationMinutes = cbDuration
+            };
         }
 
         public void UpdateSettings(string apiUrl, string apiKey)
