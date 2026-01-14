@@ -179,11 +179,4 @@ jobs:
           body: |
             ## TrackYourDay v${{ needs.calculate-version.outputs.version }}
 
-            This release was automatically created based on conventional commit messages from commit ${{ github.sha }}.
-
-            ### Installation
-            1. Download the ZIP file below
-            2. Extract to your local drive
-            3. Run TrackYourDay.MAUI.exe
-
-            For more information, see the [README](https://github.com/Skuty/TrackYourDay#readme).
+            This release was automatically created starting from commit ${{ github.sha }}.
