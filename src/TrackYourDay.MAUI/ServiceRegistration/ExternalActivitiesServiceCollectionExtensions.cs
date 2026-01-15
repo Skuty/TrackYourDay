@@ -1,6 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Polly;
-using Polly.Contrib.WaitAndRetry;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
@@ -37,6 +35,11 @@ namespace TrackYourDay.MAUI.ServiceRegistration
 
         public static IServiceCollection AddExternalActivitiesHttpClients(this IServiceCollection services)
         {
+            // TODO: Add Polly circuit breaker and retry policies
+            // Requires: dotnet add package Microsoft.Extensions.Http.Polly
+            // Circuit breaker: 5 failures -> 5 min break
+            // Retry: 3 attempts with exponential backoff
+            
             services.AddHttpClient("GitLab", (sp, client) =>
             {
                 var settingsService = sp.GetRequiredService<IGitLabSettingsService>();

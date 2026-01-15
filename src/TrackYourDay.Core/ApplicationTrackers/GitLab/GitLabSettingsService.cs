@@ -40,6 +40,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             settingsService.SetEncryptedSetting(API_KEY_KEY, apiKey ?? string.Empty);
         }
 
+        public void UpdateSettings(string apiUrl, string apiKey, bool enabled, int fetchIntervalMinutes, int circuitBreakerThreshold, int circuitBreakerDurationMinutes)
+        {
+            settingsService.SetEncryptedSetting(API_URL_KEY, apiUrl ?? string.Empty);
+            settingsService.SetEncryptedSetting(API_KEY_KEY, apiKey ?? string.Empty);
+            settingsService.SetSetting("GitLab.Enabled", enabled);
+            settingsService.SetSetting("GitLab.FetchIntervalMinutes", fetchIntervalMinutes);
+            settingsService.SetSetting("GitLab.CircuitBreakerThreshold", circuitBreakerThreshold);
+            settingsService.SetSetting("GitLab.CircuitBreakerDurationMinutes", circuitBreakerDurationMinutes);
+        }
+
         public void PersistSettings()
         {
             settingsService.PersistSettings();

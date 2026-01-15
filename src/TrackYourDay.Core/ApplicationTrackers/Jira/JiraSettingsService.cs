@@ -40,6 +40,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             settingsService.SetEncryptedSetting(API_KEY_KEY, apiKey ?? string.Empty);
         }
 
+        public void UpdateSettings(string apiUrl, string apiKey, bool enabled, int fetchIntervalMinutes, int circuitBreakerThreshold, int circuitBreakerDurationMinutes)
+        {
+            settingsService.SetEncryptedSetting(API_URL_KEY, apiUrl ?? string.Empty);
+            settingsService.SetEncryptedSetting(API_KEY_KEY, apiKey ?? string.Empty);
+            settingsService.SetSetting("Jira.Enabled", enabled);
+            settingsService.SetSetting("Jira.FetchIntervalMinutes", fetchIntervalMinutes);
+            settingsService.SetSetting("Jira.CircuitBreakerThreshold", circuitBreakerThreshold);
+            settingsService.SetSetting("Jira.CircuitBreakerDurationMinutes", circuitBreakerDurationMinutes);
+        }
+
         public void PersistSettings()
         {
             settingsService.PersistSettings();

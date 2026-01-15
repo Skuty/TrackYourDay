@@ -1,10 +1,28 @@
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
-    public record class JiraActivity(DateTime OccurrenceDate, string Description)
+    /// <summary>
+    /// Represents a Jira activity event with deterministic identifier.
+    /// </summary>
+    public record class JiraActivity
     {
-        public Guid Guid { get; init; } = Guid.NewGuid();
+        public required string UpstreamId { get; init; }
+        public required DateTime OccurrenceDate { get; init; }
+        public required string Description { get; init; }
+        
+        /// <summary>
+        /// Deterministic GUID based on UpstreamId for deduplication.
+        /// </summary>
+        public Guid Guid => GenerateDeterministicGuid(UpstreamId);
+
+        private static Guid GenerateDeterministicGuid(string input)
+        {
+            var bytes = MD5.HashData(Encoding.UTF8.GetBytes(input));
+            return new Guid(bytes);
+        }
     }
 
     public interface IJiraActivityService
@@ -15,93 +33,73 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
     public class JiraActivityService : IJiraActivityService
     {
-        private readonly IJiraRestApiClient jiraRestApiClient;
-        private readonly ILogger<JiraActivityService> logger;
-        private JiraUser currentUser;
-        private bool stopFetchingDueToFailedRequests = false;
+        private readonly IJiraRestApiClient _jiraRestApiClient;
+        private readonly ILogger<JiraActivityService> _logger;
 
         public JiraActivityService(IJiraRestApiClient jiraRestApiClient, ILogger<JiraActivityService> logger)
         {
-            this.jiraRestApiClient = jiraRestApiClient;
-            this.logger = logger;
+            _jiraRestApiClient = jiraRestApiClient;
+            _logger = logger;
         }
 
         public async Task<List<JiraActivity>> GetActivitiesUpdatedAfter(DateTime updateDate)
         {
-            if (this.stopFetchingDueToFailedRequests)
-            {
-                return new List<JiraActivity>();
-            }
+            var currentUser = await _jiraRestApiClient.GetCurrentUser().ConfigureAwait(false);
+            var issues = await _jiraRestApiClient.GetUserIssues(currentUser, updateDate).ConfigureAwait(false);
 
-            try
+            var activities = new List<JiraActivity>();
+
+            foreach (var issue in issues)
             {
-                if (this.currentUser == null)
+                // Check if this issue was created by the current user in the date range
+                if (issue.Fields.Created.HasValue &&
+                    issue.Fields.Created.Value.LocalDateTime >= updateDate &&
+                    issue.Fields.Creator?.DisplayName == currentUser.DisplayName)
                 {
-                    this.currentUser = await this.jiraRestApiClient.GetCurrentUser();
+                    activities.Add(CreateIssueCreationActivity(issue));
                 }
 
-                var issues = await this.jiraRestApiClient.GetUserIssues(this.currentUser, updateDate);
-
-                var activities = new List<JiraActivity>();
-
-                foreach (var issue in issues)
+                // Extract activities from changelog (only for current user)
+                if (issue.Changelog?.Histories != null)
                 {
-                    // Check if this issue was created by the current user in the date range
-                    if (issue.Fields.Created.HasValue &&
-                        issue.Fields.Created.Value.LocalDateTime >= updateDate &&
-                        issue.Fields.Creator?.DisplayName == this.currentUser.DisplayName)
-                    {
-                        activities.Add(CreateIssueCreationActivity(issue));
-                    }
-
-                    // Extract activities from changelog (only for current user)
-                    if (issue.Changelog?.Histories != null)
-                    {
-                        var changelogActivities = this.MapChangelogToActivities(issue);
-                        activities.AddRange(changelogActivities);
-                    }
-
-                    // Fetch and process worklogs for this issue
-                    try
-                    {
-                        var worklogs = await this.jiraRestApiClient.GetIssueWorklogs(issue.Key, updateDate);
-                        var worklogActivities = worklogs
-                            .Where(w => w.Author?.DisplayName == this.currentUser.DisplayName)
-                            .Select(w => CreateWorklogActivity(issue, w))
-                            .ToList();
-                        activities.AddRange(worklogActivities);
-                    }
-                    catch (Exception ex)
-                    {
-                        this.logger?.LogWarning(ex, $"Failed to fetch worklogs for issue {issue.Key}");
-                    }
+                    var changelogActivities = MapChangelogToActivities(issue, currentUser);
+                    activities.AddRange(changelogActivities);
                 }
 
-                return activities.OrderBy(a => a.OccurrenceDate).ToList();
+                // Fetch and process worklogs for this issue
+                try
+                {
+                    var worklogs = await _jiraRestApiClient.GetIssueWorklogs(issue.Key, updateDate).ConfigureAwait(false);
+                    var worklogActivities = worklogs
+                        .Where(w => w.Author?.DisplayName == currentUser.DisplayName)
+                        .Select(w => CreateWorklogActivity(issue, w))
+                        .ToList();
+                    activities.AddRange(worklogActivities);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to fetch worklogs for issue {IssueKey}", issue.Key);
+                }
             }
-            catch (Exception e)
-            {
-                this.logger.LogError(e, "Error while fetching Jira activities");
-                this.stopFetchingDueToFailedRequests = true;
-                return new List<JiraActivity>();
-            }
+
+            return activities.OrderBy(a => a.OccurrenceDate).ToList();
         }
 
         public async Task<bool> CheckConnection()
         {
             try
             {
-                var user = await this.jiraRestApiClient.GetCurrentUser();
+                var user = await _jiraRestApiClient.GetCurrentUser().ConfigureAwait(false);
                 return user != null && !string.IsNullOrEmpty(user.DisplayName) && user.DisplayName != "Not recognized";
             }
             catch (Exception e)
             {
-                this.logger.LogError(e, "Error while checking Jira connection");
+                _logger.LogError(e, "Error while checking Jira connection");
                 return false;
             }
         }
 
-        private JiraActivity CreateIssueCreationActivity(JiraIssueResponse issue)
+        private static JiraActivity CreateIssueCreationActivity(JiraIssueResponse issue)
         {
             var issueType = issue.Fields.IssueType?.Name ?? "Issue";
             var project = issue.Fields.Project?.Key ?? "Unknown";
@@ -114,10 +112,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 description += $" (sub-task of {parentType} {issue.Fields.Parent.Key})";
             }
 
-            return new JiraActivity(issue.Fields.Created!.Value.LocalDateTime, description);
+            var upstreamId = $"jira-issue-created-{issue.Key}-{issue.Id}";
+            return new JiraActivity
+            {
+                UpstreamId = upstreamId,
+                OccurrenceDate = issue.Fields.Created!.Value.LocalDateTime,
+                Description = description
+            };
         }
 
-        private JiraActivity CreateWorklogActivity(JiraIssueResponse issue, JiraWorklogResponse worklog)
+        private static JiraActivity CreateWorklogActivity(JiraIssueResponse issue, JiraWorklogResponse worklog)
         {
             var project = issue.Fields.Project?.Key ?? "Unknown";
             var issueType = issue.Fields.IssueType?.Name ?? "Issue";
@@ -133,10 +137,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 description += $" - \"{commentPreview}\"";
             }
 
-            return new JiraActivity(worklog.Started.LocalDateTime, description);
+            var upstreamId = $"jira-worklog-{issue.Key}-{worklog.Id}";
+            return new JiraActivity
+            {
+                UpstreamId = upstreamId,
+                OccurrenceDate = worklog.Started.LocalDateTime,
+                Description = description
+            };
         }
 
-        private List<JiraActivity> MapChangelogToActivities(JiraIssueResponse issue)
+        private static List<JiraActivity> MapChangelogToActivities(JiraIssueResponse issue, JiraUser currentUser)
         {
             var activities = new List<JiraActivity>();
 
@@ -148,7 +158,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             foreach (var history in issue.Changelog.Histories)
             {
                 // Only include changes made by the current user
-                if (history.Author?.DisplayName != this.currentUser.DisplayName)
+                if (history.Author?.DisplayName != currentUser.DisplayName)
                 {
                     continue;
                 }
@@ -160,7 +170,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
                 foreach (var item in history.Items)
                 {
-                    var activity = this.MapChangeItemToActivity(issue, history, item);
+                    var activity = MapChangeItemToActivity(issue, history, item);
                     if (activity != null)
                     {
                         activities.Add(activity);
@@ -171,7 +181,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             return activities;
         }
 
-        private JiraActivity? MapChangeItemToActivity(JiraIssueResponse issue, JiraHistoryResponse history, JiraChangeItemResponse item)
+        private static JiraActivity? MapChangeItemToActivity(JiraIssueResponse issue, JiraHistoryResponse history, JiraChangeItemResponse item)
         {
             var issueKey = issue.Key;
             var issueSummary = issue.Fields.Summary;
@@ -204,10 +214,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 _ => $"Updated {item.Field} of {issueIdentifier}: {issueSummary}"
             };
 
-            return new JiraActivity(activityDate, description);
+            var upstreamId = $"jira-history-{issueKey}-{history.Id}-{item.Field}";
+            return new JiraActivity
+            {
+                UpstreamId = upstreamId,
+                OccurrenceDate = activityDate,
+                Description = description
+            };
         }
 
-        private string MapAssigneeChange(string issueKey, string? summary, string? from, string? to)
+        private static string MapAssigneeChange(string issueKey, string? summary, string? from, string? to)
         {
             if (string.IsNullOrEmpty(from))
             {
@@ -223,7 +239,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
         }
 
-        private string MapResolutionChange(string issueKey, string? summary, string? from, string? to)
+        private static string MapResolutionChange(string issueKey, string? summary, string? from, string? to)
         {
             if (string.IsNullOrEmpty(from) && !string.IsNullOrEmpty(to))
             {
@@ -239,7 +255,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
         }
 
-        private string MapFixVersionChange(string issueKey, string? summary, string? from, string? to)
+        private static string MapFixVersionChange(string issueKey, string? summary, string? from, string? to)
         {
             if (string.IsNullOrEmpty(from))
             {
@@ -255,7 +271,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
         }
 
-        private string MapComponentChange(string issueKey, string? summary, string? from, string? to)
+        private static string MapComponentChange(string issueKey, string? summary, string? from, string? to)
         {
             if (string.IsNullOrEmpty(from))
             {
@@ -271,7 +287,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
         }
 
-        private string MapSprintChange(string issueKey, string? summary, string? from, string? to)
+        private static string MapSprintChange(string issueKey, string? summary, string? from, string? to)
         {
             if (string.IsNullOrEmpty(from))
             {
@@ -287,7 +303,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
         }
 
-        private string MapParentChange(string issueKey, string? summary, string? from, string? to)
+        private static string MapParentChange(string issueKey, string? summary, string? from, string? to)
         {
             if (string.IsNullOrEmpty(from))
             {

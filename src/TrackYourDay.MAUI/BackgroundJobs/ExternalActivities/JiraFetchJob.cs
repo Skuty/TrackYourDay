@@ -38,24 +38,24 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
             {
                 _logger.LogInformation("Jira fetch job started");
 
-                _currentUser ??= await _restApiClient.GetCurrentUser();
+                _currentUser ??= await _restApiClient.GetCurrentUser().ConfigureAwait(false);
 
                 var startDate = DateTime.Today;
-                var activities = await _activityService.GetActivitiesUpdatedAfter(startDate);
+                var activities = await _activityService.GetActivitiesUpdatedAfter(startDate).ConfigureAwait(false);
 
                 var newActivityCount = 0;
                 foreach (var activity in activities)
                 {
-                    var isNew = await _activityRepository.TryAppendAsync(activity, context.CancellationToken);
+                    var isNew = await _activityRepository.TryAppendAsync(activity, context.CancellationToken).ConfigureAwait(false);
                     if (isNew)
                     {
                         newActivityCount++;
                     }
                 }
 
-                var issues = await _restApiClient.GetUserIssues(_currentUser, startDate);
+                var issues = await _restApiClient.GetUserIssues(_currentUser, startDate).ConfigureAwait(false);
                 var currentIssues = issues.Select(MapToJiraIssue).ToList();
-                await _issueRepository.UpdateCurrentStateAsync(currentIssues, context.CancellationToken);
+                await _issueRepository.UpdateCurrentStateAsync(currentIssues, context.CancellationToken).ConfigureAwait(false);
 
                 _logger.LogInformation("Jira fetch job completed: {ActivityCount} activities ({NewCount} new), {IssueCount} current issues",
                     activities.Count, newActivityCount, currentIssues.Count);
@@ -63,6 +63,7 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Jira fetch job failed");
+                throw;
             }
         }
 

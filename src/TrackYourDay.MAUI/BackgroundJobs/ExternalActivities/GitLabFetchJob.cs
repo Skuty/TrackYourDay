@@ -32,16 +32,16 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
             {
                 _logger.LogInformation("GitLab fetch job started");
 
-                var activities = _activityService.GetTodayActivities();
+                var activities = await _activityService.GetTodayActivitiesAsync(context.CancellationToken).ConfigureAwait(false);
 
                 var newActivityCount = 0;
                 foreach (var activity in activities)
                 {
-                    var isNew = await _repository.TryAppendAsync(activity, context.CancellationToken);
+                    var isNew = await _repository.TryAppendAsync(activity, context.CancellationToken).ConfigureAwait(false);
                     if (isNew)
                     {
                         newActivityCount++;
-                        await _publisher.Publish(new GitLabActivityDiscoveredEvent(activity.Guid, activity), context.CancellationToken);
+                        await _publisher.Publish(new GitLabActivityDiscoveredEvent(activity.Guid, activity), context.CancellationToken).ConfigureAwait(false);
                     }
                 }
 
@@ -51,6 +51,7 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
             catch (Exception ex)
             {
                 _logger.LogError(ex, "GitLab fetch job failed");
+                throw;
             }
         }
 

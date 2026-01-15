@@ -51,9 +51,9 @@ namespace TrackYourDay.MAUI.ServiceRegistration
 
         private static void ConfigureExternalActivityJobs(IServiceCollectionQuartzConfigurator q, IServiceCollection services)
         {
-            var serviceProvider = services.BuildServiceProvider();
-
-            var gitLabSettings = serviceProvider.GetRequiredService<IGitLabSettingsService>().GetSettings();
+            using var tempProvider = services.BuildServiceProvider();
+            
+            var gitLabSettings = tempProvider.GetRequiredService<IGitLabSettingsService>().GetSettings();
             if (gitLabSettings.Enabled && !string.IsNullOrEmpty(gitLabSettings.ApiUrl))
             {
                 q.AddJob<GitLabFetchJob>(opts => opts.WithIdentity("GitLabFetch", "ExternalActivities"));
@@ -66,7 +66,7 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                     .StartNow());
             }
 
-            var jiraSettings = serviceProvider.GetRequiredService<IJiraSettingsService>().GetSettings();
+            var jiraSettings = tempProvider.GetRequiredService<IJiraSettingsService>().GetSettings();
             if (jiraSettings.Enabled && !string.IsNullOrEmpty(jiraSettings.ApiUrl))
             {
                 q.AddJob<JiraFetchJob>(opts => opts.WithIdentity("JiraFetch", "ExternalActivities"));
