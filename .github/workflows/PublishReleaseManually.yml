@@ -74,7 +74,3 @@ jobs:
                 tag: v${{ github.event.inputs.version }}
                 artifactContentType: application/zip
                 generateReleaseNotes: true
-                body: |
-                  ## TrackYourDay v${{ github.event.inputs.version }}
-                  
-                  This release was manually created.
