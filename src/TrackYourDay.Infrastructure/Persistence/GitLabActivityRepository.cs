@@ -6,7 +6,7 @@ using TrackYourDay.Core.ApplicationTrackers.Persistence;
 
 namespace TrackYourDay.MAUI.Infrastructure.Persistence
 {
-    internal sealed class GitLabActivityRepository : IGitLabActivityRepository
+    public sealed class GitLabActivityRepository : IGitLabActivityRepository
     {
         private readonly string _connectionString;
         private readonly ILogger<GitLabActivityRepository> _logger;

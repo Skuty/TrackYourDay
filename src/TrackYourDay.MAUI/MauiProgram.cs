@@ -9,6 +9,7 @@ using TrackYourDay.Core.ServiceRegistration;
 using TrackYourDay.Web.ServiceRegistration;
 using TrackYourDay.Core.SystemTrackers;
 using Microsoft.Extensions.Configuration;
+using TrackYourDay.MAUI.Infrastructure;
 
 namespace TrackYourDay.MAUI
 {

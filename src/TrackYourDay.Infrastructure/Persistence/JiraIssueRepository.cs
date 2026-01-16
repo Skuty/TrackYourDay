@@ -5,7 +5,7 @@ using TrackYourDay.Core.ApplicationTrackers.Persistence;
 
 namespace TrackYourDay.MAUI.Infrastructure.Persistence
 {
-    internal sealed class JiraIssueRepository : IJiraIssueRepository
+    public sealed class JiraIssueRepository : IJiraIssueRepository
     {
         private readonly string _connectionString;
         private readonly ILogger<JiraIssueRepository> _logger;

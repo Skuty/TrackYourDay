@@ -75,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\TrackYourDay.Core\TrackYourDay.Core.csproj" />
+    <ProjectReference Include="..\TrackYourDay.Infrastructure\TrackYourDay.Infrastructure.csproj" />
     <ProjectReference Include="..\TrackYourDay.Web\TrackYourDay.Web.csproj" />
   </ItemGroup>
   <ItemGroup>
