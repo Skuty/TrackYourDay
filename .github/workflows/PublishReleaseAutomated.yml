@@ -176,11 +176,3 @@ jobs:
           commit: ${{ github.sha }}
           omitBodyDuringUpdate: true
           omitNameDuringUpdate: true
-          body: |
-            ## TrackYourDay v${{ needs.calculate-version.outputs.version }}
-
-            This release was automatically created from commit ${{ github.sha }}.
-            
-            ### What's New
-            
-            See the changes below for details on what was added in this release.
