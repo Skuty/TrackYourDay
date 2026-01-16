@@ -6,6 +6,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     {
         private const string API_URL_KEY = "Jira.ApiUrl";
         private const string API_KEY_KEY = "Jira.ApiKey";
+        private const string LAST_SYNC_KEY = "Jira.LastSyncTimestamp";
+        private const int DEFAULT_LOOKBACK_DAYS = 90;
 
         private readonly IGenericSettingsService settingsService;
 
@@ -22,6 +24,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             var fetchInterval = settingsService.GetSetting("Jira.FetchIntervalMinutes", 15);
             var cbThreshold = settingsService.GetSetting("Jira.CircuitBreakerThreshold", 5);
             var cbDuration = settingsService.GetSetting("Jira.CircuitBreakerDurationMinutes", 5);
+            var lastSyncStr = settingsService.GetSetting(LAST_SYNC_KEY, string.Empty);
+            
+            DateTime? lastSync = null;
+            if (!string.IsNullOrEmpty(lastSyncStr) && DateTime.TryParse(lastSyncStr, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+            {
+                lastSync = parsed;
+            }
 
             return new JiraSettings
             {
@@ -30,7 +39,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 Enabled = enabled,
                 FetchIntervalMinutes = fetchInterval,
                 CircuitBreakerThreshold = cbThreshold,
-                CircuitBreakerDurationMinutes = cbDuration
+                CircuitBreakerDurationMinutes = cbDuration,
+                LastSyncTimestamp = lastSync
             };
         }
 
@@ -48,6 +58,17 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             settingsService.SetSetting("Jira.FetchIntervalMinutes", fetchIntervalMinutes);
             settingsService.SetSetting("Jira.CircuitBreakerThreshold", circuitBreakerThreshold);
             settingsService.SetSetting("Jira.CircuitBreakerDurationMinutes", circuitBreakerDurationMinutes);
+        }
+
+        public void UpdateLastSyncTimestamp(DateTime timestamp)
+        {
+            settingsService.SetSetting(LAST_SYNC_KEY, timestamp.ToString("O"));
+        }
+
+        public DateTime GetSyncStartDate()
+        {
+            var settings = GetSettings();
+            return settings.LastSyncTimestamp ?? DateTime.UtcNow.AddDays(-DEFAULT_LOOKBACK_DAYS);
         }
 
         public void PersistSettings()

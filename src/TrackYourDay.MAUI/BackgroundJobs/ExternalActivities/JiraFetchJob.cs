@@ -12,6 +12,7 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
         private readonly IJiraActivityRepository _activityRepository;
         private readonly IJiraIssueRepository _issueRepository;
         private readonly IJiraRestApiClient _restApiClient;
+        private readonly IJiraSettingsService _settingsService;
         private readonly IPublisher _publisher;
         private readonly ILogger<JiraFetchJob> _logger;
         private JiraUser? _currentUser;
@@ -21,6 +22,7 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
             IJiraActivityRepository activityRepository,
             IJiraIssueRepository issueRepository,
             IJiraRestApiClient restApiClient,
+            IJiraSettingsService settingsService,
             IPublisher publisher,
             ILogger<JiraFetchJob> logger)
         {
@@ -28,6 +30,7 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
             _activityRepository = activityRepository;
             _issueRepository = issueRepository;
             _restApiClient = restApiClient;
+            _settingsService = settingsService;
             _publisher = publisher;
             _logger = logger;
         }
@@ -36,11 +39,13 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
         {
             try
             {
-                _logger.LogInformation("Jira fetch job started");
+                var syncStartTime = DateTime.UtcNow;
+                var startDate = _settingsService.GetSyncStartDate();
+                
+                _logger.LogInformation("Jira fetch job started, syncing from {StartDate}", startDate);
 
                 _currentUser ??= await _restApiClient.GetCurrentUser().ConfigureAwait(false);
 
-                var startDate = DateTime.Today;
                 var activities = await _activityService.GetActivitiesUpdatedAfter(startDate).ConfigureAwait(false);
 
                 var newActivityCount = 0;
@@ -57,8 +62,11 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
                 var currentIssues = issues.Select(MapToJiraIssue).ToList();
                 await _issueRepository.UpdateCurrentStateAsync(currentIssues, context.CancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Jira fetch job completed: {ActivityCount} activities ({NewCount} new), {IssueCount} current issues",
-                    activities.Count, newActivityCount, currentIssues.Count);
+                _settingsService.UpdateLastSyncTimestamp(syncStartTime);
+                _settingsService.PersistSettings();
+
+                _logger.LogInformation("Jira fetch job completed: {ActivityCount} activities ({NewCount} new), {IssueCount} current issues, watermark updated to {SyncTime}",
+                    activities.Count, newActivityCount, currentIssues.Count, syncStartTime);
             }
             catch (Exception ex)
             {

@@ -9,6 +9,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         public int FetchIntervalMinutes { get; init; } = 15;
         public int CircuitBreakerThreshold { get; init; } = 5;
         public int CircuitBreakerDurationMinutes { get; init; } = 5;
+        public DateTime? LastSyncTimestamp { get; init; }
 
         internal static JiraSettings CreateDefaultSettings()
         {
@@ -19,7 +20,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 Enabled = false,
                 FetchIntervalMinutes = 15,
                 CircuitBreakerThreshold = 5,
-                CircuitBreakerDurationMinutes = 5
+                CircuitBreakerDurationMinutes = 5,
+                LastSyncTimestamp = null
             };
         }
     }
