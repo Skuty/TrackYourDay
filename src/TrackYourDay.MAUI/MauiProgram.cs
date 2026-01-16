@@ -8,7 +8,6 @@ using TrackYourDay.MAUI.ServiceRegistration;
 using TrackYourDay.Core.ServiceRegistration;
 using TrackYourDay.Web.ServiceRegistration;
 using TrackYourDay.Core.SystemTrackers;
-using TrackYourDay.MAUI.Infrastructure;
 using Microsoft.Extensions.Configuration;
 
 namespace TrackYourDay.MAUI

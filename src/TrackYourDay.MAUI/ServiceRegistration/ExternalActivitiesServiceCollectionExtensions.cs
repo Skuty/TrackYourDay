@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
-using TrackYourDay.MAUI.Infrastructure.Persistence;
 
 namespace TrackYourDay.MAUI.ServiceRegistration
 {
