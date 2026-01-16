@@ -7,7 +7,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         private const string API_URL_KEY = "Jira.ApiUrl";
         private const string API_KEY_KEY = "Jira.ApiKey";
         private const string LAST_SYNC_KEY = "Jira.LastSyncTimestamp";
-        private const int DEFAULT_LOOKBACK_DAYS = 90;
+        private const int DEFAULT_LOOKBACK_DAYS = 2;
 
         private readonly IGenericSettingsService settingsService;
 

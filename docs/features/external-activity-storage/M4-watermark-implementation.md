@@ -45,9 +45,9 @@
 
 ### First Sync (No Watermark)
 ```
-StartDate = DateTime.UtcNow.AddDays(-90)
+StartDate = DateTime.UtcNow.AddDays(-2)
 ```
-- Fetches last 90 days of activity
+- Fetches last 2 days of activity
 - Establishes baseline
 
 ### Subsequent Syncs (Watermark Exists)
@@ -95,11 +95,11 @@ DateTime.Parse(str, null, DateTimeStyles.RoundtripKind) // Preserves UTC
 ```
 **Rationale:** Timezone-agnostic, sortable, standard format
 
-### 2. 90-Day Default Lookback
+### 2. 2-Day Default Lookback
 ```csharp
-return settings.LastSyncTimestamp ?? DateTime.UtcNow.AddDays(-90);
+return settings.LastSyncTimestamp ?? DateTime.UtcNow.AddDays(-2);
 ```
-**Rationale:** Balances historical coverage vs. API load for new installations
+**Rationale:** Minimal API load for new installations while covering recent activity
 
 ### 3. Optimistic Watermark Update
 ```csharp
@@ -120,8 +120,8 @@ UpdateLastSyncTimestamp(syncStartTime); // Update on success only
 
 ### Existing Installations
 1. First run after upgrade: `LastSyncTimestamp == null`
-2. `GetSyncStartDate()` returns 90 days ago
-3. Fetches historical baseline
+2. `GetSyncStartDate()` returns 2 days ago
+3. Fetches recent baseline
 4. Subsequent runs use incremental sync
 
 ### No Breaking Changes
@@ -141,9 +141,9 @@ Data loss: Activities older than midnight lost forever
 
 ### After (M4 Fixed)
 ```
-First sync: Query 90 days (one-time cost)
+First sync: Query 2 days (minimal cost)
 Subsequent: Query only deltas since last sync
-Historical: All activity preserved
+Historical: All activity preserved from first sync onward
 ```
 
 **API Load Reduction:** ~95% for 15-minute polling intervals
@@ -178,7 +178,7 @@ dotnet test Tests/TrackYourDay.Tests --filter "FullyQualifiedName~JiraSettingsSe
 ## Acceptance Criteria Met
 
 ✅ **AC1:** Watermark persisted on successful sync  
-✅ **AC2:** Historical data preserved (90-day initial backfill)  
+✅ **AC2:** Historical data preserved (2-day initial backfill)  
 ✅ **AC3:** Incremental sync for subsequent runs  
 ✅ **AC4:** Failure handling (no watermark update on error)  
 ✅ **AC5:** Timezone-safe (UTC + RoundtripKind)  

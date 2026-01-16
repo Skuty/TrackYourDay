@@ -120,7 +120,7 @@ public sealed class JiraSettingsServiceTests
     }
 
     [Fact]
-    public void GivenNoLastSync_WhenGetSyncStartDate_ThenReturns90DaysAgo()
+    public void GivenNoLastSync_WhenGetSyncStartDate_ThenReturns2DaysAgo()
     {
         // Given
         var now = DateTime.UtcNow;
@@ -133,7 +133,7 @@ public sealed class JiraSettingsServiceTests
         var result = _sut.GetSyncStartDate();
 
         // Then
-        result.Should().BeCloseTo(now.AddDays(-90), TimeSpan.FromSeconds(1));
+        result.Should().BeCloseTo(now.AddDays(-2), TimeSpan.FromSeconds(1));
     }
 
     [Fact]
