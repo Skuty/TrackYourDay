@@ -68,8 +68,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
 
             var jiraActivities = new List<JiraActivity>
             {
-                new JiraActivity(now.AddHours(-2), "Jira Issue Updated - PROJ-123: Login Authentication | Updated: 2023-01-01 10:00 | Issue ID: 1"),
-                new JiraActivity(now.AddHours(-1), "Jira Issue Updated - PROJ-456: User Dashboard | Updated: 2023-01-01 11:00 | Issue ID: 2")
+                new() { UpstreamId = "jira-proj123", OccurrenceDate = now.AddHours(-2), Description = "Jira Issue Updated - PROJ-123: Login Authentication | Updated: 2023-01-01 10:00 | Issue ID: 1" },
+                new() { UpstreamId = "jira-proj456", OccurrenceDate = now.AddHours(-1), Description = "Jira Issue Updated - PROJ-456: User Dashboard | Updated: 2023-01-01 11:00 | Issue ID: 2" }
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
@@ -96,7 +96,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
 
             var jiraActivities = new List<JiraActivity>
             {
-                new JiraActivity(now.AddHours(-1), "Jira Issue Updated - PROJ-123: Login Authentication Feature | Updated: 2023-01-01 10:00 | Issue ID: 1")
+                new() { UpstreamId = "jira-proj123-v2", OccurrenceDate = now.AddHours(-1), Description = "Jira Issue Updated - PROJ-123: Login Authentication Feature | Updated: 2023-01-01 10:00 | Issue ID: 1" }
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
@@ -124,7 +124,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
 
             var jiraActivities = new List<JiraActivity>
             {
-                new JiraActivity(now.AddMinutes(-25), "Jira Issue Updated - PROJ-123: Login Authentication Feature | Updated: 2023-01-01 09:00 | Issue ID: 1")
+                new() { UpstreamId = "jira-proj123-v3", OccurrenceDate = now.AddMinutes(-25), Description = "Jira Issue Updated - PROJ-123: Login Authentication Feature | Updated: 2023-01-01 09:00 | Issue ID: 1" }
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
@@ -179,8 +179,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
 
             var jiraActivities = new List<JiraActivity>
             {
-                new JiraActivity(new DateTime(2023, 1, 1, 9, 0, 0), "Jira Issue Updated - PROJ-123: Feature | Updated: 2023-01-01 09:00 | Issue ID: 1"),
-                new JiraActivity(new DateTime(2023, 1, 2, 9, 0, 0), "Jira Issue Updated - PROJ-123: Feature | Updated: 2023-01-02 09:00 | Issue ID: 1")
+                new() { UpstreamId = "jira-proj123-day1", OccurrenceDate = new DateTime(2023, 1, 1, 9, 0, 0), Description = "Jira Issue Updated - PROJ-123: Feature | Updated: 2023-01-01 09:00 | Issue ID: 1" },
+                new() { UpstreamId = "jira-proj123-day2", OccurrenceDate = new DateTime(2023, 1, 2, 9, 0, 0), Description = "Jira Issue Updated - PROJ-123: Feature | Updated: 2023-01-02 09:00 | Issue ID: 1" }
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
@@ -211,8 +211,8 @@ namespace TrackYourDay.Tests.Insights.Analytics
 
             var jiraActivities = new List<JiraActivity>
             {
-                new JiraActivity(now.AddHours(-3), "Jira Issue Updated - PROJ-123: Login Feature | Updated: 2023-01-01 09:00 | Issue ID: 1"),
-                new JiraActivity(now.AddHours(-2), "Jira Issue Updated - PROJ-456: Critical Bug | Updated: 2023-01-01 10:00 | Issue ID: 2")
+                new() { UpstreamId = "jira-proj123-login", OccurrenceDate = now.AddHours(-3), Description = "Jira Issue Updated - PROJ-123: Login Feature | Updated: 2023-01-01 09:00 | Issue ID: 1" },
+                new() { UpstreamId = "jira-proj456-bug", OccurrenceDate = now.AddHours(-2), Description = "Jira Issue Updated - PROJ-456: Critical Bug | Updated: 2023-01-01 10:00 | Issue ID: 2" }
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
@@ -240,7 +240,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
 
             var jiraActivities = new List<JiraActivity>
             {
-                new JiraActivity(now.AddMinutes(-30), "Jira Issue Updated - PROJ-999: Authentication System | Updated: 2023-01-01 10:00 | Issue ID: 1")
+                new() { UpstreamId = "jira-proj999-auth", OccurrenceDate = now.AddMinutes(-30), Description = "Jira Issue Updated - PROJ-999: Authentication System | Updated: 2023-01-01 10:00 | Issue ID: 1" }
             };
 
             _jiraActivityServiceMock.Setup(jas => jas.GetActivitiesUpdatedAfter(It.IsAny<DateTime>()))
