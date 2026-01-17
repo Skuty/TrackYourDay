@@ -4,33 +4,22 @@ using Polly.Extensions.Http;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
+using TrackYourDay.Core.Persistence;
+using TrackYourDay.Infrastructure.Persistence;
 using TrackYourDay.MAUI.Infrastructure.Persistence;
 
 namespace TrackYourDay.MAUI.ServiceRegistration
 {
     internal static class ExternalActivitiesServiceCollectionExtensions
     {
-        private const string DatabasePath = "TrackYourDay.db";
-
         public static IServiceCollection AddExternalActivitiesPersistence(this IServiceCollection services)
         {
-            services.AddSingleton<IGitLabActivityRepository>(sp =>
-            {
-                var logger = sp.GetRequiredService<ILogger<GitLabActivityRepository>>();
-                return new GitLabActivityRepository(DatabasePath, logger);
-            });
-
-            services.AddSingleton<IJiraActivityRepository>(sp =>
-            {
-                var logger = sp.GetRequiredService<ILogger<JiraActivityRepository>>();
-                return new JiraActivityRepository(DatabasePath, logger);
-            });
-
-            services.AddSingleton<IJiraIssueRepository>(sp =>
-            {
-                var logger = sp.GetRequiredService<ILogger<JiraIssueRepository>>();
-                return new JiraIssueRepository(DatabasePath, logger);
-            });
+            services.AddSingleton<IDatabaseKeyProvider, WindowsDatabaseKeyProvider>();
+            services.AddSingleton<ISqliteConnectionFactory, SqlCipherConnectionFactory>();
+            
+            services.AddSingleton<IGitLabActivityRepository, GitLabActivityRepository>();
+            services.AddSingleton<IJiraActivityRepository, JiraActivityRepository>();
+            services.AddSingleton<IJiraIssueRepository, JiraIssueRepository>();
 
             return services;
         }

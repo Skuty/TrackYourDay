@@ -1,16 +1,22 @@
 using Microsoft.Data.Sqlite;
 using System.Collections.Concurrent;
+using TrackYourDay.Core.Persistence;
 
 namespace TrackYourDay.Core.Settings
 {
     public class SqliteGenericSettingsRepository : IGenericSettingsRepository
     {
         private readonly string databaseFileName;
+        private readonly ISqliteConnectionFactory _connectionFactory;
         private readonly ConcurrentDictionary<string, string> cache = new();
         private bool isLoaded = false;
 
-        public SqliteGenericSettingsRepository()
+        public SqliteGenericSettingsRepository(ISqliteConnectionFactory connectionFactory)
         {
+            ArgumentNullException.ThrowIfNull(connectionFactory);
+            
+            _connectionFactory = connectionFactory;
+            
             var appDataPath = Environment.ExpandEnvironmentVariables("%AppData%\\TrackYourDay");
 
             if (!Directory.Exists(appDataPath))
@@ -55,7 +61,7 @@ namespace TrackYourDay.Core.Settings
         {
             InitializeStructure();
 
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             // Clear existing settings
@@ -79,7 +85,7 @@ namespace TrackYourDay.Core.Settings
             InitializeStructure();
             cache.Clear();
 
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var command = connection.CreateCommand();
@@ -111,7 +117,7 @@ namespace TrackYourDay.Core.Settings
 
         private void InitializeStructure()
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var command = connection.CreateCommand();

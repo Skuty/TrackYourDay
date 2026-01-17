@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
+using TrackYourDay.Core.Persistence;
 
 namespace TrackYourDay.MAUI.Infrastructure.Persistence
 {
@@ -11,9 +12,14 @@ namespace TrackYourDay.MAUI.Infrastructure.Persistence
         private readonly string _connectionString;
         private readonly ILogger<GitLabActivityRepository> _logger;
 
-        public GitLabActivityRepository(string databasePath, ILogger<GitLabActivityRepository> logger)
+        public GitLabActivityRepository(
+            ISqliteConnectionFactory connectionFactory, 
+            ILogger<GitLabActivityRepository> logger)
         {
-            _connectionString = $"Data Source={databasePath}";
+            ArgumentNullException.ThrowIfNull(connectionFactory);
+            ArgumentNullException.ThrowIfNull(logger);
+            
+            _connectionString = connectionFactory.CreateConnectionString("TrackYourDay.db");
             _logger = logger;
             EnsureTableExists();
         }

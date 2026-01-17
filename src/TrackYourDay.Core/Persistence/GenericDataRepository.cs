@@ -16,15 +16,21 @@ namespace TrackYourDay.Core.Persistence
     public class GenericDataRepository<T> : IHistoricalDataRepository<T> where T : class
     {
         private readonly string databaseFileName;
+        private readonly ISqliteConnectionFactory _connectionFactory;
         private readonly IClock clock;
         private readonly string typeName;
         private readonly Func<IReadOnlyCollection<T>>? getCurrentSessionData;
 
         public GenericDataRepository(
             IClock clock,
+            ISqliteConnectionFactory connectionFactory,
             Func<IReadOnlyCollection<T>>? getCurrentSessionDataProvider = null)
         {
+            ArgumentNullException.ThrowIfNull(clock);
+            ArgumentNullException.ThrowIfNull(connectionFactory);
+            
             this.clock = clock;
+            _connectionFactory = connectionFactory;
             this.typeName = typeof(T).Name;
             this.getCurrentSessionData = getCurrentSessionDataProvider;
 
@@ -44,7 +50,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         public void Save(T item)
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var guidProperty = typeof(T).GetProperty("Guid");
@@ -76,7 +82,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         public void Update(T item)
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var guidProperty = typeof(T).GetProperty("Guid");
@@ -146,7 +152,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         public void Clear()
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var clearCommand = connection.CreateCommand();
@@ -172,7 +178,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         public int GetTotalRecordCount()
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var command = connection.CreateCommand();
@@ -188,7 +194,7 @@ namespace TrackYourDay.Core.Persistence
         {
             var items = new List<T>();
 
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var command = connection.CreateCommand();
@@ -245,7 +251,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         private void InitializeStructure()
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var command = connection.CreateCommand();

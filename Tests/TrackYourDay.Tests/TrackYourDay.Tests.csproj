@@ -22,5 +22,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\TrackYourDay.Core\TrackYourDay.Core.csproj" />
+    <ProjectReference Include="..\..\src\TrackYourDay.Infrastructure\TrackYourDay.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

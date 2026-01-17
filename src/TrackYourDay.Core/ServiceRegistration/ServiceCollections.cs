@@ -178,6 +178,9 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IClock, Clock>();
             services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
             
+            // Note: IDatabaseKeyProvider and ISqliteConnectionFactory must be registered
+            // by the hosting application (e.g., MAUI project) with concrete implementations
+            
             // Generic settings infrastructure
             services.AddSingleton<IGenericSettingsRepository, SqliteGenericSettingsRepository>();
             services.AddSingleton<IGenericSettingsService, GenericSettingsService>();
@@ -198,21 +201,25 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IHistoricalDataRepository<EndedActivity>>(sp => 
                 new GenericDataRepository<EndedActivity>(
                     sp.GetRequiredService<IClock>(),
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
                     () => sp.GetRequiredService<ActivityTracker>().GetEndedActivities()));
             
             services.AddSingleton<IHistoricalDataRepository<EndedBreak>>(sp => 
                 new GenericDataRepository<EndedBreak>(
                     sp.GetRequiredService<IClock>(),
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
                     () => sp.GetRequiredService<BreakTracker>().GetEndedBreaks()));
             
             services.AddSingleton<IHistoricalDataRepository<EndedMeeting>>(sp => 
                 new GenericDataRepository<EndedMeeting>(
                     sp.GetRequiredService<IClock>(),
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
                     null)); // Don't include tracker data - meetings are persisted immediately after confirmation
 
             services.AddSingleton<IHistoricalDataRepository<GitLabActivity>>(sp => 
                 new GenericDataRepository<GitLabActivity>(
                     sp.GetRequiredService<IClock>(),
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
                     () => sp.GetRequiredService<GitLabTracker>().GetGitLabActivities()));
 
             return services;

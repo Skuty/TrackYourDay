@@ -41,11 +41,12 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
+            // Register database encryption services first (required by Settings and Repositories)
+            builder.Services.AddExternalActivitiesPersistence();
+
             builder.Services.AddSettings();
 
             builder.Services.AddRepositories();
-
-            builder.Services.AddExternalActivitiesPersistence();
 
             builder.Services.AddExternalActivitiesHttpClients();
 

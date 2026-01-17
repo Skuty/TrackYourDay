@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
+using TrackYourDay.Core.Persistence;
 
 namespace TrackYourDay.MAUI.Infrastructure.Persistence
 {
@@ -10,9 +11,14 @@ namespace TrackYourDay.MAUI.Infrastructure.Persistence
         private readonly string _connectionString;
         private readonly ILogger<JiraIssueRepository> _logger;
 
-        public JiraIssueRepository(string databasePath, ILogger<JiraIssueRepository> logger)
+        public JiraIssueRepository(
+            ISqliteConnectionFactory connectionFactory, 
+            ILogger<JiraIssueRepository> logger)
         {
-            _connectionString = $"Data Source={databasePath}";
+            ArgumentNullException.ThrowIfNull(connectionFactory);
+            ArgumentNullException.ThrowIfNull(logger);
+            
+            _connectionString = connectionFactory.CreateConnectionString("TrackYourDay.db");
             _logger = logger;
             EnsureTableExists();
         }

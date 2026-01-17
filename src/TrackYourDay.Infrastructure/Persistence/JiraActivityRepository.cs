@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
+using TrackYourDay.Core.Persistence;
 
 namespace TrackYourDay.MAUI.Infrastructure.Persistence
 {
@@ -11,9 +12,14 @@ namespace TrackYourDay.MAUI.Infrastructure.Persistence
         private readonly string _connectionString;
         private readonly ILogger<JiraActivityRepository> _logger;
 
-        public JiraActivityRepository(string databasePath, ILogger<JiraActivityRepository> logger)
+        public JiraActivityRepository(
+            ISqliteConnectionFactory connectionFactory, 
+            ILogger<JiraActivityRepository> logger)
         {
-            _connectionString = $"Data Source={databasePath}";
+            ArgumentNullException.ThrowIfNull(connectionFactory);
+            ArgumentNullException.ThrowIfNull(logger);
+            
+            _connectionString = connectionFactory.CreateConnectionString("TrackYourDay.db");
             _logger = logger;
             EnsureTableExists();
         }
