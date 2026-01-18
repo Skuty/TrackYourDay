@@ -178,9 +178,6 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IClock, Clock>();
             services.AddSingleton<VersioningSystemFacade, VersioningSystemFacade>();
             
-            // Note: IDatabaseKeyProvider and ISqliteConnectionFactory must be registered
-            // by the hosting application (e.g., MAUI project) with concrete implementations
-            
             // Generic settings infrastructure
             services.AddSingleton<IGenericSettingsRepository, SqliteGenericSettingsRepository>();
             services.AddSingleton<IGenericSettingsService, GenericSettingsService>();
