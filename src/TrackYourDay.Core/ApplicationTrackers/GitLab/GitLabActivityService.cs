@@ -1,13 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
+using TrackYourDay.Core.ApplicationTrackers.Shared;
 
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
     /// <summary>
     /// Represents a GitLab activity event with deterministic identifier.
     /// </summary>
-    public record class GitLabActivity
+    public record class GitLabActivity : IHasDeterministicGuid, IHasOccurrenceDate
     {
         public required string UpstreamId { get; init; }
         public required DateTime OccuranceDate { get; init; }
@@ -17,6 +18,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         /// Deterministic GUID based on UpstreamId for deduplication.
         /// </summary>
         public Guid Guid => GenerateDeterministicGuid(UpstreamId);
+        
+        /// <summary>
+        /// Gets the timestamp when the activity occurred (implements IHasOccurrenceDate).
+        /// </summary>
+        DateTime IHasOccurrenceDate.OccurrenceDate => OccuranceDate;
 
         private static Guid GenerateDeterministicGuid(string input)
         {

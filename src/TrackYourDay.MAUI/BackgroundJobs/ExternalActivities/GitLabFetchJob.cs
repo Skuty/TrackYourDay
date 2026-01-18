@@ -2,30 +2,23 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Quartz;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
-using TrackYourDay.Core.ApplicationTrackers.GitLab.PublicEvents;
-using TrackYourDay.Core.ApplicationTrackers.Persistence;
 
 namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
 {
+    /// <summary>
+    /// Quartz job wrapper for GitLab activity tracking.
+    /// Delegates all logic to GitLabTracker for consolidation.
+    /// </summary>
     internal sealed class GitLabFetchJob : IJob
     {
-        private readonly IGitLabActivityService _activityService;
-        private readonly IGitLabActivityRepository _repository;
-        private readonly IGitLabSettingsService _settingsService;
-        private readonly IPublisher _publisher;
+        private readonly GitLabTracker _tracker;
         private readonly ILogger<GitLabFetchJob> _logger;
 
         public GitLabFetchJob(
-            IGitLabActivityService activityService,
-            IGitLabActivityRepository repository,
-            IGitLabSettingsService settingsService,
-            IPublisher publisher,
+            GitLabTracker tracker,
             ILogger<GitLabFetchJob> logger)
         {
-            _activityService = activityService;
-            _repository = repository;
-            _settingsService = settingsService;
-            _publisher = publisher;
+            _tracker = tracker;
             _logger = logger;
         }
 
@@ -33,30 +26,11 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
         {
             try
             {
-                var syncStartTime = DateTime.UtcNow;
-                var settings = _settingsService.GetSettings();
-                var startDate = settings.LastSyncTimestamp ?? syncStartTime;
+                _logger.LogInformation("GitLab fetch job started");
                 
-                _logger.LogInformation("GitLab fetch job started, syncing from {StartDate}", startDate);
-
-                var activities = await _activityService.GetActivitiesUpdatedAfter(startDate, context.CancellationToken).ConfigureAwait(false);
-
-                var newActivityCount = 0;
-                foreach (var activity in activities)
-                {
-                    var isNew = await _repository.TryAppendAsync(activity, context.CancellationToken).ConfigureAwait(false);
-                    if (isNew)
-                    {
-                        newActivityCount++;
-                        await _publisher.Publish(new GitLabActivityDiscoveredEvent(activity.Guid, activity), context.CancellationToken).ConfigureAwait(false);
-                    }
-                }
-
-                _settingsService.UpdateLastSyncTimestamp(syncStartTime);
-                _settingsService.PersistSettings();
-
-                _logger.LogInformation("GitLab fetch job completed: {ActivityCount} activities ({NewCount} new), watermark updated to {SyncTime}",
-                    activities.Count, newActivityCount, syncStartTime);
+                var newActivityCount = await _tracker.RecognizeActivitiesAsync(context.CancellationToken).ConfigureAwait(false);
+                
+                _logger.LogInformation("GitLab fetch job completed: {NewCount} new activities", newActivityCount);
             }
             catch (Exception ex)
             {

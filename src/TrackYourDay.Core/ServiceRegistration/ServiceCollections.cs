@@ -8,6 +8,7 @@ using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.Persistence;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.RuleEngine;
 using TrackYourDay.Core.ApplicationTrackers.UserTasks;
+using TrackYourDay.Core.ApplicationTrackers.Persistence;
 using TrackYourDay.Core.Insights.Analytics;
 using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.Notifications;
@@ -100,9 +101,9 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<GitLabTracker>(serviceProvider =>
                 new GitLabTracker(
                     serviceProvider.GetRequiredService<IGitLabActivityService>(),
-                    serviceProvider.GetRequiredService<IClock>(),
+                    serviceProvider.GetRequiredService<IGitLabActivityRepository>(),
+                    serviceProvider.GetRequiredService<IGitLabSettingsService>(),
                     serviceProvider.GetRequiredService<IPublisher>(),
-                    serviceProvider.GetRequiredService<IGenericSettingsService>(),
                     serviceProvider.GetRequiredService<ILogger<GitLabTracker>>()
                 )
             );
@@ -115,7 +116,14 @@ namespace TrackYourDay.Core.ServiceRegistration
             });
 
             services.AddSingleton<IJiraActivityService, JiraActivityService>();
-            services.AddSingleton<JiraTracker>();
+            services.AddSingleton<JiraTracker>(serviceProvider =>
+                new JiraTracker(
+                    serviceProvider.GetRequiredService<IJiraActivityService>(),
+                    serviceProvider.GetRequiredService<IJiraActivityRepository>(),
+                    serviceProvider.GetRequiredService<IJiraSettingsService>(),
+                    serviceProvider.GetRequiredService<ILogger<JiraTracker>>()
+                )
+            );
 
             services.AddSingleton<JiraKeySummaryStrategy>(serviceProvider =>
                 new JiraKeySummaryStrategy(
@@ -217,7 +225,7 @@ namespace TrackYourDay.Core.ServiceRegistration
                 new GenericDataRepository<GitLabActivity>(
                     sp.GetRequiredService<IClock>(),
                     sp.GetRequiredService<ISqliteConnectionFactory>(),
-                    () => sp.GetRequiredService<GitLabTracker>().GetGitLabActivities()));
+                    null)); // GitLab activities are persisted immediately via repository
 
             return services;
         }

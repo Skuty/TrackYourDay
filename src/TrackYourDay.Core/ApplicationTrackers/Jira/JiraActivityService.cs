@@ -1,13 +1,14 @@
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
+using TrackYourDay.Core.ApplicationTrackers.Shared;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
     /// <summary>
     /// Represents a Jira activity event with deterministic identifier.
     /// </summary>
-    public record class JiraActivity
+    public record class JiraActivity : IHasDeterministicGuid, IHasOccurrenceDate
     {
         public required string UpstreamId { get; init; }
         public required DateTime OccurrenceDate { get; init; }
