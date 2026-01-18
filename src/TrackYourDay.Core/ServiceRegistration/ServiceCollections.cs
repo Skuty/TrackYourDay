@@ -116,6 +116,7 @@ namespace TrackYourDay.Core.ServiceRegistration
             });
 
             services.AddSingleton<IJiraActivityService, JiraActivityService>();
+            services.AddSingleton<IJiraCurrentStateService, JiraCurrentStateService>();
             services.AddSingleton<JiraTracker>(serviceProvider =>
                 new JiraTracker(
                     serviceProvider.GetRequiredService<IJiraActivityService>(),

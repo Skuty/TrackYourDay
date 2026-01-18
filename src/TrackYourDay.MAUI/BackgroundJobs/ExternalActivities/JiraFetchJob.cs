@@ -11,20 +11,16 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
     internal sealed class JiraFetchJob : IJob
     {
         private readonly JiraTracker _tracker;
-        private readonly IJiraIssueRepository _issueRepository;
-        private readonly IJiraRestApiClient _restApiClient;
+        private readonly IJiraCurrentStateService _currentStateService;
         private readonly ILogger<JiraFetchJob> _logger;
-        private JiraUser? _currentUser;
 
         public JiraFetchJob(
             JiraTracker tracker,
-            IJiraIssueRepository issueRepository,
-            IJiraRestApiClient restApiClient,
+            IJiraCurrentStateService currentStateService,
             ILogger<JiraFetchJob> logger)
         {
             _tracker = tracker;
-            _issueRepository = issueRepository;
-            _restApiClient = restApiClient;
+            _currentStateService = currentStateService;
             _logger = logger;
         }
 
@@ -33,43 +29,19 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
             try
             {
                 _logger.LogInformation("Jira fetch job started");
-                
-                _currentUser ??= await _restApiClient.GetCurrentUser().ConfigureAwait(false);
 
-                // Recognize activities via tracker
                 var newActivityCount = await _tracker.RecognizeActivitiesAsync(context.CancellationToken).ConfigureAwait(false);
-
-                // Fetch and update current issues (separate concern)
-                var syncStartTime = DateTime.UtcNow;
-                var issues = await _restApiClient.GetUserIssues(_currentUser, syncStartTime.AddDays(-7)).ConfigureAwait(false);
-                var currentIssues = issues.Select(MapToJiraIssue).ToList();
-                await _issueRepository.UpdateCurrentStateAsync(currentIssues, context.CancellationToken).ConfigureAwait(false);
+                var issueCount = await _currentStateService.SyncCurrentStateAsync(context.CancellationToken).ConfigureAwait(false);
 
                 _logger.LogInformation(
                     "Jira fetch job completed: {NewCount} new activities, {IssueCount} current issues", 
-                    newActivityCount, currentIssues.Count);
+                    newActivityCount, issueCount);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Jira fetch job failed");
                 throw;
             }
-        }
-
-        private static JiraIssueState MapToJiraIssue(JiraIssueResponse response)
-        {
-            return new JiraIssueState
-            {
-                Key = response.Key,
-                Id = response.Id,
-                Summary = response.Fields.Summary ?? string.Empty,
-                Status = response.Fields.Status?.Name ?? "Unknown",
-                IssueType = response.Fields.IssueType?.Name ?? "Unknown",
-                ProjectKey = response.Fields.Project?.Key ?? "Unknown",
-                Updated = response.Fields.Updated,
-                Created = response.Fields.Created,
-                AssigneeDisplayName = response.Fields.Assignee?.DisplayName
-            };
         }
 
         internal static IJobDetail CreateJobDetail()
