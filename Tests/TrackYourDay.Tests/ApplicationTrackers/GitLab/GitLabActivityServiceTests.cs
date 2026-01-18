@@ -28,7 +28,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -53,7 +53,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(gitLabCommits);
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             // Verify mock was called the expected number of times
@@ -82,7 +82,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(gitLabProject);
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -103,7 +103,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(gitLabProject);
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -120,7 +120,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -136,7 +136,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -152,7 +152,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -168,7 +168,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -184,7 +184,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -201,7 +201,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -218,7 +218,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -234,7 +234,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -258,7 +258,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(gitLabCommits);
 
             // When
-            var activities = await this.gitLabActivityService.GetTodayActivitiesAsync();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then - All 10 commits should be visible as activities
             activities.Count.Should().Be(10);

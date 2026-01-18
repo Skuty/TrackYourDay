@@ -8,6 +8,7 @@
         public int FetchIntervalMinutes { get; init; } = 15;
         public int CircuitBreakerThreshold { get; init; } = 5;
         public int CircuitBreakerDurationMinutes { get; init; } = 5;
+        public DateTime? LastSyncTimestamp { get; init; }
 
         public static GitLabSettings CreateDefaultSettings()
         {

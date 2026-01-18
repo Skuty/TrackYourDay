@@ -36,7 +36,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             _logger = logger;
         }
 
-        public async Task<List<GitLabActivity>> GetTodayActivitiesAsync(CancellationToken cancellationToken = default)
+        public async Task<List<GitLabActivity>> GetActivitiesUpdatedAfter(DateTime startDate, CancellationToken cancellationToken = default)
         {
             var activities = new List<GitLabActivity>();
 
@@ -44,7 +44,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             var userId = new GitLabUserId(user.Id);
             var userEmail = user.Email;
 
-            var events = await _gitLabRestApiClient.GetUserEvents(userId, DateOnly.FromDateTime(DateTime.Today)).ConfigureAwait(false);
+            var events = await _gitLabRestApiClient.GetUserEvents(userId, DateOnly.FromDateTime(startDate)).ConfigureAwait(false);
 
             foreach (var gitlabEvent in events)
             {

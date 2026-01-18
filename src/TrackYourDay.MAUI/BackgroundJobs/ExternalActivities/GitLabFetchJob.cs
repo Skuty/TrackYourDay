@@ -11,17 +11,20 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
     {
         private readonly IGitLabActivityService _activityService;
         private readonly IGitLabActivityRepository _repository;
+        private readonly IGitLabSettingsService _settingsService;
         private readonly IPublisher _publisher;
         private readonly ILogger<GitLabFetchJob> _logger;
 
         public GitLabFetchJob(
             IGitLabActivityService activityService,
             IGitLabActivityRepository repository,
+            IGitLabSettingsService settingsService,
             IPublisher publisher,
             ILogger<GitLabFetchJob> logger)
         {
             _activityService = activityService;
             _repository = repository;
+            _settingsService = settingsService;
             _publisher = publisher;
             _logger = logger;
         }
@@ -30,9 +33,13 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
         {
             try
             {
-                _logger.LogInformation("GitLab fetch job started");
+                var syncStartTime = DateTime.UtcNow;
+                var settings = _settingsService.GetSettings();
+                var startDate = settings.LastSyncTimestamp ?? syncStartTime;
+                
+                _logger.LogInformation("GitLab fetch job started, syncing from {StartDate}", startDate);
 
-                var activities = await _activityService.GetTodayActivitiesAsync(context.CancellationToken).ConfigureAwait(false);
+                var activities = await _activityService.GetActivitiesUpdatedAfter(startDate, context.CancellationToken).ConfigureAwait(false);
 
                 var newActivityCount = 0;
                 foreach (var activity in activities)
@@ -45,8 +52,11 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
                     }
                 }
 
-                _logger.LogInformation("GitLab fetch job completed: {TotalCount} activities, {NewCount} new",
-                    activities.Count, newActivityCount);
+                _settingsService.UpdateLastSyncTimestamp(syncStartTime);
+                _settingsService.PersistSettings();
+
+                _logger.LogInformation("GitLab fetch job completed: {ActivityCount} activities ({NewCount} new), watermark updated to {SyncTime}",
+                    activities.Count, newActivityCount, syncStartTime);
             }
             catch (Exception ex)
             {

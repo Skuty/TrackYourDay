@@ -6,6 +6,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
     {
         private const string API_URL_KEY = "GitLab.ApiUrl";
         private const string API_KEY_KEY = "GitLab.ApiKey";
+        private const string LAST_SYNC_KEY = "GitLab.LastSyncTimestamp";
 
         private readonly IGenericSettingsService settingsService;
 
@@ -22,6 +23,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             var fetchInterval = settingsService.GetSetting("GitLab.FetchIntervalMinutes", 15);
             var cbThreshold = settingsService.GetSetting("GitLab.CircuitBreakerThreshold", 5);
             var cbDuration = settingsService.GetSetting("GitLab.CircuitBreakerDurationMinutes", 5);
+            var lastSyncStr = settingsService.GetSetting(LAST_SYNC_KEY, string.Empty);
+            
+            DateTime? lastSync = null;
+            if (!string.IsNullOrEmpty(lastSyncStr) && DateTime.TryParse(lastSyncStr, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+            {
+                lastSync = parsed;
+            }
 
             return new GitLabSettings
             {
@@ -30,7 +38,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 Enabled = enabled,
                 FetchIntervalMinutes = fetchInterval,
                 CircuitBreakerThreshold = cbThreshold,
-                CircuitBreakerDurationMinutes = cbDuration
+                CircuitBreakerDurationMinutes = cbDuration,
+                LastSyncTimestamp = lastSync
             };
         }
 
@@ -48,6 +57,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             settingsService.SetSetting("GitLab.FetchIntervalMinutes", fetchIntervalMinutes);
             settingsService.SetSetting("GitLab.CircuitBreakerThreshold", circuitBreakerThreshold);
             settingsService.SetSetting("GitLab.CircuitBreakerDurationMinutes", circuitBreakerDurationMinutes);
+        }
+
+        public void UpdateLastSyncTimestamp(DateTime timestamp)
+        {
+            settingsService.SetSetting(LAST_SYNC_KEY, timestamp.ToString("O"));
         }
 
         public void PersistSettings()

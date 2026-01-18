@@ -33,7 +33,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         public async Task RecognizeActivity()
         {
             var lastFetchTimestamp = this.settingsService.GetSetting<DateTime>(LastFetchTimestampKey, this.clock.Now.AddDays(-7));
-            var allActivities = await this.gitLabActivityService.GetTodayActivitiesAsync(CancellationToken.None).ConfigureAwait(false);
+            var allActivities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(lastFetchTimestamp, CancellationToken.None).ConfigureAwait(false);
             
             // Filter activities that occurred after the last fetch timestamp
             var newActivities = allActivities

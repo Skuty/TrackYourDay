@@ -42,7 +42,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         {
             // Given
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity>());
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -65,7 +65,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var activity2 = new GitLabActivity { UpstreamId = "gitlab-2", OccuranceDate = new DateTime(2025, 03, 16, 11, 0, 0), Description = "Closed Issue: Test issue" };
             
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity> { activity1, activity2 });
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -88,7 +88,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var lastFetchTimestamp = new DateTime(2025, 03, 16, 11, 0, 0);
 
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity> { activity });
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -113,7 +113,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var lastFetchTimestamp = new DateTime(2025, 03, 16, 10, 0, 0);
 
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity> { oldActivity, newActivity1, newActivity2 });
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -136,7 +136,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var activity2 = new GitLabActivity { UpstreamId = "gitlab-7", OccuranceDate = new DateTime(2025, 03, 16, 11, 0, 0), Description = "Activity 2" };
             
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity> { activity1, activity2 });
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -157,7 +157,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         {
             // Given
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity>());
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -181,7 +181,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var activity2 = new GitLabActivity { UpstreamId = "gitlab-9", OccuranceDate = new DateTime(2025, 03, 16, 11, 0, 0), Description = "Activity 2" };
             
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity> { activity1, activity2 });
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -204,7 +204,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given - First call with activities
             var activity1 = new GitLabActivity { UpstreamId = "gitlab-10", OccuranceDate = new DateTime(2025, 03, 16, 10, 0, 0), Description = "Activity 1" };
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity> { activity1 });
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -215,7 +215,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given - Second call with new activities
             var activity2 = new GitLabActivity { UpstreamId = "gitlab-11", OccuranceDate = new DateTime(2025, 03, 16, 11, 0, 0), Description = "Activity 2" };
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity> { activity1, activity2 });
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -241,7 +241,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var lastFetchTimestamp = new DateTime(2025, 03, 16, 10, 0, 0);
 
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity> { activity1, activity2 });
             this.settingsServiceMock
                 .Setup(s => s.GetSetting<DateTime>(It.IsAny<string>(), It.IsAny<DateTime>()))
@@ -265,7 +265,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var activityBefore7Days = new GitLabActivity { UpstreamId = "gitlab-15", OccuranceDate = new DateTime(2025, 03, 09, 10, 0, 0), Description = "Activity before 7 days" };
             
             this.gitLabActivityServiceMock
-                .Setup(s => s.GetTodayActivitiesAsync(It.IsAny<CancellationToken>()))
+                .Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<GitLabActivity> { activityBefore7Days, activityWithin7Days });
             
             // Mock the settings service to use the default value (7 days ago)
