@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.GitLab.PublicEvents;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
-using TrackYourDay.Core.ApplicationTrackers.Shared;
 
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
@@ -10,7 +9,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
     /// Unified GitLab activity tracker with dual deduplication validation.
     /// Uses GUID-based persistence as primary mechanism with timestamp-based validation.
     /// </summary>
-    public sealed class GitLabTracker : IExternalActivityTracker<GitLabActivity>
+    public sealed class GitLabTracker
     {
         private readonly IGitLabActivityService _activityService;
         private readonly IGitLabActivityRepository _repository;

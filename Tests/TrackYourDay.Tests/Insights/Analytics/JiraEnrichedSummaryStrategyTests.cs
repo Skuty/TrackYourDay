@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
+using TrackYourDay.Core.ApplicationTrackers.Persistence;
 using TrackYourDay.Core.Insights.Analytics;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Tests.TestHelpers;
@@ -13,7 +14,10 @@ namespace TrackYourDay.Tests.Insights.Analytics
     {
         private readonly Mock<ILogger<JiraEnrichedSummaryStrategy>> _loggerMock;
         private readonly Mock<IJiraActivityService> _jiraActivityServiceMock;
+        private readonly Mock<IJiraActivityRepository> _repositoryMock;
+        private readonly Mock<IJiraSettingsService> _settingsServiceMock;
         private readonly Mock<IClock> _clockMock;
+        private readonly Mock<ILogger<JiraTracker>> _trackerLoggerMock;
         private readonly JiraTracker _jiraTracker;
         private JiraEnrichedSummaryStrategy _sut;
 
@@ -21,9 +25,17 @@ namespace TrackYourDay.Tests.Insights.Analytics
         {
             _loggerMock = new Mock<ILogger<JiraEnrichedSummaryStrategy>>();
             _clockMock = new Mock<IClock>();
-            _clockMock.Setup(c => c.Now).Returns(DateTime.Now); // Setup default clock value
+            _clockMock.Setup(c => c.Now).Returns(DateTime.Now);
             _jiraActivityServiceMock = new Mock<IJiraActivityService>();
-            _jiraTracker = new JiraTracker(_jiraActivityServiceMock.Object, _clockMock.Object);
+            _repositoryMock = new Mock<IJiraActivityRepository>();
+            _settingsServiceMock = new Mock<IJiraSettingsService>();
+            _trackerLoggerMock = new Mock<ILogger<JiraTracker>>();
+            
+            _jiraTracker = new JiraTracker(
+                _jiraActivityServiceMock.Object,
+                _repositoryMock.Object,
+                _settingsServiceMock.Object,
+                _trackerLoggerMock.Object);
             
             _sut = new JiraEnrichedSummaryStrategy(_jiraTracker, _loggerMock.Object);
         }

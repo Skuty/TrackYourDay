@@ -1,7 +1,5 @@
-using MediatR;
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
-using TrackYourDay.Core.ApplicationTrackers.Shared;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
@@ -9,7 +7,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     /// Unified Jira activity tracker with dual deduplication validation.
     /// Uses GUID-based persistence as primary mechanism with timestamp-based validation.
     /// </summary>
-    public sealed class JiraTracker : IExternalActivityTracker<JiraActivity>
+    public sealed class JiraTracker
     {
         private readonly IJiraActivityService _activityService;
         private readonly IJiraActivityRepository _repository;
