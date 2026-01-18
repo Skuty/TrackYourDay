@@ -120,41 +120,6 @@ public sealed class JiraSettingsServiceTests
     }
 
     [Fact]
-    public void GivenNoLastSync_WhenGetSyncStartDate_ThenReturns2DaysAgo()
-    {
-        // Given
-        var now = DateTime.UtcNow;
-        _settingsServiceMock.Setup(x => x.GetEncryptedSetting(It.IsAny<string>(), It.IsAny<string>())).Returns(string.Empty);
-        _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<int>())).Returns(15);
-        _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<bool>())).Returns(false);
-        _settingsServiceMock.Setup(x => x.GetSetting("Jira.LastSyncTimestamp", string.Empty)).Returns(string.Empty);
-
-        // When
-        var result = _sut.GetSyncStartDate();
-
-        // Then
-        result.Should().BeCloseTo(now.AddDays(-2), TimeSpan.FromSeconds(1));
-    }
-
-    [Fact]
-    public void GivenLastSyncExists_WhenGetSyncStartDate_ThenReturnsLastSyncTimestamp()
-    {
-        // Given
-        var lastSync = new DateTime(2026, 1, 10, 8, 0, 0, DateTimeKind.Utc);
-        _settingsServiceMock.Setup(x => x.GetEncryptedSetting(It.IsAny<string>(), It.IsAny<string>())).Returns(string.Empty);
-        _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<int>())).Returns(15);
-        _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<bool>())).Returns(false);
-        _settingsServiceMock.Setup(x => x.GetSetting("Jira.LastSyncTimestamp", string.Empty))
-            .Returns(lastSync.ToString("O"));
-
-        // When
-        var result = _sut.GetSyncStartDate();
-
-        // Then
-        result.Should().BeCloseTo(lastSync, TimeSpan.FromSeconds(1));
-    }
-
-    [Fact]
     public void WhenPersistSettings_ThenDelegatesToGenericSettingsService()
     {
         // When

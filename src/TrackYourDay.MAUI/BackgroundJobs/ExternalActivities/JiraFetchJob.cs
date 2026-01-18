@@ -40,7 +40,8 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
             try
             {
                 var syncStartTime = DateTime.UtcNow;
-                var startDate = _settingsService.GetSyncStartDate();
+                var settings = _settingsService.GetSettings();
+                var startDate = settings.LastSyncTimestamp ?? syncStartTime;
                 
                 _logger.LogInformation("Jira fetch job started, syncing from {StartDate}", startDate);
 

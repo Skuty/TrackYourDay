@@ -22,12 +22,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         void UpdateLastSyncTimestamp(DateTime timestamp);
 
         /// <summary>
-        /// Gets the sync start date. Returns LastSyncTimestamp if available, otherwise returns 2 days ago.
-        /// </summary>
-        /// <returns>The date to start syncing from</returns>
-        DateTime GetSyncStartDate();
-
-        /// <summary>
         /// Persists the Jira settings.
         /// </summary>
         void PersistSettings();

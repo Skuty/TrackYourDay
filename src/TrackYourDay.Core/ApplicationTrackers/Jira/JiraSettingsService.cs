@@ -7,7 +7,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         private const string API_URL_KEY = "Jira.ApiUrl";
         private const string API_KEY_KEY = "Jira.ApiKey";
         private const string LAST_SYNC_KEY = "Jira.LastSyncTimestamp";
-        private const int DEFAULT_LOOKBACK_DAYS = 2;
 
         private readonly IGenericSettingsService settingsService;
 
@@ -63,12 +62,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         public void UpdateLastSyncTimestamp(DateTime timestamp)
         {
             settingsService.SetSetting(LAST_SYNC_KEY, timestamp.ToString("O"));
-        }
-
-        public DateTime GetSyncStartDate()
-        {
-            var settings = GetSettings();
-            return settings.LastSyncTimestamp ?? DateTime.UtcNow.AddDays(-DEFAULT_LOOKBACK_DAYS);
         }
 
         public void PersistSettings()
