@@ -2,7 +2,10 @@ using Microsoft.Extensions.Logging;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
-    public record class JiraActivity(DateTime OccurrenceDate, string Description);
+    public record class JiraActivity(DateTime OccurrenceDate, string Description)
+    {
+        public Guid Guid { get; init; } = Guid.NewGuid();
+    }
 
     public interface IJiraActivityService
     {

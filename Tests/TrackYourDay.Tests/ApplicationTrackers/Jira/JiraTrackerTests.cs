@@ -1,9 +1,12 @@
 using FluentAssertions;
 
+using MediatR;
 using Moq;
+using Microsoft.Extensions.Logging;
 
 using TrackYourDay.Core;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
+using TrackYourDay.Core.Settings;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 {
@@ -11,6 +14,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
     {
         private readonly Mock<IClock> clockMock;
         private readonly Mock<IJiraRestApiClient> jiraRestApiClientMock;
+        private readonly Mock<IPublisher> publisherMock;
+        private readonly Mock<IGenericSettingsService> settingsServiceMock;
         private readonly JiraActivityService jiraActivityService;
         private readonly JiraTracker jiraTracker;
 
@@ -18,8 +23,15 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         {
             this.clockMock = new Mock<IClock>();
             this.jiraRestApiClientMock = new Mock<IJiraRestApiClient>();
+            this.publisherMock = new Mock<IPublisher>();
+            this.settingsServiceMock = new Mock<IGenericSettingsService>();
             this.jiraActivityService = new JiraActivityService(jiraRestApiClientMock.Object, null);
-            this.jiraTracker = new JiraTracker(this.jiraActivityService, clockMock.Object);
+            this.jiraTracker = new JiraTracker(
+                this.jiraActivityService, 
+                clockMock.Object,
+                publisherMock.Object,
+                settingsServiceMock.Object,
+                Mock.Of<ILogger<JiraTracker>>());
         }
 
         [Fact]

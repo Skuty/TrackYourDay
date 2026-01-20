@@ -115,7 +115,15 @@ namespace TrackYourDay.Core.ServiceRegistration
             });
 
             services.AddSingleton<IJiraActivityService, JiraActivityService>();
-            services.AddSingleton<JiraTracker>();
+            services.AddSingleton<JiraTracker>(serviceProvider =>
+                new JiraTracker(
+                    serviceProvider.GetRequiredService<IJiraActivityService>(),
+                    serviceProvider.GetRequiredService<IClock>(),
+                    serviceProvider.GetRequiredService<IPublisher>(),
+                    serviceProvider.GetRequiredService<IGenericSettingsService>(),
+                    serviceProvider.GetRequiredService<ILogger<JiraTracker>>()
+                )
+            );
 
             services.AddSingleton<JiraKeySummaryStrategy>(serviceProvider =>
                 new JiraKeySummaryStrategy(
@@ -214,6 +222,11 @@ namespace TrackYourDay.Core.ServiceRegistration
                 new GenericDataRepository<GitLabActivity>(
                     sp.GetRequiredService<IClock>(),
                     () => sp.GetRequiredService<GitLabTracker>().GetGitLabActivities()));
+
+            services.AddSingleton<IHistoricalDataRepository<JiraActivity>>(sp => 
+                new GenericDataRepository<JiraActivity>(
+                    sp.GetRequiredService<IClock>(),
+                    () => sp.GetRequiredService<JiraTracker>().GetJiraActivities().GetAwaiter().GetResult()));
 
             return services;
         }
