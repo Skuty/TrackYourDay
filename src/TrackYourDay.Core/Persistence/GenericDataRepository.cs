@@ -4,6 +4,7 @@ using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.Persistence.Specifications;
 using TrackYourDay.Core.SystemTrackers;
+using static TrackYourDay.Core.Persistence.DatabaseConstants;
 
 namespace TrackYourDay.Core.Persistence
 {
@@ -41,7 +42,7 @@ namespace TrackYourDay.Core.Persistence
                 Directory.CreateDirectory($"{appDataPath}");
             }
 
-            this.databaseFileName = $"{appDataPath}\\TrackYourDayGeneric.db";
+            this.databaseFileName = $"{appDataPath}\\{DatabaseName}";
             InitializeStructure();
         }
 

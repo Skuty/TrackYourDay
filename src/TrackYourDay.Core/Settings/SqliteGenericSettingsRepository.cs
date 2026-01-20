@@ -1,6 +1,7 @@
 using Microsoft.Data.Sqlite;
 using System.Collections.Concurrent;
 using TrackYourDay.Core.Persistence;
+using static TrackYourDay.Core.Persistence.DatabaseConstants;
 
 namespace TrackYourDay.Core.Settings
 {
@@ -24,7 +25,7 @@ namespace TrackYourDay.Core.Settings
                 Directory.CreateDirectory($"{appDataPath}");
             }
 
-            this.databaseFileName = $"{appDataPath}\\TrackYourDayGeneric.db";
+            this.databaseFileName = $"{appDataPath}\\{DatabaseName}";
         }
 
         public string? GetSetting(string key)

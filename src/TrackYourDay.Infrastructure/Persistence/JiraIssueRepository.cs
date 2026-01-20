@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
 using TrackYourDay.Core.Persistence;
+using static TrackYourDay.Core.Persistence.DatabaseConstants;
 
 namespace TrackYourDay.MAUI.Infrastructure.Persistence
 {
@@ -18,7 +19,7 @@ namespace TrackYourDay.MAUI.Infrastructure.Persistence
             ArgumentNullException.ThrowIfNull(connectionFactory);
             ArgumentNullException.ThrowIfNull(logger);
             
-            _connectionString = connectionFactory.CreateConnectionString("TrackYourDay.db");
+            _connectionString = connectionFactory.CreateConnectionString(DatabaseName);
             _logger = logger;
             EnsureTableExists();
         }
