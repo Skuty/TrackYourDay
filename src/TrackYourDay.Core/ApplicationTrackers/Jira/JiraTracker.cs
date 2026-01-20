@@ -48,7 +48,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             foreach (var activity in newActivities)
             {
                 this.publishedActivities.Add(activity);
-                await this.publisher.Publish(new JiraActivityDiscoveredEvent(Guid.NewGuid(), activity), CancellationToken.None);
+                await this.publisher.Publish(new JiraActivityDiscoveredEvent(activity.Guid, activity), CancellationToken.None);
                 this.logger.LogInformation("Jira activity discovered: {0}", activity.Description);
             }
 
@@ -61,7 +61,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
         }
 
-        public async Task<IReadOnlyCollection<JiraActivity>> GetJiraActivities()
+        public IReadOnlyCollection<JiraActivity> GetJiraActivities()
+        {
+            return this.publishedActivities.AsReadOnly();
+        }
+
+        public async Task<IReadOnlyCollection<JiraActivity>> GetJiraActivitiesAsync()
         {
             await this.RecognizeActivity();
             return this.publishedActivities.AsReadOnly();

@@ -226,7 +226,7 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IHistoricalDataRepository<JiraActivity>>(sp => 
                 new GenericDataRepository<JiraActivity>(
                     sp.GetRequiredService<IClock>(),
-                    () => sp.GetRequiredService<JiraTracker>().GetJiraActivities().GetAwaiter().GetResult()));
+                    () => sp.GetRequiredService<JiraTracker>().GetJiraActivities()));
 
             return services;
         }

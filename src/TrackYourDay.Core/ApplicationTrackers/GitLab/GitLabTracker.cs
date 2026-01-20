@@ -45,7 +45,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             foreach (var activity in newActivities)
             {
                 this.publishedActivities.Add(activity);
-                await this.publisher.Publish(new GitLabActivityDiscoveredEvent(Guid.NewGuid(), activity), CancellationToken.None);
+                await this.publisher.Publish(new GitLabActivityDiscoveredEvent(activity.Guid, activity), CancellationToken.None);
                 this.logger.LogInformation("GitLab activity discovered: {0}", activity.Description);
             }
 

@@ -53,7 +53,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
             // When
             await this.jiraTracker.RecognizeActivity(); //TODO: This probably should be exposed somewhere in act or arrange?
-            var result = await this.jiraTracker.GetJiraActivities();
+            var result = await this.jiraTracker.GetJiraActivitiesAsync();
 
             // Then
             result.Should().NotBeNull();
@@ -88,7 +88,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
             // When
             await this.jiraTracker.RecognizeActivity();
-            var result = await this.jiraTracker.GetJiraActivities();
+            var result = await this.jiraTracker.GetJiraActivitiesAsync();
 
             // Then
             result.Should().NotBeNull();
