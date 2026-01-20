@@ -26,7 +26,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             _logger = logger;
         }
 
-        public async Task<int> SyncCurrentStateAsync(CancellationToken cancellationToken)
+        public async Task SyncStateFromRemoteService(CancellationToken cancellationToken)
         {
             _currentUser ??= await _restApiClient.GetCurrentUser().ConfigureAwait(false);
 
@@ -46,8 +46,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 "Synchronized {IssueCount} Jira issues for user {User}",
                 currentIssues.Count,
                 _currentUser.DisplayName);
-
-            return currentIssues.Count;
         }
 
         private static JiraIssueState MapToJiraIssueState(JiraIssueResponse response)

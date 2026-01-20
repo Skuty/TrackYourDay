@@ -30,7 +30,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public async Task GivenValidUser_WhenSyncCurrentStateAsync_ThenFetchesAndUpdatesIssues()
+        public async Task GivenValidUser_WhenSyncStateFromRemoteService_ThenFetchesAndUpdatesIssues()
         {
             // Given
             var currentUser = new JiraUser("testuser", "Test User", "account123");
@@ -63,10 +63,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
             // When
-            var result = await _sut.SyncCurrentStateAsync(CancellationToken.None);
+            await _sut.SyncStateFromRemoteService(CancellationToken.None);
 
             // Then
-            result.Should().Be(1);
             _restApiClientMock.Verify(c => c.GetCurrentUser(), Times.Once);
             _restApiClientMock.Verify(c => c.GetUserIssues(currentUser, lookbackDate), Times.Once);
             _issueRepositoryMock.Verify(r => r.UpdateCurrentStateAsync(
@@ -75,7 +74,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public async Task GivenNoIssues_WhenSyncCurrentStateAsync_ThenReturnsZero()
+        public async Task GivenNoIssues_WhenSyncStateFromRemoteService_ThenUpdatesRepository()
         {
             // Given
             var currentUser = new JiraUser("testuser", "Test User", "account123");
@@ -90,14 +89,16 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
             // When
-            var result = await _sut.SyncCurrentStateAsync(CancellationToken.None);
+            await _sut.SyncStateFromRemoteService(CancellationToken.None);
 
             // Then
-            result.Should().Be(0);
+            _issueRepositoryMock.Verify(r => r.UpdateCurrentStateAsync(
+                It.Is<IEnumerable<JiraIssueState>>(issues => issues.Count() == 0),
+                CancellationToken.None), Times.Once);
         }
 
         [Fact]
-        public async Task GivenMultipleCalls_WhenSyncCurrentStateAsync_ThenReusesCurrentUser()
+        public async Task GivenMultipleCalls_WhenSyncStateFromRemoteService_ThenReusesCurrentUser()
         {
             // Given
             var currentUser = new JiraUser("testuser", "Test User", "account123");
@@ -112,15 +113,15 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
             // When
-            await _sut.SyncCurrentStateAsync(CancellationToken.None);
-            await _sut.SyncCurrentStateAsync(CancellationToken.None);
+            await _sut.SyncStateFromRemoteService(CancellationToken.None);
+            await _sut.SyncStateFromRemoteService(CancellationToken.None);
 
             // Then
             _restApiClientMock.Verify(c => c.GetCurrentUser(), Times.Once);
         }
 
         [Fact]
-        public async Task GivenIssueResponse_WhenSyncCurrentStateAsync_ThenMapsAllFields()
+        public async Task GivenIssueResponse_WhenSyncStateFromRemoteService_ThenMapsAllFields()
         {
             // Given
             var currentUser = new JiraUser("testuser", "Test User", "account123");
@@ -159,7 +160,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 .Returns(Task.CompletedTask);
 
             // When
-            await _sut.SyncCurrentStateAsync(CancellationToken.None);
+            await _sut.SyncStateFromRemoteService(CancellationToken.None);
 
             // Then
             capturedState.Should().NotBeNull();
@@ -175,7 +176,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         }
 
         [Fact]
-        public async Task GivenIssueWithNullFields_WhenSyncCurrentStateAsync_ThenUsesDefaults()
+        public async Task GivenIssueWithNullFields_WhenSyncStateFromRemoteService_ThenUsesDefaults()
         {
             // Given
             var currentUser = new JiraUser("testuser", "Test User", "account123");
@@ -213,7 +214,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
                 .Returns(Task.CompletedTask);
 
             // When
-            await _sut.SyncCurrentStateAsync(CancellationToken.None);
+            await _sut.SyncStateFromRemoteService(CancellationToken.None);
 
             // Then
             capturedState.Should().NotBeNull();

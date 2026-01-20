@@ -31,11 +31,11 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
                 _logger.LogInformation("Jira fetch job started");
 
                 var newActivityCount = await _tracker.RecognizeActivitiesAsync(context.CancellationToken).ConfigureAwait(false);
-                var issueCount = await _currentStateService.SyncCurrentStateAsync(context.CancellationToken).ConfigureAwait(false);
+                await _currentStateService.SyncStateFromRemoteService(context.CancellationToken).ConfigureAwait(false);
 
                 _logger.LogInformation(
-                    "Jira fetch job completed: {NewCount} new activities, {IssueCount} current issues", 
-                    newActivityCount, issueCount);
+                    "Jira fetch job completed: {NewCount} new activities", 
+                    newActivityCount);
             }
             catch (Exception ex)
             {

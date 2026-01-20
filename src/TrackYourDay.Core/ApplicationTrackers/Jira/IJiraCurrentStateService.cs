@@ -11,7 +11,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         /// Fetches current user issues and updates the repository state.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>Count of synchronized issues</returns>
-        Task<int> SyncCurrentStateAsync(CancellationToken cancellationToken);
+        Task SyncStateFromRemoteService(CancellationToken cancellationToken);
     }
 }
