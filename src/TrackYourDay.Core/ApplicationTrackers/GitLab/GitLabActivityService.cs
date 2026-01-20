@@ -71,9 +71,24 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 var user = await _gitLabRestApiClient.GetCurrentUser().ConfigureAwait(false);
                 return user != null && user.Id > 0 && user.Username != "Not recognized";
             }
-            catch (Exception e)
+            catch (HttpRequestException ex)
             {
-                _logger.LogError(e, "Error while checking GitLab connection");
+                _logger.LogError(ex, "HTTP error while checking GitLab connection: {Message}", ex.Message);
+                return false;
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogError(ex, "GitLab connection timed out");
+                return false;
+            }
+            catch (UriFormatException ex)
+            {
+                _logger.LogError(ex, "Invalid GitLab API URL format");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while checking GitLab connection");
                 return false;
             }
         }

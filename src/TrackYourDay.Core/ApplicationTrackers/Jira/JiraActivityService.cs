@@ -93,9 +93,24 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 var user = await _jiraRestApiClient.GetCurrentUser().ConfigureAwait(false);
                 return user != null && !string.IsNullOrEmpty(user.DisplayName) && user.DisplayName != "Not recognized";
             }
-            catch (Exception e)
+            catch (HttpRequestException ex)
             {
-                _logger.LogError(e, "Error while checking Jira connection");
+                _logger.LogError(ex, "HTTP error while checking Jira connection: {Message}", ex.Message);
+                return false;
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogError(ex, "Jira connection timed out");
+                return false;
+            }
+            catch (UriFormatException ex)
+            {
+                _logger.LogError(ex, "Invalid Jira API URL format");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while checking Jira connection");
                 return false;
             }
         }
