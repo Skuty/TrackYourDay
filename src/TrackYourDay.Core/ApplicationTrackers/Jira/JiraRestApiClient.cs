@@ -16,31 +16,33 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
     public class JiraRestApiClient : IJiraRestApiClient
     {
-        private readonly HttpClient httpClient;
+        private readonly HttpClient _httpClient;
 
-        public JiraRestApiClient(string url, string personalAccessToken, ILogger logger)
+        public JiraRestApiClient(HttpClient httpClient)
         {
-            var handler = new HttpClientHandler();
-            var loggingHandler = new HttpLoggingHandler(logger, "Jira") { InnerHandler = handler };
-
-            this.httpClient = new HttpClient(loggingHandler)
-            {
-                BaseAddress = new Uri(url)
-            };
-            this.httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {personalAccessToken}");
+            _httpClient = httpClient;
         }
 
         public async Task<JiraUser> GetCurrentUser()
         {
-            var response = await httpClient.GetAsync("/rest/api/2/myself");
+            var response = await _httpClient.GetAsync("/rest/api/2/myself");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<JiraUser>(content);
+            
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+            
+            var userResponse = JsonSerializer.Deserialize<JiraMyselfResponse>(content, options);
+            return new JiraUser(userResponse?.Name ?? "Unknown", userResponse?.DisplayName ?? "Unknown", userResponse?.AccountId);
         }
 
         public async Task<List<JiraIssueResponse>> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
         {
-            var response = await httpClient.GetAsync($"/rest/api/2/search?jql=assignee=alalak AND updated>={startingFromDate:yyyy-MM-dd}&expand=changelog");
+            var accountId = jiraUser.AccountId ?? jiraUser.DisplayName;
+            var response = await _httpClient.GetAsync($"/rest/api/2/search?jql=assignee={accountId} AND updated>={startingFromDate:yyyy-MM-dd}&expand=changelog");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
 
@@ -57,7 +59,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         public async Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
         {
-            var response = await httpClient.GetAsync($"/rest/api/2/issue/{issueKey}/worklog");
+            var response = await _httpClient.GetAsync($"/rest/api/2/issue/{issueKey}/worklog");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
 
@@ -76,6 +78,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 .ToList() ?? new List<JiraWorklogResponse>();
         }
     }
+
+    public record JiraMyselfResponse(
+        [property: JsonPropertyName("name")] string? Name,
+        [property: JsonPropertyName("displayName")] string? DisplayName,
+        [property: JsonPropertyName("accountId")] string? AccountId
+    );
 
     public record JiraSearchResponse(
         [property: JsonPropertyName("issues")] List<JiraIssueResponse>? Issues,
@@ -201,20 +209,21 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     }
     public class JiraRestApiClientFactory
     {
-        public static IJiraRestApiClient Create(JiraSettings settings, ILogger logger)
+        public static IJiraRestApiClient Create(JiraSettings settings, IHttpClientFactory httpClientFactory)
         {
             if (string.IsNullOrEmpty(settings.ApiUrl))
             {
                 return new NullJiraRestApiClient();
             }
 
-            return new JiraRestApiClient(settings.ApiUrl, settings.ApiKey, logger);
+            var httpClient = httpClientFactory.CreateClient("Jira");
+            return new JiraRestApiClient(httpClient);
         }
     }
 
     public class NullJiraRestApiClient : IJiraRestApiClient
     {
-        public Task<JiraUser> GetCurrentUser() => Task.FromResult(new JiraUser("Not recognized", "Not recognized"));
+        public Task<JiraUser> GetCurrentUser() => Task.FromResult(new JiraUser("Not recognized", "Not recognized", null));
 
         public Task<List<JiraIssueResponse>> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
             => Task.FromResult(new List<JiraIssueResponse>());

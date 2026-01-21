@@ -15,8 +15,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
 
         public GitLabRestApiClientTests()
         {
-            var mockLogger = new Mock<ILogger<GitLabRestApiClient>>();
-            this.client = new GitLabRestApiClient("https://gitlab.com", "", mockLogger.Object);
+            var httpClient = new HttpClient { BaseAddress = new Uri("https://gitlab.com") };
+            httpClient.DefaultRequestHeaders.Add("PRIVATE-TOKEN", "");
+            this.client = new GitLabRestApiClient(httpClient);
         }
 
         [Fact]

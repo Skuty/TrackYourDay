@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Moq;
 using System.Text.Json;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
@@ -20,7 +20,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventWithActionTypeOpenedAndTargetTypeMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeOpenedMergeRequest()
+        public async Task GivenReceivedGitLabEventWithActionTypeOpenedAndTargetTypeMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeOpenedMergeRequest()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_OpenedMergeRequest());
@@ -28,7 +28,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -37,7 +37,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventWithActionTypePushedToAndWithoutTargetType_WhenGettingActivity_ThenReturnedActivityShouldDescribePushedCommits()
+        public async Task GivenReceivedGitLabEventWithActionTypePushedToAndWithoutTargetType_WhenGettingActivity_ThenReturnedActivityShouldDescribePushedCommits()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_PushedTwoCommits());
@@ -53,7 +53,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(gitLabCommits);
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             // Verify mock was called the expected number of times
@@ -70,7 +70,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForBranchCreation_WhenGettingActivity_ThenReturnedActivityShouldDescribeBranchCreation()
+        public async Task GivenReceivedGitLabEventForBranchCreation_WhenGettingActivity_ThenReturnedActivityShouldDescribeBranchCreation()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseForPushedNew());
@@ -82,7 +82,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(gitLabProject);
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -91,7 +91,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForBranchDeletion_WhenGettingActivity_ThenReturnedActivityShouldDescribeBranchDeletion()
+        public async Task GivenReceivedGitLabEventForBranchDeletion_WhenGettingActivity_ThenReturnedActivityShouldDescribeBranchDeletion()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseForDeleted());
@@ -103,7 +103,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(gitLabProject);
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -112,7 +112,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForMergedMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeMergedMergeRequest()
+        public async Task GivenReceivedGitLabEventForMergedMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeMergedMergeRequest()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_MergedMergeRequest());
@@ -120,7 +120,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -128,7 +128,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForApprovedMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeApprovedMergeRequest()
+        public async Task GivenReceivedGitLabEventForApprovedMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeApprovedMergeRequest()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_ApprovedMergeRequest());
@@ -136,7 +136,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -144,7 +144,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForOpenedIssue_WhenGettingActivity_ThenReturnedActivityShouldDescribeOpenedIssue()
+        public async Task GivenReceivedGitLabEventForOpenedIssue_WhenGettingActivity_ThenReturnedActivityShouldDescribeOpenedIssue()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_OpenedIssue());
@@ -152,7 +152,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -160,7 +160,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForClosedIssue_WhenGettingActivity_ThenReturnedActivityShouldDescribeClosedIssue()
+        public async Task GivenReceivedGitLabEventForClosedIssue_WhenGettingActivity_ThenReturnedActivityShouldDescribeClosedIssue()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_ClosedIssue());
@@ -168,7 +168,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -176,7 +176,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForCommentOnMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeComment()
+        public async Task GivenReceivedGitLabEventForCommentOnMergeRequest_WhenGettingActivity_ThenReturnedActivityShouldDescribeComment()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CommentOnMergeRequest());
@@ -184,7 +184,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -193,7 +193,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForCommentOnIssue_WhenGettingActivity_ThenReturnedActivityShouldDescribeComment()
+        public async Task GivenReceivedGitLabEventForCommentOnIssue_WhenGettingActivity_ThenReturnedActivityShouldDescribeComment()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CommentOnIssue());
@@ -201,7 +201,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -210,7 +210,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForCreatedWikiPage_WhenGettingActivity_ThenReturnedActivityShouldDescribeWikiCreation()
+        public async Task GivenReceivedGitLabEventForCreatedWikiPage_WhenGettingActivity_ThenReturnedActivityShouldDescribeWikiCreation()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CreatedWikiPage());
@@ -218,7 +218,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -226,7 +226,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventForCreatedMilestone_WhenGettingActivity_ThenReturnedActivityShouldDescribeMilestoneCreation()
+        public async Task GivenReceivedGitLabEventForCreatedMilestone_WhenGettingActivity_ThenReturnedActivityShouldDescribeMilestoneCreation()
         {
             // Given
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_CreatedMilestone());
@@ -234,7 +234,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(new List<GitLabEvent> { gitLabEvent });
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then
             activities.Count.Should().Be(1);
@@ -242,7 +242,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         }
 
         [Fact]
-        public void GivenReceivedGitLabEventWithMultipleCommitsInPush_WhenGettingActivity_ThenAllCommitsAreReturnedWithCorrectTimestamps()
+        public async Task GivenReceivedGitLabEventWithMultipleCommitsInPush_WhenGettingActivity_ThenAllCommitsAreReturnedWithCorrectTimestamps()
         {
             // Given - Simulate a push with 10 commits
             var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_PushedMultipleCommits());
@@ -258,7 +258,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
                 .ReturnsAsync(gitLabCommits);
 
             // When
-            var activities = this.gitLabActivityService.GetTodayActivities();
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
 
             // Then - All 10 commits should be visible as activities
             activities.Count.Should().Be(10);

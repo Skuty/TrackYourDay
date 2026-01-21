@@ -13,8 +13,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 
         public JiraRestApiClientTests()
         {
-            var mockLogger = new Mock<ILogger<JiraRestApiClient>>();
-            this.jiraRestApiClient = new JiraRestApiClient("https://sampleUrl", "sampleKey", mockLogger.Object);
+            var httpClient = new HttpClient { BaseAddress = new Uri("https://sampleUrl") };
+            httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer sampleKey");
+            this.jiraRestApiClient = new JiraRestApiClient(httpClient);
         }
 
         [Fact]

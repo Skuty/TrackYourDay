@@ -47,11 +47,16 @@ namespace TrackYourDay.Core.Insights.Analytics
                 return Array.Empty<GroupedActivity>();
             }
 
-            // Get Jira activities for enrichment
-            // Note: This uses GetAwaiter().GetResult() but the actual HTTP calls are made asynchronously
-            // by JiraTracker.RecognizeActivity() which caches results, so this won't block on I/O
-            var jiraActivities = _jiraTracker.GetJiraActivities().GetAwaiter().GetResult().ToList();
-            _logger.LogInformation("Retrieved {Count} Jira activities for enrichment", jiraActivities.Count);
+            // Determine date range from items
+            var minDate = DateOnly.FromDateTime(itemsList.Min(i => i.StartDate));
+            var maxDate = DateOnly.FromDateTime(itemsList.Max(i => i.EndDate));
+            
+            // Get Jira activities for the date range
+            // Note: Using GetAwaiter().GetResult() because ISummaryStrategy.Generate is synchronous.
+            // Consider making ISummaryStrategy async in future refactoring.
+            var jiraActivities = _jiraTracker.GetActivitiesAsync(minDate, maxDate).GetAwaiter().GetResult().ToList();
+            _logger.LogInformation("Retrieved {Count} Jira activities for enrichment ({MinDate} to {MaxDate})", 
+                jiraActivities.Count, minDate, maxDate);
 
             // Group items by date
             var itemsByDate = itemsList

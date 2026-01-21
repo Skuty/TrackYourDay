@@ -98,8 +98,8 @@ public class LlmPromptServiceTests
 
         var jiraActivities = new List<JiraActivity>
         {
-            new(DateTime.Today.AddHours(9), "Created Issue PROJ-123 in Project: Implement feature"),
-            new(DateTime.Today.AddHours(14), "Logged 2h on Issue PROJ-456 in Project: Bug fix")
+            new() { UpstreamId = "jira-1", OccurrenceDate = DateTime.Today.AddHours(9), Description = "Created Issue PROJ-123 in Project: Implement feature" },
+            new() { UpstreamId = "jira-2", OccurrenceDate = DateTime.Today.AddHours(14), Description = "Logged 2h on Issue PROJ-456 in Project: Bug fix" }
         };
         mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).ReturnsAsync(jiraActivities);
 
@@ -219,9 +219,9 @@ public class LlmPromptServiceTests
 
         var jiraActivities = new List<JiraActivity>
         {
-            new(DateTime.Today.AddDays(-7), "Old issue PROJ-999 from last week"),
-            new(DateTime.Today.AddHours(9), "Created Issue PROJ-123 in Project: Implement feature"),
-            new(DateTime.Today.AddDays(7), "Future issue PROJ-888 next week")
+            new() { UpstreamId = "jira-old", OccurrenceDate = DateTime.Today.AddDays(-7), Description = "Old issue PROJ-999 from last week" },
+            new() { UpstreamId = "jira-3", OccurrenceDate = DateTime.Today.AddHours(9), Description = "Created Issue PROJ-123 in Project: Implement feature" },
+            new() { UpstreamId = "jira-future", OccurrenceDate = DateTime.Today.AddDays(7), Description = "Future issue PROJ-888 next week" }
         };
         mockJiraService.Setup(s => s.GetActivitiesUpdatedAfter(It.IsAny<DateTime>())).ReturnsAsync(jiraActivities);
 

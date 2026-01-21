@@ -4,6 +4,7 @@ using TrackYourDay.Core.ApplicationTrackers.Breaks;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.Persistence.Specifications;
 using TrackYourDay.Core.SystemTrackers;
+using static TrackYourDay.Core.Persistence.DatabaseConstants;
 
 namespace TrackYourDay.Core.Persistence
 {
@@ -16,15 +17,21 @@ namespace TrackYourDay.Core.Persistence
     public class GenericDataRepository<T> : IHistoricalDataRepository<T> where T : class
     {
         private readonly string databaseFileName;
+        private readonly ISqliteConnectionFactory _connectionFactory;
         private readonly IClock clock;
         private readonly string typeName;
         private readonly Func<IReadOnlyCollection<T>>? getCurrentSessionData;
 
         public GenericDataRepository(
             IClock clock,
+            ISqliteConnectionFactory connectionFactory,
             Func<IReadOnlyCollection<T>>? getCurrentSessionDataProvider = null)
         {
+            ArgumentNullException.ThrowIfNull(clock);
+            ArgumentNullException.ThrowIfNull(connectionFactory);
+            
             this.clock = clock;
+            _connectionFactory = connectionFactory;
             this.typeName = typeof(T).Name;
             this.getCurrentSessionData = getCurrentSessionDataProvider;
 
@@ -35,7 +42,7 @@ namespace TrackYourDay.Core.Persistence
                 Directory.CreateDirectory($"{appDataPath}");
             }
 
-            this.databaseFileName = $"{appDataPath}\\TrackYourDayGeneric.db";
+            this.databaseFileName = $"{appDataPath}\\{DatabaseName}";
             InitializeStructure();
         }
 
@@ -44,7 +51,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         public void Save(T item)
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var guidProperty = typeof(T).GetProperty("Guid");
@@ -76,7 +83,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         public void Update(T item)
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var guidProperty = typeof(T).GetProperty("Guid");
@@ -146,7 +153,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         public void Clear()
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var clearCommand = connection.CreateCommand();
@@ -172,7 +179,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         public int GetTotalRecordCount()
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var command = connection.CreateCommand();
@@ -182,13 +189,78 @@ namespace TrackYourDay.Core.Persistence
         }
 
         /// <summary>
+        /// Attempts to append an item if it doesn't already exist (based on Guid).
+        /// </summary>
+        public async Task<bool> TryAppendAsync(T item, CancellationToken cancellationToken = default)
+        {
+            await using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+            var guidProperty = typeof(T).GetProperty("Guid");
+            
+            if (guidProperty == null)
+            {
+                throw new InvalidOperationException($"Type {typeName} must have a Guid property");
+            }
+
+            var guid = (Guid)guidProperty.GetValue(item)!;
+            var dataJson = JsonConvert.SerializeObject(item, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto
+            });
+
+            var insertCommand = connection.CreateCommand();
+            insertCommand.CommandText = @"
+                INSERT OR IGNORE INTO historical_data (Guid, TypeName, DataJson)
+                VALUES (@guid, @typeName, @dataJson)";
+            
+            insertCommand.Parameters.AddWithValue("@guid", guid.ToString());
+            insertCommand.Parameters.AddWithValue("@typeName", typeName);
+            insertCommand.Parameters.AddWithValue("@dataJson", dataJson);
+            
+            var rowsAffected = await insertCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return rowsAffected > 0;
+        }
+
+        /// <summary>
+        /// Finds items matching the specification asynchronously.
+        /// </summary>
+        public async Task<IReadOnlyCollection<T>> FindAsync(ISpecification<T> specification, CancellationToken cancellationToken = default)
+        {
+            if (specification == null)
+                throw new ArgumentNullException(nameof(specification));
+
+            var items = new List<T>();
+
+            // Get from database using specification
+            items.AddRange(await GetFromDatabaseBySpecificationAsync(specification, cancellationToken).ConfigureAwait(false));
+
+            // If we have current session data, filter it using the specification
+            if (getCurrentSessionData != null)
+            {
+                var currentData = getCurrentSessionData()
+                    .Where(item => specification.IsSatisfiedBy(item))
+                    .ToList();
+                
+                // Add current session items that aren't already in the results (avoid duplicates)
+                var existingGuids = items
+                    .Select(item => GetGuidFromItem(item))
+                    .ToHashSet();
+                
+                items.AddRange(currentData.Where(item => !existingGuids.Contains(GetGuidFromItem(item))));
+            }
+
+            return items.AsReadOnly();
+        }
+
+        /// <summary>
         /// Queries the database using a specification pattern.
         /// </summary>
         private IReadOnlyCollection<T> GetFromDatabaseBySpecification(ISpecification<T> specification)
         {
             var items = new List<T>();
 
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var command = connection.CreateCommand();
@@ -229,6 +301,53 @@ namespace TrackYourDay.Core.Persistence
         }
 
         /// <summary>
+        /// Queries the database using a specification pattern asynchronously.
+        /// </summary>
+        private async Task<IReadOnlyCollection<T>> GetFromDatabaseBySpecificationAsync(ISpecification<T> specification, CancellationToken cancellationToken)
+        {
+            var items = new List<T>();
+
+            await using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+            var command = connection.CreateCommand();
+            
+            // Build query with specification
+            var whereClause = specification.GetSqlWhereClause();
+            command.CommandText = $@"
+                SELECT DataJson 
+                FROM historical_data 
+                WHERE TypeName = @typeName 
+                  AND ({whereClause})
+                ORDER BY Id";
+            
+            command.Parameters.AddWithValue("@typeName", typeName);
+            
+            // Add specification parameters
+            var specParams = specification.GetSqlParameters();
+            foreach (var param in specParams)
+            {
+                command.Parameters.AddWithValue(param.Key, param.Value);
+            }
+
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                var dataJson = reader.GetString(0);
+                var item = JsonConvert.DeserializeObject<T>(dataJson, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.Auto
+                });
+                if (item != null)
+                {
+                    items.Add(item);
+                }
+            }
+
+            return items.AsReadOnly();
+        }
+
+        /// <summary>
         /// Extracts the Guid from an entity using reflection.
         /// </summary>
         private Guid GetGuidFromItem(T item)
@@ -245,7 +364,7 @@ namespace TrackYourDay.Core.Persistence
         /// </summary>
         private void InitializeStructure()
         {
-            using var connection = new SqliteConnection($"Data Source={databaseFileName}");
+            using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
             connection.Open();
 
             var command = connection.CreateCommand();

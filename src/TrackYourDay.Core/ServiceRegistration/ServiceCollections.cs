@@ -8,6 +8,7 @@ using TrackYourDay.Core.ApplicationTrackers.MsTeams;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.Persistence;
 using TrackYourDay.Core.ApplicationTrackers.MsTeams.RuleEngine;
 using TrackYourDay.Core.ApplicationTrackers.UserTasks;
+using TrackYourDay.Core.ApplicationTrackers.Persistence;
 using TrackYourDay.Core.Insights.Analytics;
 using TrackYourDay.Core.Insights.Workdays;
 using TrackYourDay.Core.Notifications;
@@ -92,17 +93,17 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IGitLabRestApiClient>(serviceCollection =>
             {
                 var gitLabSettingsService = serviceCollection.GetRequiredService<IGitLabSettingsService>();
-                var logger = serviceCollection.GetRequiredService<ILogger<GitLabRestApiClient>>();
-                return GitLabRestApiClientFactory.Create(gitLabSettingsService.GetSettings(), logger);
+                var httpClientFactory = serviceCollection.GetRequiredService<IHttpClientFactory>();
+                return GitLabRestApiClientFactory.Create(gitLabSettingsService.GetSettings(), httpClientFactory);
             });
 
             services.AddSingleton<IGitLabActivityService, GitLabActivityService>();
             services.AddSingleton<GitLabTracker>(serviceProvider =>
                 new GitLabTracker(
                     serviceProvider.GetRequiredService<IGitLabActivityService>(),
-                    serviceProvider.GetRequiredService<IClock>(),
+                    serviceProvider.GetRequiredService<IHistoricalDataRepository<GitLabActivity>>(),
+                    serviceProvider.GetRequiredService<IGitLabSettingsService>(),
                     serviceProvider.GetRequiredService<IPublisher>(),
-                    serviceProvider.GetRequiredService<IGenericSettingsService>(),
                     serviceProvider.GetRequiredService<ILogger<GitLabTracker>>()
                 )
             );
@@ -110,12 +111,20 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IJiraRestApiClient>(serviceCollection =>
             {
                 var jiraSettingsService = serviceCollection.GetRequiredService<IJiraSettingsService>();
-                var logger = serviceCollection.GetRequiredService<ILogger<JiraRestApiClient>>();
-                return JiraRestApiClientFactory.Create(jiraSettingsService.GetSettings(), logger);
+                var httpClientFactory = serviceCollection.GetRequiredService<IHttpClientFactory>();
+                return JiraRestApiClientFactory.Create(jiraSettingsService.GetSettings(), httpClientFactory);
             });
 
             services.AddSingleton<IJiraActivityService, JiraActivityService>();
-            services.AddSingleton<JiraTracker>();
+            services.AddSingleton<IJiraCurrentStateService, JiraCurrentStateService>();
+            services.AddSingleton<JiraTracker>(serviceProvider =>
+                new JiraTracker(
+                    serviceProvider.GetRequiredService<IJiraActivityService>(),
+                    serviceProvider.GetRequiredService<IHistoricalDataRepository<JiraActivity>>(),
+                    serviceProvider.GetRequiredService<IJiraSettingsService>(),
+                    serviceProvider.GetRequiredService<ILogger<JiraTracker>>()
+                )
+            );
 
             services.AddSingleton<JiraKeySummaryStrategy>(serviceProvider =>
                 new JiraKeySummaryStrategy(
@@ -198,22 +207,32 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<IHistoricalDataRepository<EndedActivity>>(sp => 
                 new GenericDataRepository<EndedActivity>(
                     sp.GetRequiredService<IClock>(),
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
                     () => sp.GetRequiredService<ActivityTracker>().GetEndedActivities()));
             
             services.AddSingleton<IHistoricalDataRepository<EndedBreak>>(sp => 
                 new GenericDataRepository<EndedBreak>(
                     sp.GetRequiredService<IClock>(),
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
                     () => sp.GetRequiredService<BreakTracker>().GetEndedBreaks()));
             
             services.AddSingleton<IHistoricalDataRepository<EndedMeeting>>(sp => 
                 new GenericDataRepository<EndedMeeting>(
                     sp.GetRequiredService<IClock>(),
-                    null)); // Don't include tracker data - meetings are persisted immediately after confirmation
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
+                    null));
 
             services.AddSingleton<IHistoricalDataRepository<GitLabActivity>>(sp => 
                 new GenericDataRepository<GitLabActivity>(
                     sp.GetRequiredService<IClock>(),
-                    () => sp.GetRequiredService<GitLabTracker>().GetGitLabActivities()));
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
+                    null));
+
+            services.AddSingleton<IHistoricalDataRepository<JiraActivity>>(sp => 
+                new GenericDataRepository<JiraActivity>(
+                    sp.GetRequiredService<IClock>(),
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
+                    null));
 
             return services;
         }

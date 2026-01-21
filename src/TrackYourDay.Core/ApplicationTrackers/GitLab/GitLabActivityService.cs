@@ -1,80 +1,99 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using System.Text;
+using TrackYourDay.Core.ApplicationTrackers.Shared;
 
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
-    public record class GitLabActivity(DateTime OccuranceDate, string Description)
+    /// <summary>
+    /// Represents a GitLab activity event with deterministic identifier.
+    /// </summary>
+    public record class GitLabActivity : IHasDeterministicGuid, IHasOccurrenceDate
     {
-        public Guid Guid { get; init; } = Guid.NewGuid();
-    }
+        public required string UpstreamId { get; init; }
+        public required DateTime OccuranceDate { get; init; }
+        public required string Description { get; init; }
+        
+        /// <summary>
+        /// Deterministic GUID based on UpstreamId for deduplication.
+        /// </summary>
+        public Guid Guid => GenerateDeterministicGuid(UpstreamId);
+        
+        /// <summary>
+        /// Gets the timestamp when the activity occurred (implements IHasOccurrenceDate).
+        /// </summary>
+        DateTime IHasOccurrenceDate.OccurrenceDate => OccuranceDate;
 
-    //TODO: Split namespaces for internal and eternal objects like GitLabACtivity and GitLabCommit
+        private static Guid GenerateDeterministicGuid(string input)
+        {
+            var bytes = MD5.HashData(Encoding.UTF8.GetBytes(input));
+            return new Guid(bytes);
+        }
+    }
 
     public class GitLabActivityService : IGitLabActivityService
     {
-        private readonly IGitLabRestApiClient gitLabRestApiClient;
-        private readonly ILogger<GitLabActivityService> logger;
-        private GitLabUserId userId;
-        private string userEmail;
-        private List<GitLabActivity> gitlabActivities;
-        private bool stopFetchingDueToFailedRequests = false;
+        private readonly IGitLabRestApiClient _gitLabRestApiClient;
+        private readonly ILogger<GitLabActivityService> _logger;
 
         public GitLabActivityService(IGitLabRestApiClient gitLabRestApiClient, ILogger<GitLabActivityService> logger)
         {
-            this.gitLabRestApiClient = gitLabRestApiClient;
-            this.logger = logger;
-            this.gitlabActivities = new List<GitLabActivity>();
+            _gitLabRestApiClient = gitLabRestApiClient;
+            _logger = logger;
         }
 
-        public List<GitLabActivity> GetTodayActivities()
+        public async Task<List<GitLabActivity>> GetActivitiesUpdatedAfter(DateTime startDate, CancellationToken cancellationToken = default)
         {
-            if (this.stopFetchingDueToFailedRequests)
+            var activities = new List<GitLabActivity>();
+
+            var user = await _gitLabRestApiClient.GetCurrentUser().ConfigureAwait(false);
+            var userId = new GitLabUserId(user.Id);
+            var userEmail = user.Email;
+
+            var events = await _gitLabRestApiClient.GetUserEvents(userId, DateOnly.FromDateTime(startDate)).ConfigureAwait(false);
+
+            foreach (var gitlabEvent in events)
             {
-                return this.gitlabActivities;
+                var eventActivities = await MapGitLabEventToGitLabActivityAsync(gitlabEvent, userEmail, cancellationToken).ConfigureAwait(false);
+                if (eventActivities != null)
+                {
+                    activities.AddRange(eventActivities);
+                }
             }
 
-            this.gitlabActivities.Clear();
-            try
-            {
-                if (this.userId == null)
-                {
-                    var user = this.gitLabRestApiClient.GetCurrentUser().GetAwaiter().GetResult();
-                    this.userId = new GitLabUserId(user.Id);
-                    this.userEmail = user.Email;
-                }
-
-                var events = this.gitLabRestApiClient.GetUserEvents(new GitLabUserId(this.userId.Id), DateOnly.FromDateTime(DateTime.Today)).GetAwaiter().GetResult();
-
-                foreach (var gitlabEvent in events)
-                {
-                    // TODO: store GitLabData and only add new items to it instead of repulling everything from scratch
-                    var gitLabActivity = this.MapGitLabEventToGitLabActivity(gitlabEvent);
-
-                    this.gitlabActivities.AddRange(gitLabActivity);
-                }
-            } catch (Exception e)
-            {
-                this.logger?.LogError(e, "Error while fetching GitLab activities");
-                this.stopFetchingDueToFailedRequests = true;
-            }
-
-            return this.gitlabActivities;
+            return activities;
         }
 
         public async Task<bool> CheckConnection()
         {
             try
             {
-                var user = await this.gitLabRestApiClient.GetCurrentUser();
+                var user = await _gitLabRestApiClient.GetCurrentUser().ConfigureAwait(false);
                 return user != null && user.Id > 0 && user.Username != "Not recognized";
             }
-            catch (Exception e)
+            catch (HttpRequestException ex)
             {
-                this.logger?.LogError(e, "Error while checking GitLab connection");
+                _logger.LogError(ex, "HTTP error while checking GitLab connection: {Message}", ex.Message);
+                return false;
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogError(ex, "GitLab connection timed out");
+                return false;
+            }
+            catch (UriFormatException ex)
+            {
+                _logger.LogError(ex, "Invalid GitLab API URL format");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while checking GitLab connection");
                 return false;
             }
         }
 
-        private List<GitLabActivity> MapGitLabEventToGitLabActivity(GitLabEvent gitlabEvent)
+        private async Task<List<GitLabActivity>?> MapGitLabEventToGitLabActivityAsync(GitLabEvent gitlabEvent, string userEmail, CancellationToken cancellationToken)
         {
             if (gitlabEvent == null)
             {
@@ -84,124 +103,143 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             // Handle Push events (commits and branch creation)
             if (gitlabEvent.PushData != null)
             {
-                return this.MapPushEvent(gitlabEvent);
+                return await MapPushEventAsync(gitlabEvent, userEmail, cancellationToken).ConfigureAwait(false);
             }
 
             // Handle Merge Request events
             if (gitlabEvent.TargetType == "MergeRequest")
             {
-                return this.MapMergeRequestEvent(gitlabEvent);
+                return MapMergeRequestEvent(gitlabEvent);
             }
 
             // Handle Issue events
             if (gitlabEvent.TargetType == "Issue")
             {
-                return this.MapIssueEvent(gitlabEvent);
+                return MapIssueEvent(gitlabEvent);
             }
 
             // Handle Note/Comment events
             if (gitlabEvent.TargetType == "Note" && gitlabEvent.Note != null)
             {
-                return this.MapNoteEvent(gitlabEvent);
+                return MapNoteEvent(gitlabEvent);
             }
 
             // Handle Wiki Page events
             if (gitlabEvent.TargetType == "WikiPage::Meta")
             {
-                return this.MapWikiEvent(gitlabEvent);
+                return MapWikiEvent(gitlabEvent);
             }
 
             // Handle Milestone events
             if (gitlabEvent.TargetType == "Milestone")
             {
-                return this.MapMilestoneEvent(gitlabEvent);
+                return MapMilestoneEvent(gitlabEvent);
             }
 
             // Fallback for other event types
-            return new List<GitLabActivity>
-            {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, $"{gitlabEvent.Action} {gitlabEvent.TargetType}: {gitlabEvent.TargetTitle}")
-            };
+            var upstreamId = $"gitlab-event-{gitlabEvent.ProjectId}-{gitlabEvent.TargetType}-{gitlabEvent.CreatedAt:O}";
+            return
+            [
+                new GitLabActivity
+                {
+                    UpstreamId = upstreamId,
+                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    Description = $"{gitlabEvent.Action} {gitlabEvent.TargetType}: {gitlabEvent.TargetTitle}"
+                }
+            ];
         }
 
-        private List<GitLabActivity> MapPushEvent(GitLabEvent gitlabEvent)
+        private async Task<List<GitLabActivity>> MapPushEventAsync(GitLabEvent gitlabEvent, string userEmail, CancellationToken cancellationToken)
         {
-            var project = this.gitLabRestApiClient.GetProject(new GitLabProjectId(gitlabEvent.ProjectId)).GetAwaiter().GetResult();
+            var project = await _gitLabRestApiClient.GetProject(new GitLabProjectId(gitlabEvent.ProjectId)).ConfigureAwait(false);
             var projectName = project.NameWithNamespace;
             var branchName = gitlabEvent.PushData.Ref;
 
-            // Check if this is a new branch creation (action_name is "pushed new" and push_data.action is "created")
+            // Check if this is a new branch creation
             if (gitlabEvent.PushData.Action == "created" && gitlabEvent.PushData.RefType == "branch")
             {
-                return new List<GitLabActivity>
-                {
-                    new GitLabActivity(gitlabEvent.CreatedAt.DateTime, $"Created new branch '{branchName}' in Repository: {projectName}")
-                };
+                var upstreamId = $"gitlab-branch-created-{gitlabEvent.ProjectId}-{branchName}-{gitlabEvent.CreatedAt:O}";
+                return
+                [
+                    new GitLabActivity
+                    {
+                        UpstreamId = upstreamId,
+                        OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                        Description = $"Created new branch '{branchName}' in Repository: {projectName}"
+                    }
+                ];
             }
 
             // Check if this is a tag creation
             if (gitlabEvent.PushData.Action == "created" && gitlabEvent.PushData.RefType == "tag")
             {
-                return new List<GitLabActivity>
-                {
-                    new GitLabActivity(gitlabEvent.CreatedAt.DateTime, $"Created new tag '{branchName}' in Repository: {projectName}")
-                };
+                var upstreamId = $"gitlab-tag-created-{gitlabEvent.ProjectId}-{branchName}-{gitlabEvent.CreatedAt:O}";
+                return
+                [
+                    new GitLabActivity
+                    {
+                        UpstreamId = upstreamId,
+                        OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                        Description = $"Created new tag '{branchName}' in Repository: {projectName}"
+                    }
+                ];
             }
 
             // Check if this is a branch/tag deletion
             if (gitlabEvent.PushData.Action == "removed")
             {
                 var refType = gitlabEvent.PushData.RefType;
-                return new List<GitLabActivity>
-                {
-                    new GitLabActivity(gitlabEvent.CreatedAt.DateTime, $"Deleted {refType} '{branchName}' from Repository: {projectName}")
-                };
+                var upstreamId = $"gitlab-{refType}-removed-{gitlabEvent.ProjectId}-{branchName}-{gitlabEvent.CreatedAt:O}";
+                return
+                [
+                    new GitLabActivity
+                    {
+                        UpstreamId = upstreamId,
+                        OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                        Description = $"Deleted {refType} '{branchName}' from Repository: {projectName}"
+                    }
+                ];
             }
 
-            // Regular commit push - fetch commits by SHA range if available
+            // Regular commit push
             List<GitLabCommit> commits;
             var commitFrom = gitlabEvent.PushData.CommitFrom;
             var commitTo = gitlabEvent.PushData.CommitTo;
 
             if (!string.IsNullOrEmpty(commitFrom) && !string.IsNullOrEmpty(commitTo))
             {
-                // Use the SHA range from the push event to get exact commits
-                var allCommits = this.gitLabRestApiClient.GetCommitsByShaRange(
+                var allCommits = await _gitLabRestApiClient.GetCommitsByShaRange(
                     new GitLabProjectId(gitlabEvent.ProjectId), 
                     commitFrom, 
-                    commitTo)
-                    .GetAwaiter().GetResult();
-                commits = allCommits
-                    .Where(c => c.AuthorEmail == this.userEmail)
-                    .ToList();
+                    commitTo).ConfigureAwait(false);
+                commits = allCommits.Where(c => c.AuthorEmail == userEmail).ToList();
             }
             else
             {
-                // Fallback to date-based fetch if no SHA range available
-                var allCommits = this.gitLabRestApiClient.GetCommits(
+                var allCommits = await _gitLabRestApiClient.GetCommits(
                     new GitLabProjectId(gitlabEvent.ProjectId), 
                     new GitLabRefName(branchName), 
-                    DateOnly.FromDateTime(DateTime.Today))
-                    .GetAwaiter().GetResult();
-                commits = allCommits
-                    .Where(c => c.AuthorEmail == this.userEmail)
-                    .ToList();
+                    DateOnly.FromDateTime(DateTime.Today)).ConfigureAwait(false);
+                commits = allCommits.Where(c => c.AuthorEmail == userEmail).ToList();
             }
 
             var gitLabActivities = new List<GitLabActivity>();
 
-            // Create activity for each commit with its actual timestamp from committed_date
             foreach (var commit in commits)
             {
-                gitLabActivities.Add(new GitLabActivity(
-                    commit.CommittedDate.DateTime,
-                    $"Commit to Repository: {projectName}, branch: {branchName}, Title: {commit.Title}"));
+                var upstreamId = $"gitlab-commit-{gitlabEvent.ProjectId}-{commit.Id}";
+                gitLabActivities.Add(new GitLabActivity
+                {
+                    UpstreamId = upstreamId,
+                    OccuranceDate = commit.CommittedDate.DateTime,
+                    Description = $"Commit to Repository: {projectName}, branch: {branchName}, Title: {commit.Title}"
+                });
             }
 
             return gitLabActivities;
         }
 
-        private List<GitLabActivity> MapMergeRequestEvent(GitLabEvent gitlabEvent)
+        private static List<GitLabActivity> MapMergeRequestEvent(GitLabEvent gitlabEvent)
         {
             var description = gitlabEvent.Action switch
             {
@@ -215,13 +253,19 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 _ => $"{gitlabEvent.Action} Merge Request: {gitlabEvent.TargetTitle}"
             };
 
-            return new List<GitLabActivity>
-            {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
-            };
+            var upstreamId = $"gitlab-mr-{gitlabEvent.ProjectId}-{gitlabEvent.Id}-{gitlabEvent.Action}";
+            return
+            [
+                new GitLabActivity
+                {
+                    UpstreamId = upstreamId,
+                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    Description = description
+                }
+            ];
         }
 
-        private List<GitLabActivity> MapIssueEvent(GitLabEvent gitlabEvent)
+        private static List<GitLabActivity> MapIssueEvent(GitLabEvent gitlabEvent)
         {
             var description = gitlabEvent.Action switch
             {
@@ -233,13 +277,19 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 _ => $"{gitlabEvent.Action} Issue: {gitlabEvent.TargetTitle}"
             };
 
-            return new List<GitLabActivity>
-            {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
-            };
+            var upstreamId = $"gitlab-issue-{gitlabEvent.ProjectId}-{gitlabEvent.Id}-{gitlabEvent.Action}";
+            return
+            [
+                new GitLabActivity
+                {
+                    UpstreamId = upstreamId,
+                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    Description = description
+                }
+            ];
         }
 
-        private List<GitLabActivity> MapNoteEvent(GitLabEvent gitlabEvent)
+        private static List<GitLabActivity> MapNoteEvent(GitLabEvent gitlabEvent)
         {
             var noteType = gitlabEvent.Note.NoteableType;
             var commentPreview = gitlabEvent.Note.Body.Length > 50
@@ -255,13 +305,19 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 _ => $"Commented on {noteType} '{gitlabEvent.TargetTitle}': {commentPreview}"
             };
 
-            return new List<GitLabActivity>
-            {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
-            };
+            var upstreamId = $"gitlab-note-{gitlabEvent.ProjectId}-{gitlabEvent.Note.Id}-{gitlabEvent.CreatedAt:O}";
+            return
+            [
+                new GitLabActivity
+                {
+                    UpstreamId = upstreamId,
+                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    Description = description
+                }
+            ];
         }
 
-        private List<GitLabActivity> MapWikiEvent(GitLabEvent gitlabEvent)
+        private static List<GitLabActivity> MapWikiEvent(GitLabEvent gitlabEvent)
         {
             var description = gitlabEvent.Action switch
             {
@@ -271,13 +327,19 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 _ => $"{gitlabEvent.Action} Wiki Page: {gitlabEvent.TargetTitle}"
             };
 
-            return new List<GitLabActivity>
-            {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
-            };
+            var upstreamId = $"gitlab-wiki-{gitlabEvent.ProjectId}-{gitlabEvent.Id}-{gitlabEvent.Action}";
+            return
+            [
+                new GitLabActivity
+                {
+                    UpstreamId = upstreamId,
+                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    Description = description
+                }
+            ];
         }
 
-        private List<GitLabActivity> MapMilestoneEvent(GitLabEvent gitlabEvent)
+        private static List<GitLabActivity> MapMilestoneEvent(GitLabEvent gitlabEvent)
         {
             var description = gitlabEvent.Action switch
             {
@@ -289,12 +351,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 _ => $"{gitlabEvent.Action} Milestone: {gitlabEvent.TargetTitle}"
             };
 
-            return new List<GitLabActivity>
-            {
-                new GitLabActivity(gitlabEvent.CreatedAt.DateTime, description)
-            };
+            var upstreamId = $"gitlab-milestone-{gitlabEvent.ProjectId}-{gitlabEvent.Id}-{gitlabEvent.Action}";
+            return
+            [
+                new GitLabActivity
+                {
+                    UpstreamId = upstreamId,
+                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    Description = description
+                }
+            ];
         }
-
-        //TODO: Add tests for duplicated events
     }
 }

@@ -8,8 +8,8 @@ using TrackYourDay.MAUI.ServiceRegistration;
 using TrackYourDay.Core.ServiceRegistration;
 using TrackYourDay.Web.ServiceRegistration;
 using TrackYourDay.Core.SystemTrackers;
-using TrackYourDay.MAUI.Infrastructure;
 using Microsoft.Extensions.Configuration;
+using TrackYourDay.MAUI.Infrastructure;
 
 namespace TrackYourDay.MAUI
 {
@@ -41,9 +41,14 @@ namespace TrackYourDay.MAUI
 
             builder.Services.AddSingleton(Assembly.GetExecutingAssembly().GetName().Version);
 
+            // Register database encryption services first (required by Settings and Repositories)
+            builder.Services.AddExternalActivitiesPersistence();
+
             builder.Services.AddSettings();
 
             builder.Services.AddRepositories();
+
+            builder.Services.AddExternalActivitiesHttpClients();
 
             builder.Services.AddTrackers();
 

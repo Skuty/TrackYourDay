@@ -1,8 +1,11 @@
 ﻿using Quartz;
+using TrackYourDay.Core.ApplicationTrackers.GitLab;
+using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.Notifications;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.MAUI.BackgroundJobs;
 using TrackYourDay.MAUI.BackgroundJobs.ActivityTracking;
+using TrackYourDay.MAUI.BackgroundJobs.ExternalActivities;
 using TrackYourDay.MAUI.MauiPages;
 using TrackYourDay.MAUI.UiNotifications;
 
@@ -41,7 +44,40 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                     .WithDescription("Job that periodically checks for notifications to process")
                     .WithDailyTimeIntervalSchedule(x => x.WithInterval(10, IntervalUnit.Second))
                     .StartNow());
+
+                ConfigureExternalActivityJobs(q, services);
             });
+        }
+
+        private static void ConfigureExternalActivityJobs(IServiceCollectionQuartzConfigurator q, IServiceCollection services)
+        {
+            using var tempProvider = services.BuildServiceProvider();
+            
+            var gitLabSettings = tempProvider.GetRequiredService<IGitLabSettingsService>().GetSettings();
+            if (gitLabSettings.Enabled && !string.IsNullOrEmpty(gitLabSettings.ApiUrl))
+            {
+                q.AddJob<GitLabFetchJob>(opts => opts.WithIdentity("GitLabFetch", "ExternalActivities"));
+                q.AddTrigger(opts => opts
+                    .ForJob("GitLabFetch", "ExternalActivities")
+                    .WithIdentity("GitLabFetchTrigger", "ExternalActivities")
+                    .WithSimpleSchedule(x => x
+                        .WithIntervalInMinutes(gitLabSettings.FetchIntervalMinutes)
+                        .RepeatForever())
+                    .StartNow());
+            }
+
+            var jiraSettings = tempProvider.GetRequiredService<IJiraSettingsService>().GetSettings();
+            if (jiraSettings.Enabled && !string.IsNullOrEmpty(jiraSettings.ApiUrl))
+            {
+                q.AddJob<JiraFetchJob>(opts => opts.WithIdentity("JiraFetch", "ExternalActivities"));
+                q.AddTrigger(opts => opts
+                    .ForJob("JiraFetch", "ExternalActivities")
+                    .WithIdentity("JiraFetchTrigger", "ExternalActivities")
+                    .WithSimpleSchedule(x => x
+                        .WithIntervalInMinutes(jiraSettings.FetchIntervalMinutes)
+                        .RepeatForever())
+                    .StartNow());
+            }
         }
     }
 }

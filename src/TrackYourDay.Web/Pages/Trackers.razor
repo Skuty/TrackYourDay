@@ -136,14 +136,12 @@
             .Where(a => DateOnly.FromDateTime(a.OccuranceDate) == dateOnly)
             .ToList();
 
-        // For GitLab activities, filter by date (in-memory only, fetched from API)
-        gitLabActivities = gitlabTracker.GetGitLabActivities()
-            .Where(a => DateOnly.FromDateTime(a.OccuranceDate) == dateOnly)
+        // For GitLab activities, fetch from repository
+        gitLabActivities = (await gitlabTracker.GetActivitiesAsync(dateOnly, dateOnly))
             .ToList();
 
-        // For Jira activities, filter by date (in-memory only, fetched from API)
-        jiraActivities = (await jiraTracker.GetJiraActivities())
-            .Where(a => DateOnly.FromDateTime(a.OccurrenceDate) == dateOnly)
+        // For Jira activities, fetch from repository
+        jiraActivities = (await jiraTracker.GetActivitiesAsync(dateOnly, dateOnly))
             .ToList();
 
         StateHasChanged();

@@ -1,44 +1,97 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using TrackYourDay.Core.Persistence;
+using TrackYourDay.Core.Persistence.Specifications;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
-    public class JiraTracker
+    /// <summary>
+    /// Unified Jira activity tracker with dual deduplication validation.
+    /// Uses GUID-based persistence as primary mechanism with timestamp-based validation.
+    /// </summary>
+    public sealed class JiraTracker
     {
-        private readonly IJiraActivityService jiraActivityService;
-        private readonly IClock clock;
-        private DateTime? lastFetchedDate;
-        private List<JiraActivity> jiraActivities;
+        private readonly IJiraActivityService _activityService;
+        private readonly IHistoricalDataRepository<JiraActivity> _repository;
+        private readonly IJiraSettingsService _settingsService;
+        private readonly ILogger<JiraTracker> _logger;
 
-        public JiraTracker(IJiraActivityService jiraActivityService, IClock clock)
+        public JiraTracker(
+            IJiraActivityService activityService,
+            IHistoricalDataRepository<JiraActivity> repository,
+            IJiraSettingsService settingsService,
+            ILogger<JiraTracker> logger)
         {
-            this.jiraActivityService = jiraActivityService;
-            this.clock = clock;
-            this.jiraActivities = new List<JiraActivity>();
+            _activityService = activityService;
+            _repository = repository;
+            _settingsService = settingsService;
+            _logger = logger;
         }
 
-        public async Task RecognizeActivity()
+        /// <summary>
+        /// Discovers and processes new Jira activities.
+        /// Primary: GUID-based deduplication via repository.
+        /// Secondary: Timestamp validation for consistency checking.
+        /// </summary>
+        public async Task<int> RecognizeActivitiesAsync(CancellationToken cancellationToken = default)
         {
-            if (this.lastFetchedDate == null)
+            var syncStartTime = DateTime.UtcNow;
+            var settings = _settingsService.GetSettings();
+            var watermark = settings.LastSyncTimestamp ?? syncStartTime.AddDays(-7);
+            
+            _logger.LogInformation("Jira activity recognition started, fetching since {Watermark}", watermark);
+
+            var activities = await _activityService.GetActivitiesUpdatedAfter(watermark).ConfigureAwait(false);
+
+            var newActivityCount = 0;
+            foreach (var activity in activities)
             {
-                var todayActivities = await this.jiraActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
-                this.jiraActivities.AddRange(todayActivities);
-                this.lastFetchedDate = this.clock.Now;
+                // Primary: GUID-based deduplication (repository enforces uniqueness)
+                var isNewByGuid = await _repository.TryAppendAsync(activity, cancellationToken).ConfigureAwait(false);
+                
+                // Secondary: Timestamp-based validation (consistency check)
+                var isNewByTimestamp = activity.OccurrenceDate > watermark;
+                
+                // Log mismatches for debugging/monitoring
+                if (isNewByGuid != isNewByTimestamp)
+                {
+                    _logger.LogWarning(
+                        "Deduplication mismatch for JiraActivity {ActivityId}: " +
+                        "GUID-based={GuidResult}, Timestamp-based={TimestampResult} " +
+                        "(OccurrenceDate={OccurrenceDate}, Watermark={Watermark}). " +
+                        "Description: {Description}",
+                        activity.Guid, isNewByGuid, isNewByTimestamp, 
+                        activity.OccurrenceDate, watermark, activity.Description);
+                }
+                
+                // Count new activities (GUID-based decision, no event publishing for Jira)
+                if (isNewByGuid)
+                {
+                    newActivityCount++;
+                    _logger.LogDebug("Jira activity discovered: {Description}", activity.Description);
+                }
             }
 
-            if (lastFetchedDate.Value < this.clock.Now.AddMinutes(-5))
-            {
-                var newActivities = await this.jiraActivityService.GetActivitiesUpdatedAfter(this.lastFetchedDate.Value);
-                this.jiraActivities.AddRange(newActivities);
-                this.lastFetchedDate = this.clock.Now;
-            }
+            // Update watermark to current sync time
+            _settingsService.UpdateLastSyncTimestamp(syncStartTime);
+            _settingsService.PersistSettings();
+
+            _logger.LogInformation(
+                "Jira activity recognition completed: {TotalCount} activities processed, {NewCount} new",
+                activities.Count, newActivityCount);
+
+            return newActivityCount;
         }
 
-        public async Task<IReadOnlyCollection<JiraActivity>> GetJiraActivities()
+        /// <summary>
+        /// Gets Jira activities for a specific date range from repository.
+        /// </summary>
+        public async Task<IReadOnlyCollection<JiraActivity>> GetActivitiesAsync(
+            DateOnly fromDate, 
+            DateOnly toDate, 
+            CancellationToken cancellationToken = default)
         {
-            await this.RecognizeActivity();
-            return this.jiraActivities;
+            var specification = new DateRangeSpecification<JiraActivity>(fromDate, toDate);
+            return await _repository.FindAsync(specification, cancellationToken).ConfigureAwait(false);
         }
     }
 }

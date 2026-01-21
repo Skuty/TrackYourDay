@@ -240,28 +240,106 @@
     
     private async Task CheckGitLabConnection()
     {
-        this.gitLabSettingsService.UpdateSettings(this.gitLabApiUrl, this.gitLabApiKey);
-        var gitLabClient = GitLabRestApiClientFactory.Create(this.gitLabSettingsService.GetSettings(), logger);
-        var tempGitLabService = new GitLabActivityService(gitLabClient, null);
+        if (string.IsNullOrWhiteSpace(this.gitLabApiUrl))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "GitLab API URL cannot be empty.";
+            ShowConnectionCheckDialog();
+            return;
+        }
         
-        connectionCheckSuccess = await tempGitLabService.CheckConnection();
-        connectionCheckMessage = connectionCheckSuccess 
-            ? "Successfully connected to GitLab!" 
-            : "Failed to connect to GitLab. Please check your API URL and API Key.";
+        if (string.IsNullOrWhiteSpace(this.gitLabApiKey))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "GitLab API Key cannot be empty.";
+            ShowConnectionCheckDialog();
+            return;
+        }
+        
+        if (!Uri.TryCreate(this.gitLabApiUrl, UriKind.Absolute, out var uri))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "Invalid GitLab API URL format. Please provide a valid URL.";
+            ShowConnectionCheckDialog();
+            return;
+        }
+        
+        try
+        {
+            this.gitLabSettingsService.UpdateSettings(this.gitLabApiUrl, this.gitLabApiKey);
+            var httpClient = new HttpClient
+            {
+                BaseAddress = uri
+            };
+            httpClient.DefaultRequestHeaders.Add("PRIVATE-TOKEN", this.gitLabSettingsService.GetSettings().ApiKey);
+            
+            var gitLabClient = new GitLabRestApiClient(httpClient);
+            var tempGitLabService = new GitLabActivityService(gitLabClient, null);
+            
+            connectionCheckSuccess = await tempGitLabService.CheckConnection();
+            connectionCheckMessage = connectionCheckSuccess 
+                ? "Successfully connected to GitLab!" 
+                : "Failed to connect to GitLab. Please check your API URL and API Key.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error checking GitLab connection");
+            connectionCheckSuccess = false;
+            connectionCheckMessage = $"Failed to connect to GitLab: {ex.Message}";
+        }
         
         ShowConnectionCheckDialog();
     }
     
     private async Task CheckJiraConnection()
     {
-        this.jiraSettingsService.UpdateSettings(this.jiraApiUrl, this.jiraApiKey);
-        var jiraClient = JiraRestApiClientFactory.Create(this.jiraSettingsService.GetSettings(), logger);
-        var tempJiraService = new JiraActivityService(jiraClient, null);
+        if (string.IsNullOrWhiteSpace(this.jiraApiUrl))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "Jira API URL cannot be empty.";
+            ShowConnectionCheckDialog();
+            return;
+        }
         
-        connectionCheckSuccess = await tempJiraService.CheckConnection();
-        connectionCheckMessage = connectionCheckSuccess 
-            ? "Successfully connected to Jira!" 
-            : "Failed to connect to Jira. Please check your API URL and API Key.";
+        if (string.IsNullOrWhiteSpace(this.jiraApiKey))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "Jira API Key cannot be empty.";
+            ShowConnectionCheckDialog();
+            return;
+        }
+        
+        if (!Uri.TryCreate(this.jiraApiUrl, UriKind.Absolute, out var uri))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "Invalid Jira API URL format. Please provide a valid URL.";
+            ShowConnectionCheckDialog();
+            return;
+        }
+        
+        try
+        {
+            this.jiraSettingsService.UpdateSettings(this.jiraApiUrl, this.jiraApiKey);
+            var httpClient = new HttpClient
+            {
+                BaseAddress = uri
+            };
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {this.jiraSettingsService.GetSettings().ApiKey}");
+            
+            var jiraClient = new JiraRestApiClient(httpClient);
+            var tempJiraService = new JiraActivityService(jiraClient, null);
+            
+            connectionCheckSuccess = await tempJiraService.CheckConnection();
+            connectionCheckMessage = connectionCheckSuccess 
+                ? "Successfully connected to Jira!" 
+                : "Failed to connect to Jira. Please check your API URL and API Key.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error checking Jira connection");
+            connectionCheckSuccess = false;
+            connectionCheckMessage = $"Failed to connect to Jira: {ex.Message}";
+        }
         
         ShowConnectionCheckDialog();
     }

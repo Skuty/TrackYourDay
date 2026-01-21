@@ -16,6 +16,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         void UpdateSettings(string apiUrl, string apiKey);
 
         /// <summary>
+        /// Updates the last successful sync timestamp.
+        /// </summary>
+        /// <param name="timestamp">The timestamp of the last successful sync</param>
+        void UpdateLastSyncTimestamp(DateTime timestamp);
+
+        /// <summary>
         /// Persists the GitLab settings.
         /// </summary>
         void PersistSettings();
