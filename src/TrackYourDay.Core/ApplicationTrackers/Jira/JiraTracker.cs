@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
-using TrackYourDay.Core.ApplicationTrackers.Persistence;
+using TrackYourDay.Core.Persistence;
+using TrackYourDay.Core.Persistence.Specifications;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
@@ -10,13 +11,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     public sealed class JiraTracker
     {
         private readonly IJiraActivityService _activityService;
-        private readonly IJiraActivityRepository _repository;
+        private readonly IHistoricalDataRepository<JiraActivity> _repository;
         private readonly IJiraSettingsService _settingsService;
         private readonly ILogger<JiraTracker> _logger;
 
         public JiraTracker(
             IJiraActivityService activityService,
-            IJiraActivityRepository repository,
+            IHistoricalDataRepository<JiraActivity> repository,
             IJiraSettingsService settingsService,
             ILogger<JiraTracker> logger)
         {
@@ -89,7 +90,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             DateOnly toDate, 
             CancellationToken cancellationToken = default)
         {
-            return await _repository.GetActivitiesAsync(fromDate, toDate, cancellationToken).ConfigureAwait(false);
+            var specification = new DateRangeSpecification<JiraActivity>(fromDate, toDate);
+            return await _repository.FindAsync(specification, cancellationToken).ConfigureAwait(false);
         }
     }
 }

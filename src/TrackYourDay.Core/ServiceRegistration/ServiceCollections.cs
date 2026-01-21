@@ -101,7 +101,7 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<GitLabTracker>(serviceProvider =>
                 new GitLabTracker(
                     serviceProvider.GetRequiredService<IGitLabActivityService>(),
-                    serviceProvider.GetRequiredService<IGitLabActivityRepository>(),
+                    serviceProvider.GetRequiredService<IHistoricalDataRepository<GitLabActivity>>(),
                     serviceProvider.GetRequiredService<IGitLabSettingsService>(),
                     serviceProvider.GetRequiredService<IPublisher>(),
                     serviceProvider.GetRequiredService<ILogger<GitLabTracker>>()
@@ -120,7 +120,7 @@ namespace TrackYourDay.Core.ServiceRegistration
             services.AddSingleton<JiraTracker>(serviceProvider =>
                 new JiraTracker(
                     serviceProvider.GetRequiredService<IJiraActivityService>(),
-                    serviceProvider.GetRequiredService<IJiraActivityRepository>(),
+                    serviceProvider.GetRequiredService<IHistoricalDataRepository<JiraActivity>>(),
                     serviceProvider.GetRequiredService<IJiraSettingsService>(),
                     serviceProvider.GetRequiredService<ILogger<JiraTracker>>()
                 )
@@ -220,13 +220,19 @@ namespace TrackYourDay.Core.ServiceRegistration
                 new GenericDataRepository<EndedMeeting>(
                     sp.GetRequiredService<IClock>(),
                     sp.GetRequiredService<ISqliteConnectionFactory>(),
-                    null)); // Don't include tracker data - meetings are persisted immediately after confirmation
+                    null));
 
             services.AddSingleton<IHistoricalDataRepository<GitLabActivity>>(sp => 
                 new GenericDataRepository<GitLabActivity>(
                     sp.GetRequiredService<IClock>(),
                     sp.GetRequiredService<ISqliteConnectionFactory>(),
-                    null)); // GitLab activities are persisted immediately via repository
+                    null));
+
+            services.AddSingleton<IHistoricalDataRepository<JiraActivity>>(sp => 
+                new GenericDataRepository<JiraActivity>(
+                    sp.GetRequiredService<IClock>(),
+                    sp.GetRequiredService<ISqliteConnectionFactory>(),
+                    null));
 
             return services;
         }

@@ -2,7 +2,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
-using TrackYourDay.Core.ApplicationTrackers.Persistence;
+using TrackYourDay.Core.Persistence;
+using TrackYourDay.Core.Persistence.Specifications;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.Jira
 {
@@ -10,7 +11,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
     public class JiraTrackerTests
     {
         private readonly Mock<IJiraActivityService> _activityServiceMock;
-        private readonly Mock<IJiraActivityRepository> _repositoryMock;
+        private readonly Mock<IHistoricalDataRepository<JiraActivity>> _repositoryMock;
         private readonly Mock<IJiraSettingsService> _settingsServiceMock;
         private readonly Mock<ILogger<JiraTracker>> _loggerMock;
         private readonly JiraTracker _tracker;
@@ -18,7 +19,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
         public JiraTrackerTests()
         {
             _activityServiceMock = new Mock<IJiraActivityService>();
-            _repositoryMock = new Mock<IJiraActivityRepository>();
+            _repositoryMock = new Mock<IHistoricalDataRepository<JiraActivity>>();
             _settingsServiceMock = new Mock<IJiraSettingsService>();
             _loggerMock = new Mock<ILogger<JiraTracker>>();
 
@@ -163,7 +164,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             };
 
             _repositoryMock
-                .Setup(r => r.GetActivitiesAsync(fromDate, toDate, It.IsAny<CancellationToken>()))
+                .Setup(r => r.FindAsync(It.IsAny<ISpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedActivities);
 
             // When
@@ -172,7 +173,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             // Then
             result.Should().BeEquivalentTo(expectedActivities);
             _repositoryMock.Verify(
-                r => r.GetActivitiesAsync(fromDate, toDate, It.IsAny<CancellationToken>()),
+                r => r.FindAsync(It.Is<DateRangeSpecification<JiraActivity>>(s => true), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
     }

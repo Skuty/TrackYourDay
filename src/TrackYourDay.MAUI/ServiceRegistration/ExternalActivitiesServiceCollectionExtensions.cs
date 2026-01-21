@@ -17,8 +17,6 @@ namespace TrackYourDay.MAUI.ServiceRegistration
             services.AddSingleton<IDatabaseKeyProvider, WindowsDatabaseKeyProvider>();
             services.AddSingleton<ISqliteConnectionFactory, SqlCipherConnectionFactory>();
             
-            services.AddSingleton<IGitLabActivityRepository, GitLabActivityRepository>();
-            services.AddSingleton<IJiraActivityRepository, JiraActivityRepository>();
             services.AddSingleton<IJiraIssueRepository, JiraIssueRepository>();
 
             return services;

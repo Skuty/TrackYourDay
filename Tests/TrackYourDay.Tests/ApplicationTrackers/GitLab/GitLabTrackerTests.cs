@@ -4,7 +4,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
 using TrackYourDay.Core.ApplicationTrackers.GitLab.PublicEvents;
-using TrackYourDay.Core.ApplicationTrackers.Persistence;
+using TrackYourDay.Core.Persistence;
+using TrackYourDay.Core.Persistence.Specifications;
 
 namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
 {
@@ -12,7 +13,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
     public class GitLabTrackerTests
     {
         private readonly Mock<IGitLabActivityService> _activityServiceMock;
-        private readonly Mock<IGitLabActivityRepository> _repositoryMock;
+        private readonly Mock<IHistoricalDataRepository<GitLabActivity>> _repositoryMock;
         private readonly Mock<IGitLabSettingsService> _settingsServiceMock;
         private readonly Mock<IPublisher> _publisherMock;
         private readonly Mock<ILogger<GitLabTracker>> _loggerMock;
@@ -21,7 +22,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         public GitLabTrackerTests()
         {
             _activityServiceMock = new Mock<IGitLabActivityService>();
-            _repositoryMock = new Mock<IGitLabActivityRepository>();
+            _repositoryMock = new Mock<IHistoricalDataRepository<GitLabActivity>>();
             _settingsServiceMock = new Mock<IGitLabSettingsService>();
             _publisherMock = new Mock<IPublisher>();
             _loggerMock = new Mock<ILogger<GitLabTracker>>();
@@ -234,7 +235,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             };
 
             _repositoryMock
-                .Setup(r => r.GetActivitiesAsync(fromDate, toDate, It.IsAny<CancellationToken>()))
+                .Setup(r => r.FindAsync(It.IsAny<ISpecification<GitLabActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedActivities);
 
             // When
@@ -243,7 +244,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Then
             result.Should().BeEquivalentTo(expectedActivities);
             _repositoryMock.Verify(
-                r => r.GetActivitiesAsync(fromDate, toDate, It.IsAny<CancellationToken>()),
+                r => r.FindAsync(It.Is<DateRangeSpecification<GitLabActivity>>(s => true), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
     }

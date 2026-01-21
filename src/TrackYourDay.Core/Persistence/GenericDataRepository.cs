@@ -189,6 +189,71 @@ namespace TrackYourDay.Core.Persistence
         }
 
         /// <summary>
+        /// Attempts to append an item if it doesn't already exist (based on Guid).
+        /// </summary>
+        public async Task<bool> TryAppendAsync(T item, CancellationToken cancellationToken = default)
+        {
+            await using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+            var guidProperty = typeof(T).GetProperty("Guid");
+            
+            if (guidProperty == null)
+            {
+                throw new InvalidOperationException($"Type {typeName} must have a Guid property");
+            }
+
+            var guid = (Guid)guidProperty.GetValue(item)!;
+            var dataJson = JsonConvert.SerializeObject(item, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto
+            });
+
+            var insertCommand = connection.CreateCommand();
+            insertCommand.CommandText = @"
+                INSERT OR IGNORE INTO historical_data (Guid, TypeName, DataJson)
+                VALUES (@guid, @typeName, @dataJson)";
+            
+            insertCommand.Parameters.AddWithValue("@guid", guid.ToString());
+            insertCommand.Parameters.AddWithValue("@typeName", typeName);
+            insertCommand.Parameters.AddWithValue("@dataJson", dataJson);
+            
+            var rowsAffected = await insertCommand.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            return rowsAffected > 0;
+        }
+
+        /// <summary>
+        /// Finds items matching the specification asynchronously.
+        /// </summary>
+        public async Task<IReadOnlyCollection<T>> FindAsync(ISpecification<T> specification, CancellationToken cancellationToken = default)
+        {
+            if (specification == null)
+                throw new ArgumentNullException(nameof(specification));
+
+            var items = new List<T>();
+
+            // Get from database using specification
+            items.AddRange(await GetFromDatabaseBySpecificationAsync(specification, cancellationToken).ConfigureAwait(false));
+
+            // If we have current session data, filter it using the specification
+            if (getCurrentSessionData != null)
+            {
+                var currentData = getCurrentSessionData()
+                    .Where(item => specification.IsSatisfiedBy(item))
+                    .ToList();
+                
+                // Add current session items that aren't already in the results (avoid duplicates)
+                var existingGuids = items
+                    .Select(item => GetGuidFromItem(item))
+                    .ToHashSet();
+                
+                items.AddRange(currentData.Where(item => !existingGuids.Contains(GetGuidFromItem(item))));
+            }
+
+            return items.AsReadOnly();
+        }
+
+        /// <summary>
         /// Queries the database using a specification pattern.
         /// </summary>
         private IReadOnlyCollection<T> GetFromDatabaseBySpecification(ISpecification<T> specification)
@@ -220,6 +285,53 @@ namespace TrackYourDay.Core.Persistence
 
             using var reader = command.ExecuteReader();
             while (reader.Read())
+            {
+                var dataJson = reader.GetString(0);
+                var item = JsonConvert.DeserializeObject<T>(dataJson, new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.Auto
+                });
+                if (item != null)
+                {
+                    items.Add(item);
+                }
+            }
+
+            return items.AsReadOnly();
+        }
+
+        /// <summary>
+        /// Queries the database using a specification pattern asynchronously.
+        /// </summary>
+        private async Task<IReadOnlyCollection<T>> GetFromDatabaseBySpecificationAsync(ISpecification<T> specification, CancellationToken cancellationToken)
+        {
+            var items = new List<T>();
+
+            await using var connection = new SqliteConnection(_connectionFactory.CreateConnectionString(databaseFileName));
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+            var command = connection.CreateCommand();
+            
+            // Build query with specification
+            var whereClause = specification.GetSqlWhereClause();
+            command.CommandText = $@"
+                SELECT DataJson 
+                FROM historical_data 
+                WHERE TypeName = @typeName 
+                  AND ({whereClause})
+                ORDER BY Id";
+            
+            command.Parameters.AddWithValue("@typeName", typeName);
+            
+            // Add specification parameters
+            var specParams = specification.GetSqlParameters();
+            foreach (var param in specParams)
+            {
+                command.Parameters.AddWithValue(param.Key, param.Value);
+            }
+
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 var dataJson = reader.GetString(0);
                 var item = JsonConvert.DeserializeObject<T>(dataJson, new JsonSerializerSettings

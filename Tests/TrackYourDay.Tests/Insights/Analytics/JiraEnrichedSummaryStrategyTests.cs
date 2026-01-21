@@ -3,8 +3,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using TrackYourDay.Core;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
-using TrackYourDay.Core.ApplicationTrackers.Persistence;
 using TrackYourDay.Core.Insights.Analytics;
+using TrackYourDay.Core.Persistence;
+using TrackYourDay.Core.Persistence.Specifications;
 using TrackYourDay.Core.SystemTrackers;
 using TrackYourDay.Tests.TestHelpers;
 
@@ -14,7 +15,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
     {
         private readonly Mock<ILogger<JiraEnrichedSummaryStrategy>> _loggerMock;
         private readonly Mock<IJiraActivityService> _jiraActivityServiceMock;
-        private readonly Mock<IJiraActivityRepository> _repositoryMock;
+        private readonly Mock<IHistoricalDataRepository<JiraActivity>> _repositoryMock;
         private readonly Mock<IJiraSettingsService> _settingsServiceMock;
         private readonly Mock<IClock> _clockMock;
         private readonly Mock<ILogger<JiraTracker>> _trackerLoggerMock;
@@ -27,7 +28,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
             _clockMock = new Mock<IClock>();
             _clockMock.Setup(c => c.Now).Returns(DateTime.Now);
             _jiraActivityServiceMock = new Mock<IJiraActivityService>();
-            _repositoryMock = new Mock<IJiraActivityRepository>();
+            _repositoryMock = new Mock<IHistoricalDataRepository<JiraActivity>>();
             _settingsServiceMock = new Mock<IJiraSettingsService>();
             _trackerLoggerMock = new Mock<ILogger<JiraTracker>>();
             
@@ -55,7 +56,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
         {
             // Given
             var activities = new List<EndedActivity>();
-            _repositoryMock.Setup(r => r.GetActivitiesAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+            _repositoryMock.Setup(r => r.FindAsync(It.IsAny<ISpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<JiraActivity>());
 
             // When
@@ -84,7 +85,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new() { UpstreamId = "jira-proj456", OccurrenceDate = now.AddHours(-1), Description = "Jira Issue Updated - PROJ-456: User Dashboard | Updated: 2023-01-01 11:00 | Issue ID: 2" }
             };
 
-            _repositoryMock.Setup(r => r.GetActivitiesAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+            _repositoryMock.Setup(r => r.FindAsync(It.IsAny<ISpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(jiraActivities);
 
             // When
@@ -111,7 +112,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new() { UpstreamId = "jira-proj123-v2", OccurrenceDate = now.AddHours(-1), Description = "Jira Issue Updated - PROJ-123: Login Authentication Feature | Updated: 2023-01-01 10:00 | Issue ID: 1" }
             };
 
-            _repositoryMock.Setup(r => r.GetActivitiesAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+            _repositoryMock.Setup(r => r.FindAsync(It.IsAny<ISpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(jiraActivities);
 
             // When
@@ -139,7 +140,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new() { UpstreamId = "jira-proj123-v3", OccurrenceDate = now.AddMinutes(-25), Description = "Jira Issue Updated - PROJ-123: Login Authentication Feature | Updated: 2023-01-01 09:00 | Issue ID: 1" }
             };
 
-            _repositoryMock.Setup(r => r.GetActivitiesAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+            _repositoryMock.Setup(r => r.FindAsync(It.IsAny<ISpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(jiraActivities);
 
             // When
@@ -162,7 +163,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 CreateActivity(now.AddHours(-1), now, "Random task without Jira")
             };
 
-            _repositoryMock.Setup(r => r.GetActivitiesAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+            _repositoryMock.Setup(r => r.FindAsync(It.IsAny<ISpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<JiraActivity>());
 
             // When
@@ -195,7 +196,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new() { UpstreamId = "jira-proj123-day2", OccurrenceDate = new DateTime(2023, 1, 2, 9, 0, 0), Description = "Jira Issue Updated - PROJ-123: Feature | Updated: 2023-01-02 09:00 | Issue ID: 1" }
             };
 
-            _repositoryMock.Setup(r => r.GetActivitiesAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+            _repositoryMock.Setup(r => r.FindAsync(It.IsAny<ISpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(jiraActivities);
 
             // When
@@ -227,7 +228,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new() { UpstreamId = "jira-proj456-bug", OccurrenceDate = now.AddHours(-2), Description = "Jira Issue Updated - PROJ-456: Critical Bug | Updated: 2023-01-01 10:00 | Issue ID: 2" }
             };
 
-            _repositoryMock.Setup(r => r.GetActivitiesAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+            _repositoryMock.Setup(r => r.FindAsync(It.IsAny<ISpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(jiraActivities);
 
             // When
@@ -255,7 +256,7 @@ namespace TrackYourDay.Tests.Insights.Analytics
                 new() { UpstreamId = "jira-proj999-auth", OccurrenceDate = now.AddMinutes(-30), Description = "Jira Issue Updated - PROJ-999: Authentication System | Updated: 2023-01-01 10:00 | Issue ID: 1" }
             };
 
-            _repositoryMock.Setup(r => r.GetActivitiesAsync(It.IsAny<DateOnly>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+            _repositoryMock.Setup(r => r.FindAsync(It.IsAny<ISpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(jiraActivities);
 
             // When

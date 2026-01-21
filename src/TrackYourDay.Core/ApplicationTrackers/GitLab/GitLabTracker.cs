@@ -1,7 +1,8 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using TrackYourDay.Core.ApplicationTrackers.GitLab.PublicEvents;
-using TrackYourDay.Core.ApplicationTrackers.Persistence;
+using TrackYourDay.Core.Persistence;
+using TrackYourDay.Core.Persistence.Specifications;
 
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 {
@@ -12,14 +13,14 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
     public sealed class GitLabTracker
     {
         private readonly IGitLabActivityService _activityService;
-        private readonly IGitLabActivityRepository _repository;
+        private readonly IHistoricalDataRepository<GitLabActivity> _repository;
         private readonly IGitLabSettingsService _settingsService;
         private readonly IPublisher _publisher;
         private readonly ILogger<GitLabTracker> _logger;
 
         public GitLabTracker(
             IGitLabActivityService activityService,
-            IGitLabActivityRepository repository,
+            IHistoricalDataRepository<GitLabActivity> repository,
             IGitLabSettingsService settingsService,
             IPublisher publisher,
             ILogger<GitLabTracker> logger)
@@ -98,7 +99,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             DateOnly toDate, 
             CancellationToken cancellationToken = default)
         {
-            return await _repository.GetActivitiesAsync(fromDate, toDate, cancellationToken).ConfigureAwait(false);
+            var specification = new DateRangeSpecification<GitLabActivity>(fromDate, toDate);
+            return await _repository.FindAsync(specification, cancellationToken).ConfigureAwait(false);
         }
     }
 }
