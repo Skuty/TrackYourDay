@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Extensions.Http;
+using TrackYourDay.Core.ApplicationTrackers;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
@@ -37,7 +38,12 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                 }
             })
             .AddPolicyHandler(GetCircuitBreakerPolicy(gitLabSettings.CircuitBreakerThreshold, gitLabSettings.CircuitBreakerDurationMinutes))
-            .AddPolicyHandler(GetRetryPolicy());
+            .AddPolicyHandler(GetRetryPolicy())
+            .AddHttpMessageHandler(sp =>
+            {
+                var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
+                return new HttpLoggingHandler(logger, "GitLab");
+            });
 
             var jiraSettings = tempProvider.GetRequiredService<IJiraSettingsService>().GetSettings();
             services.AddHttpClient("Jira", client =>
@@ -50,7 +56,12 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                 }
             })
             .AddPolicyHandler(GetCircuitBreakerPolicy(jiraSettings.CircuitBreakerThreshold, jiraSettings.CircuitBreakerDurationMinutes))
-            .AddPolicyHandler(GetRetryPolicy());
+            .AddPolicyHandler(GetRetryPolicy())
+            .AddHttpMessageHandler(sp =>
+            {
+                var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
+                return new HttpLoggingHandler(logger, "Jira");
+            });
 
             return services;
         }
