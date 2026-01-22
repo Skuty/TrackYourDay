@@ -9,93 +9,83 @@
 @using TrackYourDay.Core.Persistence.Specifications
 @using TrackYourDay.Web.Components
 
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <img src="Images/refresh-button.png" alt="Refresh" style="cursor: pointer" width="35px" height="35px" @onclick="Refresh" />
-        <MudDatePicker Label="Select Date" Date="selectedDate" DateChanged="OnDateChanged" />
-        <OperationalBarComponent></OperationalBarComponent>
-    </div>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+    <MudStack Spacing="4">
+        <!-- Header with controls -->
+        <MudPaper Elevation="0" Class="d-flex align-center gap-4 pa-3" Style="border-radius: 12px;">
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                          Color="Color.Primary" 
+                          OnClick="Refresh" 
+                          Size="Size.Large" />
+            <MudDatePicker Label="Select Date" 
+                          Date="selectedDate" 
+                          DateChanged="OnDateChanged" 
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense" />
+            <MudSpacer />
+            <OperationalBarComponent />
+        </MudPaper>
 
-<hr />
+        <!-- External Work Items -->
+        <ExternalArtifactsComponent />
 
-<MudExpansionPanels MultiExpansion="true">
-    <MudExpansionPanel Text="Short overview" IsInitiallyExpanded="true">
+        <!-- Workday Overview -->
+        <MudExpansionPanels MultiExpansion="true">
+    <MudExpansionPanel Text="Workday Progress" IsInitiallyExpanded="true">
         @if (IsToday())
         {
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Estimated end of Workday at: @this.estimatedEndOfWorkDay.ToShortTimeString()</h2>
-            </div>
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-4">
+                <MudText Typo="Typo.h6">Estimated end: @estimatedEndOfWorkDay.ToShortTimeString()</MudText>
+            </MudAlert>
         }
         else
         {
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="color: #3f51b5; font-family: 'Arial', sans-serif;">Historical Data for @selectedDate?.ToString("D")</h2>
-            </div>
+            <MudAlert Severity="Severity.Normal" Dense="true" Class="mb-4">
+                <MudText Typo="Typo.h6">Historical Data: @selectedDate?.ToString("D")</MudText>
+            </MudAlert>
         }
-        <MudGrid Justify="Justify.Center">
-            <MudItem>
-                <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
-                    <CustomGraphics>
-                        <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                            @workday.TimeLeftToWorkActively.Hours h @workday.TimeLeftToWorkActively.Minutes m
-                        </text>
-                    </CustomGraphics>
-                </MudChart>
+        <MudGrid Justify="Justify.Center" Spacing="3">
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4 text-center" Style="border-radius: 12px;" Elevation="2">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">Time Left</MudText>
+                    <MudChart ChartType="ChartType.Donut" Width="200px" Height="200px" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
+                        <CustomGraphics>
+                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
+                                @workday.TimeLeftToWorkActively.Hours h @workday.TimeLeftToWorkActively.Minutes m
+                            </text>
+                        </CustomGraphics>
+                    </MudChart>
+                </MudPaper>
             </MudItem>
-            <MudItem>
-                <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@breaksLeftDataChart" InputLabels="@breaksLeftLabelsChart">
-                    <CustomGraphics>
-                        <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                            @workday.BreakTimeLeft.Hours h @workday.BreakTimeLeft.Minutes m
-                        </text>
-                    </CustomGraphics>
-                </MudChart>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4 text-center" Style="border-radius: 12px;" Elevation="2">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">Breaks</MudText>
+                    <MudChart ChartType="ChartType.Donut" Width="200px" Height="200px" InputData="@breaksLeftDataChart" InputLabels="@breaksLeftLabelsChart">
+                        <CustomGraphics>
+                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
+                                @workday.BreakTimeLeft.Hours h @workday.BreakTimeLeft.Minutes m
+                            </text>
+                        </CustomGraphics>
+                    </MudChart>
+                </MudPaper>
             </MudItem>
-            <MudItem>
-                <MudChart ChartType="ChartType.Donut" Width="180px" Height="180" InputData="@overhoursDataChart" InputLabels="@overhoursLabelsChart">
-                    <CustomGraphics>
-                        <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                            @workday.OverhoursTime.Hours h @workday.OverhoursTime.Minutes m
-                        </text>
-                    </CustomGraphics>
-                </MudChart>
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Class="pa-4 text-center" Style="border-radius: 12px;" Elevation="2">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">Overhours</MudText>
+                    <MudChart ChartType="ChartType.Donut" Width="200px" Height="200px" InputData="@overhoursDataChart" InputLabels="@overhoursLabelsChart">
+                        <CustomGraphics>
+                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
+                                @workday.OverhoursTime.Hours h @workday.OverhoursTime.Minutes m
+                            </text>
+                        </CustomGraphics>
+                    </MudChart>
+                </MudPaper>
             </MudItem>
         </MudGrid>
     </MudExpansionPanel>
 </MudExpansionPanels>
-
-<MudStack Row="true">
-    <MudCard>
-        <MudCardContent>
-            <MudText Typo="Typo.h5">Workday progress for @selectedDate?.ToString("D"):</MudText>
-            <MudText Typo="Typo.body2">Time Of All Activities: @workday.TimeOfAllActivities</MudText>
-            <MudText Typo="Typo.body2">Time Of All Breaks: @workday.TimeOfAllBreaks</MudText>
-            <MudText Typo="Typo.body2">Overall Time Left To Work: @workday.OverallTimeLeftToWork</MudText>
-            <MudText Typo="Typo.body2">Time Left To Work Actively: @workday.TimeLeftToWorkActively</MudText>
-            <MudText Typo="Typo.body2">Break Time Left: @workday.BreakTimeLeft</MudText>
-            <MudText Typo="Typo.body2">Valid Break Time Used: @workday.ValidBreakTimeUsed</MudText>
-            <MudText Typo="Typo.body2">OverhoursTime: @workday.OverhoursTime</MudText>
-        </MudCardContent>
-        <MudCardActions>
-            @* <MudButton Variant="Variant.Text" Color="Color.Primary">Learn More</MudButton> *@
-        </MudCardActions>
-    </MudCard>
-
-    <MudCard>
-        <MudCardContent>
-            <MudText Typo="Typo.h5">Workday definition:</MudText>
-            <MudText Typo="Typo.body2">Workday Duration: @workdayDefinition.WorkdayDuration</MudText>
-            <MudText Typo="Typo.body2">Allowed Break Duration: @workdayDefinition.AllowedBreakDuration</MudText>
-            <MudText Typo="Typo.body2">Included Break Definitions: </MudText>
-                @foreach (var definition in @workdayDefinition.BreakDefinitions)
-                {
-                    <MudText Typo="Typo.body2">@definition.Duration - @definition.Description</MudText>
-                }
-        </MudCardContent>
-        <MudCardActions>
-            @* <MudButton Variant="Variant.Text" Color="Color.Primary">Learn More</MudButton> *@
-        </MudCardActions>
-    </MudCard>
-</MudStack>
+    </MudStack>
+</MudContainer>
 
 @code {
     [Inject]
