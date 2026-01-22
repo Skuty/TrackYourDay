@@ -1,0 +1,50 @@
+.artifacts-card {
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.compact-content {
+    padding: 12px !important;
+}
+
+.compact-item {
+    border: 1px solid var(--mud-palette-lines-default);
+    border-radius: 6px;
+    transition: all 0.15s ease;
+}
+
+.compact-item:hover {
+    border-color: var(--mud-palette-primary);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+.compact-chip {
+    height: 20px !important;
+    font-size: 0.7rem !important;
+    padding: 0 6px !important;
+}
+
+.compact-action {
+    flex-shrink: 0;
+}
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Rotating animation for refresh icon */
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.rotating {
+    animation: rotate 1s linear infinite;
+}
