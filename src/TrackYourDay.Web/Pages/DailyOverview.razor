@@ -50,8 +50,8 @@
                     <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">Time Left</MudText>
                     <MudChart ChartType="ChartType.Donut" Width="200px" Height="200px" InputData="@worktimeLeftDataChart" InputLabels="@worktimeLeftLabelsChart">
                         <CustomGraphics>
-                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                                @workday.TimeLeftToWorkActively.Hours h @workday.TimeLeftToWorkActively.Minutes m
+                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#616161" font-family="Helvetica" font-size="5">
+                                @(workday.TimeLeftToWorkActively.Hours)h @(workday.TimeLeftToWorkActively.Minutes)m
                             </text>
                         </CustomGraphics>
                     </MudChart>
@@ -62,8 +62,8 @@
                     <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">Breaks</MudText>
                     <MudChart ChartType="ChartType.Donut" Width="200px" Height="200px" InputData="@breaksLeftDataChart" InputLabels="@breaksLeftLabelsChart">
                         <CustomGraphics>
-                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                                @workday.BreakTimeLeft.Hours h @workday.BreakTimeLeft.Minutes m
+                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#616161" font-family="Helvetica" font-size="5">
+                                @(workday.BreakTimeLeft.Hours)h @(workday.BreakTimeLeft.Minutes)m
                             </text>
                         </CustomGraphics>
                     </MudChart>
@@ -74,8 +74,8 @@
                     <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-2">Overhours</MudText>
                     <MudChart ChartType="ChartType.Donut" Width="200px" Height="200px" InputData="@overhoursDataChart" InputLabels="@overhoursLabelsChart">
                         <CustomGraphics>
-                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">
-                                @workday.OverhoursTime.Hours h @workday.OverhoursTime.Minutes m
+                            <text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#616161" font-family="Helvetica" font-size="5">
+                                @(workday.OverhoursTime.Hours)h @(workday.OverhoursTime.Minutes)m
                             </text>
                         </CustomGraphics>
                     </MudChart>

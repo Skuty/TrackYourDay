@@ -23,12 +23,9 @@
         <MudStack Spacing="2" Class="pa-4">
             <MudGrid>
                 <MudItem xs="3">
-                    <MudDatePicker Label="Start Date" @bind-Date="startDate" />
+                    <MudDatePicker Label="Date" @bind-Date="selectedDate" MaxDate="clock.Now.Date" />
                 </MudItem>
-                <MudItem xs="3">
-                    <MudDatePicker Label="End Date" @bind-Date="endDate" />
-                </MudItem>
-                <MudItem xs="4">
+                <MudItem xs="7">
                     <MudSelect T="string" @bind-Value="selectedStrategy" Label="Summary Strategy" Variant="Variant.Outlined"  Class="mud-input-control">
                         @foreach (var strategy in availableStrategies)
                         {
@@ -70,20 +67,12 @@
             </MudAlert>
 
             <MudGrid>
-                <MudItem xs="12">
-                    <MudText Typo="Typo.body2" Class="mb-2">Date Range</MudText>
-                </MudItem>
-                <MudItem xs="12" sm="4">
-                    <MudDatePicker Label="Start Date" 
-                                   @bind-Date="llmStartDate" 
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker Label="Date" 
+                                   @bind-Date="llmDate" 
                                    MaxDate="clock.Now.Date" />
                 </MudItem>
-                <MudItem xs="12" sm="4">
-                    <MudDatePicker Label="End Date" 
-                                   @bind-Date="llmEndDate" 
-                                   MaxDate="clock.Now.Date" />
-                </MudItem>
-                <MudItem xs="12" sm="4">
+                <MudItem xs="12" sm="6">
                     <MudSelect T="string" 
                                @bind-Value="selectedTemplateKey" 
                                Label="Prompt Template" 
@@ -96,13 +85,6 @@
                     </MudSelect>
                 </MudItem>
             </MudGrid>
-
-            @if (showMultiDayWarning)
-            {
-                <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Dense="true">
-                    LLM prompts work best for single-day analysis. Consider selecting one day at a time for better results.
-                </MudAlert>
-            }
 
             @if (!string.IsNullOrEmpty(llmErrorMessage))
             {
@@ -186,22 +168,19 @@
     private List<GroupedActivity>? groupedActivities = null;
     private string selectedStrategy = "Choose strategy";
     private Dictionary<string, ISummaryStrategy> availableStrategies = new();
-    private DateTime? startDate;
-    private DateTime? endDate;
+    private DateTime? selectedDate;
     private string errorMessage = string.Empty;
     private string _searchString = string.Empty;
 
     // LLM Analysis tab state
     private List<LlmPromptTemplate> availableTemplates = new();
     private string? selectedTemplateKey;
-    private DateTime? llmStartDate;
-    private DateTime? llmEndDate;
+    private DateTime? llmDate;
     private string generatedPrompt = string.Empty;
     private string llmErrorMessage = string.Empty;
     private bool isGenerating = false;
     private bool isCopying = false;
     private int characterCount = 0;
-    private bool showMultiDayWarning = false;
 
     protected override void OnInitialized()
     {
@@ -209,10 +188,8 @@
         availableStrategies = strategies.ToDictionary(s => s.GetType().Name, s => s);
         
         // Set default dates to today
-        startDate = clock.Now.Date;
-        endDate = clock.Now.Date;
-        llmStartDate = clock.Now.Date;
-        llmEndDate = clock.Now.Date;
+        selectedDate = clock.Now.Date;
+        llmDate = clock.Now.Date;
 
         LoadTemplates();
     }
@@ -238,15 +215,9 @@
     {
         errorMessage = string.Empty;
         
-        if (startDate == null)
+        if (selectedDate == null)
         {
-            errorMessage = "Please select a start date.";
-            return;
-        }
-        
-        if (endDate == null)
-        {
-            errorMessage = "Please select an end date.";
+            errorMessage = "Please select a date.";
             return;
         }
         
@@ -255,37 +226,27 @@
             errorMessage = "Please select a summary strategy.";
             return;
         }
-        
-        if (startDate.Value > endDate.Value)
-        {
-            errorMessage = "Start date must be before or equal to end date.";
-            return;
-        }
 
         ISummaryStrategy strategyInstance = availableStrategies[selectedStrategy];
         
-        // Collect all trackable items for the date range
+        // Collect all trackable items for the selected date
         var allItems = new List<TrackedActivity>();
+        var dateOnly = DateOnly.FromDateTime(selectedDate.Value);
         
         // Get activities from the repository
         var activities = activityRepository.Find(
-            new ActivityByDateRangeSpecification(
-                DateOnly.FromDateTime(startDate.Value),
-                DateOnly.FromDateTime(endDate.Value)));
+            new ActivityByDateRangeSpecification(dateOnly, dateOnly));
         allItems.AddRange(activities);
         
         // Get meetings from the repository
         var meetings = meetingRepository.Find(
-            new MeetingByDateRangeSpecification(
-                DateOnly.FromDateTime(startDate.Value),
-                DateOnly.FromDateTime(endDate.Value)));
+            new MeetingByDateRangeSpecification(dateOnly, dateOnly));
         allItems.AddRange(meetings);
         
         // Get user tasks from the service
         var userTasks = userTaskService.GetAllTasks()
             .Where(t => t.IsCompleted && 
-                       DateOnly.FromDateTime(t.StartDate) >= DateOnly.FromDateTime(startDate.Value) &&
-                       DateOnly.FromDateTime(t.StartDate) <= DateOnly.FromDateTime(endDate.Value));
+                       DateOnly.FromDateTime(t.StartDate) == dateOnly);
         allItems.AddRange(userTasks);
         
         // Generate grouped activities using the strategy
@@ -301,17 +262,10 @@
         llmErrorMessage = string.Empty;
         generatedPrompt = string.Empty;
         characterCount = 0;
-        showMultiDayWarning = false;
 
         if (!ValidatePromptInputs())
         {
             return;
-        }
-
-        // Check for multi-day selection
-        if (llmStartDate!.Value.Date != llmEndDate!.Value.Date)
-        {
-            showMultiDayWarning = true;
         }
 
         isGenerating = true;
@@ -320,10 +274,9 @@
         {
             await Task.Delay(50); // Allow UI to update
 
-            var start = DateOnly.FromDateTime(llmStartDate.Value);
-            var end = DateOnly.FromDateTime(llmEndDate.Value);
+            var dateOnly = DateOnly.FromDateTime(llmDate!.Value);
             
-            generatedPrompt = await llmPromptService.GeneratePrompt(selectedTemplateKey!, start, end);
+            generatedPrompt = await llmPromptService.GeneratePrompt(selectedTemplateKey!, dateOnly, dateOnly);
             characterCount = generatedPrompt.Length;
 
             snackbar.Add("Prompt generated successfully", Severity.Success);
@@ -346,27 +299,15 @@
 
     private bool ValidatePromptInputs()
     {
-        if (llmStartDate == null)
+        if (llmDate == null)
         {
-            llmErrorMessage = "Please select a start date.";
-            return false;
-        }
-
-        if (llmEndDate == null)
-        {
-            llmErrorMessage = "Please select an end date.";
+            llmErrorMessage = "Please select a date.";
             return false;
         }
 
         if (string.IsNullOrEmpty(selectedTemplateKey))
         {
             llmErrorMessage = "Please select a prompt template.";
-            return false;
-        }
-
-        if (llmStartDate.Value > llmEndDate.Value)
-        {
-            llmErrorMessage = "Start date must be before or equal to end date.";
             return false;
         }
 
