@@ -98,6 +98,9 @@ namespace TrackYourDay.Core.ServiceRegistration
             });
 
             services.AddSingleton<IGitLabActivityService, GitLabActivityService>();
+            services.AddSingleton<IGitLabStateRepository, GitLabStateRepository>();
+            services.AddSingleton<IGitLabStateService, GitLabStateService>();
+            
             services.AddSingleton<GitLabTracker>(serviceProvider =>
                 new GitLabTracker(
                     serviceProvider.GetRequiredService<IGitLabActivityService>(),

@@ -11,6 +11,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         Task<GitLabProject> GetProject(GitLabProjectId projectId);
         Task<List<GitLabCommit>> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate);
         Task<List<GitLabCommit>> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha);
+        Task<List<Models.GitLabArtifact>> GetAssignedIssues(GitLabUserId userId);
+        Task<List<Models.GitLabArtifact>> GetAssignedMergeRequests(GitLabUserId userId);
+        Task<List<Models.GitLabArtifact>> GetCreatedMergeRequests(GitLabUserId userId);
     }
 
     public class GitLabRestApiClient : IGitLabRestApiClient
@@ -79,6 +82,114 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             var comparison = JsonSerializer.Deserialize<GitLabComparison>(content);
             return comparison?.Commits ?? new List<GitLabCommit>();
         }
+
+        public async Task<List<Models.GitLabArtifact>> GetAssignedIssues(GitLabUserId userId)
+        {
+            var allArtifacts = new List<Models.GitLabArtifact>();
+            int page = 1;
+            bool hasMoreIssues;
+
+            do
+            {
+                var response = await _httpClient.GetAsync($"/api/v4/issues?assignee_id={userId.Id}&state=opened&per_page={PAGE_LIMIT}&page={page}");
+                response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+                var issues = JsonSerializer.Deserialize<List<GitLabIssueDto>>(content) ?? new List<GitLabIssueDto>();
+
+                allArtifacts.AddRange(issues.Select(i => new Models.GitLabArtifact
+                {
+                    Id = i.Id,
+                    Iid = i.Iid,
+                    ProjectId = i.ProjectId,
+                    Title = i.Title,
+                    Description = i.Description,
+                    Type = Models.GitLabArtifactType.Issue,
+                    State = i.State,
+                    CreatedAt = i.CreatedAt,
+                    UpdatedAt = i.UpdatedAt,
+                    WebUrl = i.WebUrl,
+                    AuthorUsername = i.Author.Username,
+                    AssigneeUsernames = i.Assignees.Select(a => a.Username).ToList()
+                }));
+
+                hasMoreIssues = issues.Count == PAGE_LIMIT;
+                page++;
+            } while (hasMoreIssues);
+
+            return allArtifacts;
+        }
+
+        public async Task<List<Models.GitLabArtifact>> GetAssignedMergeRequests(GitLabUserId userId)
+        {
+            var allArtifacts = new List<Models.GitLabArtifact>();
+            int page = 1;
+            bool hasMoreMergeRequests;
+
+            do
+            {
+                var response = await _httpClient.GetAsync($"/api/v4/merge_requests?assignee_id={userId.Id}&state=opened&per_page={PAGE_LIMIT}&page={page}");
+                response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+                var mergeRequests = JsonSerializer.Deserialize<List<GitLabMergeRequestDto>>(content) ?? new List<GitLabMergeRequestDto>();
+
+                allArtifacts.AddRange(mergeRequests.Select(mr => new Models.GitLabArtifact
+                {
+                    Id = mr.Id,
+                    Iid = mr.Iid,
+                    ProjectId = mr.ProjectId,
+                    Title = mr.Title,
+                    Description = mr.Description,
+                    Type = Models.GitLabArtifactType.MergeRequest,
+                    State = mr.State,
+                    CreatedAt = mr.CreatedAt,
+                    UpdatedAt = mr.UpdatedAt,
+                    WebUrl = mr.WebUrl,
+                    AuthorUsername = mr.Author.Username,
+                    AssigneeUsernames = mr.Assignees.Select(a => a.Username).ToList()
+                }));
+
+                hasMoreMergeRequests = mergeRequests.Count == PAGE_LIMIT;
+                page++;
+            } while (hasMoreMergeRequests);
+
+            return allArtifacts;
+        }
+
+        public async Task<List<Models.GitLabArtifact>> GetCreatedMergeRequests(GitLabUserId userId)
+        {
+            var allArtifacts = new List<Models.GitLabArtifact>();
+            int page = 1;
+            bool hasMoreMergeRequests;
+
+            do
+            {
+                var response = await _httpClient.GetAsync($"/api/v4/merge_requests?author_id={userId.Id}&state=opened&per_page={PAGE_LIMIT}&page={page}");
+                response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+                var mergeRequests = JsonSerializer.Deserialize<List<GitLabMergeRequestDto>>(content) ?? new List<GitLabMergeRequestDto>();
+
+                allArtifacts.AddRange(mergeRequests.Select(mr => new Models.GitLabArtifact
+                {
+                    Id = mr.Id,
+                    Iid = mr.Iid,
+                    ProjectId = mr.ProjectId,
+                    Title = mr.Title,
+                    Description = mr.Description,
+                    Type = Models.GitLabArtifactType.MergeRequest,
+                    State = mr.State,
+                    CreatedAt = mr.CreatedAt,
+                    UpdatedAt = mr.UpdatedAt,
+                    WebUrl = mr.WebUrl,
+                    AuthorUsername = mr.Author.Username,
+                    AssigneeUsernames = mr.Assignees.Select(a => a.Username).ToList()
+                }));
+
+                hasMoreMergeRequests = mergeRequests.Count == PAGE_LIMIT;
+                page++;
+            } while (hasMoreMergeRequests);
+
+            return allArtifacts;
+        }
     }
     public class NullGitLabRestApiClient : IGitLabRestApiClient
     {
@@ -124,6 +235,15 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
         public Task<List<GitLabCommit>> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha)
             => Task.FromResult(new List<GitLabCommit>());
+
+        public Task<List<Models.GitLabArtifact>> GetAssignedIssues(GitLabUserId userId)
+            => Task.FromResult(new List<Models.GitLabArtifact>());
+
+        public Task<List<Models.GitLabArtifact>> GetAssignedMergeRequests(GitLabUserId userId)
+            => Task.FromResult(new List<Models.GitLabArtifact>());
+
+        public Task<List<Models.GitLabArtifact>> GetCreatedMergeRequests(GitLabUserId userId)
+            => Task.FromResult(new List<Models.GitLabArtifact>());
     }
 
     public class GitLabRestApiClientFactory
@@ -272,4 +392,30 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             [property: JsonPropertyName("commits")] List<GitLabCommit> Commits,
             [property: JsonPropertyName("compare_timeout")] bool CompareTimeout,
             [property: JsonPropertyName("compare_same_ref")] bool CompareSameRef);
+
+        internal record GitLabIssueDto(
+            [property: JsonPropertyName("id")] long Id,
+            [property: JsonPropertyName("iid")] long Iid,
+            [property: JsonPropertyName("project_id")] long ProjectId,
+            [property: JsonPropertyName("title")] string Title,
+            [property: JsonPropertyName("description")] string? Description,
+            [property: JsonPropertyName("state")] string State,
+            [property: JsonPropertyName("created_at")] DateTimeOffset CreatedAt,
+            [property: JsonPropertyName("updated_at")] DateTimeOffset UpdatedAt,
+            [property: JsonPropertyName("author")] GitLabUser Author,
+            [property: JsonPropertyName("assignees")] List<GitLabUser> Assignees,
+            [property: JsonPropertyName("web_url")] string WebUrl);
+
+        internal record GitLabMergeRequestDto(
+            [property: JsonPropertyName("id")] long Id,
+            [property: JsonPropertyName("iid")] long Iid,
+            [property: JsonPropertyName("project_id")] long ProjectId,
+            [property: JsonPropertyName("title")] string Title,
+            [property: JsonPropertyName("description")] string? Description,
+            [property: JsonPropertyName("state")] string State,
+            [property: JsonPropertyName("created_at")] DateTimeOffset CreatedAt,
+            [property: JsonPropertyName("updated_at")] DateTimeOffset UpdatedAt,
+            [property: JsonPropertyName("author")] GitLabUser Author,
+            [property: JsonPropertyName("assignees")] List<GitLabUser> Assignees,
+            [property: JsonPropertyName("web_url")] string WebUrl);
 }
