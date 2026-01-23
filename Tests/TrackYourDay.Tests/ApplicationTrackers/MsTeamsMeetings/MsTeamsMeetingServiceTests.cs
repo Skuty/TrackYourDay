@@ -67,22 +67,25 @@ public sealed class MsTeamsMeetingServiceTests
     }
 
     [Fact]
-    public async Task GivenNoPendingMeeting_WhenConfirmed_ThenLogsWarningAndDoesNothing()
+    public async Task GivenNoPendingMeeting_WhenConfirmed_ThenThrowsInvalidOperationException()
     {
         // Given
         var meetingGuid = Guid.NewGuid();
 
         // When
-        await _tracker.ConfirmMeetingEndAsync(meetingGuid);
+        var act = async () => await _tracker.ConfirmMeetingEndAsync(meetingGuid);
 
         // Then
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage($"No pending meeting found with ID {meetingGuid}");
+        
         _publisherMock.Verify(
             x => x.Publish(It.IsAny<MeetingEndedEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task GivenDifferentPendingMeeting_WhenConfirmed_ThenLogsWarningAndDoesNothing()
+    public async Task GivenDifferentPendingMeeting_WhenConfirmed_ThenThrowsInvalidOperationException()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
@@ -103,9 +106,12 @@ public sealed class MsTeamsMeetingServiceTests
         var differentGuid = Guid.NewGuid();
 
         // When
-        await _tracker.ConfirmMeetingEndAsync(differentGuid);
+        var act = async () => await _tracker.ConfirmMeetingEndAsync(differentGuid);
 
         // Then
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage($"No pending meeting found with ID {differentGuid}");
+        
         _publisherMock.Verify(
             x => x.Publish(It.IsAny<MeetingEndedEvent>(), It.IsAny<CancellationToken>()),
             Times.Never);

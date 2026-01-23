@@ -205,6 +205,115 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
     }
 
     [Fact]
+    public async Task GivenPendingEnd_WhenConfirmedWithCustomEndTime_ThenUsesProvidedEndTime()
+    {
+        // Given
+        var startTime = new DateTime(2026, 1, 7, 10, 0, 0);
+        var customEndTime = new DateTime(2026, 1, 7, 11, 30, 0);
+        var currentTime = new DateTime(2026, 1, 7, 12, 0, 0);
+        
+        _clockMock.Setup(x => x.Now).Returns(startTime);
+        
+        var meeting = new StartedMeeting(Guid.NewGuid(), startTime, "Test Meeting");
+        var matchedRuleId = Guid.NewGuid();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _tracker.RecognizeActivity();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns(((StartedMeeting?)null, (Guid?)null));
+        
+        _tracker.RecognizeActivity();
+
+        _clockMock.Setup(x => x.Now).Returns(currentTime);
+
+        // When
+        await _tracker.ConfirmMeetingEndAsync(meeting.Guid, null, customEndTime);
+
+        // Then
+        _publisherMock.Verify(
+            x => x.Publish(
+                It.Is<MeetingEndedEvent>(e => 
+                    e.EndedMeeting.EndDate == customEndTime),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GivenPendingEnd_WhenConfirmedWithEndTimeBeforeStartTime_ThenThrowsArgumentException()
+    {
+        // Given
+        var startTime = new DateTime(2026, 1, 7, 10, 0, 0);
+        var invalidEndTime = new DateTime(2026, 1, 7, 9, 0, 0);
+        
+        _clockMock.Setup(x => x.Now).Returns(startTime);
+        
+        var meeting = new StartedMeeting(Guid.NewGuid(), startTime, "Test Meeting");
+        var matchedRuleId = Guid.NewGuid();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _tracker.RecognizeActivity();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns(((StartedMeeting?)null, (Guid?)null));
+        
+        _tracker.RecognizeActivity();
+
+        // When
+        var act = async () => await _tracker.ConfirmMeetingEndAsync(meeting.Guid, null, invalidEndTime);
+
+        // Then
+        await act.Should().ThrowAsync<ArgumentException>()
+            .WithMessage("*End time*cannot be before meeting start time*");
+    }
+
+    [Fact]
+    public async Task GivenPendingEnd_WhenConfirmedWithoutCustomEndTime_ThenUsesClockNow()
+    {
+        // Given
+        var startTime = new DateTime(2026, 1, 7, 10, 0, 0);
+        var currentTime = new DateTime(2026, 1, 7, 11, 0, 0);
+        
+        _clockMock.Setup(x => x.Now).Returns(startTime);
+        
+        var meeting = new StartedMeeting(Guid.NewGuid(), startTime, "Test Meeting");
+        var matchedRuleId = Guid.NewGuid();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(null, null))
+            .Returns((meeting, matchedRuleId));
+        
+        _tracker.RecognizeActivity();
+        
+        _meetingDiscoveryStrategyMock
+            .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
+            .Returns(((StartedMeeting?)null, (Guid?)null));
+        
+        _tracker.RecognizeActivity();
+        
+        _clockMock.Setup(x => x.Now).Returns(currentTime);
+
+        // When
+        await _tracker.ConfirmMeetingEndAsync(meeting.Guid);
+
+        // Then
+        _publisherMock.Verify(
+            x => x.Publish(
+                It.Is<MeetingEndedEvent>(e => 
+                    e.EndedMeeting.EndDate == currentTime),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
     public void GivenPendingEnd_WhenCancelledViaCancelPendingEnd_ThenReturnsToActiveState()
     {
         // Given

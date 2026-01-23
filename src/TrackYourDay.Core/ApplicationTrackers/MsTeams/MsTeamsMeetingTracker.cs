@@ -108,9 +108,19 @@ public sealed class MsTeamsMeetingTracker
         }
     }
 
+    /// <summary>
+    /// Confirms the end of a pending meeting with validation.
+    /// </summary>
+    /// <param name="meetingGuid">Unique identifier of the meeting to confirm.</param>
+    /// <param name="customDescription">Optional custom description (max 500 chars).</param>
+    /// <param name="customEndTime">Optional custom end time. Must be between meeting start and current time.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when no pending meeting exists.</exception>
     public async Task ConfirmMeetingEndAsync(
         Guid meetingGuid,
         string? customDescription = null,
+        DateTime? customEndTime = null,
         CancellationToken cancellationToken = default)
     {
         var pending = _pendingEndMeeting;
@@ -118,10 +128,29 @@ public sealed class MsTeamsMeetingTracker
         if (pending == null || pending.Guid != meetingGuid)
         {
             _logger.LogWarning("No pending meeting for Guid: {Guid}", meetingGuid);
-            return;
+            throw new InvalidOperationException($"No pending meeting found with ID {meetingGuid}");
         }
 
-        var endedMeeting = pending.End(_clock.Now);
+        var endTime = customEndTime ?? _clock.Now;
+        var now = _clock.Now;
+        
+        // Validation: End time cannot be before start time
+        if (endTime < pending.StartDate)
+        {
+            throw new ArgumentException(
+                $"End time ({endTime:HH:mm}) cannot be before meeting start time ({pending.StartDate:HH:mm})", 
+                nameof(customEndTime));
+        }
+
+        // Validation: End time cannot be in the future
+        if (endTime > now)
+        {
+            throw new ArgumentException(
+                $"End time ({endTime:HH:mm}) cannot be in the future (current time: {now:HH:mm})", 
+                nameof(customEndTime));
+        }
+
+        var endedMeeting = pending.End(endTime);
 
         if (!string.IsNullOrWhiteSpace(customDescription))
         {
@@ -141,6 +170,71 @@ public sealed class MsTeamsMeetingTracker
             .ConfigureAwait(false);
         
         _logger.LogInformation("Meeting confirmed: {Description}", endedMeeting.GetDescription());
+    }
+
+    /// <summary>
+    /// Manually ends a currently ongoing meeting with validation.
+    /// Can be used to end meetings that are still active (not in pending state).
+    /// </summary>
+    /// <param name="meetingGuid">Unique identifier of the meeting to end.</param>
+    /// <param name="customDescription">Optional custom description (max 500 chars).</param>
+    /// <param name="customEndTime">Optional custom end time. Must be between meeting start and current time.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when meeting with given ID is not found.</exception>
+    public async Task EndMeetingManuallyAsync(
+        Guid meetingGuid,
+        string? customDescription = null,
+        DateTime? customEndTime = null,
+        CancellationToken cancellationToken = default)
+    {
+        var ongoing = _ongoingMeeting;
+
+        if (ongoing == null || ongoing.Guid != meetingGuid)
+        {
+            _logger.LogWarning("No ongoing meeting for Guid: {Guid}", meetingGuid);
+            throw new InvalidOperationException($"No meeting found with ID {meetingGuid}");
+        }
+
+        var endTime = customEndTime ?? _clock.Now;
+        var now = _clock.Now;
+        
+        // Validation: End time cannot be before start time
+        if (endTime < ongoing.StartDate)
+        {
+            throw new ArgumentException(
+                $"End time ({endTime:HH:mm}) cannot be before meeting start time ({ongoing.StartDate:HH:mm})", 
+                nameof(customEndTime));
+        }
+
+        // Validation: End time cannot be in the future
+        if (endTime > now)
+        {
+            throw new ArgumentException(
+                $"End time ({endTime:HH:mm}) cannot be in the future (current time: {now:HH:mm})", 
+                nameof(customEndTime));
+        }
+
+        var endedMeeting = ongoing.End(endTime);
+
+        if (!string.IsNullOrWhiteSpace(customDescription))
+        {
+            if (customDescription.Length > 500)
+                throw new ArgumentException("Description cannot exceed 500 characters", nameof(customDescription));
+            
+            endedMeeting.SetCustomDescription(customDescription);
+        }
+
+        _pendingEndMeeting = null;
+        _pendingEndDetectedAt = null;
+        _ongoingMeeting = null;
+        _matchedRuleId = null;
+        _endedMeetings.Add(endedMeeting);
+
+        await _publisher.Publish(new MeetingEndedEvent(Guid.NewGuid(), endedMeeting), cancellationToken)
+            .ConfigureAwait(false);
+        
+        _logger.LogInformation("Meeting manually ended: {Description}", endedMeeting.GetDescription());
     }
 
     public void CancelPendingEnd(Guid meetingGuid)

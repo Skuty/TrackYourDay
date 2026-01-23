@@ -13,7 +13,7 @@
     <div>
         <MudTextField @bind-Value="BreakTime" style="margin-top: -9px; width: 80px;" T="TimeSpan" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.FreeBreakfast" Format="hh\:mm" ReadOnly="true" />
     </div>
-    <div>
+    <div @onclick="OnMeetingIconClick" style="cursor: @(IsOngoingMeeting ? "pointer" : "default");">
         <MudIcon Icon="@Icons.Material.Filled.VideoCameraFront" Color="this.MeetingIconColor" Size="Size.Medium" style="margin-top: 0px;" />
     </div>
 
@@ -29,6 +29,9 @@
 
     [Inject]
     private UserTaskService userTaskService { get; set; }
+
+    [Inject]
+    private IDialogService DialogService { get; set; }
 
 
     private TimeSpan WorkTime { get; set; }
@@ -54,14 +57,23 @@
 
     private void UpdateOngoingMeetingToActive(MeetingStartedEvent meetingStartedEvent)
     {
+        this.IsOngoingMeeting = true;
         this.MeetingIconColor = Color.Success;
         InvokeAsync(StateHasChanged);
     }
 
     private void UpdateOngoingMeetingToInactive(MeetingEndedEvent meetingEndedEvent)
     {
+        this.IsOngoingMeeting = false;
         this.MeetingIconColor = Color.Default;
         InvokeAsync(StateHasChanged);
+    }
+
+    private void OnMeetingIconClick()
+    {
+        if (!IsOngoingMeeting) return;
+        
+        Mediator.Publish(new RequestManualMeetingEndEvent());
     }
 
     public void Dispose()
