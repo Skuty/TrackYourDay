@@ -22,6 +22,54 @@
                     <MudText Typo="Typo.body2">
                         <strong>Meeting:</strong> @meetingTitle
                     </MudText>
+                    <MudText Typo="Typo.body2">
+                        <strong>Start:</strong> @(startTime != DateTime.MinValue ? startTime.ToString("HH:mm") : "Unknown")
+                    </MudText>
+                </MudStack>
+
+                <MudStack Spacing="2">
+                    <MudTimePicker Time="@endTime"
+                                   TimeChanged="OnTimeChanged"
+                                   Label="End Time"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Editable="true"
+                                   AmPm="false"
+                                   TimeFormat="HH:mm"
+                                   TimeEditFormat="HH:mm"
+                                   PickerVariant="PickerVariant.Dialog"
+                                   Required="true"
+                                   RequiredError="Please enter a valid time in HH:mm format"
+                                   Error="@(!endTime.HasValue && showValidation)"
+                                   ErrorText="@(showValidation && !endTime.HasValue ? "End time is required" : string.Empty)" />
+                    
+                    <MudStack Row="true" Spacing="1" Justify="Justify.Center">
+                        <MudButton Variant="Variant.Text" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => SubtractMinutes(5))"
+                                   StartIcon="@Icons.Material.Filled.Remove">
+                            5m
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => SubtractMinutes(10))"
+                                   StartIcon="@Icons.Material.Filled.Remove">
+                            10m
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" 
+                                   Size="Size.Small" 
+                                   OnClick="@(() => SubtractMinutes(15))"
+                                   StartIcon="@Icons.Material.Filled.Remove">
+                            15m
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" 
+                                   Size="Size.Small" 
+                                   Color="Color.Primary"
+                                   OnClick="ResetToCurrentTime"
+                                   StartIcon="@Icons.Material.Filled.Refresh">
+                            Now
+                        </MudButton>
+                    </MudStack>
                 </MudStack>
 
                 <MudTextField @bind-Value="customDescription"
@@ -30,6 +78,11 @@
                               Variant="Variant.Outlined"
                               Lines="2"
                               Margin="Margin.Dense" />
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true">@errorMessage</MudAlert>
+                }
 
                 <MudStack Row="true" Spacing="2">
                     <MudButton Variant="Variant.Filled" 
@@ -46,11 +99,6 @@
                         Still Ongoing
                     </MudButton>
                 </MudStack>
-
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <MudAlert Severity="Severity.Error" Dense="true">@errorMessage</MudAlert>
-                }
             </MudStack>
         </MudPaper>
     }
@@ -69,9 +117,12 @@
 
     private Guid meetingGuid;
     private string? meetingTitle;
+    private DateTime startTime = DateTime.MinValue;
+    private TimeSpan? endTime;
     private string? customDescription;
     private string errorMessage = string.Empty;
     private bool isProcessing;
+    private bool showValidation;
     private bool _userResponded;
     private CancellationTokenSource _timeoutCts = new();
 
@@ -94,8 +145,64 @@
                 }
             }
             
-
+            // Get meeting start time from tracker
+            var ongoing = meetingService.GetOngoingMeeting();
+            if (ongoing?.Guid == meetingGuid)
+            {
+                startTime = ongoing.StartDate != DateTime.MinValue ? ongoing.StartDate : DateTime.Now;
+            }
+            else
+            {
+                // Fallback: if meeting not found, use current time
+                startTime = DateTime.Now;
+            }
+            
+            // Always default end time to current time
+            endTime = DateTime.Now.TimeOfDay;
         }
+    }
+
+    private void SubtractMinutes(int minutes)
+    {
+        if (!endTime.HasValue) return;
+        
+        // Work directly with TimeSpan for simpler logic
+        var newEndTime = endTime.Value.Subtract(TimeSpan.FromMinutes(minutes));
+        
+        // Handle negative values (wrap to previous day scenario)
+        if (newEndTime < TimeSpan.Zero)
+        {
+            newEndTime = TimeSpan.Zero;
+        }
+        
+        // Ensure end time doesn't go before start time (same day comparison)
+        if (startTime != DateTime.MinValue)
+        {
+            var startTimeSpan = startTime.TimeOfDay;
+            if (newEndTime < startTimeSpan)
+            {
+                newEndTime = startTimeSpan;
+            }
+        }
+        
+        endTime = newEndTime;
+        StateHasChanged();
+    }
+
+    private void ResetToCurrentTime()
+    {
+        endTime = DateTime.Now.TimeOfDay;
+        StateHasChanged();
+    }
+
+    private void OnTimeChanged(TimeSpan? newTime)
+    {
+        endTime = newTime;
+        if (showValidation)
+        {
+            errorMessage = string.Empty;
+        }
+        StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -129,6 +236,15 @@
         if (string.IsNullOrEmpty(meetingTitle) || isProcessing)
             return;
 
+        showValidation = true;
+
+        if (!endTime.HasValue)
+        {
+            errorMessage = "Please enter a valid end time in HH:mm format";
+            StateHasChanged();
+            return;
+        }
+
         _userResponded = true;
         _timeoutCts.Cancel();
         isProcessing = true;
@@ -136,8 +252,39 @@
 
         try
         {
-            await meetingService.ConfirmMeetingEndAsync(meetingGuid, customDescription);
+            DateTime? customEndTime = null;
+            if (endTime.HasValue)
+            {
+                customEndTime = startTime.Date.Add(endTime.Value);
+                
+                if (customEndTime < startTime)
+                {
+                    customEndTime = customEndTime.Value.AddDays(1);
+                }
+            }
+
+            // Try to confirm pending meeting first, if that fails try manual end
+            try
+            {
+                await meetingService.ConfirmMeetingEndAsync(meetingGuid, customDescription, customEndTime);
+            }
+            catch (InvalidOperationException)
+            {
+                // Meeting is not in pending state, try manual end
+                await meetingService.EndMeetingManuallyAsync(meetingGuid, customDescription, customEndTime);
+            }
+            
             await CloseWindow();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+            isProcessing = false;
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+            isProcessing = false;
         }
         catch (Exception)
         {
