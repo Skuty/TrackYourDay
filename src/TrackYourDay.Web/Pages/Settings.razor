@@ -26,6 +26,9 @@
         </MudText>
         <MudTextField @bind-Value="gitLabApiUrl" Label="GitLab API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="gitLabApiKey" Label="GitLab API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+        <MudNumericField T="int" @bind-Value="gitLabFetchIntervalMinutes" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="gitLabCircuitBreakerThreshold" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="gitLabCircuitBreakerDurationMinutes" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CheckGitLabConnection" Class="mt-2">Check Connection</MudButton>
     </MudTabPanel>
     <MudTabPanel Text="Jira Integration">
@@ -35,6 +38,9 @@
         </MudText>
         <MudTextField @bind-Value="jiraApiUrl" Label="Jira API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="jiraApiKey" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+        <MudNumericField T="int" @bind-Value="jiraFetchIntervalMinutes" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="jiraCircuitBreakerThreshold" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="jiraCircuitBreakerDurationMinutes" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CheckJiraConnection" Class="mt-2">Check Connection</MudButton>
     </MudTabPanel>
     <MudTabPanel Text="Database Management">
@@ -148,6 +154,12 @@
     private string jiraApiUrl = string.Empty;
     private string jiraApiKey = string.Empty;
     private bool jiraEnabled = false;
+    private int gitLabFetchIntervalMinutes = 15;
+    private int gitLabCircuitBreakerThreshold = 5;
+    private int gitLabCircuitBreakerDurationMinutes = 5;
+    private int jiraFetchIntervalMinutes = 15;
+    private int jiraCircuitBreakerThreshold = 5;
+    private int jiraCircuitBreakerDurationMinutes = 5;
     
     private long activitiesSize;
     private long breaksSize;
@@ -185,11 +197,17 @@
         this.gitLabApiUrl = gitLabSettings.ApiUrl;
         this.gitLabApiKey = gitLabSettings.ApiKey;
         this.gitLabEnabled = gitLabSettings.Enabled;
+        this.gitLabFetchIntervalMinutes = gitLabSettings.FetchIntervalMinutes;
+        this.gitLabCircuitBreakerThreshold = gitLabSettings.CircuitBreakerThreshold;
+        this.gitLabCircuitBreakerDurationMinutes = gitLabSettings.CircuitBreakerDurationMinutes;
 
         var jiraSettings = this.jiraSettingsService.GetSettings();
         this.jiraApiUrl = jiraSettings.ApiUrl;
         this.jiraApiKey = jiraSettings.ApiKey;
         this.jiraEnabled = jiraSettings.Enabled;
+        this.jiraFetchIntervalMinutes = jiraSettings.FetchIntervalMinutes;
+        this.jiraCircuitBreakerThreshold = jiraSettings.CircuitBreakerThreshold;
+        this.jiraCircuitBreakerDurationMinutes = jiraSettings.CircuitBreakerDurationMinutes;
     }
     
     private void LoadDatabaseStats()
@@ -240,9 +258,9 @@
             this.gitLabApiUrl,
             this.gitLabApiKey,
             this.gitLabEnabled,
-            currentGitLabSettings.FetchIntervalMinutes,
-            currentGitLabSettings.CircuitBreakerThreshold,
-            currentGitLabSettings.CircuitBreakerDurationMinutes);
+            this.gitLabFetchIntervalMinutes,
+            this.gitLabCircuitBreakerThreshold,
+            this.gitLabCircuitBreakerDurationMinutes);
         this.gitLabSettingsService.PersistSettings();
 
         var currentJiraSettings = this.jiraSettingsService.GetSettings();
@@ -250,9 +268,9 @@
             this.jiraApiUrl,
             this.jiraApiKey,
             this.jiraEnabled,
-            currentJiraSettings.FetchIntervalMinutes,
-            currentJiraSettings.CircuitBreakerThreshold,
-            currentJiraSettings.CircuitBreakerDurationMinutes);
+            this.jiraFetchIntervalMinutes,
+            this.jiraCircuitBreakerThreshold,
+            this.jiraCircuitBreakerDurationMinutes);
         this.jiraSettingsService.PersistSettings();
 
         this.ShowSettingsSavedDialog();
