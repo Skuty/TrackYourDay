@@ -250,28 +250,95 @@
 
     private void SaveSettings()
     {
+        // Persist break settings first
         this.breaksSettingsService.UpdateTimeOfNoActivityToStartBreak(TimeSpan.FromMinutes(this.minutesOfNoActivityToStartBreak));
         this.breaksSettingsService.PersistSettings();
-        
-        var currentGitLabSettings = this.gitLabSettingsService.GetSettings();
-        this.gitLabSettingsService.UpdateSettings(
-            this.gitLabApiUrl,
-            this.gitLabApiKey,
-            this.gitLabEnabled,
-            this.gitLabFetchIntervalMinutes,
-            this.gitLabCircuitBreakerThreshold,
-            this.gitLabCircuitBreakerDurationMinutes);
-        this.gitLabSettingsService.PersistSettings();
 
-        var currentJiraSettings = this.jiraSettingsService.GetSettings();
-        this.jiraSettingsService.UpdateSettings(
-            this.jiraApiUrl,
-            this.jiraApiKey,
-            this.jiraEnabled,
-            this.jiraFetchIntervalMinutes,
-            this.jiraCircuitBreakerThreshold,
-            this.jiraCircuitBreakerDurationMinutes);
-        this.jiraSettingsService.PersistSettings();
+        // Validate GitLab settings when enabled
+        if (this.gitLabEnabled)
+        {
+            var gitLabErrors = new System.Collections.Generic.List<string>();
+            if (string.IsNullOrWhiteSpace(this.gitLabApiUrl))
+                gitLabErrors.Add("GitLab API URL cannot be empty.");
+            if (string.IsNullOrWhiteSpace(this.gitLabApiKey))
+                gitLabErrors.Add("GitLab API Key cannot be empty.");
+            if (this.gitLabFetchIntervalMinutes < 1)
+                gitLabErrors.Add("GitLab Fetch Interval must be at least 1 minute.");
+            if (this.gitLabCircuitBreakerThreshold < 1)
+                gitLabErrors.Add("GitLab Circuit Breaker Threshold must be at least 1.");
+            if (this.gitLabCircuitBreakerDurationMinutes < 1)
+                gitLabErrors.Add("GitLab Circuit Breaker Duration must be at least 1 minute.");
+
+            if (gitLabErrors.Count > 0)
+            {
+                connectionCheckSuccess = false;
+                connectionCheckMessage = string.Join("\n", gitLabErrors);
+                ShowConnectionCheckDialog();
+                return;
+            }
+        }
+
+        try
+        {
+            this.gitLabSettingsService.UpdateSettings(
+                this.gitLabApiUrl,
+                this.gitLabApiKey,
+                this.gitLabEnabled,
+                this.gitLabFetchIntervalMinutes,
+                this.gitLabCircuitBreakerThreshold,
+                this.gitLabCircuitBreakerDurationMinutes);
+            this.gitLabSettingsService.PersistSettings();
+        }
+        catch (System.Exception ex)
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = $"Failed to save GitLab settings: {ex.Message}";
+            ShowConnectionCheckDialog();
+            return;
+        }
+
+        // Validate Jira settings when enabled
+        if (this.jiraEnabled)
+        {
+            var jiraErrors = new System.Collections.Generic.List<string>();
+            if (string.IsNullOrWhiteSpace(this.jiraApiUrl))
+                jiraErrors.Add("Jira API URL cannot be empty.");
+            if (string.IsNullOrWhiteSpace(this.jiraApiKey))
+                jiraErrors.Add("Jira API Key cannot be empty.");
+            if (this.jiraFetchIntervalMinutes < 1)
+                jiraErrors.Add("Jira Fetch Interval must be at least 1 minute.");
+            if (this.jiraCircuitBreakerThreshold < 1)
+                jiraErrors.Add("Jira Circuit Breaker Threshold must be at least 1.");
+            if (this.jiraCircuitBreakerDurationMinutes < 1)
+                jiraErrors.Add("Jira Circuit Breaker Duration must be at least 1 minute.");
+
+            if (jiraErrors.Count > 0)
+            {
+                connectionCheckSuccess = false;
+                connectionCheckMessage = string.Join("\n", jiraErrors);
+                ShowConnectionCheckDialog();
+                return;
+            }
+        }
+
+        try
+        {
+            this.jiraSettingsService.UpdateSettings(
+                this.jiraApiUrl,
+                this.jiraApiKey,
+                this.jiraEnabled,
+                this.jiraFetchIntervalMinutes,
+                this.jiraCircuitBreakerThreshold,
+                this.jiraCircuitBreakerDurationMinutes);
+            this.jiraSettingsService.PersistSettings();
+        }
+        catch (System.Exception ex)
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = $"Failed to save Jira settings: {ex.Message}";
+            ShowConnectionCheckDialog();
+            return;
+        }
 
         this.ShowSettingsSavedDialog();
     }

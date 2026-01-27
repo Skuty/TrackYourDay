@@ -51,6 +51,32 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         public void UpdateSettings(string apiUrl, string apiKey, bool enabled, int fetchIntervalMinutes, int circuitBreakerThreshold, int circuitBreakerDurationMinutes)
         {
+            // Validate inputs when enabling integration
+            if (enabled)
+            {
+                if (string.IsNullOrWhiteSpace(apiUrl))
+                {
+                    throw new System.ArgumentException("API URL is required when enabling Jira integration.", nameof(apiUrl));
+                }
+                if (string.IsNullOrWhiteSpace(apiKey))
+                {
+                    throw new System.ArgumentException("API Key is required when enabling Jira integration.", nameof(apiKey));
+                }
+            }
+
+            if (fetchIntervalMinutes < 1)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(fetchIntervalMinutes), "Fetch interval must be at least 1 minute.");
+            }
+            if (circuitBreakerThreshold < 1)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(circuitBreakerThreshold), "Circuit breaker threshold must be at least 1.");
+            }
+            if (circuitBreakerDurationMinutes < 1)
+            {
+                throw new System.ArgumentOutOfRangeException(nameof(circuitBreakerDurationMinutes), "Circuit breaker duration must be at least 1 minute.");
+            }
+
             settingsService.SetEncryptedSetting(API_URL_KEY, apiUrl ?? string.Empty);
             settingsService.SetEncryptedSetting(API_KEY_KEY, apiKey ?? string.Empty);
             settingsService.SetSetting("Jira.Enabled", enabled);
