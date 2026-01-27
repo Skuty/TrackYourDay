@@ -24,11 +24,11 @@
         <MudText>
             GitLab credentials are encrypted at rest using AES with your Windows Account SID as salt.
         </MudText>
-        <MudTextField @bind-Value="gitLabApiUrl" @bind-Value:event="oninput" Immediate="true" Label="GitLab API URL" Variant="Variant.Outlined" />
-        <MudTextField @bind-Value="gitLabApiKey" @bind-Value:event="oninput" Immediate="true" Label="GitLab API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
-        <MudNumericField T="int" @bind-Value="gitLabFetchIntervalMinutes" @bind-Value:event="oninput" Immediate="true" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
-        <MudNumericField T="int" @bind-Value="gitLabCircuitBreakerThreshold" @bind-Value:event="oninput" Immediate="true" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
-        <MudNumericField T="int" @bind-Value="gitLabCircuitBreakerDurationMinutes" @bind-Value:event="oninput" Immediate="true" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
+        <MudTextField @bind-Value="gitLabApiUrl" Label="GitLab API URL" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="gitLabApiKey" Label="GitLab API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+        <MudNumericField T="int" @bind-Value="gitLabFetchIntervalMinutes" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="gitLabCircuitBreakerThreshold" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="gitLabCircuitBreakerDurationMinutes" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CheckGitLabConnection" Class="mt-2">Check Connection</MudButton>
     </MudTabPanel>
     <MudTabPanel Text="Jira Integration">
@@ -36,11 +36,11 @@
         <MudText>
             Jira credentials are encrypted at rest using AES with your Windows Account SID as salt.
         </MudText>
-        <MudTextField @bind-Value="jiraApiUrl" @bind-Value:event="oninput" Immediate="true" Label="Jira API URL" Variant="Variant.Outlined" />
-        <MudTextField @bind-Value="jiraApiKey" @bind-Value:event="oninput" Immediate="true" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
-        <MudNumericField T="int" @bind-Value="jiraFetchIntervalMinutes" @bind-Value:event="oninput" Immediate="true" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
-        <MudNumericField T="int" @bind-Value="jiraCircuitBreakerThreshold" @bind-Value:event="oninput" Immediate="true" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
-        <MudNumericField T="int" @bind-Value="jiraCircuitBreakerDurationMinutes" @bind-Value:event="oninput" Immediate="true" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
+        <MudTextField @bind-Value="jiraApiUrl" Label="Jira API URL" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="jiraApiKey" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+        <MudNumericField T="int" @bind-Value="jiraFetchIntervalMinutes" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="jiraCircuitBreakerThreshold" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="jiraCircuitBreakerDurationMinutes" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CheckJiraConnection" Class="mt-2">Check Connection</MudButton>
     </MudTabPanel>
     <MudTabPanel Text="Database Management">
@@ -248,41 +248,28 @@
         StateHasChanged();
     }
 
-    private async System.Threading.Tasks.Task SaveSettings()
+    private void SaveSettings()
     {
-        // Small yield to ensure UI input events are applied before validation
-        await System.Threading.Tasks.Task.Delay(1);
-n        // Persist break settings first
+        // Persist break settings first
         this.breaksSettingsService.UpdateTimeOfNoActivityToStartBreak(TimeSpan.FromMinutes(this.minutesOfNoActivityToStartBreak));
         this.breaksSettingsService.PersistSettings();
-n        // Snapshot current UI values to avoid race conditions during validation/save
-        var gitLabApiUrlLocal = this.gitLabApiUrl?.Trim() ?? string.Empty;
-        var gitLabApiKeyLocal = this.gitLabApiKey ?? string.Empty;
-        var gitLabEnabledLocal = this.gitLabEnabled;
-        var gitLabFetchIntervalLocal = this.gitLabFetchIntervalMinutes;
-        var gitLabCbThresholdLocal = this.gitLabCircuitBreakerThreshold;
-        var gitLabCbDurationLocal = this.gitLabCircuitBreakerDurationMinutes;
-n        var jiraApiUrlLocal = this.jiraApiUrl?.Trim() ?? string.Empty;
-        var jiraApiKeyLocal = this.jiraApiKey ?? string.Empty;
-        var jiraEnabledLocal = this.jiraEnabled;
-        var jiraFetchIntervalLocal = this.jiraFetchIntervalMinutes;
-        var jiraCbThresholdLocal = this.jiraCircuitBreakerThreshold;
-        var jiraCbDurationLocal = this.jiraCircuitBreakerDurationMinutes;
-n        // Validate GitLab settings when enabled
-        if (gitLabEnabledLocal)
+
+        // Validate GitLab settings when enabled
+        if (this.gitLabEnabled)
         {
             var gitLabErrors = new System.Collections.Generic.List<string>();
-            if (string.IsNullOrWhiteSpace(gitLabApiUrlLocal))
+            if (string.IsNullOrWhiteSpace(this.gitLabApiUrl))
                 gitLabErrors.Add("GitLab API URL cannot be empty.");
-            if (string.IsNullOrWhiteSpace(gitLabApiKeyLocal))
+            if (string.IsNullOrWhiteSpace(this.gitLabApiKey))
                 gitLabErrors.Add("GitLab API Key cannot be empty.");
-            if (gitLabFetchIntervalLocal < 1)
+            if (this.gitLabFetchIntervalMinutes < 1)
                 gitLabErrors.Add("GitLab Fetch Interval must be at least 1 minute.");
-            if (gitLabCbThresholdLocal < 1)
+            if (this.gitLabCircuitBreakerThreshold < 1)
                 gitLabErrors.Add("GitLab Circuit Breaker Threshold must be at least 1.");
-            if (gitLabCbDurationLocal < 1)
+            if (this.gitLabCircuitBreakerDurationMinutes < 1)
                 gitLabErrors.Add("GitLab Circuit Breaker Duration must be at least 1 minute.");
-n            if (gitLabErrors.Count > 0)
+
+            if (gitLabErrors.Count > 0)
             {
                 connectionCheckSuccess = false;
                 connectionCheckMessage = string.Join("\n", gitLabErrors);
@@ -290,41 +277,42 @@
                 return;
             }
         }
-n        try
+
+        try
         {
             this.gitLabSettingsService.UpdateSettings(
-                gitLabApiUrlLocal,
-                gitLabApiKeyLocal,
-                gitLabEnabledLocal,
-                gitLabFetchIntervalLocal,
-                gitLabCbThresholdLocal,
-                gitLabCbDurationLocal);
+                this.gitLabApiUrl,
+                this.gitLabApiKey,
+                this.gitLabEnabled,
+                this.gitLabFetchIntervalMinutes,
+                this.gitLabCircuitBreakerThreshold,
+                this.gitLabCircuitBreakerDurationMinutes);
             this.gitLabSettingsService.PersistSettings();
         }
         catch (System.Exception ex)
         {
-            // If persisting fails, reload previous values so UI doesn't show blanks
-            this.LoadSettings();
             connectionCheckSuccess = false;
             connectionCheckMessage = $"Failed to save GitLab settings: {ex.Message}";
             ShowConnectionCheckDialog();
             return;
         }
-n        // Validate Jira settings when enabled
-        if (jiraEnabledLocal)
+
+        // Validate Jira settings when enabled
+        if (this.jiraEnabled)
         {
             var jiraErrors = new System.Collections.Generic.List<string>();
-            if (string.IsNullOrWhiteSpace(jiraApiUrlLocal))
+            if (string.IsNullOrWhiteSpace(this.jiraApiUrl))
                 jiraErrors.Add("Jira API URL cannot be empty.");
-            if (string.IsNullOrWhiteSpace(jiraApiKeyLocal))
+            if (string.IsNullOrWhiteSpace(this.jiraApiKey))
                 jiraErrors.Add("Jira API Key cannot be empty.");
-            if (jiraFetchIntervalLocal < 1)
+            if (this.jiraFetchIntervalMinutes < 1)
                 jiraErrors.Add("Jira Fetch Interval must be at least 1 minute.");
-            if (jiraCbThresholdLocal < 1)
+            if (this.jiraCircuitBreakerThreshold < 1)
                 jiraErrors.Add("Jira Circuit Breaker Threshold must be at least 1.");
-            if (jiraCbDurationLocal < 1)
+            if (this.jiraCircuitBreakerDurationMinutes < 1)
                 jiraErrors.Add("Jira Circuit Breaker Duration must be at least 1 minute.");
-n            if (jiraErrors.Count > 0)
+
+            if (jiraErrors.Count > 0)
             {
                 connectionCheckSuccess = false;
                 connectionCheckMessage = string.Join("\n", jiraErrors);
@@ -332,28 +320,26 @@
                 return;
             }
         }
-n        try
+
+        try
         {
             this.jiraSettingsService.UpdateSettings(
-                jiraApiUrlLocal,
-                jiraApiKeyLocal,
-                jiraEnabledLocal,
-                jiraFetchIntervalLocal,
-                jiraCbThresholdLocal,
-                jiraCbDurationLocal);
+                this.jiraApiUrl,
+                this.jiraApiKey,
+                this.jiraEnabled,
+                this.jiraFetchIntervalMinutes,
+                this.jiraCircuitBreakerThreshold,
+                this.jiraCircuitBreakerDurationMinutes);
             this.jiraSettingsService.PersistSettings();
         }
         catch (System.Exception ex)
         {
-            // Reload previous settings on failure so UI remains consistent
-            this.LoadSettings();
             connectionCheckSuccess = false;
             connectionCheckMessage = $"Failed to save Jira settings: {ex.Message}";
             ShowConnectionCheckDialog();
             return;
         }
-n        // Reload saved settings to make sure UI reflects persisted values (avoids transient blanking)
-        this.LoadSettings();
+
         this.ShowSettingsSavedDialog();
     }
     
