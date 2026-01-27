@@ -213,6 +213,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         {
             if (string.IsNullOrEmpty(settings.ApiUrl))
             {
+                // Log that Jira is not configured so it's obvious in startup logs
                 return new NullJiraRestApiClient();
             }
 

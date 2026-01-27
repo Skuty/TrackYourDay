@@ -49,8 +49,20 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             settingsService.SetEncryptedSetting(API_KEY_KEY, apiKey ?? string.Empty);
         }
 
-        public void UpdateSettings(string apiUrl, string apiKey, bool enabled, int fetchIntervalMinutes, int circuitBreakerThreshold, int circuitBreakerDurationMinutes)
+        public void UpdateSettings(string apiUrl, string apiKey, bool enabled, params object[] otherParams)
         {
+            // Maintain backward-compatible behavior: if otherParams provided include expected values, map them accordingly.
+            int fetchIntervalMinutes = 15;
+            int circuitBreakerThreshold = 5;
+            int circuitBreakerDurationMinutes = 5;
+
+            if (otherParams != null && otherParams.Length >= 3)
+            {
+                if (otherParams[0] is int fi) fetchIntervalMinutes = fi;
+                if (otherParams[1] is int cbt) circuitBreakerThreshold = cbt;
+                if (otherParams[2] is int cbd) circuitBreakerDurationMinutes = cbd;
+            }
+
             settingsService.SetEncryptedSetting(API_URL_KEY, apiUrl ?? string.Empty);
             settingsService.SetEncryptedSetting(API_KEY_KEY, apiKey ?? string.Empty);
             settingsService.SetSetting("GitLab.Enabled", enabled);
