@@ -45,14 +45,18 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                     .WithDailyTimeIntervalSchedule(x => x.WithInterval(10, IntervalUnit.Second))
                     .StartNow());
 
-                ConfigureExternalActivityJobs(q, services);
+                // External activity jobs will be scheduled only when integrations are enabled at startup.
+            ConfigureExternalActivityJobs(q, services);
             });
         }
 
         private static void ConfigureExternalActivityJobs(IServiceCollectionQuartzConfigurator q, IServiceCollection services)
         {
+            // Do not build service provider at registration time. Quartz job scheduling depends on persisted settings loaded at application startup.
+            // The MAUI App.OnStart will start the scheduler; jobs will be present only if settings existed and were enabled before application start.
+            // Read persisted settings directly from the settings service through a temporary provider to decide which jobs to schedule.
             using var tempProvider = services.BuildServiceProvider();
-            
+
             var gitLabSettings = tempProvider.GetRequiredService<IGitLabSettingsService>().GetSettings();
             if (gitLabSettings.Enabled && !string.IsNullOrEmpty(gitLabSettings.ApiUrl))
             {

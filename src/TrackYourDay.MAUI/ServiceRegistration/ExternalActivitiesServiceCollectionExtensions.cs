@@ -25,43 +25,62 @@ namespace TrackYourDay.MAUI.ServiceRegistration
 
         public static IServiceCollection AddExternalActivitiesHttpClients(this IServiceCollection services)
         {
-            using var tempProvider = services.BuildServiceProvider();
+            // Do not resolve settings during DI registration to avoid using BuildServiceProvider here;
+            // register named HttpClients with deferred configuration at runtime via a factory.
 
-            var gitLabSettings = tempProvider.GetRequiredService<IGitLabSettingsService>().GetSettings();
-            services.AddHttpClient("GitLab", client =>
-            {
-                if (!string.IsNullOrEmpty(gitLabSettings.ApiUrl))
+            services.AddHttpClient("GitLab")
+                .ConfigureHttpClient((sp, client) =>
                 {
-                    client.BaseAddress = new Uri(gitLabSettings.ApiUrl);
-                    client.DefaultRequestHeaders.Add("PRIVATE-TOKEN", gitLabSettings.ApiKey);
-                    client.Timeout = TimeSpan.FromSeconds(30);
-                }
-            })
-            .AddPolicyHandler(GetCircuitBreakerPolicy(gitLabSettings.CircuitBreakerThreshold, gitLabSettings.CircuitBreakerDurationMinutes))
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddHttpMessageHandler(sp =>
-            {
-                var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
-                return new HttpLoggingHandler(logger, "GitLab");
-            });
+                    var gitLabSettings = sp.GetRequiredService<IGitLabSettingsService>().GetSettings();
+                    if (!string.IsNullOrEmpty(gitLabSettings.ApiUrl))
+                    {
+                        client.BaseAddress = new Uri(gitLabSettings.ApiUrl);
+                        client.DefaultRequestHeaders.Remove("PRIVATE-TOKEN");
+                        if (!string.IsNullOrEmpty(gitLabSettings.ApiKey))
+                        {
+                            client.DefaultRequestHeaders.Add("PRIVATE-TOKEN", gitLabSettings.ApiKey);
+                        }
+                        client.Timeout = TimeSpan.FromSeconds(30);
+                    }
+                })
+                .AddPolicyHandler((sp, req) =>
+                {
+                    var settings = sp.GetRequiredService<IGitLabSettingsService>().GetSettings();
+                    return GetCircuitBreakerPolicy(settings.CircuitBreakerThreshold, settings.CircuitBreakerDurationMinutes);
+                })
+                .AddPolicyHandler((sp, req) => GetRetryPolicy())
+                .AddHttpMessageHandler(sp =>
+                {
+                    var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
+                    return new HttpLoggingHandler(logger, "GitLab");
+                });
 
-            var jiraSettings = tempProvider.GetRequiredService<IJiraSettingsService>().GetSettings();
-            services.AddHttpClient("Jira", client =>
-            {
-                if (!string.IsNullOrEmpty(jiraSettings.ApiUrl))
+            services.AddHttpClient("Jira")
+                .ConfigureHttpClient((sp, client) =>
                 {
-                    client.BaseAddress = new Uri(jiraSettings.ApiUrl);
-                    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {jiraSettings.ApiKey}");
-                    client.Timeout = TimeSpan.FromSeconds(30);
-                }
-            })
-            .AddPolicyHandler(GetCircuitBreakerPolicy(jiraSettings.CircuitBreakerThreshold, jiraSettings.CircuitBreakerDurationMinutes))
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddHttpMessageHandler(sp =>
-            {
-                var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
-                return new HttpLoggingHandler(logger, "Jira");
-            });
+                    var jiraSettings = sp.GetRequiredService<IJiraSettingsService>().GetSettings();
+                    if (!string.IsNullOrEmpty(jiraSettings.ApiUrl))
+                    {
+                        client.BaseAddress = new Uri(jiraSettings.ApiUrl);
+                        client.DefaultRequestHeaders.Remove("Authorization");
+                        if (!string.IsNullOrEmpty(jiraSettings.ApiKey))
+                        {
+                            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {jiraSettings.ApiKey}");
+                        }
+                        client.Timeout = TimeSpan.FromSeconds(30);
+                    }
+                })
+                .AddPolicyHandler((sp, req) =>
+                {
+                    var settings = sp.GetRequiredService<IJiraSettingsService>().GetSettings();
+                    return GetCircuitBreakerPolicy(settings.CircuitBreakerThreshold, settings.CircuitBreakerDurationMinutes);
+                })
+                .AddPolicyHandler((sp, req) => GetRetryPolicy())
+                .AddHttpMessageHandler(sp =>
+                {
+                    var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
+                    return new HttpLoggingHandler(logger, "Jira");
+                });
 
             return services;
         }

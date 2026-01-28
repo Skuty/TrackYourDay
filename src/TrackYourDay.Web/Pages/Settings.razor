@@ -20,19 +20,27 @@
         </MudSlider>
     </MudTabPanel>
     <MudTabPanel Text="GitLab Integration"> 
+        <MudSwitch @bind-Checked="gitLabEnabled" Color="Color.Primary" Label="Enabled" Class="mb-2" />
         <MudText>
             GitLab credentials are encrypted at rest using AES with your Windows Account SID as salt.
         </MudText>
         <MudTextField @bind-Value="gitLabApiUrl" Label="GitLab API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="gitLabApiKey" Label="GitLab API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+        <MudNumericField T="int" @bind-Value="gitLabFetchIntervalMinutes" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="gitLabCircuitBreakerThreshold" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="gitLabCircuitBreakerDurationMinutes" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CheckGitLabConnection" Class="mt-2">Check Connection</MudButton>
     </MudTabPanel>
     <MudTabPanel Text="Jira Integration">
+        <MudSwitch @bind-Checked="jiraEnabled" Color="Color.Primary" Label="Enabled" Class="mb-2" />
         <MudText>
             Jira credentials are encrypted at rest using AES with your Windows Account SID as salt.
         </MudText>
         <MudTextField @bind-Value="jiraApiUrl" Label="Jira API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="jiraApiKey" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
+        <MudNumericField T="int" @bind-Value="jiraFetchIntervalMinutes" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="jiraCircuitBreakerThreshold" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
+        <MudNumericField T="int" @bind-Value="jiraCircuitBreakerDurationMinutes" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CheckJiraConnection" Class="mt-2">Check Connection</MudButton>
     </MudTabPanel>
     <MudTabPanel Text="Database Management">
@@ -142,8 +150,16 @@
     private bool isClearDatabaseDialogVisible;
     private string gitLabApiUrl = string.Empty;
     private string gitLabApiKey = string.Empty;
+    private bool gitLabEnabled = false;
     private string jiraApiUrl = string.Empty;
     private string jiraApiKey = string.Empty;
+    private bool jiraEnabled = false;
+    private int gitLabFetchIntervalMinutes = 15;
+    private int gitLabCircuitBreakerThreshold = 5;
+    private int gitLabCircuitBreakerDurationMinutes = 5;
+    private int jiraFetchIntervalMinutes = 15;
+    private int jiraCircuitBreakerThreshold = 5;
+    private int jiraCircuitBreakerDurationMinutes = 5;
     
     private long activitiesSize;
     private long breaksSize;
@@ -180,10 +196,18 @@
         var gitLabSettings = this.gitLabSettingsService.GetSettings();
         this.gitLabApiUrl = gitLabSettings.ApiUrl;
         this.gitLabApiKey = gitLabSettings.ApiKey;
+        this.gitLabEnabled = gitLabSettings.Enabled;
+        this.gitLabFetchIntervalMinutes = gitLabSettings.FetchIntervalMinutes;
+        this.gitLabCircuitBreakerThreshold = gitLabSettings.CircuitBreakerThreshold;
+        this.gitLabCircuitBreakerDurationMinutes = gitLabSettings.CircuitBreakerDurationMinutes;
 
         var jiraSettings = this.jiraSettingsService.GetSettings();
         this.jiraApiUrl = jiraSettings.ApiUrl;
         this.jiraApiKey = jiraSettings.ApiKey;
+        this.jiraEnabled = jiraSettings.Enabled;
+        this.jiraFetchIntervalMinutes = jiraSettings.FetchIntervalMinutes;
+        this.jiraCircuitBreakerThreshold = jiraSettings.CircuitBreakerThreshold;
+        this.jiraCircuitBreakerDurationMinutes = jiraSettings.CircuitBreakerDurationMinutes;
     }
     
     private void LoadDatabaseStats()
@@ -226,14 +250,95 @@
 
     private void SaveSettings()
     {
+        // Persist break settings first
         this.breaksSettingsService.UpdateTimeOfNoActivityToStartBreak(TimeSpan.FromMinutes(this.minutesOfNoActivityToStartBreak));
         this.breaksSettingsService.PersistSettings();
-        
-        this.gitLabSettingsService.UpdateSettings(this.gitLabApiUrl, this.gitLabApiKey);
-        this.gitLabSettingsService.PersistSettings();
-        
-        this.jiraSettingsService.UpdateSettings(this.jiraApiUrl, this.jiraApiKey);
-        this.jiraSettingsService.PersistSettings();
+
+        // Validate GitLab settings when enabled
+        if (this.gitLabEnabled)
+        {
+            var gitLabErrors = new System.Collections.Generic.List<string>();
+            if (string.IsNullOrWhiteSpace(this.gitLabApiUrl))
+                gitLabErrors.Add("GitLab API URL cannot be empty.");
+            if (string.IsNullOrWhiteSpace(this.gitLabApiKey))
+                gitLabErrors.Add("GitLab API Key cannot be empty.");
+            if (this.gitLabFetchIntervalMinutes < 1)
+                gitLabErrors.Add("GitLab Fetch Interval must be at least 1 minute.");
+            if (this.gitLabCircuitBreakerThreshold < 1)
+                gitLabErrors.Add("GitLab Circuit Breaker Threshold must be at least 1.");
+            if (this.gitLabCircuitBreakerDurationMinutes < 1)
+                gitLabErrors.Add("GitLab Circuit Breaker Duration must be at least 1 minute.");
+
+            if (gitLabErrors.Count > 0)
+            {
+                connectionCheckSuccess = false;
+                connectionCheckMessage = string.Join("\n", gitLabErrors);
+                ShowConnectionCheckDialog();
+                return;
+            }
+        }
+
+        try
+        {
+            this.gitLabSettingsService.UpdateSettings(
+                this.gitLabApiUrl,
+                this.gitLabApiKey,
+                this.gitLabEnabled,
+                this.gitLabFetchIntervalMinutes,
+                this.gitLabCircuitBreakerThreshold,
+                this.gitLabCircuitBreakerDurationMinutes);
+            this.gitLabSettingsService.PersistSettings();
+        }
+        catch (System.Exception ex)
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = $"Failed to save GitLab settings: {ex.Message}";
+            ShowConnectionCheckDialog();
+            return;
+        }
+
+        // Validate Jira settings when enabled
+        if (this.jiraEnabled)
+        {
+            var jiraErrors = new System.Collections.Generic.List<string>();
+            if (string.IsNullOrWhiteSpace(this.jiraApiUrl))
+                jiraErrors.Add("Jira API URL cannot be empty.");
+            if (string.IsNullOrWhiteSpace(this.jiraApiKey))
+                jiraErrors.Add("Jira API Key cannot be empty.");
+            if (this.jiraFetchIntervalMinutes < 1)
+                jiraErrors.Add("Jira Fetch Interval must be at least 1 minute.");
+            if (this.jiraCircuitBreakerThreshold < 1)
+                jiraErrors.Add("Jira Circuit Breaker Threshold must be at least 1.");
+            if (this.jiraCircuitBreakerDurationMinutes < 1)
+                jiraErrors.Add("Jira Circuit Breaker Duration must be at least 1 minute.");
+
+            if (jiraErrors.Count > 0)
+            {
+                connectionCheckSuccess = false;
+                connectionCheckMessage = string.Join("\n", jiraErrors);
+                ShowConnectionCheckDialog();
+                return;
+            }
+        }
+
+        try
+        {
+            this.jiraSettingsService.UpdateSettings(
+                this.jiraApiUrl,
+                this.jiraApiKey,
+                this.jiraEnabled,
+                this.jiraFetchIntervalMinutes,
+                this.jiraCircuitBreakerThreshold,
+                this.jiraCircuitBreakerDurationMinutes);
+            this.jiraSettingsService.PersistSettings();
+        }
+        catch (System.Exception ex)
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = $"Failed to save Jira settings: {ex.Message}";
+            ShowConnectionCheckDialog();
+            return;
+        }
 
         this.ShowSettingsSavedDialog();
     }
@@ -266,17 +371,17 @@
         
         try
         {
-            this.gitLabSettingsService.UpdateSettings(this.gitLabApiUrl, this.gitLabApiKey);
             var httpClient = new HttpClient
             {
-                BaseAddress = uri
+                BaseAddress = uri,
+                Timeout = TimeSpan.FromSeconds(30)
             };
-            httpClient.DefaultRequestHeaders.Add("PRIVATE-TOKEN", this.gitLabSettingsService.GetSettings().ApiKey);
+            httpClient.DefaultRequestHeaders.Add("PRIVATE-TOKEN", this.gitLabApiKey);
             
             var gitLabClient = new GitLabRestApiClient(httpClient);
-            var tempGitLabService = new GitLabActivityService(gitLabClient, null);
-            
-            connectionCheckSuccess = await tempGitLabService.CheckConnection();
+            var user = await gitLabClient.GetCurrentUser();
+
+            connectionCheckSuccess = user != null && user.Id > 0 && user.Username != "Not recognized";
             connectionCheckMessage = connectionCheckSuccess 
                 ? "Successfully connected to GitLab!" 
                 : "Failed to connect to GitLab. Please check your API URL and API Key.";
@@ -319,17 +424,17 @@
         
         try
         {
-            this.jiraSettingsService.UpdateSettings(this.jiraApiUrl, this.jiraApiKey);
             var httpClient = new HttpClient
             {
-                BaseAddress = uri
+                BaseAddress = uri,
+                Timeout = TimeSpan.FromSeconds(30)
             };
-            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {this.jiraSettingsService.GetSettings().ApiKey}");
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {this.jiraApiKey}");
             
             var jiraClient = new JiraRestApiClient(httpClient);
-            var tempJiraService = new JiraActivityService(jiraClient, null);
-            
-            connectionCheckSuccess = await tempJiraService.CheckConnection();
+            var user = await jiraClient.GetCurrentUser();
+
+            connectionCheckSuccess = user != null && !string.IsNullOrEmpty(user.DisplayName) && user.DisplayName != "Not recognized";
             connectionCheckMessage = connectionCheckSuccess 
                 ? "Successfully connected to Jira!" 
                 : "Failed to connect to Jira. Please check your API URL and API Key.";
