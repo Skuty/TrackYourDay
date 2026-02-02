@@ -115,7 +115,8 @@ namespace TrackYourDay.Core.ServiceRegistration
             {
                 var jiraSettingsService = serviceCollection.GetRequiredService<IJiraSettingsService>();
                 var httpClientFactory = serviceCollection.GetRequiredService<IHttpClientFactory>();
-                return JiraRestApiClientFactory.Create(jiraSettingsService.GetSettings(), httpClientFactory);
+                var logger = serviceCollection.GetRequiredService<ILogger<JiraRestApiClient>>();
+                return JiraRestApiClientFactory.Create(jiraSettingsService.GetSettings(), httpClientFactory, logger);
             });
 
             services.AddSingleton<IJiraActivityService, JiraActivityService>();
