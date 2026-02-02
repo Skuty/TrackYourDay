@@ -17,25 +17,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     public class JiraRestApiClient : IJiraRestApiClient
     {
         private readonly HttpClient _httpClient;
-        private readonly ILogger<JiraRestApiClient> _logger;
 
-        public JiraRestApiClient(HttpClient httpClient, ILogger<JiraRestApiClient> logger)
+        public JiraRestApiClient(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _logger = logger;
         }
 
         public async Task<JiraUser> GetCurrentUser()
         {
             var response = await _httpClient.GetAsync("/rest/api/2/myself");
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Jira API request failed. Status: {StatusCode}, Response: {Response}", 
-                    response.StatusCode, errorContent);
-                response.EnsureSuccessStatusCode();
-            }
+            response.EnsureSuccessStatusCode();
             
             var content = await response.Content.ReadAsStringAsync();
             
@@ -57,14 +48,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             var url = $"/rest/api/2/search?jql={encodedJql}&expand=changelog";
             
             var response = await _httpClient.GetAsync(url);
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Jira API request failed. URL: {Url}, JQL: {Jql}, Status: {StatusCode}, Response: {Response}", 
-                    url, jql, response.StatusCode, errorContent);
-                response.EnsureSuccessStatusCode();
-            }
+            response.EnsureSuccessStatusCode();
             
             var content = await response.Content.ReadAsStringAsync();
 
@@ -82,14 +66,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         public async Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
         {
             var response = await _httpClient.GetAsync($"/rest/api/2/issue/{issueKey}/worklog");
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Jira API request failed. IssueKey: {IssueKey}, Status: {StatusCode}, Response: {Response}", 
-                    issueKey, response.StatusCode, errorContent);
-                response.EnsureSuccessStatusCode();
-            }
+            response.EnsureSuccessStatusCode();
             
             var content = await response.Content.ReadAsStringAsync();
 
@@ -239,7 +216,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     }
     public class JiraRestApiClientFactory
     {
-        public static IJiraRestApiClient Create(JiraSettings settings, IHttpClientFactory httpClientFactory, ILogger<JiraRestApiClient> logger)
+        public static IJiraRestApiClient Create(JiraSettings settings, IHttpClientFactory httpClientFactory)
         {
             if (string.IsNullOrEmpty(settings.ApiUrl))
             {
@@ -247,7 +224,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
 
             var httpClient = httpClientFactory.CreateClient("Jira");
-            return new JiraRestApiClient(httpClient, logger);
+            return new JiraRestApiClient(httpClient);
         }
     }
 

@@ -9,15 +9,13 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
     public class JiraRestApiClientTests
     {
         private readonly Mock<HttpMessageHandler> httpMessageHandlerMock;
-        private readonly Mock<ILogger<JiraRestApiClient>> loggerMock;
         private readonly JiraRestApiClient jiraRestApiClient;
 
         public JiraRestApiClientTests()
         {
             var httpClient = new HttpClient { BaseAddress = new Uri("https://sampleUrl") };
             httpClient.DefaultRequestHeaders.Add("Authorization", "Bearer sampleKey");
-            this.loggerMock = new Mock<ILogger<JiraRestApiClient>>();
-            this.jiraRestApiClient = new JiraRestApiClient(httpClient, loggerMock.Object);
+            this.jiraRestApiClient = new JiraRestApiClient(httpClient);
         }
 
         [Fact]

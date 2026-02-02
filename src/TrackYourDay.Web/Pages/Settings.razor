@@ -326,9 +326,7 @@
             };
             httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {this.jiraSettingsService.GetSettings().ApiKey}");
             
-            var jiraLogger = this.logger as ILogger<JiraRestApiClient> 
-                ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<JiraRestApiClient>.Instance;
-            var jiraClient = new JiraRestApiClient(httpClient, jiraLogger);
+            var jiraClient = new JiraRestApiClient(httpClient);
             var tempJiraService = new JiraActivityService(jiraClient, null);
             
             connectionCheckSuccess = await tempJiraService.CheckConnection();

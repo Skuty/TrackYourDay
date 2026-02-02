@@ -57,11 +57,9 @@ namespace TrackYourDay.MAUI.ServiceRegistration
             })
             .AddPolicyHandler(GetCircuitBreakerPolicy(jiraSettings.CircuitBreakerThreshold, jiraSettings.CircuitBreakerDurationMinutes))
             .AddPolicyHandler(GetRetryPolicy())
-            .AddHttpMessageHandler(sp =>
-            {
-                var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
-                return new HttpLoggingHandler(logger, "Jira");
-            });
+            .AddHttpMessageHandler<JiraHttpLoggingHandler>();
+
+            services.AddTransient<JiraHttpLoggingHandler>();
 
             return services;
         }
