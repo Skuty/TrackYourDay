@@ -27,6 +27,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         {
             var response = await _httpClient.GetAsync("/rest/api/2/myself");
             response.EnsureSuccessStatusCode();
+            
             var content = await response.Content.ReadAsStringAsync();
             
             var options = new JsonSerializerOptions
@@ -42,8 +43,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         public async Task<List<JiraIssueResponse>> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate)
         {
             var accountId = jiraUser.AccountId ?? jiraUser.DisplayName;
-            var response = await _httpClient.GetAsync($"/rest/api/2/search?jql=assignee={accountId} AND updated>={startingFromDate:yyyy-MM-dd}&expand=changelog");
+            var jql = $"assignee=\"{accountId}\" AND updated>=\"{startingFromDate:yyyy-MM-dd}\"";
+            var encodedJql = Uri.EscapeDataString(jql);
+            var url = $"/rest/api/2/search?jql={encodedJql}&expand=changelog";
+            
+            var response = await _httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
+            
             var content = await response.Content.ReadAsStringAsync();
 
             var options = new JsonSerializerOptions
@@ -61,6 +67,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         {
             var response = await _httpClient.GetAsync($"/rest/api/2/issue/{issueKey}/worklog");
             response.EnsureSuccessStatusCode();
+            
             var content = await response.Content.ReadAsStringAsync();
 
             var options = new JsonSerializerOptions
