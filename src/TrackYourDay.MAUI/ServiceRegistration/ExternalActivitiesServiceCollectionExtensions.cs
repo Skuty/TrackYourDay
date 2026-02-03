@@ -3,7 +3,7 @@ using Polly;
 using Polly.Extensions.Http;
 using TrackYourDay.Core.ApplicationTrackers;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
-using TrackYourDay.Core.ApplicationTrackers.Jira;
+
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
 using TrackYourDay.Core.Persistence;
 using TrackYourDay.Infrastructure.Persistence;
@@ -57,9 +57,11 @@ namespace TrackYourDay.MAUI.ServiceRegistration
             })
             .AddPolicyHandler(GetCircuitBreakerPolicy(jiraSettings.CircuitBreakerThreshold, jiraSettings.CircuitBreakerDurationMinutes))
             .AddPolicyHandler(GetRetryPolicy())
-            .AddHttpMessageHandler<JiraHttpLoggingHandler>();
-
-            services.AddTransient<JiraHttpLoggingHandler>();
+            .AddHttpMessageHandler(sp =>
+            {
+                var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
+                return new HttpLoggingHandler(logger, "Jira");
+            });
 
             return services;
         }
