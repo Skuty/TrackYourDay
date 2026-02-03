@@ -26,57 +26,37 @@ public class HttpLoggingHandler : DelegatingHandler
         CancellationToken cancellationToken)
     {
         var stopwatch = Stopwatch.StartNew();
-        HttpResponseMessage? response = null;
-        Exception? exception = null;
+        var requestUri = request.RequestUri?.ToString() ?? "unknown";
 
+        _logger.LogDebug("{ServiceName} HTTP {Method} {Uri}", _serviceName, request.Method, requestUri);
+
+        HttpResponseMessage response;
         try
         {
-            response = await base.SendAsync(request, cancellationToken);
-            return response;
+            response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            exception = ex;
+            _logger.LogError(ex, "{ServiceName} HTTP {Method} {Uri} failed after {ElapsedMs}ms",
+                _serviceName, request.Method, requestUri, stopwatch.ElapsedMilliseconds);
             throw;
         }
-        finally
-        {
-            stopwatch.Stop();
-            LogHttpRequest(request, response, stopwatch.Elapsed, exception);
-        }
-    }
 
-    private void LogHttpRequest(
-        HttpRequestMessage request,
-        HttpResponseMessage? response,
-        TimeSpan duration,
-        Exception? exception)
-    {
-        var method = request.Method.Method;
-        var uri = request.RequestUri?.ToString() ?? "unknown";
-        var statusCode = response?.StatusCode;
-        var statusCodeInt = (int?)statusCode;
-        var durationMs = duration.TotalMilliseconds;
+        stopwatch.Stop();
 
-        if (exception != null)
+        if (response.IsSuccessStatusCode)
         {
-            _logger.LogInformation(
-                "{ServiceName} HTTP {Method} {Uri} failed after {DurationMs}ms with exception: {ExceptionMessage}",
-                _serviceName,
-                method,
-                uri,
-                durationMs,
-                exception.Message);
+            _logger.LogDebug("{ServiceName} HTTP {Method} {Uri} completed with {StatusCode} in {ElapsedMs}ms",
+                _serviceName, request.Method, requestUri, (int)response.StatusCode, stopwatch.ElapsedMilliseconds);
         }
         else
         {
-            _logger.LogInformation(
-                "{ServiceName} HTTP {Method} {Uri} completed with status {StatusCode} in {DurationMs}ms",
-                _serviceName,
-                method,
-                uri,
-                statusCodeInt,
-                durationMs);
+            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            _logger.LogError(
+                "{ServiceName} HTTP {Method} {Uri} failed with {StatusCode} in {ElapsedMs}ms. Response: {Response}",
+                _serviceName, request.Method, requestUri, (int)response.StatusCode, stopwatch.ElapsedMilliseconds, errorContent);
         }
+
+        return response;
     }
 }

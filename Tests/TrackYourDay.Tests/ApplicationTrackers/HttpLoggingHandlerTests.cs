@@ -20,7 +20,7 @@ public class HttpLoggingHandlerTests
     }
 
     [Fact]
-    public async Task GivenSuccessfulRequest_WhenSendingAsync_ThenLogsInformationWithStatusAndDuration()
+    public async Task GivenSuccessfulRequest_WhenSendingAsync_ThenLogsDebugWithStatusAndDuration()
     {
         // Given
         var response = new HttpResponseMessage(HttpStatusCode.OK);
@@ -46,7 +46,7 @@ public class HttpLoggingHandlerTests
         // Then
         _loggerMock.Verify(
             x => x.Log(
-                LogLevel.Information,
+                LogLevel.Debug,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("TestService") && 
                                                 v.ToString()!.Contains("200") &&
@@ -57,10 +57,14 @@ public class HttpLoggingHandlerTests
     }
 
     [Fact]
-    public async Task GivenFailedRequest_WhenSendingAsync_ThenLogsInformationWithStatusAndDuration()
+    public async Task GivenFailedRequest_WhenSendingAsync_ThenLogsErrorWithStatusAndResponseBody()
     {
         // Given
-        var response = new HttpResponseMessage(HttpStatusCode.BadRequest);
+        var errorBody = "{\"error\": \"Invalid request\"}";
+        var response = new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent(errorBody)
+        };
         _innerHandlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -83,18 +87,19 @@ public class HttpLoggingHandlerTests
         // Then
         _loggerMock.Verify(
             x => x.Log(
-                LogLevel.Information,
+                LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("TestService") && 
                                                 v.ToString()!.Contains("400") &&
-                                                v.ToString()!.Contains("ms")),
+                                                v.ToString()!.Contains("ms") &&
+                                                v.ToString()!.Contains(errorBody)),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task GivenExceptionDuringRequest_WhenSendingAsync_ThenLogsInformationWithExceptionMessage()
+    public async Task GivenExceptionDuringRequest_WhenSendingAsync_ThenLogsErrorWithExceptionMessage()
     {
         // Given
         var expectedException = new HttpRequestException("Connection failed");
@@ -121,12 +126,12 @@ public class HttpLoggingHandlerTests
         await act.Should().ThrowAsync<HttpRequestException>();
         _loggerMock.Verify(
             x => x.Log(
-                LogLevel.Information,
+                LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("TestService") && 
-                                                v.ToString()!.Contains("Connection failed") &&
+                                                v.ToString()!.Contains("failed after") &&
                                                 v.ToString()!.Contains("ms")),
-                It.IsAny<Exception>(),
+                It.Is<Exception>(ex => ex == expectedException),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
