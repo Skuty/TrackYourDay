@@ -20,8 +20,21 @@ jobs:
         with:
           dotnet-version: 9.0.x  
 
+      - name: Cache MAUI workloads
+        id: cache-maui-workloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Program Files\dotnet\sdk-manifests
+            C:\Program Files\dotnet\packs
+            C:\Program Files\dotnet\metadata
+          key: ${{ runner.os }}-maui-${{ hashFiles('global.json') }}
+          restore-keys: |
+            ${{ runner.os }}-maui-
+
       - name: Install MAUI workloads
-        run: dotnet workload install maui
+        if: steps.cache-maui-workloads.outputs.cache-hit != 'true'
+        run: dotnet workload install maui --skip-manifest-update
 
       - name: Cache NuGet packages
         id: cache-nugetpackages
@@ -33,13 +46,27 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        if: steps.cache-nugetpackages.outputs.cache-hit != 'true'
         run: dotnet restore
       
-      - name: Build
-        run: dotnet build --configuration Release
+      - name: Build (Debug - PR)
+        if: github.event_name == 'pull_request'
+        run: dotnet build --configuration Debug --no-restore
+        env:
+          # Skip expensive WASM optimizations during PR builds
+          RunAOTCompilation: false
+          WasmBuildNative: false
+          BlazorEnableCompression: false
+
+      - name: Build (Release - Main)
+        if: github.ref == 'refs/heads/main'
+        run: dotnet build --configuration Release --no-restore
+        env:
+          # Skip expensive WASM optimizations during CI
+          RunAOTCompilation: false
+          WasmBuildNative: false
+          BlazorEnableCompression: false
 
       - name: Test
-        run: dotnet test --configuration Release --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
+        run: dotnet test --configuration ${{ github.event_name == 'pull_request' && 'Debug' || 'Release' }} --no-build --logger "trx;LogFileName=test_results.xml" --filter "Category!=Integration"
         env:
           VSTEST_LOG_PATH: test_results.xml
