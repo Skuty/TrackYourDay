@@ -51,21 +51,29 @@ public class HttpLoggingHandler : DelegatingHandler
         }
         else
         {
-            var contentBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-            var originalContent = response.Content;
-            
-            response.Content = new ByteArrayContent(contentBytes);
-            foreach (var header in originalContent.Headers)
-            {
-                response.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
-            }
-
-            var errorContent = System.Text.Encoding.UTF8.GetString(contentBytes);
+            var errorContent = await ReadAndRestoreResponseContentAsync(response, cancellationToken).ConfigureAwait(false);
             _logger.LogError(
                 "{ServiceName} HTTP {Method} {Uri} failed with {StatusCode} in {ElapsedMs}ms. Response: {Response}",
                 _serviceName, request.Method, requestUri, (int)response.StatusCode, stopwatch.ElapsedMilliseconds, errorContent);
         }
 
         return response;
+    }
+
+    private static async Task<string> ReadAndRestoreResponseContentAsync(
+        HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        var contentBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+        
+        var originalContent = response.Content;
+        response.Content = new ByteArrayContent(contentBytes);
+        
+        foreach (var header in originalContent.Headers)
+        {
+            response.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
+
+        return System.Text.Encoding.UTF8.GetString(contentBytes);
     }
 }
