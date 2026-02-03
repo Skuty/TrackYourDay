@@ -3,7 +3,7 @@ using Polly;
 using Polly.Extensions.Http;
 using TrackYourDay.Core.ApplicationTrackers;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
-
+using TrackYourDay.Core.ApplicationTrackers.Jira;
 using TrackYourDay.Core.ApplicationTrackers.Persistence;
 using TrackYourDay.Core.Persistence;
 using TrackYourDay.Infrastructure.Persistence;
