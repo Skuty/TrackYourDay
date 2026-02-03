@@ -51,7 +51,16 @@ public class HttpLoggingHandler : DelegatingHandler
         }
         else
         {
-            var errorContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var contentBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+            var originalContent = response.Content;
+            
+            response.Content = new ByteArrayContent(contentBytes);
+            foreach (var header in originalContent.Headers)
+            {
+                response.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            var errorContent = System.Text.Encoding.UTF8.GetString(contentBytes);
             _logger.LogError(
                 "{ServiceName} HTTP {Method} {Uri} failed with {StatusCode} in {ElapsedMs}ms. Response: {Response}",
                 _serviceName, request.Method, requestUri, (int)response.StatusCode, stopwatch.ElapsedMilliseconds, errorContent);

@@ -37,7 +37,7 @@ public class HttpLoggingHandlerIntegrationTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         loggerMock.Verify(
             x => x.Log(
-                LogLevel.Information,
+                LogLevel.Debug,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("TestService") && 
                                                 v.ToString()!.Contains("200")),
