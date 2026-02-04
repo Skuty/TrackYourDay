@@ -20,20 +20,7 @@ jobs:
         with:
           dotnet-version: 9.0.x  
 
-      - name: Cache MAUI workloads
-        id: cache-maui-workloads
-        uses: actions/cache@v4
-        with:
-          path: |
-            C:\Program Files\dotnet\sdk-manifests
-            C:\Program Files\dotnet\packs
-            C:\Program Files\dotnet\metadata
-          key: ${{ runner.os }}-maui-${{ hashFiles('global.json') }}
-          restore-keys: |
-            ${{ runner.os }}-maui-
-
       - name: Install MAUI workloads
-        if: steps.cache-maui-workloads.outputs.cache-hit != 'true'
         run: dotnet workload install maui --skip-manifest-update
 
       - name: Cache NuGet packages
