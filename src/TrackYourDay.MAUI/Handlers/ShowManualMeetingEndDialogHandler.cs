@@ -32,7 +32,10 @@ internal sealed class ShowManualMeetingEndDialogHandler
 
         // Reuse existing confirmation dialog handler
         await _publisher.Publish(
-            new MeetingEndConfirmationRequestedEvent(ongoingMeeting.Guid, ongoingMeeting.Title),
+            new MeetingEndConfirmationRequestedEvent(
+                ongoingMeeting.Guid, 
+                ongoingMeeting.Title,
+                ongoingMeeting.StartDate),
             cancellationToken);
     }
 }

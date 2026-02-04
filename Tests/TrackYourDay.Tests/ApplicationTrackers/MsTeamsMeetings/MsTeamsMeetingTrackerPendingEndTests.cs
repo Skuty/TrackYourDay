@@ -34,7 +34,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
     }
 
     [Fact]
-    public void GivenOngoingMeeting_WhenNoLongerRecognized_ThenPublishesPendingEndEvent()
+    public async Task GivenOngoingMeeting_WhenNoLongerRecognized_ThenPublishesPendingEndEvent()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
@@ -44,19 +44,21 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
 
         // When
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         // Then
         _publisherMock.Verify(
             x => x.Publish(
-                It.Is<MeetingEndConfirmationRequestedEvent>(e => e.MeetingGuid == meeting.Guid),
+                It.Is<MeetingEndConfirmationRequestedEvent>(e => 
+                    e.MeetingGuid == meeting.Guid &&
+                    e.StartTime == meeting.StartDate),
                 CancellationToken.None),
             Times.Once);
         
@@ -65,7 +67,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
     }
 
     [Fact]
-    public void GivenPendingEnd_WhenMeetingRecognizedAgain_ThenCancelsPendingEnd()
+    public async Task GivenPendingEnd_WhenMeetingRecognizedAgain_ThenCancelsPendingEnd()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
@@ -75,13 +77,13 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         var sameMeeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
         _meetingDiscoveryStrategyMock
@@ -89,7 +91,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Returns((sameMeeting, matchedRuleId));
 
         // When
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         // Then
         _tracker.GetOngoingMeeting().Should().NotBeNull();
@@ -99,7 +101,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
     }
 
     [Fact]
-    public void GivenPendingEnd_WhenNotExpired_ThenWaitsForConfirmation()
+    public async Task GivenPendingEnd_WhenNotExpired_ThenWaitsForConfirmation()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
@@ -109,18 +111,18 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _clockMock.Setup(x => x.Now).Returns(_clockMock.Object.Now.AddMinutes(1));
 
         // When
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         // Then
         _publisherMock.Verify(
@@ -129,7 +131,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
     }
 
     [Fact]
-    public void GivenPendingEnd_WhenDifferentMeetingRecognized_ThenBlocksNewMeeting()
+    public async Task GivenPendingEnd_WhenDifferentMeetingRecognized_ThenBlocksNewMeeting()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
@@ -139,13 +141,13 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         var differentMeeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Different Meeting");
         _meetingDiscoveryStrategyMock
@@ -153,7 +155,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Returns((differentMeeting, Guid.NewGuid()));
 
         // When
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         // Then
         _tracker.GetOngoingMeeting().Should().BeNull();
@@ -179,13 +181,13 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         var customDescription = "Discussed project timeline";
 
@@ -221,13 +223,13 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         _clockMock.Setup(x => x.Now).Returns(currentTime);
 
@@ -259,13 +261,13 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         // When
         var act = async () => await _tracker.ConfirmMeetingEndAsync(meeting.Guid, null, invalidEndTime);
@@ -291,13 +293,13 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _clockMock.Setup(x => x.Now).Returns(currentTime);
 
@@ -314,7 +316,7 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
     }
 
     [Fact]
-    public void GivenPendingEnd_WhenCancelledViaCancelPendingEnd_ThenReturnsToActiveState()
+    public async Task GivenPendingEnd_WhenCancelledViaCancelPendingEnd_ThenReturnsToActiveState()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clockMock.Object.Now, "Test Meeting");
@@ -324,13 +326,13 @@ public sealed class MsTeamsMeetingTrackerPendingEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         // When
         _tracker.CancelPendingEnd(meeting.Guid);

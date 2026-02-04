@@ -131,29 +131,18 @@
         if (Guid.TryParse(MeetingGuidString, out meetingGuid))
         {
             var uri = new Uri(navigationManager.Uri);
-            var query = uri.Query;
+            var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
             
-            if (!string.IsNullOrEmpty(query) && query.Contains("title="))
-            {
-                var titleParam = query.Split('&')
-                    .Select(p => p.TrimStart('?'))
-                    .FirstOrDefault(p => p.StartsWith("title="));
-                    
-                if (titleParam != null)
-                {
-                    meetingTitle = System.Web.HttpUtility.UrlDecode(titleParam.Substring("title=".Length));
-                }
-            }
+            meetingTitle = queryParams["title"];
             
-            // Get meeting start time from tracker
-            var ongoing = meetingService.GetOngoingMeeting();
-            if (ongoing?.Guid == meetingGuid)
+            // Parse start time from event payload (passed as ticks)
+            if (long.TryParse(queryParams["startTime"], out var startTimeTicks))
             {
-                startTime = ongoing.StartDate != DateTime.MinValue ? ongoing.StartDate : DateTime.Now;
+                startTime = new DateTime(startTimeTicks);
             }
             else
             {
-                // Fallback: if meeting not found, use current time
+                // Fallback only if parameter missing
                 startTime = DateTime.Now;
             }
             

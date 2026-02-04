@@ -8,7 +8,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.MsTeams;
 /// Singleton tracker for MS Teams meeting lifecycle.
 /// Blocking state machine: PENDING state blocks all new meeting recognition.
 /// Auto-confirmation handled in UI layer (not Core).
-/// NOT thread-safe - caller must ensure single-threaded access.
+/// Thread-safe via Quartz DisallowConcurrentExecution on calling job.
 /// </summary>
 public sealed class MsTeamsMeetingTracker
 {
@@ -35,7 +35,7 @@ public sealed class MsTeamsMeetingTracker
         _logger = logger;
     }
 
-    public void RecognizeActivity()
+    public async Task RecognizeActivityAsync()
     {
         var pendingEnd = _pendingEndMeeting;
 
@@ -79,7 +79,8 @@ public sealed class MsTeamsMeetingTracker
         {
             _ongoingMeeting = recognized;
             _matchedRuleId = matchedRuleId;
-            _publisher.Publish(new MeetingStartedEvent(Guid.NewGuid(), recognized), CancellationToken.None);
+            await _publisher.Publish(new MeetingStartedEvent(Guid.NewGuid(), recognized), CancellationToken.None)
+                .ConfigureAwait(false);
             _logger.LogInformation("Meeting started: {Title}", recognized.Title);
             return;
         }
@@ -97,12 +98,13 @@ public sealed class MsTeamsMeetingTracker
             _pendingEndDetectedAt = _clock.Now;
             _ongoingMeeting = null;
             
-            _publisher.Publish(
+            await _publisher.Publish(
                 new MeetingEndConfirmationRequestedEvent(
                     ongoing.Guid,
-                    ongoing.Title),
+                    ongoing.Title,
+                    ongoing.StartDate),
                 CancellationToken.None
-            );
+            ).ConfigureAwait(false);
             
             _logger.LogInformation("Meeting end detected, awaiting confirmation: {Title}", ongoing.Title);
         }
