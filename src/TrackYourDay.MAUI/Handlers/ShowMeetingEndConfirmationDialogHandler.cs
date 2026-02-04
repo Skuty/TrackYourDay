@@ -7,7 +7,8 @@ namespace TrackYourDay.MAUI.Handlers;
 
 /// <summary>
 /// Shows confirmation dialog when meeting end is detected.
-/// Passes meeting data via URL parameters. Window allows minimize and can be moved behind other windows.
+/// Passes all meeting data via URL parameters to avoid UI querying tracker state.
+/// Window allows minimize and can be moved behind other windows.
 /// </summary>
 internal sealed class ShowMeetingEndConfirmationDialogHandler 
     : INotificationHandler<MeetingEndConfirmationRequestedEvent>
@@ -15,7 +16,8 @@ internal sealed class ShowMeetingEndConfirmationDialogHandler
     public Task Handle(MeetingEndConfirmationRequestedEvent notification, CancellationToken cancellationToken)
     {
         var encodedTitle = HttpUtility.UrlEncode(notification.MeetingTitle);
-        var path = $"/MeetingEndConfirmation/{notification.MeetingGuid}?title={encodedTitle}";
+        var startTimeTicks = notification.StartTime.Ticks;
+        var path = $"/MeetingEndConfirmation/{notification.MeetingGuid}?title={encodedTitle}&startTime={startTimeTicks}";
         MauiPageFactory.OpenWebPageInNewWindow(path, 600, 480, allowMinimize: true, alwaysOnTop: false);
 
         return Task.CompletedTask;

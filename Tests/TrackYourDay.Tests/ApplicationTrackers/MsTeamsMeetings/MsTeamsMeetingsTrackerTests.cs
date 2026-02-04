@@ -31,7 +31,7 @@ public class MsTeamsMeetingsTrackerTests
     }
 
     [Fact]
-    public void GivenMeetingIsNotStarted_WhenMeetingIsStarted_ThenMeetingStartedEventIsPublished()
+    public async Task GivenMeetingIsNotStarted_WhenMeetingIsStarted_ThenMeetingStartedEventIsPublished()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clock.Now, "Test meeting");
@@ -41,14 +41,14 @@ public class MsTeamsMeetingsTrackerTests
             .Returns((meeting, matchedRuleId));
 
         // When
-        _msTeamsMeetingsTracker.RecognizeActivity();
+        await _msTeamsMeetingsTracker.RecognizeActivityAsync();
 
         // Then
         _publisherMock.Verify(x => x.Publish(It.IsAny<MeetingStartedEvent>(), CancellationToken.None), Times.Once);
     }
 
     [Fact]
-    public void GivenMeetingIsOngoing_WhenSameMeetingRecognized_ThenMeetingStartedEventIsNotPublished()
+    public async Task GivenMeetingIsOngoing_WhenSameMeetingRecognized_ThenMeetingStartedEventIsNotPublished()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clock.Now, "Test meeting");
@@ -58,21 +58,21 @@ public class MsTeamsMeetingsTrackerTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _msTeamsMeetingsTracker.RecognizeActivity();
+        await _msTeamsMeetingsTracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns((meeting, matchedRuleId));
 
         // When
-        _msTeamsMeetingsTracker.RecognizeActivity();
+        await _msTeamsMeetingsTracker.RecognizeActivityAsync();
 
         // Then
         _publisherMock.Verify(x => x.Publish(It.IsAny<MeetingStartedEvent>(), CancellationToken.None), Times.Once);
     }
 
     [Fact]
-    public void GivenMeetingIsStarted_WhenMeetingEnds_ThenMeetingEndConfirmationRequestedEventIsPublished()
+    public async Task GivenMeetingIsStarted_WhenMeetingEnds_ThenMeetingEndConfirmationRequestedEventIsPublished()
     {
         // Given
         var meeting = new StartedMeeting(Guid.NewGuid(), _clock.Now, "Test meeting");
@@ -82,14 +82,14 @@ public class MsTeamsMeetingsTrackerTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _msTeamsMeetingsTracker.RecognizeActivity();
+        await _msTeamsMeetingsTracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
 
         // When
-        _msTeamsMeetingsTracker.RecognizeActivity();
+        await _msTeamsMeetingsTracker.RecognizeActivityAsync();
 
         // Then
         _publisherMock.Verify(x => x.Publish(It.IsAny<MeetingEndConfirmationRequestedEvent>(), CancellationToken.None), Times.Once);
@@ -107,13 +107,13 @@ public class MsTeamsMeetingsTrackerTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _msTeamsMeetingsTracker.RecognizeActivity();
+        await _msTeamsMeetingsTracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _msTeamsMeetingsTracker.RecognizeActivity();
+        await _msTeamsMeetingsTracker.RecognizeActivityAsync();
         
         await _msTeamsMeetingsTracker.ConfirmMeetingEndAsync(meetingGuid, "Discussed project requirements");
 
@@ -137,13 +137,13 @@ public class MsTeamsMeetingsTrackerTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _msTeamsMeetingsTracker.RecognizeActivity();
+        await _msTeamsMeetingsTracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _msTeamsMeetingsTracker.RecognizeActivity();
+        await _msTeamsMeetingsTracker.RecognizeActivityAsync();
         
         await _msTeamsMeetingsTracker.ConfirmMeetingEndAsync(meetingGuid);
 

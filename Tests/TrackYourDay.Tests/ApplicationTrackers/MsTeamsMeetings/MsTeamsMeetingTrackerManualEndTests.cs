@@ -43,7 +43,7 @@ public class MsTeamsMeetingTrackerManualEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         _publisherMock.Invocations.Clear();
 
         // When
@@ -70,7 +70,7 @@ public class MsTeamsMeetingTrackerManualEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         // When
         await _tracker.EndMeetingManuallyAsync(meetingGuid, "Custom Description");
@@ -94,7 +94,7 @@ public class MsTeamsMeetingTrackerManualEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         var customEndTime = startTime.AddMinutes(30);
         _clockMock.Setup(x => x.Now).Returns(startTime.AddMinutes(40));
@@ -138,7 +138,7 @@ public class MsTeamsMeetingTrackerManualEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         // When
         var act = async () => await _tracker.EndMeetingManuallyAsync(wrongGuid);
@@ -161,7 +161,7 @@ public class MsTeamsMeetingTrackerManualEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         var invalidEndTime = startTime.AddMinutes(-10);
         _clockMock.Setup(x => x.Now).Returns(startTime.AddMinutes(30));
@@ -188,7 +188,7 @@ public class MsTeamsMeetingTrackerManualEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _clockMock.Setup(x => x.Now).Returns(currentTime);
         var futureEndTime = currentTime.AddMinutes(10);
@@ -214,7 +214,7 @@ public class MsTeamsMeetingTrackerManualEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         var tooLongDescription = new string('A', 501);
 
@@ -239,7 +239,7 @@ public class MsTeamsMeetingTrackerManualEndTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
 
         // When
         await _tracker.EndMeetingManuallyAsync(meetingGuid);

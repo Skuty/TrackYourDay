@@ -43,7 +43,7 @@ public sealed class MsTeamsMeetingTrackerValidationTests
         
         _clockMock.Setup(x => x.Now).Returns(startTime);
         
-        var meeting = StartMeetingAndTransitionToPending(startTime);
+        var meeting = await StartMeetingAndTransitionToPending(startTime);
         
         _clockMock.Setup(x => x.Now).Returns(currentTime);
 
@@ -64,7 +64,7 @@ public sealed class MsTeamsMeetingTrackerValidationTests
         
         _clockMock.Setup(x => x.Now).Returns(startTime);
         
-        var meeting = StartMeetingAndTransitionToPending(startTime);
+        var meeting = await StartMeetingAndTransitionToPending(startTime);
 
         // When
         var act = async () => await _tracker.ConfirmMeetingEndAsync(meeting.Guid, null, invalidEndTime);
@@ -83,7 +83,7 @@ public sealed class MsTeamsMeetingTrackerValidationTests
         
         _clockMock.Setup(x => x.Now).Returns(startTime);
         
-        var meeting = StartMeetingAndTransitionToPending(startTime);
+        var meeting = await StartMeetingAndTransitionToPending(startTime);
         
         _clockMock.Setup(x => x.Now).Returns(currentTime);
 
@@ -102,7 +102,7 @@ public sealed class MsTeamsMeetingTrackerValidationTests
         
         _clockMock.Setup(x => x.Now).Returns(startTime);
         
-        var meeting = StartMeetingAndTransitionToPending(startTime);
+        var meeting = await StartMeetingAndTransitionToPending(startTime);
 
         // When
         var act = async () => await _tracker.ConfirmMeetingEndAsync(meeting.Guid, null, startTime);
@@ -121,7 +121,7 @@ public sealed class MsTeamsMeetingTrackerValidationTests
         
         _clockMock.Setup(x => x.Now).Returns(startTime);
         
-        var meeting = StartMeetingAndTransitionToPending(startTime);
+        var meeting = await StartMeetingAndTransitionToPending(startTime);
         
         _clockMock.Setup(x => x.Now).Returns(currentTime);
 
@@ -159,7 +159,7 @@ public sealed class MsTeamsMeetingTrackerValidationTests
         
         _clockMock.Setup(x => x.Now).Returns(startTime);
         
-        var meeting = StartMeetingAndTransitionToPending(startTime);
+        var meeting = await StartMeetingAndTransitionToPending(startTime);
         
         _clockMock.Setup(x => x.Now).Returns(currentTime);
 
@@ -180,7 +180,7 @@ public sealed class MsTeamsMeetingTrackerValidationTests
         
         _clockMock.Setup(x => x.Now).Returns(startTime);
         
-        var meeting = StartMeetingAndTransitionToPending(startTime);
+        var meeting = await StartMeetingAndTransitionToPending(startTime);
         
         _clockMock.Setup(x => x.Now).Returns(currentTime);
 
@@ -201,7 +201,7 @@ public sealed class MsTeamsMeetingTrackerValidationTests
         
         _clockMock.Setup(x => x.Now).Returns(startTime);
         
-        var meeting = StartMeetingAndTransitionToPending(startTime);
+        var meeting = await StartMeetingAndTransitionToPending(startTime);
 
         // When
         var act = async () => await _tracker.ConfirmMeetingEndAsync(meeting.Guid, null, invalidEndTime);
@@ -211,7 +211,7 @@ public sealed class MsTeamsMeetingTrackerValidationTests
             .WithMessage("*cannot be before meeting start time*");
     }
 
-    private StartedMeeting StartMeetingAndTransitionToPending(DateTime startTime)
+    private async Task<StartedMeeting> StartMeetingAndTransitionToPending(DateTime startTime)
     {
         var meeting = new StartedMeeting(Guid.NewGuid(), startTime, "Test Meeting");
         var matchedRuleId = Guid.NewGuid();
@@ -220,13 +220,13 @@ public sealed class MsTeamsMeetingTrackerValidationTests
             .Setup(x => x.RecognizeMeeting(null, null))
             .Returns((meeting, matchedRuleId));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         _meetingDiscoveryStrategyMock
             .Setup(x => x.RecognizeMeeting(meeting, matchedRuleId))
             .Returns(((StartedMeeting?)null, (Guid?)null));
         
-        _tracker.RecognizeActivity();
+        await _tracker.RecognizeActivityAsync();
         
         return meeting;
     }
