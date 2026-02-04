@@ -12,13 +12,16 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
     internal sealed class GitLabFetchJob : IJob
     {
         private readonly GitLabTracker _tracker;
+        private readonly IGitLabCurrentStateService _currentStateService;
         private readonly ILogger<GitLabFetchJob> _logger;
 
         public GitLabFetchJob(
             GitLabTracker tracker,
+            IGitLabCurrentStateService currentStateService,
             ILogger<GitLabFetchJob> logger)
         {
             _tracker = tracker;
+            _currentStateService = currentStateService;
             _logger = logger;
         }
 
@@ -27,10 +30,13 @@ namespace TrackYourDay.MAUI.BackgroundJobs.ExternalActivities
             try
             {
                 _logger.LogInformation("GitLab fetch job started");
-                
+
                 var newActivityCount = await _tracker.RecognizeActivitiesAsync(context.CancellationToken).ConfigureAwait(false);
-                
-                _logger.LogInformation("GitLab fetch job completed: {NewCount} new activities", newActivityCount);
+                await _currentStateService.SyncStateFromRemoteService(context.CancellationToken).ConfigureAwait(false);
+
+                _logger.LogInformation(
+                    "GitLab fetch job completed: {NewCount} new activities",
+                    newActivityCount);
             }
             catch (Exception ex)
             {

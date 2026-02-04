@@ -4,20 +4,20 @@ using TrackYourDay.Core.ApplicationTrackers.GitLab.Models;
 namespace TrackYourDay.Core.ApplicationTrackers.GitLab;
 
 /// <summary>
-/// Service for managing GitLab state snapshots.
+/// Synchronizes current state of assigned GitLab work items.
 /// </summary>
-public sealed class GitLabStateService : IGitLabStateService
+public sealed class GitLabCurrentStateService : IGitLabCurrentStateService
 {
     private readonly IGitLabRestApiClient _apiClient;
     private readonly IGitLabStateRepository _repository;
     private readonly IClock _clock;
-    private readonly ILogger<GitLabStateService> _logger;
+    private readonly ILogger<GitLabCurrentStateService> _logger;
 
-    public GitLabStateService(
+    public GitLabCurrentStateService(
         IGitLabRestApiClient apiClient,
         IGitLabStateRepository repository,
         IClock clock,
-        ILogger<GitLabStateService> logger)
+        ILogger<GitLabCurrentStateService> logger)
     {
         _apiClient = apiClient;
         _repository = repository;
@@ -25,7 +25,7 @@ public sealed class GitLabStateService : IGitLabStateService
         _logger = logger;
     }
 
-    public async Task<GitLabStateSnapshot> CaptureCurrentStateAsync(CancellationToken cancellationToken = default)
+    public async Task SyncStateFromRemoteService(CancellationToken cancellationToken)
     {
         var user = await _apiClient.GetCurrentUser().ConfigureAwait(false);
         var userId = new GitLabUserId(user.Id);
@@ -51,19 +51,8 @@ public sealed class GitLabStateService : IGitLabStateService
         await _repository.SaveAsync(snapshot, cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
-            "Captured GitLab state: {ArtifactCount} artifacts",
-            snapshot.Artifacts.Count);
-
-        return snapshot;
-    }
-
-    public async Task<GitLabStateSnapshot?> GetLatestSnapshotAsync(CancellationToken cancellationToken = default)
-    {
-        return await _repository.GetLatestAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    public async Task<List<GitLabStateSnapshot>> GetSnapshotsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
-    {
-        return await _repository.GetByDateRangeAsync(startDate, endDate, cancellationToken).ConfigureAwait(false);
+            "Synchronized {ArtifactCount} GitLab artifacts for user {UserId}",
+            snapshot.Artifacts.Count,
+            userId.Value);
     }
 }
