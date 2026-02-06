@@ -11,7 +11,7 @@ namespace TrackYourDay.Web.Components;
 public partial class ExternalArtifactsComponent : IDisposable
 {
     [Inject] private IJiraIssueRepository? JiraRepository { get; set; }
-    [Inject] private IGitLabStateService? GitLabStateService { get; set; }
+    [Inject] private IGitLabStateRepository? GitLabStateRepository { get; set; }
     [Inject] private IJiraSettingsService? JiraSettingsService { get; set; }
     [Inject] private IClock? Clock { get; set; }
 
@@ -60,9 +60,9 @@ public partial class ExternalArtifactsComponent : IDisposable
             }
 
             // Load GitLab artifacts
-            if (GitLabStateService != null)
+            if (GitLabStateRepository != null)
             {
-                var snapshot = await GitLabStateService.GetLatestSnapshotAsync(CancellationToken.None);
+                var snapshot = await GitLabStateRepository.GetLatestAsync(CancellationToken.None);
                 _gitLabArtifacts = snapshot?.Artifacts ?? [];
             }
 
