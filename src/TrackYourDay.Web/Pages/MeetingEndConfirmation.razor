@@ -72,12 +72,67 @@
                     </MudStack>
                 </MudStack>
 
-                <MudTextField @bind-Value="customDescription"
+                 <MudTextField @bind-Value="customDescription"
                               Label="Description (optional)"
                               Placeholder="@meetingTitle"
                               Variant="Variant.Outlined"
                               Lines="2"
                               Margin="Margin.Dense" />
+
+                <MudDivider />
+
+                <MudText Typo="Typo.subtitle2" Class="mt-2">Or Postpone Check:</MudText>
+
+                <MudStack Spacing="2">
+                    <MudStack Row="true" Spacing="1" Justify="Justify.Center">
+                        <MudButton Variant="Variant.Text" 
+                                   Size="Size.Small" 
+                                   Color="Color.Info"
+                                   OnClick="@(() => Postpone(5))"
+                                   Disabled="isProcessing"
+                                   StartIcon="@Icons.Material.Filled.Schedule">
+                            +5m
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" 
+                                   Size="Size.Small" 
+                                   Color="Color.Info"
+                                   OnClick="@(() => Postpone(10))"
+                                   Disabled="isProcessing"
+                                   StartIcon="@Icons.Material.Filled.Schedule">
+                            +10m
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" 
+                                   Size="Size.Small" 
+                                   Color="Color.Info"
+                                   OnClick="@(() => Postpone(15))"
+                                   Disabled="isProcessing"
+                                   StartIcon="@Icons.Material.Filled.Schedule">
+                            +15m
+                        </MudButton>
+                    </MudStack>
+
+                    <MudTimePicker Time="@postponeTime"
+                                   TimeChanged="OnPostponeTimeChanged"
+                                   Label="Postpone Until"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   Editable="true"
+                                   AmPm="false"
+                                   TimeFormat="HH:mm"
+                                   TimeEditFormat="HH:mm"
+                                   PickerVariant="PickerVariant.Dialog" />
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Info"
+                               FullWidth="true" 
+                               OnClick="PostponeUntilSelectedTime"
+                               Disabled="isProcessing || !postponeTime.HasValue"
+                               StartIcon="@Icons.Material.Filled.Schedule">
+                        Postpone Until Selected Time
+                    </MudButton>
+                </MudStack>
+
+                <MudDivider Class="my-2" />
 
                 @if (!string.IsNullOrEmpty(errorMessage))
                 {
@@ -125,6 +180,7 @@
     private bool showValidation;
     private bool _userResponded;
     private CancellationTokenSource _timeoutCts = new();
+    private TimeSpan? postponeTime;
 
     protected override void OnInitialized()
     {
@@ -297,6 +353,72 @@
     private async Task CloseWindow()
     {
         await mediator.Send(new CloseWindowCommand(ParentMauiWindowId));
+    }
+
+    private void OnPostponeTimeChanged(TimeSpan? newTime)
+    {
+        postponeTime = newTime;
+        StateHasChanged();
+    }
+
+    private async Task Postpone(int minutes)
+    {
+        if (string.IsNullOrEmpty(meetingTitle) || isProcessing)
+            return;
+
+        var postponeUntil = DateTime.Now.AddMinutes(minutes);
+        await ExecutePostpone(postponeUntil);
+    }
+
+    private async Task PostponeUntilSelectedTime()
+    {
+        if (!postponeTime.HasValue || string.IsNullOrEmpty(meetingTitle) || isProcessing)
+            return;
+
+        var today = DateTime.Today;
+        var selectedTime = today.Add(postponeTime.Value);
+        
+        // If selected time is in the past today, assume user means tomorrow
+        if (selectedTime < DateTime.Now)
+        {
+            selectedTime = selectedTime.AddDays(1);
+        }
+        
+        // Validate not more than 24 hours
+        if (selectedTime > DateTime.Now.AddHours(24))
+        {
+            errorMessage = "Postpone time cannot exceed 24 hours from now";
+            StateHasChanged();
+            return;
+        }
+
+        await ExecutePostpone(selectedTime);
+    }
+
+    private async Task ExecutePostpone(DateTime postponeUntil)
+    {
+        _userResponded = true;
+        _timeoutCts.Cancel();
+        isProcessing = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            await meetingService.PostponeCheckAsync(meetingGuid, postponeUntil);
+            await CloseWindow();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+            isProcessing = false;
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            errorMessage = "An error occurred while postponing. Please try again.";
+            isProcessing = false;
+            StateHasChanged();
+        }
     }
 
     public void Dispose()
