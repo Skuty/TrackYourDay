@@ -133,12 +133,15 @@ namespace TrackYourDay.Core.ApplicationTrackers.Breaks
 
         public void RevokeBreak(Guid breakGuid, DateTime revokeDate)
         {
-            // TODO: Change this approach as mentioned in tests for BreakTracker as it will cause issues in future
-            endedBreaks.TryRemove(breakGuid, out var endedBreak);
-            if (endedBreak is null)
+            if (!endedBreaks.TryGetValue(breakGuid, out var endedBreak))
             {
                 throw new ArgumentException($"Break with guid {breakGuid} does not exist");
             }
+
+            // Mark break as revoked and update in-memory dictionary
+            var revokedEndedBreak = endedBreak.MarkAsRevoked(revokeDate);
+            endedBreaks.TryUpdate(breakGuid, revokedEndedBreak, endedBreak);
+
             var revokedBreak = endedBreak.Revoke(revokeDate);
             revokedBreaks.Add(revokedBreak);
 
