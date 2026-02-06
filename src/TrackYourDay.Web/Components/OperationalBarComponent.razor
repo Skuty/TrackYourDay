@@ -39,6 +39,7 @@
     private TimeSpan UserTaskTime { get; set; }
     private string UserTaskDescription { get; set; } = string.Empty;
     private bool IsOngoingMeeting { get; set; } = false;
+    private bool IsMeetingPostponed { get; set; } = false;
     private Color MeetingIconColor { get; set; } = Color.Default;
 
     protected override void OnInitialized()
@@ -46,6 +47,7 @@
         EventWrapper.OperationalBarOnWorkdayUpdatedAction += UpdateWorkdayProperties;
         EventWrapper.OperationalBarOnMeetingStartedAction += UpdateOngoingMeetingToActive;
         EventWrapper.OperationalBarOnMeetingEndedAction += UpdateOngoingMeetingToInactive;
+        EventWrapper.OperationalBarOnMeetingCheckPostponedAction += UpdateMeetingToPostponed;
     }
 
     private void UpdateWorkdayProperties(WorkdayUpdatedEvent notification)
@@ -58,6 +60,7 @@
     private void UpdateOngoingMeetingToActive(MeetingStartedEvent meetingStartedEvent)
     {
         this.IsOngoingMeeting = true;
+        this.IsMeetingPostponed = false;
         this.MeetingIconColor = Color.Success;
         InvokeAsync(StateHasChanged);
     }
@@ -65,7 +68,15 @@
     private void UpdateOngoingMeetingToInactive(MeetingEndedEvent meetingEndedEvent)
     {
         this.IsOngoingMeeting = false;
+        this.IsMeetingPostponed = false;
         this.MeetingIconColor = Color.Default;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateMeetingToPostponed(MeetingCheckPostponedEvent meetingCheckPostponedEvent)
+    {
+        this.IsMeetingPostponed = true;
+        this.MeetingIconColor = Color.Info;
         InvokeAsync(StateHasChanged);
     }
 

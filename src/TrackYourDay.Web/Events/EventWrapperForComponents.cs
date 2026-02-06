@@ -31,5 +31,11 @@ namespace TrackYourDay.Web.Events
         {
             OperationalBarOnMeetingEndedAction?.Invoke(meetingEndedEvent);
         }
+
+        public event Action<MeetingCheckPostponedEvent>? OperationalBarOnMeetingCheckPostponedAction;
+        public void OperationalBarOnMeetingCheckPostponed(MeetingCheckPostponedEvent meetingCheckPostponedEvent)
+        {
+            OperationalBarOnMeetingCheckPostponedAction?.Invoke(meetingCheckPostponedEvent);
+        }
     }
 }

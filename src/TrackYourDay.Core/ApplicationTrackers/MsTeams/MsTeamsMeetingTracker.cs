@@ -20,6 +20,7 @@ public sealed class MsTeamsMeetingTracker
     private StartedMeeting? _ongoingMeeting;
     private StartedMeeting? _pendingEndMeeting;
     private DateTime? _pendingEndDetectedAt;
+    private DateTime? _postponedUntil;
     private Guid? _matchedRuleId;
     private readonly List<EndedMeeting> _endedMeetings = [];
 
@@ -37,6 +38,20 @@ public sealed class MsTeamsMeetingTracker
 
     public async Task RecognizeActivityAsync()
     {
+        // Check if postpone is active
+        if (_postponedUntil.HasValue)
+        {
+            if (_clock.Now < _postponedUntil.Value)
+            {
+                // Still postponed - skip all detection logic
+                return;
+            }
+            
+            // Postpone expired - clear and continue
+            _postponedUntil = null;
+            _logger.LogInformation("Meeting check postpone expired, resuming detection");
+        }
+
         var pendingEnd = _pendingEndMeeting;
 
         // PENDING STATE: Blocking behavior - do not recognize any new meetings
@@ -133,6 +148,9 @@ public sealed class MsTeamsMeetingTracker
             throw new InvalidOperationException($"No pending meeting found with ID {meetingGuid}");
         }
 
+        // Clear any active postpone
+        _postponedUntil = null;
+
         var endTime = customEndTime ?? _clock.Now;
         var now = _clock.Now;
         
@@ -198,6 +216,9 @@ public sealed class MsTeamsMeetingTracker
             throw new InvalidOperationException($"No meeting found with ID {meetingGuid}");
         }
 
+        // Clear any active postpone
+        _postponedUntil = null;
+
         var endTime = customEndTime ?? _clock.Now;
         var now = _clock.Now;
         
@@ -250,6 +271,47 @@ public sealed class MsTeamsMeetingTracker
             _pendingEndDetectedAt = null;
             _logger.LogInformation("Pending end cancelled: {Title}", pending.Title);
         }
+    }
+
+    /// <summary>
+    /// Postpones meeting end detection checks until the specified time.
+    /// </summary>
+    /// <param name="meetingGuid">Meeting GUID to validate against pending/ongoing meeting</param>
+    /// <param name="postponeUntil">DateTime when checks should resume</param>
+    /// <exception cref="ArgumentException">Thrown if meeting GUID doesn't match or postpone time is invalid</exception>
+    public async Task PostponeCheckAsync(Guid meetingGuid, DateTime postponeUntil)
+    {
+        if (postponeUntil <= _clock.Now)
+        {
+            throw new ArgumentException("Postpone time must be in the future", nameof(postponeUntil));
+        }
+
+        if (postponeUntil > _clock.Now.AddHours(24))
+        {
+            throw new ArgumentException("Postpone time cannot exceed 24 hours", nameof(postponeUntil));
+        }
+
+        var targetMeeting = _pendingEndMeeting ?? _ongoingMeeting;
+        if (targetMeeting == null || targetMeeting.Guid != meetingGuid)
+        {
+            throw new ArgumentException("Meeting GUID does not match pending or ongoing meeting", nameof(meetingGuid));
+        }
+
+        _postponedUntil = postponeUntil;
+        
+        // Clear pending state and restore to ongoing if was pending
+        if (_pendingEndMeeting != null)
+        {
+            _ongoingMeeting = _pendingEndMeeting;
+            _pendingEndMeeting = null;
+            _pendingEndDetectedAt = null;
+        }
+
+        await _publisher.Publish(new MeetingCheckPostponedEvent(meetingGuid, postponeUntil), CancellationToken.None)
+            .ConfigureAwait(false);
+
+        _logger.LogInformation("Meeting check postponed until {PostponeUntil}: {Title}", 
+            postponeUntil, targetMeeting.Title);
     }
 
     public StartedMeeting? GetOngoingMeeting() => _ongoingMeeting;
