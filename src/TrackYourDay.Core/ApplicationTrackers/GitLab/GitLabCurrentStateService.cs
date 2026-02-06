@@ -53,6 +53,6 @@ public sealed class GitLabCurrentStateService : IGitLabCurrentStateService
         _logger.LogInformation(
             "Synchronized {ArtifactCount} GitLab artifacts for user {UserId}",
             snapshot.Artifacts.Count,
-            userId.Value);
+            userId.Id);
     }
 }
