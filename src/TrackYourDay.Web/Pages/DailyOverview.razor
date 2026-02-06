@@ -134,7 +134,10 @@
         this.workdayDefinition = this.workdaySettingsService.GetWorkdayDefinition();
         
         var activities = this.activityRepository.Find(new ActivityByDateSpecification(dateOnly));
-        var breaks = this.breakRepository.Find(new BreakByDateSpecification(dateOnly));
+        var breakSpec = new AndSpecification<EndedBreak>(
+            new BreakByDateSpecification(dateOnly),
+            new NonRevokedBreaksSpecification());
+        var breaks = this.breakRepository.Find(breakSpec);
         
         this.workday = Workday.CreateBasedOn(this.workdayDefinition, activities, breaks);
 
