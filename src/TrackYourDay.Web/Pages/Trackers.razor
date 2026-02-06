@@ -122,7 +122,10 @@
         var dateOnly = DateOnly.FromDateTime(selectedDate.Value);
 
         // For breaks, activities, and meetings, use the repository (which combines current session + historical data)
-        breaks = breakRepository.Find(new BreakByDateSpecification(dateOnly));
+        var breakSpec = new AndSpecification<EndedBreak>(
+            new BreakByDateSpecification(dateOnly),
+            new NonRevokedBreaksSpecification());
+        breaks = breakRepository.Find(breakSpec);
         activities = activityRepository.Find(new ActivityByDateSpecification(dateOnly));
         meetings = meetingRepository.Find(new MeetingByDateSpecification(dateOnly));
 

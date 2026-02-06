@@ -70,4 +70,26 @@ namespace TrackYourDay.Core.Persistence.Specifications
             return entityDate >= startDate && entityDate <= endDate;
         }
     }
+
+    /// <summary>
+    /// Specification for filtering only non-revoked breaks.
+    /// Excludes breaks where RevokedAt is not null.
+    /// </summary>
+    public class NonRevokedBreaksSpecification : ISpecification<EndedBreak>
+    {
+        public string GetSqlWhereClause()
+        {
+            return "json_extract(DataJson, '$.RevokedAt') IS NULL";
+        }
+
+        public Dictionary<string, object> GetSqlParameters()
+        {
+            return new Dictionary<string, object>();
+        }
+
+        public bool IsSatisfiedBy(EndedBreak entity)
+        {
+            return entity.RevokedAt == null;
+        }
+    }
 }
