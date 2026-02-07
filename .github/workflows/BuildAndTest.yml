@@ -33,11 +33,11 @@ jobs:
             ${{ runner.os }}-nuget-
 
       - name: Restore dependencies
-        run: dotnet restore --runtime win-x64
+        run: dotnet restore
       
       - name: Build (Debug - PR)
         if: github.event_name == 'pull_request'
-        run: dotnet build --configuration Debug --no-restore
+        run: dotnet build --configuration Debug
         env:
           # Skip expensive WASM optimizations during PR builds
           RunAOTCompilation: false
@@ -46,7 +46,7 @@ jobs:
 
       - name: Build (Release - Main)
         if: github.ref == 'refs/heads/main'
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build --configuration Release
         env:
           # Skip expensive WASM optimizations during CI
           RunAOTCompilation: false
