@@ -41,11 +41,13 @@ public sealed class GitLabCurrentStateService : IGitLabCurrentStateService
         var createdMergeRequests = await _apiClient.GetCreatedMergeRequests(userId).ConfigureAwait(false);
         allArtifacts.AddRange(createdMergeRequests);
 
+        var uniqueArtifacts = allArtifacts.DistinctBy(a => a.Id).ToList();
+
         var snapshot = new GitLabStateSnapshot
         {
             Guid = Guid.NewGuid(),
             CapturedAt = _clock.Now,
-            Artifacts = allArtifacts
+            Artifacts = uniqueArtifacts
         };
 
         await _repository.SaveAsync(snapshot, cancellationToken).ConfigureAwait(false);
