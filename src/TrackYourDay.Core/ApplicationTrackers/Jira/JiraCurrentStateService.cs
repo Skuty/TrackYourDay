@@ -10,6 +10,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     {
         private readonly IJiraRestApiClient _restApiClient;
         private readonly IJiraIssueRepository _issueRepository;
+        private readonly IJiraSettingsService _jiraSettings;
         private readonly IClock _clock;
         private readonly ILogger<JiraCurrentStateService> _logger;
         private JiraUser? _currentUser;
@@ -17,11 +18,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         public JiraCurrentStateService(
             IJiraRestApiClient restApiClient,
             IJiraIssueRepository issueRepository,
+            IJiraSettingsService jiraSettings,
             IClock clock,
             ILogger<JiraCurrentStateService> logger)
         {
             _restApiClient = restApiClient;
             _issueRepository = issueRepository;
+            _jiraSettings = jiraSettings;
             _clock = clock;
             _logger = logger;
         }
@@ -36,7 +39,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 .GetUserIssues(_currentUser, syncStartTime.AddDays(-lookbackDays))
                 .ConfigureAwait(false);
 
-            var currentIssues = issues.Select(MapToJiraIssueState).ToList();
+            var baseUrl = GetJiraBaseUrl();
+            var currentIssues = issues.Select(issue => MapToJiraIssueState(issue, baseUrl)).ToList();
             
             await _issueRepository
                 .UpdateCurrentStateAsync(currentIssues, cancellationToken)
@@ -48,7 +52,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 _currentUser.DisplayName);
         }
 
-        private static JiraIssueState MapToJiraIssueState(JiraIssueResponse response)
+        private static JiraIssueState MapToJiraIssueState(JiraIssueResponse response, string baseUrl)
         {
             return new JiraIssueState
             {
@@ -60,8 +64,42 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 ProjectKey = response.Fields.Project?.Key ?? "Unknown",
                 Updated = response.Fields.Updated,
                 Created = response.Fields.Created,
-                AssigneeDisplayName = response.Fields.Assignee?.DisplayName
+                AssigneeDisplayName = response.Fields.Assignee?.DisplayName,
+                BrowseUrl = ConstructBrowseUrl(baseUrl, response.Key)
             };
+        }
+
+        private string GetJiraBaseUrl()
+        {
+            var settings = _jiraSettings.GetSettings();
+            var apiUrl = settings?.ApiUrl;
+
+            if (string.IsNullOrWhiteSpace(apiUrl))
+            {
+                _logger.LogWarning("Jira API URL is not configured, issue URLs will be unavailable");
+                return string.Empty;
+            }
+
+            try
+            {
+                var uri = new Uri(apiUrl);
+                return $"{uri.Scheme}://{uri.Host}";
+            }
+            catch (UriFormatException ex)
+            {
+                _logger.LogWarning(ex, "Invalid Jira API URL format: {ApiUrl}", apiUrl);
+                return string.Empty;
+            }
+        }
+
+        private static string ConstructBrowseUrl(string baseUrl, string issueKey)
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(issueKey))
+            {
+                return "#";
+            }
+
+            return $"{baseUrl}/browse/{issueKey}";
         }
     }
 }

@@ -30,5 +30,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Persistence
         public required DateTimeOffset Updated { get; init; }
         public DateTimeOffset? Created { get; init; }
         public string? AssigneeDisplayName { get; init; }
+        public required string BrowseUrl { get; init; }
     }
 }

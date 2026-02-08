@@ -12,14 +12,12 @@ public partial class ExternalArtifactsComponent : IDisposable
 {
     [Inject] private IJiraIssueRepository? JiraRepository { get; set; }
     [Inject] private IGitLabStateRepository? GitLabStateRepository { get; set; }
-    [Inject] private IJiraSettingsService? JiraSettingsService { get; set; }
     [Inject] private IClock? Clock { get; set; }
 
     private List<JiraIssueState> _jiraIssues = [];
     private List<GitLabArtifact> _gitLabArtifacts = [];
     private bool _isLoading = true;
     private System.Threading.Timer? _refreshTimer;
-    private string? _jiraBaseUrl;
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,13 +62,6 @@ public partial class ExternalArtifactsComponent : IDisposable
             {
                 var snapshot = await GitLabStateRepository.GetLatestAsync(CancellationToken.None);
                 _gitLabArtifacts = snapshot?.Artifacts ?? [];
-            }
-
-            // Load Jira base URL for constructing issue links
-            if (JiraSettingsService != null)
-            {
-                var settings = JiraSettingsService.GetSettings();
-                _jiraBaseUrl = settings?.ApiUrl;
             }
         }
         finally
@@ -120,21 +111,7 @@ public partial class ExternalArtifactsComponent : IDisposable
         };
     }
 
-    private string GetJiraIssueUrl(string issueKey)
-    {
-        // If Jira base URL is configured, construct the full URL
-        // ApiUrl typically ends with /rest/api/3, so we need to extract base
-        if (!string.IsNullOrEmpty(_jiraBaseUrl))
-        {
-            var baseUrl = _jiraBaseUrl.Replace("/rest/api/3", "")
-                                       .Replace("/rest/api/2", "")
-                                       .TrimEnd('/');
-            return $"{baseUrl}/browse/{issueKey}";
-        }
-        
-        // Fallback: returns placeholder anchor link (won't navigate)
-        return $"#";
-    }
+
 
     public void Dispose()
     {
