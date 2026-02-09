@@ -3,65 +3,64 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using TrackYourDay.Core.ApplicationTrackers.Jira;
-using TrackYourDay.Core.ApplicationTrackers.MsTeams;
-using TrackYourDay.Core.ApplicationTrackers.UserTasks;
-using TrackYourDay.Core.Insights.Analytics;
+using TrackYourDay.Core.ApplicationTrackers.GitLab;
+using TrackYourDay.Core.ApplicationTrackers.GitLab.Models;
+using TrackYourDay.Core.ApplicationTrackers.Persistence;
 using TrackYourDay.Core.Persistence;
 using TrackYourDay.Core.Persistence.Specifications;
 using TrackYourDay.Core.Settings;
-using TrackYourDay.Core.SystemTrackers;
 
 namespace TrackYourDay.Core.LlmPrompts;
 
 public class LlmPromptService(
     IGenericSettingsRepository settingsRepository,
-    IHistoricalDataRepository<EndedActivity> activityRepository,
-    IHistoricalDataRepository<EndedMeeting> meetingRepository,
-    UserTaskService userTaskService,
-    ActivityNameSummaryStrategy summaryStrategy,
-    IJiraActivityService jiraActivityService,
+    IHistoricalDataRepository<JiraActivity> jiraActivityRepository,
+    IHistoricalDataRepository<GitLabActivity> gitLabActivityRepository,
+    IJiraIssueRepository jiraIssueRepository,
+    IGitLabStateRepository gitLabStateRepository,
     ILogger<LlmPromptService> logger) : ILlmPromptService
 {
-    private const int AverageRowBytes = 80;
+    private const int AverageRowBytes = 100;
     private const string KeyPrefix = "llm_template:";
 
-    public async Task<string> GeneratePrompt(string templateKey, DateOnly startDate, DateOnly endDate)
+    public async Task<string> GeneratePrompt(string templateKey, DateOnly date)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(templateKey);
-        if (startDate > endDate)
-            throw new ArgumentException("Start date must not be after end date", nameof(startDate));
 
-        var template = GetTemplateByKey(templateKey) 
+        var template = GetTemplateByKey(templateKey)
             ?? throw new InvalidOperationException($"Template '{templateKey}' not found");
 
-        if (!template.HasValidPlaceholder())
-            throw new InvalidOperationException($"Template '{templateKey}' missing placeholder");
+        var prompt = template.SystemPrompt;
 
-        var activities = GetActivitiesForDateRange(startDate, endDate);
-        if (activities.Count == 0)
-            throw new InvalidOperationException($"No activities found for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
-
-        var markdown = SerializeToMarkdown(activities);
-        var jiraIssuesMarkdown = await GetJiraIssuesMarkdown(startDate, endDate);
-        
-        if (!string.IsNullOrEmpty(jiraIssuesMarkdown))
+        if (prompt.Contains(LlmPromptTemplate.JiraActivitiesPlaceholder, StringComparison.Ordinal))
         {
-            markdown = $"{markdown}\n\n{jiraIssuesMarkdown}";
+            var jiraMarkdown = await GetJiraActivitiesMarkdown(date).ConfigureAwait(false);
+            prompt = prompt.Replace(LlmPromptTemplate.JiraActivitiesPlaceholder, jiraMarkdown);
         }
-        
-        var rendered = template.SystemPrompt.Replace(LlmPromptTemplate.Placeholder, markdown);
 
-        logger.LogInformation("Generated prompt for {TemplateKey}: {CharCount} characters, {ActivityCount} activities",
-            templateKey, rendered.Length, activities.Count);
+        if (prompt.Contains(LlmPromptTemplate.GitLabActivitiesPlaceholder, StringComparison.Ordinal))
+        {
+            var gitLabMarkdown = await GetGitLabActivitiesMarkdown(date).ConfigureAwait(false);
+            prompt = prompt.Replace(LlmPromptTemplate.GitLabActivitiesPlaceholder, gitLabMarkdown);
+        }
 
-        return rendered;
+        if (prompt.Contains(LlmPromptTemplate.CurrentlyAssignedIssuesPlaceholder, StringComparison.Ordinal))
+        {
+            var assignedMarkdown = await GetCurrentlyAssignedIssuesMarkdown().ConfigureAwait(false);
+            prompt = prompt.Replace(LlmPromptTemplate.CurrentlyAssignedIssuesPlaceholder, assignedMarkdown);
+        }
+
+        logger.LogInformation("Generated prompt for {TemplateKey} on {Date}: {CharCount} characters",
+            templateKey, date, prompt.Length);
+
+        return prompt;
     }
 
     public IReadOnlyList<LlmPromptTemplate> GetActiveTemplates()
     {
         var templates = new List<LlmPromptTemplate>();
         var keys = settingsRepository.GetAllKeys()
-            .Where(k => k.StartsWith(KeyPrefix));
+            .Where(k => k.StartsWith(KeyPrefix, StringComparison.Ordinal));
 
         foreach (var key in keys)
         {
@@ -79,35 +78,130 @@ public class LlmPromptService(
         return templates.OrderBy(t => t.DisplayOrder).ToList();
     }
 
-    private IReadOnlyCollection<GroupedActivity> GetActivitiesForDateRange(DateOnly startDate, DateOnly endDate)
+    private async Task<string> GetJiraActivitiesMarkdown(DateOnly date)
     {
-        var allItems = new List<TrackedActivity>();
-        allItems.AddRange(activityRepository.Find(new ActivityByDateRangeSpecification(startDate, endDate)));
-        allItems.AddRange(meetingRepository.Find(new MeetingByDateRangeSpecification(startDate, endDate)));
-        var userTasks = userTaskService.GetAllTasks()
-            .Where(t => t.IsCompleted && DateOnly.FromDateTime(t.StartDate) >= startDate && DateOnly.FromDateTime(t.StartDate) <= endDate);
-        allItems.AddRange(userTasks);
-        return summaryStrategy.Generate(allItems);
-    }
-
-    private static string SerializeToMarkdown(IReadOnlyCollection<GroupedActivity> activities)
-    {
-        var sb = new StringBuilder(activities.Count * AverageRowBytes + 200);
-        sb.AppendLine("| Date       | Activity Description | Duration  |");
-        sb.AppendLine("|------------|---------------------|-----------|");
-        foreach (var activity in activities)
+        try
         {
-            var duration = FormatDuration(activity.Duration);
-            var description = EscapeMarkdown(activity.Description);
-            sb.AppendLine($"| {activity.Date:yyyy-MM-dd} | {description} | {duration} |");
+            var specification = new DateRangeSpecification<JiraActivity>(date, date);
+            var activities = await jiraActivityRepository.FindAsync(specification, CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (activities.Count == 0)
+                return string.Empty;
+
+            var sb = new StringBuilder(activities.Count * AverageRowBytes + 200);
+            sb.AppendLine("## Jira Activities");
+            sb.AppendLine();
+            sb.AppendLine("| Time | Activity Description |");
+            sb.AppendLine("|------|----------------------|");
+
+            foreach (var activity in activities.OrderBy(a => a.OccurrenceDate))
+            {
+                var time = activity.OccurrenceDate.ToString("HH:mm");
+                var description = EscapeMarkdown(activity.Description);
+                sb.AppendLine($"| {time} | {description} |");
+            }
+
+            return sb.ToString();
         }
-        return sb.ToString();
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to fetch Jira activities for {Date}", date);
+            return string.Empty;
+        }
     }
 
-    private static string FormatDuration(TimeSpan duration) 
-        => $"{(int)duration.TotalHours:D2}:{duration.Minutes:D2}:{duration.Seconds:D2}";
+    private async Task<string> GetGitLabActivitiesMarkdown(DateOnly date)
+    {
+        try
+        {
+            var specification = new DateRangeSpecification<GitLabActivity>(date, date);
+            var activities = await gitLabActivityRepository.FindAsync(specification, CancellationToken.None)
+                .ConfigureAwait(false);
 
-    private static string EscapeMarkdown(string text) 
+            if (activities.Count == 0)
+                return string.Empty;
+
+            var sb = new StringBuilder(activities.Count * AverageRowBytes + 200);
+            sb.AppendLine("## GitLab Activities");
+            sb.AppendLine();
+            sb.AppendLine("| Time | Activity Description |");
+            sb.AppendLine("|------|----------------------|");
+
+            foreach (var activity in activities.OrderBy(a => a.OccuranceDate))
+            {
+                var time = activity.OccuranceDate.ToString("HH:mm");
+                var description = EscapeMarkdown(activity.Description);
+                sb.AppendLine($"| {time} | {description} |");
+            }
+
+            return sb.ToString();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to fetch GitLab activities for {Date}", date);
+            return string.Empty;
+        }
+    }
+
+    private async Task<string> GetCurrentlyAssignedIssuesMarkdown()
+    {
+        try
+        {
+            var sb = new StringBuilder(2048);
+            sb.AppendLine("## Currently Assigned Issues");
+            sb.AppendLine();
+
+            var jiraIssues = await jiraIssueRepository.GetCurrentIssuesAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (jiraIssues.Count > 0)
+            {
+                sb.AppendLine("### Jira Issues");
+                sb.AppendLine("| Key | Summary | Status | Project | Updated |");
+                sb.AppendLine("|-----|---------|--------|---------|---------|");
+
+                foreach (var issue in jiraIssues.OrderByDescending(i => i.Updated))
+                {
+                    var summary = EscapeMarkdown(issue.Summary);
+                    var key = issue.BrowseUrl != "#" ? $"[{issue.Key}]({issue.BrowseUrl})" : issue.Key;
+                    sb.AppendLine($"| {key} | {summary} | {issue.Status} | {issue.ProjectKey} | {issue.Updated:yyyy-MM-dd HH:mm} |");
+                }
+
+                sb.AppendLine();
+            }
+
+            var gitLabSnapshot = await gitLabStateRepository.GetLatestAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+
+            if (gitLabSnapshot?.Artifacts.Count > 0)
+            {
+                sb.AppendLine("### GitLab Work Items");
+                sb.AppendLine("| Type | Title | State | Updated |");
+                sb.AppendLine("|------|-------|-------|---------|");
+
+                foreach (var artifact in gitLabSnapshot.Artifacts.OrderByDescending(a => a.UpdatedAt))
+                {
+                    var title = EscapeMarkdown(artifact.Title);
+                    var type = artifact.Type == GitLabArtifactType.MergeRequest ? "MR" : "Issue";
+                    var titleWithLink = $"[{title}]({artifact.WebUrl})";
+                    sb.AppendLine($"| {type} | {titleWithLink} | {artifact.State} | {artifact.UpdatedAt:yyyy-MM-dd HH:mm} |");
+                }
+
+                sb.AppendLine();
+            }
+
+            var result = sb.ToString();
+            return result == "## Currently Assigned Issues\n\n" ? string.Empty : result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to fetch currently assigned issues");
+            return string.Empty;
+        }
+    }
+
+    private static string EscapeMarkdown(string text)
         => text.Replace("|", "\\|").Replace("\n", " ").Replace("\r", "");
 
     private LlmPromptTemplate? GetTemplateByKey(string templateKey)
@@ -118,42 +212,4 @@ public class LlmPromptService(
     }
 
     private static string GetStorageKey(string templateKey) => $"{KeyPrefix}{templateKey}";
-
-    private async Task<string> GetJiraIssuesMarkdown(DateOnly startDate, DateOnly endDate)
-    {
-        try
-        {
-            var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
-            var jiraActivities = (await jiraActivityService.GetActivitiesUpdatedAfter(startDateTime))
-                .Where(a => DateOnly.FromDateTime(a.OccurrenceDate) >= startDate 
-                         && DateOnly.FromDateTime(a.OccurrenceDate) <= endDate)
-                .OrderBy(a => a.OccurrenceDate)
-                .ToList();
-
-            if (jiraActivities.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            var sb = new StringBuilder(jiraActivities.Count * AverageRowBytes + 200);
-            sb.AppendLine("## Related Jira Issues");
-            sb.AppendLine();
-            sb.AppendLine("| Date       | Jira Activity Description |");
-            sb.AppendLine("|------------|---------------------------|");
-            
-            foreach (var activity in jiraActivities)
-            {
-                var description = EscapeMarkdown(activity.Description);
-                sb.AppendLine($"| {activity.OccurrenceDate:yyyy-MM-dd} | {description} |");
-            }
-
-            return sb.ToString();
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to fetch Jira issues for date range {StartDate} to {EndDate}", 
-                startDate, endDate);
-            return string.Empty;
-        }
-    }
 }

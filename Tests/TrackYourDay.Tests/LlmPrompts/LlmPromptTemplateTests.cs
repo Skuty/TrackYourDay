@@ -54,14 +54,80 @@ public class LlmPromptTemplateTests
     }
 
     [Fact]
-    public void GivenTemplateWithPlaceholder_WhenCheckingPlaceholder_ThenReturnsTrue()
+    public void GivenTemplateWithJiraActivitiesPlaceholder_WhenCheckingPlaceholder_ThenReturnsTrue()
     {
         // Given
         var template = new LlmPromptTemplate
         {
             TemplateKey = "test",
             Name = "Test",
-            SystemPrompt = "Before {ACTIVITY_DATA_PLACEHOLDER} after",
+            SystemPrompt = "Before {JIRA_ACTIVITIES} after",
+            IsActive = true,
+            DisplayOrder = 1,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // When
+        var hasPlaceholder = template.HasValidPlaceholder();
+
+        // Then
+        hasPlaceholder.Should().BeTrue();
+    }
+
+    [Fact]
+    public void GivenTemplateWithGitLabActivitiesPlaceholder_WhenCheckingPlaceholder_ThenReturnsTrue()
+    {
+        // Given
+        var template = new LlmPromptTemplate
+        {
+            TemplateKey = "test",
+            Name = "Test",
+            SystemPrompt = "Before {GITLAB_ACTIVITIES} after",
+            IsActive = true,
+            DisplayOrder = 1,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // When
+        var hasPlaceholder = template.HasValidPlaceholder();
+
+        // Then
+        hasPlaceholder.Should().BeTrue();
+    }
+
+    [Fact]
+    public void GivenTemplateWithCurrentlyAssignedPlaceholder_WhenCheckingPlaceholder_ThenReturnsTrue()
+    {
+        // Given
+        var template = new LlmPromptTemplate
+        {
+            TemplateKey = "test",
+            Name = "Test",
+            SystemPrompt = "Before {CURRENTLY_ASSIGNED_ISSUES} after",
+            IsActive = true,
+            DisplayOrder = 1,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // When
+        var hasPlaceholder = template.HasValidPlaceholder();
+
+        // Then
+        hasPlaceholder.Should().BeTrue();
+    }
+
+    [Fact]
+    public void GivenTemplateWithMultiplePlaceholders_WhenCheckingPlaceholder_ThenReturnsTrue()
+    {
+        // Given
+        var template = new LlmPromptTemplate
+        {
+            TemplateKey = "test",
+            Name = "Test",
+            SystemPrompt = "{CURRENTLY_ASSIGNED_ISSUES}\n\n{JIRA_ACTIVITIES}\n\n{GITLAB_ACTIVITIES}",
             IsActive = true,
             DisplayOrder = 1,
             CreatedAt = DateTime.UtcNow,

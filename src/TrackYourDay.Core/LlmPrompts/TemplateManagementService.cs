@@ -53,8 +53,7 @@ public class TemplateManagementService(
             throw new ArgumentException("Name must be 5-100 characters", nameof(name));
         if (systemPrompt.Length is < 100 or > 10000)
             throw new ArgumentException("Prompt must be 100-10,000 characters", nameof(systemPrompt));
-        if (!systemPrompt.Contains(LlmPromptTemplate.Placeholder, StringComparison.Ordinal))
-            throw new ArgumentException($"Prompt must contain {LlmPromptTemplate.Placeholder}", nameof(systemPrompt));
+        
         if (displayOrder < 1)
             throw new ArgumentException("Display order must be positive", nameof(displayOrder));
 
@@ -157,8 +156,14 @@ REQUIREMENTS:
 - Each entry must include: Description, Duration (decimal hours), Jira Key
 - Note: Durations already exclude break periods
 
-ACTIVITY DATA:
-{ACTIVITY_DATA_PLACEHOLDER}
+JIRA ACTIVITIES:
+{JIRA_ACTIVITIES}
+
+GITLAB ACTIVITIES:
+{GITLAB_ACTIVITIES}
+
+CURRENTLY ASSIGNED ISSUES:
+{CURRENTLY_ASSIGNED_ISSUES}
 
 OUTPUT FORMAT:
 | Description | Duration (hours) | Jira Key |
@@ -184,8 +189,14 @@ Rules:
 4. Convert durations to decimal hours (e.g., 1h 30m = 1.5)
 5. Break time already excluded from durations
 
-Data:
-{ACTIVITY_DATA_PLACEHOLDER}
+Jira Activities:
+{JIRA_ACTIVITIES}
+
+GitLab Activities:
+{GITLAB_ACTIVITIES}
+
+Currently Assigned:
+{CURRENTLY_ASSIGNED_ISSUES}
 
 Output as table with columns: Task, Hours, Jira Ticket",
                 IsActive = true,
@@ -205,8 +216,14 @@ For each task:
 - Identify associated Jira ticket (if mentioned in activity names)
 - If no ticket, indicate ""Administrative"" or ""Untracked""
 
-Activities:
-{ACTIVITY_DATA_PLACEHOLDER}
+Jira Activities:
+{JIRA_ACTIVITIES}
+
+GitLab Activities:
+{GITLAB_ACTIVITIES}
+
+Currently Assigned Issues:
+{CURRENTLY_ASSIGNED_ISSUES}
 
 Format output as:
 1. [Jira Key or ""N/A""] - Description (X.X hours)
@@ -246,7 +263,13 @@ Format output as:
         ArgumentException.ThrowIfNullOrWhiteSpace(systemPrompt);
         var sampleActivities = CreateSampleActivities();
         var markdown = SerializeToMarkdown(sampleActivities);
-        return systemPrompt.Replace(LlmPromptTemplate.Placeholder, markdown);
+        
+        var result = systemPrompt;
+        result = result.Replace(LlmPromptTemplate.JiraActivitiesPlaceholder, markdown);
+        result = result.Replace(LlmPromptTemplate.GitLabActivitiesPlaceholder, markdown);
+        result = result.Replace(LlmPromptTemplate.CurrentlyAssignedIssuesPlaceholder, markdown);
+        
+        return result;
     }
 
     private static GroupedActivity[] CreateSampleActivities()

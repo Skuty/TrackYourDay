@@ -86,6 +86,29 @@
                 </MudItem>
             </MudGrid>
 
+            <MudAlert Severity="Severity.Info" Variant="Variant.Text" Dense="true">
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    <strong>Available Placeholders:</strong>
+                </MudText>
+                <MudChipSet>
+                    <MudChip Color="Color.Primary" Size="Size.Small" Variant="Variant.Text">
+                        <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small" Class="mr-1" />
+                        {JIRA_ACTIVITIES}
+                    </MudChip>
+                    <MudChip Color="Color.Secondary" Size="Size.Small" Variant="Variant.Text">
+                        <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small" Class="mr-1" />
+                        {GITLAB_ACTIVITIES}
+                    </MudChip>
+                    <MudChip Color="Color.Tertiary" Size="Size.Small" Variant="Variant.Text">
+                        <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small" Class="mr-1" />
+                        {CURRENTLY_ASSIGNED_ISSUES}
+                    </MudChip>
+                </MudChipSet>
+                <MudText Typo="Typo.caption" Class="mt-2">
+                    Templates can include any combination of these placeholders. Missing placeholders will be skipped.
+                </MudText>
+            </MudAlert>
+
             @if (!string.IsNullOrEmpty(llmErrorMessage))
             {
                 <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@llmErrorMessage</MudAlert>
@@ -276,7 +299,7 @@
 
             var dateOnly = DateOnly.FromDateTime(llmDate!.Value);
             
-            generatedPrompt = await llmPromptService.GeneratePrompt(selectedTemplateKey!, dateOnly, dateOnly);
+            generatedPrompt = await llmPromptService.GeneratePrompt(selectedTemplateKey!, dateOnly);
             characterCount = generatedPrompt.Length;
 
             snackbar.Add("Prompt generated successfully", Severity.Success);
