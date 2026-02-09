@@ -48,3 +48,57 @@
 .rotating {
     animation: rotate 1s linear infinite;
 }
+
+/* Scrollable panel for issues */
+.scrollable-panel {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    margin-right: -4px;
+}
+
+/* Custom scrollbar styling for modern look */
+.scrollable-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollable-panel::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+}
+
+.scrollable-panel::-webkit-scrollbar-thumb {
+    background: var(--mud-palette-action-disabled);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.scrollable-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--mud-palette-action-disabled-background);
+}
+
+/* Fade indicators for scrollable content */
+.scrollable-panel::before,
+.scrollable-panel::after {
+    content: '';
+    position: sticky;
+    left: 0;
+    right: 0;
+    height: 12px;
+    pointer-events: none;
+    z-index: 1;
+    display: block;
+}
+
+.scrollable-panel::before {
+    top: 0;
+    background: linear-gradient(to bottom, var(--mud-palette-surface) 0%, transparent 100%);
+    margin-bottom: -12px;
+}
+
+.scrollable-panel::after {
+    bottom: 0;
+    background: linear-gradient(to top, var(--mud-palette-surface) 0%, transparent 100%);
+    margin-top: -12px;
+}

@@ -50,38 +50,36 @@
                                 <MudIcon Icon="@Icons.Material.Filled.BugReport" Size="Size.Small" Color="Color.Primary" />
                                 <MudText Typo="Typo.subtitle2" Color="Color.Primary">Jira Issues (@_jiraIssues.Count)</MudText>
                             </MudStack>
-                            @foreach (var issue in _jiraIssues.OrderByDescending(i => i.Updated).Take(5))
-                            {
-                                <MudPaper Elevation="0" Class="compact-item pa-2">
-                                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Spacing="1">
-                                        <MudStack Spacing="0" Style="flex: 1; min-width: 0;">
-                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                                <MudChip Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="compact-chip">
-                                                    @issue.Key
-                                                </MudChip>
-                                                <MudChip Size="Size.Small" Color="GetStatusColor(issue.Status)" Variant="Variant.Filled" Class="compact-chip">
-                                                    @issue.Status
-                                                </MudChip>
+                            <div class="scrollable-panel">
+                                <MudStack Spacing="1">
+                                    @foreach (var issue in _jiraIssues.OrderByDescending(i => i.Updated))
+                                    {
+                                        <MudPaper Elevation="0" Class="compact-item pa-2">
+                                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Spacing="1">
+                                                <MudStack Spacing="0" Style="flex: 1; min-width: 0;">
+                                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                        <MudChip Size="Size.Small" Color="Color.Primary" Variant="Variant.Text" Class="compact-chip">
+                                                            @issue.Key
+                                                        </MudChip>
+                                                        <MudChip Size="Size.Small" Color="GetStatusColor(issue.Status)" Variant="Variant.Filled" Class="compact-chip">
+                                                            @issue.Status
+                                                        </MudChip>
+                                                    </MudStack>
+                                                    <MudTooltip Text="@issue.Summary" Delay="300">
+                                                        <MudText Typo="Typo.body2" Class="text-truncate" Style="font-weight: 500">@issue.Summary</MudText>
+                                                    </MudTooltip>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatTimeAgo(issue.Updated)</MudText>
+                                                </MudStack>
+                                                <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" 
+                                                              Size="Size.Small" 
+                                                              Href="@issue.BrowseUrl" 
+                                                              Target="_blank" 
+                                                              Class="compact-action" />
                                             </MudStack>
-                                            <MudTooltip Text="@issue.Summary" Delay="300">
-                                                <MudText Typo="Typo.body2" Class="text-truncate" Style="font-weight: 500">@issue.Summary</MudText>
-                                            </MudTooltip>
-                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatTimeAgo(issue.Updated)</MudText>
-                                        </MudStack>
-                                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" 
-                                                      Size="Size.Small" 
-                                                      Href="@GetJiraIssueUrl(issue.Key)" 
-                                                      Target="_blank" 
-                                                      Class="compact-action" />
-                                    </MudStack>
-                                </MudPaper>
-                            }
-                            @if (_jiraIssues.Count > 5)
-                            {
-                                <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
-                                    +@(_jiraIssues.Count - 5) more
-                                </MudText>
-                            }
+                                        </MudPaper>
+                                    }
+                                </MudStack>
+                            </div>
                         </MudStack>
                     </MudItem>
                 }
@@ -94,39 +92,37 @@
                                 <MudIcon Icon="@Icons.Material.Filled.Code" Size="Size.Small" Color="Color.Secondary" />
                                 <MudText Typo="Typo.subtitle2" Color="Color.Secondary">GitLab (@_gitLabArtifacts.Count)</MudText>
                             </MudStack>
-                            @foreach (var artifact in _gitLabArtifacts.OrderByDescending(a => a.UpdatedAt).Take(5))
-                            {
-                                <MudPaper Elevation="0" Class="compact-item pa-2">
-                                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Spacing="1">
-                                        <MudStack Spacing="0" Style="flex: 1; min-width: 0;">
-                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                                <MudIcon Icon="@GetGitLabIcon(artifact.Type)" Size="Size.Small" />
-                                                <MudChip Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text" Class="compact-chip">
-                                                    !@artifact.Iid
-                                                </MudChip>
-                                                <MudChip Size="Size.Small" Color="GetGitLabStateColor(artifact.State)" Variant="Variant.Filled" Class="compact-chip">
-                                                    @artifact.State
-                                                </MudChip>
+                            <div class="scrollable-panel">
+                                <MudStack Spacing="1">
+                                    @foreach (var artifact in _gitLabArtifacts.OrderByDescending(a => a.UpdatedAt))
+                                    {
+                                        <MudPaper Elevation="0" Class="compact-item pa-2">
+                                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Spacing="1">
+                                                <MudStack Spacing="0" Style="flex: 1; min-width: 0;">
+                                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                        <MudIcon Icon="@GetGitLabIcon(artifact.Type)" Size="Size.Small" />
+                                                        <MudChip Size="Size.Small" Color="Color.Secondary" Variant="Variant.Text" Class="compact-chip">
+                                                            !@artifact.Iid
+                                                        </MudChip>
+                                                        <MudChip Size="Size.Small" Color="GetGitLabStateColor(artifact.State)" Variant="Variant.Filled" Class="compact-chip">
+                                                            @artifact.State
+                                                        </MudChip>
+                                                    </MudStack>
+                                                    <MudTooltip Text="@artifact.Title" Delay="300">
+                                                        <MudText Typo="Typo.body2" Class="text-truncate" Style="font-weight: 500">@artifact.Title</MudText>
+                                                    </MudTooltip>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatTimeAgo(artifact.UpdatedAt)</MudText>
+                                                </MudStack>
+                                                <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" 
+                                                              Size="Size.Small" 
+                                                              Href="@artifact.WebUrl" 
+                                                              Target="_blank" 
+                                                              Class="compact-action" />
                                             </MudStack>
-                                            <MudTooltip Text="@artifact.Title" Delay="300">
-                                                <MudText Typo="Typo.body2" Class="text-truncate" Style="font-weight: 500">@artifact.Title</MudText>
-                                            </MudTooltip>
-                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatTimeAgo(artifact.UpdatedAt)</MudText>
-                                        </MudStack>
-                                        <MudIconButton Icon="@Icons.Material.Filled.OpenInNew" 
-                                                      Size="Size.Small" 
-                                                      Href="@artifact.WebUrl" 
-                                                      Target="_blank" 
-                                                      Class="compact-action" />
-                                    </MudStack>
-                                </MudPaper>
-                            }
-                            @if (_gitLabArtifacts.Count > 5)
-                            {
-                                <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
-                                    +@(_gitLabArtifacts.Count - 5) more
-                                </MudText>
-                            }
+                                        </MudPaper>
+                                    }
+                                </MudStack>
+                            </div>
                         </MudStack>
                     </MudItem>
                 }
