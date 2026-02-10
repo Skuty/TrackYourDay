@@ -150,7 +150,7 @@ public class LlmPromptServiceTests
         var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today));
 
         // Then
-        result.Should().Contain("## Jira Activities");
+        result.Should().Contain("| Time | Activity Description |");
         result.Should().Contain("PROJ-123");
         result.Should().Contain("PROJ-456");
     }
@@ -208,7 +208,7 @@ public class LlmPromptServiceTests
         var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today));
 
         // Then
-        result.Should().Contain("## GitLab Activities");
+        result.Should().Contain("| Time | Activity Description |");
         result.Should().Contain("!123");
         result.Should().Contain("!456");
     }
@@ -270,9 +270,8 @@ public class LlmPromptServiceTests
         var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today));
 
         // Then
-        result.Should().Contain("## Jira Activities");
+        result.Should().Contain("| Time | Activity Description |");
         result.Should().Contain("PROJ-123");
-        result.Should().Contain("## GitLab Activities");
         result.Should().Contain("!123");
     }
 
@@ -362,11 +361,10 @@ public class LlmPromptServiceTests
         var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today));
 
         // Then
-        result.Should().Contain("## Currently Assigned Issues");
-        result.Should().Contain("### Jira Issues");
+        result.Should().Contain("| Key | Summary | Status | Project | Updated |");
         result.Should().Contain("PROJ-123");
         result.Should().Contain("Fix critical bug");
-        result.Should().Contain("### GitLab Work Items");
+        result.Should().Contain("| Type | Title | State | Updated |");
         result.Should().Contain("Feature implementation");
     }
 
@@ -417,12 +415,11 @@ public class LlmPromptServiceTests
         var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today));
 
         // Then
-        result.Should().Be("Analyze: ");
-        result.Should().NotContain("## Jira Activities");
+        result.Should().Be("Analyze: No data available");
     }
 
     [Fact]
-    public async Task GivenJiraRepositoryThrowsException_WhenGeneratingPrompt_ThenContinuesWithEmptySection()
+    public async Task GivenJiraRepositoryThrowsException_WhenGeneratingPrompt_ThenContinuesWithNoDataMessage()
     {
         // Given
         var mockSettings = new Mock<IGenericSettingsRepository>();
@@ -468,8 +465,7 @@ public class LlmPromptServiceTests
         var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today));
 
         // Then
-        result.Should().BeEmpty();
-        result.Should().NotContain("## Jira Activities");
+        result.Should().Be("No data available");
     }
 
     [Fact]
@@ -544,9 +540,8 @@ public class LlmPromptServiceTests
         var result = await sut.GeneratePrompt("test", DateOnly.FromDateTime(DateTime.Today));
 
         // Then
-        result.Should().Contain("## Currently Assigned Issues");
-        result.Should().Contain("## Jira Activities");
-        result.Should().Contain("## GitLab Activities");
+        result.Should().Contain("| Key | Summary | Status | Project | Updated |");
+        result.Should().Contain("| Time | Activity Description |");
         result.Should().NotContain("{CURRENTLY_ASSIGNED_ISSUES}");
         result.Should().NotContain("{JIRA_ACTIVITIES}");
         result.Should().NotContain("{GITLAB_ACTIVITIES}");
