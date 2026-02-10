@@ -9,83 +9,127 @@
 @inject MsTeamsMeetingTracker meetingService
 @inject NavigationManager navigationManager
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="py-4">
-    @if (!string.IsNullOrEmpty(meetingTitle))
-    {
-        <MudPaper Class="pa-6" Elevation="3">
-            <MudStack Spacing="3">
-                <MudText Typo="Typo.h6" Align="Align.Center" Color="Color.Warning">
-                    Did this meeting end?
-                </MudText>
+@if (!string.IsNullOrEmpty(meetingTitle))
+{
+    <div class="meeting-container">
+        <!-- Header with status indicator -->
+        <div class="meeting-header">
+            <h3 class="meeting-header-title">Did this meeting end?</h3>
+        </div>
 
-                <MudStack Spacing="2">
-                    <MudText Typo="Typo.body2">
-                        <strong>Meeting:</strong> @meetingTitle
+        <!-- Scrollable content area -->
+        <div class="meeting-content">
+            <!-- Meeting Information -->
+            <div class="meeting-info">
+                <div class="meeting-info-row">
+                    <span class="meeting-info-label">Meeting:</span>
+                    <span class="meeting-info-value">@meetingTitle</span>
+                </div>
+                <div class="meeting-info-row">
+                    <span class="meeting-info-label">Started:</span>
+                    <span class="meeting-info-value">@(startTime != DateTime.MinValue ? startTime.ToString("HH:mm") : "Unknown")</span>
+                </div>
+                @if (startTime != DateTime.MinValue && endTime.HasValue)
+                {
+                    var duration = DateTime.Today.Add(endTime.Value) - startTime;
+                    if (duration.TotalSeconds < 0) 
+                    {
+                        duration = duration.Add(TimeSpan.FromDays(1));
+                    }
+                    <div class="meeting-info-row">
+                        <span class="meeting-info-label">Duration:</span>
+                        <span class="meeting-info-value">@($"{(int)duration.TotalHours}h {duration.Minutes}m")</span>
+                    </div>
+                }
+            </div>
+
+            <!-- End Time Selection -->
+            <MudTimePicker Time="@endTime"
+                           TimeChanged="OnTimeChanged"
+                           Label="Meeting End Time"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Editable="true"
+                           AmPm="false"
+                           TimeFormat="HH:mm"
+                           TimeEditFormat="HH:mm"
+                           PickerVariant="PickerVariant.Dialog"
+                           Required="true"
+                           Error="@(!endTime.HasValue && showValidation)"
+                           ErrorText="@(showValidation && !endTime.HasValue ? "End time is required" : string.Empty)"
+                           aria-label="Select meeting end time" />
+
+            <div class="time-adjustment-group">
+                <MudButton Variant="Variant.Text" 
+                           Size="Size.Small" 
+                           OnClick="@(() => SubtractMinutes(5))"
+                           StartIcon="@Icons.Material.Filled.Remove"
+                           aria-label="Subtract 5 minutes">
+                    5m
+                </MudButton>
+                <MudButton Variant="Variant.Text" 
+                           Size="Size.Small" 
+                           OnClick="@(() => SubtractMinutes(10))"
+                           StartIcon="@Icons.Material.Filled.Remove"
+                           aria-label="Subtract 10 minutes">
+                    10m
+                </MudButton>
+                <MudButton Variant="Variant.Text" 
+                           Size="Size.Small" 
+                           OnClick="@(() => SubtractMinutes(15))"
+                           StartIcon="@Icons.Material.Filled.Remove"
+                           aria-label="Subtract 15 minutes">
+                    15m
+                </MudButton>
+                <MudButton Variant="Variant.Text" 
+                           Size="Size.Small" 
+                           Color="Color.Primary"
+                           OnClick="ResetToCurrentTime"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           aria-label="Reset to current time">
+                    Now
+                </MudButton>
+            </div>
+
+            <MudTextField @bind-Value="customDescription"
+                          Label="Description (optional)"
+                          Placeholder="@meetingTitle"
+                          Variant="Variant.Outlined"
+                          Lines="2"
+                          Margin="Margin.Dense"
+                          Class="mt-3"
+                          aria-label="Meeting description" />
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Success" 
+                       FullWidth="true" 
+                       OnClick="ConfirmEnd"
+                       Disabled="isProcessing"
+                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                       Class="mt-3"
+                       aria-label="Confirm meeting ended">
+                @if (isProcessing)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                }
+                else
+                {
+                    <span>Confirm End</span>
+                }
+            </MudButton>
+
+            <!-- Postpone Section -->
+            <div class="mt-3">
+                <div class="postpone-header">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Class="mr-1" />
+                        Postpone Check
                     </MudText>
-                    <MudText Typo="Typo.body2">
-                        <strong>Start:</strong> @(startTime != DateTime.MinValue ? startTime.ToString("HH:mm") : "Unknown")
-                    </MudText>
-                </MudStack>
+                </div>
 
-                <MudStack Spacing="2">
-                    <MudTimePicker Time="@endTime"
-                                   TimeChanged="OnTimeChanged"
-                                   Label="End Time"
-                                   Variant="Variant.Outlined"
-                                   Margin="Margin.Dense"
-                                   Editable="true"
-                                   AmPm="false"
-                                   TimeFormat="HH:mm"
-                                   TimeEditFormat="HH:mm"
-                                   PickerVariant="PickerVariant.Dialog"
-                                   Required="true"
-                                   RequiredError="Please enter a valid time in HH:mm format"
-                                   Error="@(!endTime.HasValue && showValidation)"
-                                   ErrorText="@(showValidation && !endTime.HasValue ? "End time is required" : string.Empty)" />
-                    
+                <MudStack Spacing="1" Class="mt-2">
                     <MudStack Row="true" Spacing="1" Justify="Justify.Center">
-                        <MudButton Variant="Variant.Text" 
-                                   Size="Size.Small" 
-                                   OnClick="@(() => SubtractMinutes(5))"
-                                   StartIcon="@Icons.Material.Filled.Remove">
-                            5m
-                        </MudButton>
-                        <MudButton Variant="Variant.Text" 
-                                   Size="Size.Small" 
-                                   OnClick="@(() => SubtractMinutes(10))"
-                                   StartIcon="@Icons.Material.Filled.Remove">
-                            10m
-                        </MudButton>
-                        <MudButton Variant="Variant.Text" 
-                                   Size="Size.Small" 
-                                   OnClick="@(() => SubtractMinutes(15))"
-                                   StartIcon="@Icons.Material.Filled.Remove">
-                            15m
-                        </MudButton>
-                        <MudButton Variant="Variant.Text" 
-                                   Size="Size.Small" 
-                                   Color="Color.Primary"
-                                   OnClick="ResetToCurrentTime"
-                                   StartIcon="@Icons.Material.Filled.Refresh">
-                            Now
-                        </MudButton>
-                    </MudStack>
-                </MudStack>
-
-                 <MudTextField @bind-Value="customDescription"
-                              Label="Description (optional)"
-                              Placeholder="@meetingTitle"
-                              Variant="Variant.Outlined"
-                              Lines="2"
-                              Margin="Margin.Dense" />
-
-                <MudDivider />
-
-                <MudText Typo="Typo.subtitle2" Class="mt-2">Or Postpone Check:</MudText>
-
-                <MudStack Spacing="2">
-                    <MudStack Row="true" Spacing="1" Justify="Justify.Center">
-                        <MudButton Variant="Variant.Text" 
+                        <MudButton Variant="Variant.Outlined" 
                                    Size="Size.Small" 
                                    Color="Color.Info"
                                    OnClick="@(() => Postpone(5))"
@@ -93,7 +137,7 @@
                                    StartIcon="@Icons.Material.Filled.Schedule">
                             +5m
                         </MudButton>
-                        <MudButton Variant="Variant.Text" 
+                        <MudButton Variant="Variant.Outlined" 
                                    Size="Size.Small" 
                                    Color="Color.Info"
                                    OnClick="@(() => Postpone(10))"
@@ -101,7 +145,7 @@
                                    StartIcon="@Icons.Material.Filled.Schedule">
                             +10m
                         </MudButton>
-                        <MudButton Variant="Variant.Text" 
+                        <MudButton Variant="Variant.Outlined" 
                                    Size="Size.Small" 
                                    Color="Color.Info"
                                    OnClick="@(() => Postpone(15))"
@@ -113,55 +157,50 @@
 
                     <MudTimePicker Time="@postponeTime"
                                    TimeChanged="OnPostponeTimeChanged"
-                                   Label="Postpone Until"
+                                   Label="Custom Postpone Time"
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense"
                                    Editable="true"
                                    AmPm="false"
                                    TimeFormat="HH:mm"
                                    TimeEditFormat="HH:mm"
-                                   PickerVariant="PickerVariant.Dialog" />
-                    
-                    <MudButton Variant="Variant.Outlined" 
-                               Color="Color.Info"
-                               FullWidth="true" 
-                               OnClick="PostponeUntilSelectedTime"
-                               Disabled="isProcessing || !postponeTime.HasValue"
-                               StartIcon="@Icons.Material.Filled.Schedule">
-                        Postpone Until Selected Time
-                    </MudButton>
+                                   PickerVariant="PickerVariant.Dialog"
+                                   aria-label="Select custom postpone time" />
                 </MudStack>
+            </div>
 
-                <MudDivider Class="my-2" />
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Dense="true" Class="mt-2">@errorMessage</MudAlert>
+            }
+        </div>
 
-                @if (!string.IsNullOrEmpty(errorMessage))
+        <!-- Fixed action footer -->
+        <div class="action-footer">
+            <MudButton Variant="Variant.Outlined" 
+                       FullWidth="true" 
+                       OnClick="StillOngoing"
+                       Disabled="isProcessing"
+                       StartIcon="@Icons.Material.Filled.AccessTime"
+                       aria-label="Meeting still ongoing">
+                @if (postponeTime.HasValue)
                 {
-                    <MudAlert Severity="Severity.Error" Dense="true">@errorMessage</MudAlert>
+                    <span>Still Ongoing - Postpone Until @postponeTime.Value.ToString(@"hh\:mm")</span>
                 }
-
-                <MudStack Row="true" Spacing="2">
-                    <MudButton Variant="Variant.Filled" 
-                               Color="Color.Success" 
-                               FullWidth="true" 
-                               OnClick="ConfirmEnd"
-                               Disabled="isProcessing">
-                        Confirm
-                    </MudButton>
-                    <MudButton Variant="Variant.Outlined" 
-                               FullWidth="true" 
-                               OnClick="StillOngoing"
-                               Disabled="isProcessing">
-                        Still Ongoing
-                    </MudButton>
-                </MudStack>
-            </MudStack>
-        </MudPaper>
-    }
-    else
-    {
+                else
+                {
+                    <span>Still Ongoing</span>
+                }
+            </MudButton>
+        </div>
+    </div>
+}
+else
+{
+    <div style="padding: 16px;">
         <MudAlert Severity="Severity.Warning">Meeting confirmation expired or already handled</MudAlert>
-    }
-</MudContainer>
+    </div>
+}
 
 @code {
     [Parameter]
@@ -346,6 +385,14 @@
         _userResponded = true;
         _timeoutCts.Cancel();
 
+        // If custom postpone time is set, postpone to that time
+        if (postponeTime.HasValue)
+        {
+            await PostponeUntilSelectedTime();
+            return;
+        }
+
+        // Otherwise, just cancel and let default recognition continue
         meetingService.CancelPendingEnd(meetingGuid);
         await CloseWindow();
     }
@@ -358,6 +405,7 @@
     private void OnPostponeTimeChanged(TimeSpan? newTime)
     {
         postponeTime = newTime;
+        // Trigger re-render to update "Still Ongoing" button text
         StateHasChanged();
     }
 
