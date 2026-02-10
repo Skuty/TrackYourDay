@@ -87,11 +87,9 @@ public class LlmPromptService(
                 .ConfigureAwait(false);
 
             if (activities.Count == 0)
-                return string.Empty;
+                return "No data available";
 
             var sb = new StringBuilder(activities.Count * AverageRowBytes + 200);
-            sb.AppendLine("## Jira Activities");
-            sb.AppendLine();
             sb.AppendLine("| Time | Activity Description |");
             sb.AppendLine("|------|----------------------|");
 
@@ -107,7 +105,7 @@ public class LlmPromptService(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to fetch Jira activities for {Date}", date);
-            return string.Empty;
+            return "No data available";
         }
     }
 
@@ -120,11 +118,9 @@ public class LlmPromptService(
                 .ConfigureAwait(false);
 
             if (activities.Count == 0)
-                return string.Empty;
+                return "No data available";
 
             var sb = new StringBuilder(activities.Count * AverageRowBytes + 200);
-            sb.AppendLine("## GitLab Activities");
-            sb.AppendLine();
             sb.AppendLine("| Time | Activity Description |");
             sb.AppendLine("|------|----------------------|");
 
@@ -140,7 +136,7 @@ public class LlmPromptService(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to fetch GitLab activities for {Date}", date);
-            return string.Empty;
+            return "No data available";
         }
     }
 
@@ -149,15 +145,18 @@ public class LlmPromptService(
         try
         {
             var sb = new StringBuilder(2048);
-            sb.AppendLine("## Currently Assigned Issues");
-            sb.AppendLine();
+            bool hasAnyData = false;
 
             var jiraIssues = await jiraIssueRepository.GetCurrentIssuesAsync(CancellationToken.None)
                 .ConfigureAwait(false);
 
             if (jiraIssues.Count > 0)
             {
-                sb.AppendLine("### Jira Issues");
+                if (!hasAnyData)
+                {
+                    hasAnyData = true;
+                }
+
                 sb.AppendLine("| Key | Summary | Status | Project | Updated |");
                 sb.AppendLine("|-----|---------|--------|---------|---------|");
 
@@ -176,7 +175,15 @@ public class LlmPromptService(
 
             if (gitLabSnapshot?.Artifacts.Count > 0)
             {
-                sb.AppendLine("### GitLab Work Items");
+                if (!hasAnyData)
+                {
+                    hasAnyData = true;
+                }
+                else
+                {
+                    sb.AppendLine();
+                }
+
                 sb.AppendLine("| Type | Title | State | Updated |");
                 sb.AppendLine("|------|-------|-------|---------|");
 
@@ -191,13 +198,12 @@ public class LlmPromptService(
                 sb.AppendLine();
             }
 
-            var result = sb.ToString();
-            return result == "## Currently Assigned Issues\n\n" ? string.Empty : result;
+            return hasAnyData ? sb.ToString() : "No data available";
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to fetch currently assigned issues");
-            return string.Empty;
+            return "No data available";
         }
     }
 
