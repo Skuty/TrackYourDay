@@ -4,15 +4,43 @@ namespace TrackYourDay.Core.Insights.Analytics
 {
     public class GroupedActivity
     {
-        private List<Guid> processedEvents;
-        private List<TimePeriod> includedPeriods;
-        private List<TimePeriod> excludedPeriods;
+        private readonly List<TrackedOccurrence> includedOccurrences;
+        private readonly List<TrackedOccurrence> excludedOccurrences;
+        private readonly HashSet<Guid> processedEventIds;
 
         public DateOnly Date { get; }
 
-        public string Description { get; }
+        public string? Description { get; }
 
-        public TimeSpan Duration { get; private set; }
+        /// <summary>
+        /// Calculates wall-clock time duration by merging overlapping periods and subtracting breaks.
+        /// </summary>
+        public TimeSpan Duration 
+        { 
+            get 
+            {
+                var mergedIncluded = MergeOverlappingPeriods(
+                    includedOccurrences.Select(o => o.Period).ToList()
+                );
+                
+                var totalIncluded = TimeSpan.FromTicks(mergedIncluded.Sum(p => p.Duration.Ticks));
+                
+                var totalExcluded = TimeSpan.Zero;
+                foreach (var excluded in excludedOccurrences)
+                {
+                    foreach (var included in mergedIncluded)
+                    {
+                        if (excluded.Period.IsOverlappingWith(included))
+                        {
+                            totalExcluded += excluded.Period.GetOverlappingDuration(included);
+                        }
+                    }
+                }
+                
+                var result = totalIncluded - totalExcluded;
+                return result > TimeSpan.Zero ? result : TimeSpan.Zero;
+            }
+        }
 
         public static GroupedActivity CreateEmptyForDate(DateOnly date)
         {
@@ -24,89 +52,81 @@ namespace TrackYourDay.Core.Insights.Analytics
             return new GroupedActivity(date, description);
         }
 
-
-        private static GroupedActivity CombineWith(GroupedActivity activityToCombine)
-        {
-            throw new NotImplementedException("Just an idea how we can do cascaded grouping of different grouped activities to other grouped groups without implementing new type");
-        }
-
         public GroupedActivity(DateOnly date)
         {
-            processedEvents = new List<Guid>();
-            includedPeriods = new List<TimePeriod>();
-            excludedPeriods = new List<TimePeriod>();
+            includedOccurrences = new List<TrackedOccurrence>();
+            excludedOccurrences = new List<TrackedOccurrence>();
+            processedEventIds = new HashSet<Guid>();
             Date = date;
-            Duration = TimeSpan.Zero;
+            Description = null;
         }
 
-        public GroupedActivity(DateOnly date, string description) : this(date)
+        public GroupedActivity(DateOnly date, string? description) : this(date)
         {
             Description = description;
         }
 
-        // TODO: We are using guid to identify was TimePeriod already exlucded,
-        // but we should compare to other excluded time period because guid can differ and we will substitute twice the same time
-        // Guid should not be interesting for us at all, or at least we shouldnt be considering it as condition
-        internal void Include(Guid eventGuid, TimePeriod periodToInclude) 
+        internal void Include(Guid eventId, TimePeriod period) 
         {
-            if (!processedEvents.Contains(eventGuid))
+            if (!processedEventIds.Contains(eventId))
             {
-                includedPeriods.Add(periodToInclude);
-                processedEvents.Add(eventGuid);
-
-                if (excludedPeriods.Any())
-                {
-                    foreach (var excludedPeriod in excludedPeriods)
-                    {
-                        if (periodToInclude.IsOverlappingWith(excludedPeriod))
-                        {
-                            TimeSpan durationToAdd = periodToInclude.Duration - periodToInclude.GetOverlappingDuration(excludedPeriod);
-                            Duration += durationToAdd > TimeSpan.Zero ? durationToAdd : TimeSpan.Zero;
-                        }
-                        else
-                        {
-                            Duration += periodToInclude.Duration;
-
-                        }
-                    }
-                } 
-                else
-                {
-                    Duration += periodToInclude.Duration;
-
-                }
+                includedOccurrences.Add(new TrackedOccurrence(eventId, period));
+                processedEventIds.Add(eventId);
             }
         }
 
-        internal void ReduceBy(Guid eventGuid, TimePeriod periodToExclude)
+        internal void ReduceBy(Guid eventId, TimePeriod period)
         {
-            if (!processedEvents.Contains(eventGuid))
+            if (!processedEventIds.Contains(eventId))
             {
-                excludedPeriods.Add(periodToExclude);
-                processedEvents.Add(eventGuid);
-
-                foreach (var includedPeriod in includedPeriods)
-                {
-                    if (periodToExclude.IsOverlappingWith(includedPeriod))
-                    {
-                        Duration -= periodToExclude.GetOverlappingDuration(includedPeriod);
-                    }
-                }
+                excludedOccurrences.Add(new TrackedOccurrence(eventId, period));
+                processedEventIds.Add(eventId);
             }
         }
 
         /// <summary>
-        /// Gets the included periods with their corresponding event GUIDs.
+        /// Gets all included activity occurrences for timeline rendering.
         /// </summary>
-        /// <returns>A read-only list of tuples containing event GUIDs and their time periods.</returns>
-        public IReadOnlyList<(Guid EventGuid, TimePeriod Period)> GetIncludedPeriodsWithEvents()
+        public IReadOnlyList<TrackedOccurrence> GetIncludedOccurrences()
         {
-            var result = new List<(Guid, TimePeriod)>(includedPeriods.Count);
-            for (int i = 0; i < includedPeriods.Count && i < processedEvents.Count; i++)
+            return includedOccurrences.AsReadOnly();
+        }
+
+        /// <summary>
+        /// Gets all excluded periods (breaks) for timeline rendering.
+        /// </summary>
+        public IReadOnlyList<TrackedOccurrence> GetExcludedOccurrences()
+        {
+            return excludedOccurrences.AsReadOnly();
+        }
+
+        private List<TimePeriod> MergeOverlappingPeriods(List<TimePeriod> periods)
+        {
+            if (periods.Count == 0) 
+                return new List<TimePeriod>();
+            
+            var sorted = periods.OrderBy(p => p.StartDate).ToList();
+            var merged = new List<TimePeriod> { sorted[0] };
+            
+            for (int i = 1; i < sorted.Count; i++)
             {
-                result.Add((processedEvents[i], includedPeriods[i]));
+                var current = sorted[i];
+                var last = merged[^1];
+                
+                if (current.StartDate <= last.EndDate)
+                {
+                    // Overlapping or adjacent → merge
+                    var newEndDate = current.EndDate > last.EndDate ? current.EndDate : last.EndDate;
+                    merged[^1] = new TimePeriod(last.StartDate, newEndDate);
+                }
+                else
+                {
+                    // Non-overlapping → add new period
+                    merged.Add(current);
+                }
             }
-            return result.AsReadOnly();
+            
+            return merged;
         }
     }
 }

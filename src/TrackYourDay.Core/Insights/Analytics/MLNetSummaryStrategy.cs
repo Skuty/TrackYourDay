@@ -276,11 +276,11 @@ namespace TrackYourDay.Core.Insights.Analytics
             // Collect all time periods from all groups using the public method
             foreach (var group in groupList)
             {
-                var periodsWithEvents = group.GetIncludedPeriodsWithEvents();
+                var occurrences = group.GetIncludedOccurrences();
                 
-                foreach (var (eventGuid, period) in periodsWithEvents)
+                foreach (var occurrence in occurrences)
                 {
-                    mergedGroup.Include(eventGuid, period);
+                    mergedGroup.Include(occurrence.EventId, occurrence.Period);
                 }
             }
 
