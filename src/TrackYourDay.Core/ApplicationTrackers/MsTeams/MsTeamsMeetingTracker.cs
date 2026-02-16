@@ -298,6 +298,9 @@ public sealed class MsTeamsMeetingTracker
         _matchedRuleId = null;
         
         _logger.LogInformation("Meeting recognition cancelled (false positive): {Title}", meetingTitle);
+        
+        // Publish event to notify UI
+        _publisher.Publish(new MeetingCanceledEvent(meetingGuid));
     }
 
     /// <summary>
