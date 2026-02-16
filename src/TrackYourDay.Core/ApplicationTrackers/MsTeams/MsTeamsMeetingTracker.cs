@@ -274,6 +274,33 @@ public sealed class MsTeamsMeetingTracker
     }
 
     /// <summary>
+    /// Cancels a recognized meeting that was incorrectly detected (false positive).
+    /// Clears all meeting state without recording it as an ended meeting.
+    /// </summary>
+    /// <param name="meetingGuid">Meeting GUID to validate and cancel</param>
+    /// <exception cref="ArgumentException">Thrown if meeting GUID doesn't match pending or ongoing meeting</exception>
+    public void CancelRecognizedMeeting(Guid meetingGuid)
+    {
+        var targetMeeting = _pendingEndMeeting ?? _ongoingMeeting;
+        
+        if (targetMeeting == null || targetMeeting.Guid != meetingGuid)
+        {
+            throw new ArgumentException("Meeting GUID does not match pending or ongoing meeting", nameof(meetingGuid));
+        }
+
+        var meetingTitle = targetMeeting.Title;
+        
+        // Clear all meeting state
+        _ongoingMeeting = null;
+        _pendingEndMeeting = null;
+        _pendingEndDetectedAt = null;
+        _postponedUntil = null;
+        _matchedRuleId = null;
+        
+        _logger.LogInformation("Meeting recognition cancelled (false positive): {Title}", meetingTitle);
+    }
+
+    /// <summary>
     /// Postpones meeting end detection checks until the specified time.
     /// </summary>
     /// <param name="meetingGuid">Meeting GUID to validate against pending/ongoing meeting</param>
