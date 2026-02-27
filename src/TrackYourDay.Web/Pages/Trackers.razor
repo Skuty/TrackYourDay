@@ -32,35 +32,17 @@
 </div>
 
 <MudTabs Elevation="2" Rounded="true" Centered="false" Class="my-6">
-    <MudTabPanel Icon="@Icons.Material.Filled.FreeBreakfast" Text="Breaks" BadgeData="@(breaks.Count)">
-        <TrackerResultsComponent TItem="EndedBreak" 
-        Items="@breaks"
-        Title="Breaks"
-        Columns="@breakColumns"/>
+    <MudTabPanel Icon="@Icons.Material.Filled.VideoCameraFront" Text="Teams Meetings" BadgeData="@(meetings.Count)">
+        <TrackerResultsComponent TItem="EndedMeeting"
+                                 Items="@meetings"
+                                 Title="Teams Meetings"
+                                 Columns="@meetingColumns" />
     </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.Task" Text="Tasks" BadgeData="@(userTasks.Count())">
         <TrackerResultsComponent TItem="UserTask"
         Items="@userTasks"
         Title="User Tasks"
         Columns="@userTasksColumns" />
-    </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="System" BadgeData="@(activities.Count)">
-        <TrackerResultsComponent TItem="EndedActivity"
-        Items="@activities"
-        Title="System Activities"
-        Columns="@activityColumns"/>
-    </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="Inputs" BadgeData="@(instantActivities.Count)">
-        <TrackerResultsComponent TItem="InstantActivity"
-        Items="@instantActivities"
-        Title="Instant Activities"
-        Columns="@instantActivityColumns" />
-    </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.VideoCameraFront" Text="Teams Meetings" BadgeData="@(meetings.Count)">
-        <TrackerResultsComponent TItem="EndedMeeting"
-        Items="@meetings"
-        Title="Teams Meetings"
-        Columns="@meetingColumns" />
     </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.CallSplit" Text="GitLab" BadgeData="@(gitLabActivities.Count)">
         <TrackerResultsComponent TItem="GitLabActivity"
@@ -73,6 +55,24 @@
                                  Items="@jiraActivities"
                                  Title="Jira Activities"
                                  Columns="@jiraActivityColumns" />
+    </MudTabPanel>
+    <MudTabPanel Icon="@Icons.Material.Filled.FreeBreakfast" Text="Breaks" BadgeData="@(breaks.Count)">
+        <TrackerResultsComponent TItem="EndedBreak"
+                                 Items="@breaks"
+                                 Title="Breaks"
+                                 Columns="@breakColumns" />
+    </MudTabPanel>
+    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="System" BadgeData="@(activities.Count)">
+        <TrackerResultsComponent TItem="EndedActivity"
+                                 Items="@activities"
+                                 Title="System Activities"
+                                 Columns="@activityColumns" />
+    </MudTabPanel>
+    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="Inputs" BadgeData="@(instantActivities.Count)">
+        <TrackerResultsComponent TItem="InstantActivity"
+                                 Items="@instantActivities"
+                                 Title="Instant Activities"
+                                 Columns="@instantActivityColumns" />
     </MudTabPanel>
 </MudTabs>
 
