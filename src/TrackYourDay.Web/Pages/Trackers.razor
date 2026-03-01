@@ -46,25 +46,12 @@
         Columns="@userTasksColumns"
         DurationSelector="@(x => x.GetDuration())" />
     </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="System" BadgeData="@(activities.Count)">
-        <TrackerResultsComponent TItem="EndedActivity"
-        Items="@activities"
-        Title="System Activities"
-        Columns="@activityColumns"
-        DurationSelector="@(x => x.GetDuration())"/>
-    </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="Inputs" BadgeData="@(instantActivities.Count)">
-        <TrackerResultsComponent TItem="InstantActivity"
-        Items="@instantActivities"
-        Title="Instant Activities"
-        Columns="@instantActivityColumns" />
-    </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.VideoCameraFront" Text="Teams Meetings" BadgeData="@(meetings.Count)">
         <TrackerResultsComponent TItem="EndedMeeting"
-        Items="@meetings"
-        Title="Teams Meetings"
-        Columns="@meetingColumns"
-        DurationSelector="@(x => x.GetDuration())" />
+                                 Items="@meetings"
+                                 Title="Teams Meetings"
+                                 Columns="@meetingColumns"
+                                 DurationSelector="@(x => x.GetDuration())" />
     </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.CallSplit" Text="GitLab" BadgeData="@(gitLabActivities.Count)">
         <TrackerResultsComponent TItem="GitLabActivity"
@@ -78,23 +65,18 @@
                                  Title="Jira Activities"
                                  Columns="@jiraActivityColumns" />
     </MudTabPanel>
-    <MudTabPanel Icon="@Icons.Material.Filled.FreeBreakfast" Text="Breaks" BadgeData="@(breaks.Count)">
-        <TrackerResultsComponent TItem="EndedBreak"
-                                 Items="@breaks"
-                                 Title="Breaks"
-                                 Columns="@breakColumns" />
-    </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="System" BadgeData="@(activities.Count)">
         <TrackerResultsComponent TItem="EndedActivity"
-                                 Items="@activities"
-                                 Title="System Activities"
-                                 Columns="@activityColumns" />
+        Items="@activities"
+        Title="System Activities"
+        Columns="@activityColumns"
+        DurationSelector="@(x => x.GetDuration())"/>
     </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="Inputs" BadgeData="@(instantActivities.Count)">
         <TrackerResultsComponent TItem="InstantActivity"
-                                 Items="@instantActivities"
-                                 Title="Instant Activities"
-                                 Columns="@instantActivityColumns" />
+        Items="@instantActivities"
+        Title="Instant Activities"
+        Columns="@instantActivityColumns" />
     </MudTabPanel>
 </MudTabs>
 
