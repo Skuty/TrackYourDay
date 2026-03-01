@@ -36,19 +36,22 @@
         <TrackerResultsComponent TItem="EndedBreak" 
         Items="@breaks"
         Title="Breaks"
-        Columns="@breakColumns"/>
+        Columns="@breakColumns"
+        DurationSelector="@(x => x.BreakDuration)"/>
     </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.Task" Text="Tasks" BadgeData="@(userTasks.Count())">
         <TrackerResultsComponent TItem="UserTask"
         Items="@userTasks"
         Title="User Tasks"
-        Columns="@userTasksColumns" />
+        Columns="@userTasksColumns"
+        DurationSelector="@(x => x.GetDuration())" />
     </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="System" BadgeData="@(activities.Count)">
         <TrackerResultsComponent TItem="EndedActivity"
         Items="@activities"
         Title="System Activities"
-        Columns="@activityColumns"/>
+        Columns="@activityColumns"
+        DurationSelector="@(x => x.GetDuration())"/>
     </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.WorkOutline" Text="Inputs" BadgeData="@(instantActivities.Count)">
         <TrackerResultsComponent TItem="InstantActivity"
@@ -60,7 +63,8 @@
         <TrackerResultsComponent TItem="EndedMeeting"
         Items="@meetings"
         Title="Teams Meetings"
-        Columns="@meetingColumns" />
+        Columns="@meetingColumns"
+        DurationSelector="@(x => x.GetDuration())" />
     </MudTabPanel>
     <MudTabPanel Icon="@Icons.Material.Filled.CallSplit" Text="GitLab" BadgeData="@(gitLabActivities.Count)">
         <TrackerResultsComponent TItem="GitLabActivity"
