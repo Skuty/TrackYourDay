@@ -109,18 +109,10 @@ namespace TrackYourDay.Core.Insights.Analytics
 
         public static IReadOnlyList<ISummaryStrategy> GetAvailableStrategies(IServiceProvider serviceProvider)
         {
-            var strategies = new List<ISummaryStrategy>
+            return new List<ISummaryStrategy>
             {
-                serviceProvider.GetRequiredService<MLNetSummaryStrategy>(),
-                serviceProvider.GetRequiredService<JiraKeySummaryStrategy>(),
-                serviceProvider.GetRequiredService<JiraEnrichedSummaryStrategy>(),
-                serviceProvider.GetRequiredService<HybridContextualSummaryStrategy>(),
-                serviceProvider.GetRequiredService<TimeBasedSummaryStrategy>(),
-                serviceProvider.GetRequiredService<DurationBasedSummaryStrategy>(),
-                serviceProvider.GetRequiredService<ContextBasedSummaryStrategy>(),
                 serviceProvider.GetRequiredService<ActivityNameSummaryStrategy>()
             };
-            return strategies;
         }
     }
 }

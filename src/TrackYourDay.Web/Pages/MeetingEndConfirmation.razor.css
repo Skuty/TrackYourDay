@@ -52,7 +52,21 @@
 
 .meeting-info-value {
     color: #333;
-    font-size: 0.8125rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+/* Make meeting title more prominent */
+.meeting-info-row:first-child .meeting-info-value {
+    font-size: 1.0625rem;
+    font-weight: 700;
+}
+
+/* Make time values (Started and Duration) bigger */
+.meeting-info-row:nth-child(2) .meeting-info-value,
+.meeting-info-row:nth-child(3) .meeting-info-value {
+    font-size: 1rem;
+    font-weight: 700;
 }
 
 .time-adjustment-group {

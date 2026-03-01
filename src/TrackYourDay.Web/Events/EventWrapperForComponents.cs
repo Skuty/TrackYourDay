@@ -37,5 +37,11 @@ namespace TrackYourDay.Web.Events
         {
             OperationalBarOnMeetingCheckPostponedAction?.Invoke(meetingCheckPostponedEvent);
         }
+
+        public event Action<MeetingCanceledEvent>? OperationalBarOnMeetingCanceledAction;
+        public void OperationalBarOnMeetingCanceled(MeetingCanceledEvent meetingCanceledEvent)
+        {
+            OperationalBarOnMeetingCanceledAction?.Invoke(meetingCanceledEvent);
+        }
     }
 }

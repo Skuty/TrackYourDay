@@ -48,6 +48,7 @@
         EventWrapper.OperationalBarOnMeetingStartedAction += UpdateOngoingMeetingToActive;
         EventWrapper.OperationalBarOnMeetingEndedAction += UpdateOngoingMeetingToInactive;
         EventWrapper.OperationalBarOnMeetingCheckPostponedAction += UpdateMeetingToPostponed;
+        EventWrapper.OperationalBarOnMeetingCanceledAction += UpdateMeetingToCanceled;
     }
 
     private void UpdateWorkdayProperties(WorkdayUpdatedEvent notification)
@@ -80,6 +81,14 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private void UpdateMeetingToCanceled(MeetingCanceledEvent meetingCanceledEvent)
+    {
+        this.IsOngoingMeeting = false;
+        this.IsMeetingPostponed = false;
+        this.MeetingIconColor = Color.Default;
+        InvokeAsync(StateHasChanged);
+    }
+
     private void OnMeetingIconClick()
     {
         if (!IsOngoingMeeting) return;
@@ -90,5 +99,9 @@
     public void Dispose()
     {
         EventWrapper.OperationalBarOnWorkdayUpdatedAction -= UpdateWorkdayProperties;
+        EventWrapper.OperationalBarOnMeetingStartedAction -= UpdateOngoingMeetingToActive;
+        EventWrapper.OperationalBarOnMeetingEndedAction -= UpdateOngoingMeetingToInactive;
+        EventWrapper.OperationalBarOnMeetingCheckPostponedAction -= UpdateMeetingToPostponed;
+        EventWrapper.OperationalBarOnMeetingCanceledAction -= UpdateMeetingToCanceled;
     }
 }

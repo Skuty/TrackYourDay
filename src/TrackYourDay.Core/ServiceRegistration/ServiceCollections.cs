@@ -68,15 +68,14 @@ namespace TrackYourDay.Core.ServiceRegistration
                     serviceCollection.GetRequiredService<ILogger<BreakTracker>>());
             });
 
-            services.AddSingleton<MLNetSummaryStrategy>(serviceProvider => 
-                new MLNetSummaryStrategy(
-                    serviceProvider.GetRequiredService<IClock>(),
-                    serviceProvider.GetRequiredService<ILogger<MLNetSummaryStrategy>>()
+            services.AddSingleton<ActivityNameSummaryStrategy>(serviceProvider =>
+                new ActivityNameSummaryStrategy(
+                    serviceProvider.GetRequiredService<ILogger<ActivityNameSummaryStrategy>>()
                 )
             );
 
-            services.AddSingleton<ISummaryStrategy, MLNetSummaryStrategy>(serviceProvider => 
-                serviceProvider.GetRequiredService<MLNetSummaryStrategy>()
+            services.AddSingleton<ISummaryStrategy, ActivityNameSummaryStrategy>(serviceProvider =>
+                serviceProvider.GetRequiredService<ActivityNameSummaryStrategy>()
             );
 
             services.AddSingleton<ActivitiesAnalyser>(serviceProvider => 
@@ -126,49 +125,6 @@ namespace TrackYourDay.Core.ServiceRegistration
                     serviceProvider.GetRequiredService<IHistoricalDataRepository<JiraActivity>>(),
                     serviceProvider.GetRequiredService<IJiraSettingsService>(),
                     serviceProvider.GetRequiredService<ILogger<JiraTracker>>()
-                )
-            );
-
-            services.AddSingleton<JiraKeySummaryStrategy>(serviceProvider =>
-                new JiraKeySummaryStrategy(
-                    serviceProvider.GetRequiredService<ILogger<JiraKeySummaryStrategy>>()
-                )
-            );
-
-            services.AddSingleton<TimeBasedSummaryStrategy>(serviceProvider =>
-                new TimeBasedSummaryStrategy(
-                    serviceProvider.GetRequiredService<ILogger<TimeBasedSummaryStrategy>>()
-                )
-            );
-
-            services.AddSingleton<DurationBasedSummaryStrategy>(serviceProvider =>
-                new DurationBasedSummaryStrategy(
-                    serviceProvider.GetRequiredService<ILogger<DurationBasedSummaryStrategy>>()
-                )
-            );
-
-            services.AddSingleton<ContextBasedSummaryStrategy>(serviceProvider =>
-                new ContextBasedSummaryStrategy(
-                    serviceProvider.GetRequiredService<ILogger<ContextBasedSummaryStrategy>>()
-                )
-            );
-
-            services.AddSingleton<JiraEnrichedSummaryStrategy>(serviceProvider =>
-                new JiraEnrichedSummaryStrategy(
-                    serviceProvider.GetRequiredService<JiraTracker>(),
-                    serviceProvider.GetRequiredService<ILogger<JiraEnrichedSummaryStrategy>>()
-                )
-            );
-
-            services.AddSingleton<HybridContextualSummaryStrategy>(serviceProvider =>
-                new HybridContextualSummaryStrategy(
-                    serviceProvider.GetRequiredService<ILogger<HybridContextualSummaryStrategy>>()
-                )
-            );
-
-            services.AddSingleton<ActivityNameSummaryStrategy>(serviceProvider =>
-                new ActivityNameSummaryStrategy(
-                    serviceProvider.GetRequiredService<ILogger<ActivityNameSummaryStrategy>>()
                 )
             );
 
