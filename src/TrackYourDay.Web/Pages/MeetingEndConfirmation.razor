@@ -29,9 +29,66 @@
                     <span class="meeting-info-label">Started:</span>
                     <span class="meeting-info-value">@(startTime != DateTime.MinValue ? startTime.ToString("HH:mm") : "Unknown")</span>
                 </div>
+            </div>
+
+            <!-- Start Time Selection -->
+            <MudTimePicker Time="@customStartTime"
+                           TimeChanged="OnStartTimeChanged"
+                           Label="Meeting Start Time"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           Editable="true"
+                           AmPm="false"
+                           TimeFormat="HH:mm"
+                           TimeEditFormat="HH:mm"
+                           PickerVariant="PickerVariant.Dialog"
+                           Required="true"
+                           aria-label="Select meeting start time" />
+
+            <div class="time-adjustment-group">
+                <MudButton Variant="Variant.Text"
+                           Size="Size.Small"
+                           OnClick="@(() => SubtractStartMinutes(5))"
+                           StartIcon="@Icons.Material.Filled.Remove"
+                           aria-label="Subtract 5 minutes from start">
+                    5m
+                </MudButton>
+                <MudButton Variant="Variant.Text"
+                           Size="Size.Small"
+                           OnClick="@(() => SubtractStartMinutes(10))"
+                           StartIcon="@Icons.Material.Filled.Remove"
+                           aria-label="Subtract 10 minutes from start">
+                    10m
+                </MudButton>
+                <MudButton Variant="Variant.Text"
+                           Size="Size.Small"
+                           OnClick="@(() => SubtractStartMinutes(15))"
+                           StartIcon="@Icons.Material.Filled.Remove"
+                           aria-label="Subtract 15 minutes from start">
+                    15m
+                </MudButton>
+                <MudButton Variant="Variant.Text"
+                           Size="Size.Small"
+                           OnClick="@(() => AddStartMinutes(5))"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           aria-label="Add 5 minutes to start">
+                    5m
+                </MudButton>
+                <MudButton Variant="Variant.Text"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           OnClick="ResetStartToOriginal"
+                           StartIcon="@Icons.Material.Filled.Refresh"
+                           aria-label="Reset start to original">
+                    Reset
+                </MudButton>
+            </div>
+
+            <div class="meeting-info">
                 @if (startTime != DateTime.MinValue && endTime.HasValue)
                 {
-                    var duration = DateTime.Today.Add(endTime.Value) - startTime;
+                    var effectiveStart = customStartTime.HasValue ? DateTime.Today.Add(customStartTime.Value) : startTime;
+                    var duration = DateTime.Today.Add(endTime.Value) - effectiveStart;
                     if (duration.TotalSeconds < 0) 
                     {
                         duration = duration.Add(TimeSpan.FromDays(1));
@@ -231,6 +288,7 @@ else
     private string? meetingTitle;
     private DateTime startTime = DateTime.MinValue;
     private TimeSpan? endTime;
+    private TimeSpan? customStartTime;
     private string? customDescription;
     private string errorMessage = string.Empty;
     private bool isProcessing;
@@ -261,6 +319,8 @@ else
             
             // Always default end time to current time
             endTime = DateTime.Now.TimeOfDay;
+            // Default start time to original meeting start
+            customStartTime = startTime.TimeOfDay;
         }
     }
 
@@ -294,6 +354,37 @@ else
     private void ResetToCurrentTime()
     {
         endTime = DateTime.Now.TimeOfDay;
+        StateHasChanged();
+    }
+
+    private void OnStartTimeChanged(TimeSpan? newTime)
+    {
+        customStartTime = newTime;
+        StateHasChanged();
+    }
+
+    private void SubtractStartMinutes(int minutes)
+    {
+        if (!customStartTime.HasValue) return;
+        var newStart = customStartTime.Value.Subtract(TimeSpan.FromMinutes(minutes));
+        customStartTime = newStart < TimeSpan.Zero ? TimeSpan.Zero : newStart;
+        StateHasChanged();
+    }
+
+    private void AddStartMinutes(int minutes)
+    {
+        if (!customStartTime.HasValue) return;
+        var newStart = customStartTime.Value.Add(TimeSpan.FromMinutes(minutes));
+        // Cap at end time so start never exceeds end
+        if (endTime.HasValue && newStart > endTime.Value)
+            newStart = endTime.Value;
+        customStartTime = newStart;
+        StateHasChanged();
+    }
+
+    private void ResetStartToOriginal()
+    {
+        customStartTime = startTime != DateTime.MinValue ? startTime.TimeOfDay : null;
         StateHasChanged();
     }
 
@@ -365,15 +456,21 @@ else
                 }
             }
 
+            DateTime? customStartDateTime = null;
+            if (customStartTime.HasValue && startTime != DateTime.MinValue)
+            {
+                customStartDateTime = startTime.Date.Add(customStartTime.Value);
+            }
+
             // Try to confirm pending meeting first, if that fails try manual end
             try
             {
-                await meetingService.ConfirmMeetingEndAsync(meetingGuid, customDescription, customEndTime);
+                await meetingService.ConfirmMeetingEndAsync(meetingGuid, customDescription, customEndTime, customStartDateTime);
             }
             catch (InvalidOperationException)
             {
                 // Meeting is not in pending state, try manual end
-                await meetingService.EndMeetingManuallyAsync(meetingGuid, customDescription, customEndTime);
+                await meetingService.EndMeetingManuallyAsync(meetingGuid, customDescription, customEndTime, customStartDateTime);
             }
             
             await CloseWindow();
