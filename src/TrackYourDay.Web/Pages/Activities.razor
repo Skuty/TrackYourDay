@@ -15,6 +15,10 @@ else
             <ToolBarContent>
                 <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                               AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                <MudSpacer />
+                <MudText Typo="Typo.body2" Class="mr-2 align-self-center">
+                    Total: <strong>@FormatDuration(TotalPeriodicDuration)</strong>
+                </MudText>
             </ToolBarContent>
             <Columns>
                 <PropertyColumn Property="x => x.StartDate.ToLongTimeString()" Title="Activity Started" Filterable="false" />
@@ -52,6 +56,15 @@ else
     }
     
     private string _searchString;
+
+    private TimeSpan TotalPeriodicDuration => periodicActivities is null
+        ? TimeSpan.Zero
+        : periodicActivities
+            .Where(_quickFilter)
+            .Aggregate(TimeSpan.Zero, (sum, x) => sum + x.GetDuration());
+
+    private static string FormatDuration(TimeSpan d)
+        => (int)d.TotalHours > 0 ? $"{(int)d.TotalHours}h {d.Minutes}m" : $"{d.Minutes}m";
 
     // custom sort by name length
     private Func<EndedActivity, object> _sortByDuration => x =>

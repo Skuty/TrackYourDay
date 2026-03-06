@@ -8,6 +8,13 @@
                     Adornment="Adornment.Start" Immediate="true"
                     AdornmentIcon="@Icons.Material.Filled.Search" 
                     IconSize="Size.Medium" Class="mt-0"/>
+        @if (DurationSelector != null)
+        {
+            <MudSpacer />
+            <MudText Typo="Typo.body2" Class="mr-2 align-self-center">
+                Total: <strong>@FormatDuration(TotalFilteredDuration)</strong>
+            </MudText>
+        }
     </ToolBarContent>
     <Columns>
         @foreach (var column in Columns)
@@ -33,7 +40,28 @@
     [Parameter]
     public List<TableColumn<TItem>> Columns { get; set; } = new();
 
+    /// <summary>
+    /// Optional selector to extract duration from each item for the total sum display.
+    /// </summary>
+    [Parameter]
+    public Func<TItem, TimeSpan>? DurationSelector { get; set; }
+
     private string _searchString;
+
+    private TimeSpan TotalFilteredDuration
+    {
+        get
+        {
+            if (DurationSelector is null || Items is null)
+                return TimeSpan.Zero;
+            return Items
+                .Where(QuickFilter)
+                .Aggregate(TimeSpan.Zero, (sum, item) => sum + DurationSelector(item));
+        }
+    }
+
+    private static string FormatDuration(TimeSpan d)
+        => (int)d.TotalHours > 0 ? $"{(int)d.TotalHours}h {d.Minutes}m" : $"{d.Minutes}m";
 
     private Func<TItem, bool> QuickFilter => x =>
     {
