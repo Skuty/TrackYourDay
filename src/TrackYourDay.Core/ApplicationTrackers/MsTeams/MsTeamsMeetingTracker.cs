@@ -131,6 +131,7 @@ public sealed class MsTeamsMeetingTracker
     /// <param name="meetingGuid">Unique identifier of the meeting to confirm.</param>
     /// <param name="customDescription">Optional custom description (max 500 chars).</param>
     /// <param name="customEndTime">Optional custom end time. Must be between meeting start and current time.</param>
+    /// <param name="customStartTime">Optional custom start time. Must be before end time and not overlap with already recognized meetings.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
     /// <exception cref="InvalidOperationException">Thrown when no pending meeting exists.</exception>
@@ -138,6 +139,7 @@ public sealed class MsTeamsMeetingTracker
         Guid meetingGuid,
         string? customDescription = null,
         DateTime? customEndTime = null,
+        DateTime? customStartTime = null,
         CancellationToken cancellationToken = default)
     {
         var pending = _pendingEndMeeting;
@@ -152,13 +154,22 @@ public sealed class MsTeamsMeetingTracker
         _postponedUntil = null;
 
         var endTime = customEndTime ?? _clock.Now;
+        var effectiveStartTime = customStartTime ?? pending.StartDate;
         var now = _clock.Now;
-        
-        // Validation: End time cannot be before start time
-        if (endTime < pending.StartDate)
+
+        // Validation: Custom start time cannot be in the future
+        if (customStartTime.HasValue && customStartTime.Value > now)
         {
             throw new ArgumentException(
-                $"End time ({endTime:HH:mm}) cannot be before meeting start time ({pending.StartDate:HH:mm})", 
+                $"Start time ({customStartTime.Value:HH:mm}) cannot be in the future (current time: {now:HH:mm})",
+                nameof(customStartTime));
+        }
+
+        // Validation: End time cannot be before start time
+        if (endTime < effectiveStartTime)
+        {
+            throw new ArgumentException(
+                $"End time ({endTime:HH:mm}) cannot be before meeting start time ({effectiveStartTime:HH:mm})", 
                 nameof(customEndTime));
         }
 
@@ -170,7 +181,9 @@ public sealed class MsTeamsMeetingTracker
                 nameof(customEndTime));
         }
 
-        var endedMeeting = pending.End(endTime);
+        ValidateNoOverlapWithEndedMeetings(effectiveStartTime, endTime);
+
+        var endedMeeting = new EndedMeeting(pending.Guid, effectiveStartTime, endTime, pending.Title);
 
         if (!string.IsNullOrWhiteSpace(customDescription))
         {
@@ -199,6 +212,7 @@ public sealed class MsTeamsMeetingTracker
     /// <param name="meetingGuid">Unique identifier of the meeting to end.</param>
     /// <param name="customDescription">Optional custom description (max 500 chars).</param>
     /// <param name="customEndTime">Optional custom end time. Must be between meeting start and current time.</param>
+    /// <param name="customStartTime">Optional custom start time. Must be before end time and not overlap with already recognized meetings.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="ArgumentException">Thrown when validation fails.</exception>
     /// <exception cref="InvalidOperationException">Thrown when meeting with given ID is not found.</exception>
@@ -206,6 +220,7 @@ public sealed class MsTeamsMeetingTracker
         Guid meetingGuid,
         string? customDescription = null,
         DateTime? customEndTime = null,
+        DateTime? customStartTime = null,
         CancellationToken cancellationToken = default)
     {
         var ongoing = _ongoingMeeting;
@@ -220,13 +235,22 @@ public sealed class MsTeamsMeetingTracker
         _postponedUntil = null;
 
         var endTime = customEndTime ?? _clock.Now;
+        var effectiveStartTime = customStartTime ?? ongoing.StartDate;
         var now = _clock.Now;
-        
-        // Validation: End time cannot be before start time
-        if (endTime < ongoing.StartDate)
+
+        // Validation: Custom start time cannot be in the future
+        if (customStartTime.HasValue && customStartTime.Value > now)
         {
             throw new ArgumentException(
-                $"End time ({endTime:HH:mm}) cannot be before meeting start time ({ongoing.StartDate:HH:mm})", 
+                $"Start time ({customStartTime.Value:HH:mm}) cannot be in the future (current time: {now:HH:mm})",
+                nameof(customStartTime));
+        }
+
+        // Validation: End time cannot be before start time
+        if (endTime < effectiveStartTime)
+        {
+            throw new ArgumentException(
+                $"End time ({endTime:HH:mm}) cannot be before meeting start time ({effectiveStartTime:HH:mm})", 
                 nameof(customEndTime));
         }
 
@@ -238,7 +262,9 @@ public sealed class MsTeamsMeetingTracker
                 nameof(customEndTime));
         }
 
-        var endedMeeting = ongoing.End(endTime);
+        ValidateNoOverlapWithEndedMeetings(effectiveStartTime, endTime);
+
+        var endedMeeting = new EndedMeeting(ongoing.Guid, effectiveStartTime, endTime, ongoing.Title);
 
         if (!string.IsNullOrWhiteSpace(customDescription))
         {
@@ -347,4 +373,22 @@ public sealed class MsTeamsMeetingTracker
     public StartedMeeting? GetOngoingMeeting() => _ongoingMeeting;
 
     public IReadOnlyCollection<EndedMeeting> GetEndedMeetings() => _endedMeetings.AsReadOnly();
+
+    /// <summary>
+    /// Validates that the given time range does not overlap with any already-recognized ended meetings.
+    /// Two intervals overlap when: start &lt; existingEnd AND end &gt; existingStart.
+    /// </summary>
+    /// <exception cref="ArgumentException">Thrown when an overlap is detected.</exception>
+    private void ValidateNoOverlapWithEndedMeetings(DateTime startTime, DateTime endTime)
+    {
+        foreach (var meeting in _endedMeetings)
+        {
+            if (startTime < meeting.EndDate && endTime > meeting.StartDate)
+            {
+                throw new ArgumentException(
+                    $"Meeting time [{startTime:HH:mm} - {endTime:HH:mm}] overlaps with already recognized meeting " +
+                    $"'{meeting.GetDescription()}' [{meeting.StartDate:HH:mm} - {meeting.EndDate:HH:mm}]");
+            }
+        }
+    }
 }
