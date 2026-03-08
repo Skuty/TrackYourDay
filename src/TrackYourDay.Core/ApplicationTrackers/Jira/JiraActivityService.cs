@@ -60,10 +60,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                     activities.Add(CreateIssueCreationActivity(issue));
                 }
 
-                // Extract activities from changelog (only for current user)
+                // Extract activities from changelog (only for current user, only after watermark)
                 if (issue.Changelog?.Histories != null)
                 {
-                    var changelogActivities = MapChangelogToActivities(issue, currentUser);
+                    var changelogActivities = MapChangelogToActivities(issue, currentUser, updateDate);
                     activities.AddRange(changelogActivities);
                 }
 
@@ -162,7 +162,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             };
         }
 
-        private static List<JiraActivity> MapChangelogToActivities(JiraIssueResponse issue, JiraUser currentUser)
+        private static List<JiraActivity> MapChangelogToActivities(JiraIssueResponse issue, JiraUser currentUser, DateTime updatedAfter)
         {
             var activities = new List<JiraActivity>();
 
@@ -173,6 +173,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
             foreach (var history in issue.Changelog.Histories)
             {
+                // Only include changes made after the watermark date
+                if (history.Created.LocalDateTime < updatedAfter)
+                {
+                    continue;
+                }
+
                 // Only include changes made by the current user
                 if (history.Author?.DisplayName != currentUser.DisplayName)
                 {
