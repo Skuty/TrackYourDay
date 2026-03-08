@@ -53,6 +53,38 @@
         <MudText Typo="Typo.h6" Class="mb-2">Clear All Historical Data</MudText>
         <MudText Typo="Typo.body2" Color="Color.Warning">Warning: This action cannot be undone!</MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Error" OnClick="ShowClearDatabaseDialog" Class="mt-2">Clear Database</MudButton>
+        <MudDivider Class="my-4" />
+        <MudExpansionPanels>
+            <MudExpansionPanel Text="Raw SQL Console" Icon="@Icons.Material.Filled.Terminal">
+                <MudTextField @bind-Value="rawSqlStatement"
+                              Label="SQL Statement"
+                              Variant="Variant.Outlined"
+                              Lines="6"
+                              Placeholder="SELECT * FROM historical_data LIMIT 10"
+                              Class="mb-3"
+                              Style="font-family: monospace;" />
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           OnClick="ExecuteRawSql"
+                           Disabled="rawSqlIsExecuting"
+                           StartIcon="@Icons.Material.Filled.PlayArrow"
+                           Class="mb-3">
+                    @(rawSqlIsExecuting ? "Executing…" : "Execute")
+                </MudButton>
+                @if (rawSqlResult is not null)
+                {
+                    <MudTextField Value="@rawSqlResult.Message"
+                                  Label="@(rawSqlResult.Success ? "Result" : "Error")"
+                                  Variant="Variant.Outlined"
+                                  Lines="8"
+                                  ReadOnly="true"
+                                  Style="font-family: monospace;"
+                                  AdornmentColor="@(rawSqlResult.Success ? Color.Success : Color.Error)"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@(rawSqlResult.Success ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error)" />
+                }
+            </MudExpansionPanel>
+        </MudExpansionPanels>
     </MudTabPanel>
     <MudTabPanel Text="LLM Prompt Templates" Icon="@Icons.Material.Filled.TextSnippet">
         <TemplateManagement />
@@ -145,6 +177,9 @@
     [Inject]
     private ILogger<Settings> logger { get; init; }
 
+    [Inject]
+    private IRawSqlExecutor rawSqlExecutor { get; init; }
+
     private int minutesOfNoActivityToStartBreak = 5;
     private bool isSettingsSavedDialogVisible;
     private bool isClearDatabaseDialogVisible;
@@ -172,6 +207,10 @@
     private bool isConnectionCheckDialogVisible;
     private bool connectionCheckSuccess;
     private string connectionCheckMessage = string.Empty;
+
+    private string rawSqlStatement = string.Empty;
+    private RawSqlResult? rawSqlResult;
+    private bool rawSqlIsExecuting;
 
     protected override void OnInitialized()
     {
@@ -246,6 +285,28 @@
         HideClearDatabaseDialog();
         LoadDatabaseStats();
         StateHasChanged();
+    }
+
+    private async Task ExecuteRawSql()
+    {
+        rawSqlIsExecuting = true;
+        rawSqlResult = null;
+        StateHasChanged();
+
+        try
+        {
+            rawSqlResult = await rawSqlExecutor.ExecuteAsync(rawSqlStatement);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error executing raw SQL");
+            rawSqlResult = new RawSqlResult(false, $"Unexpected error: {ex.Message}");
+        }
+        finally
+        {
+            rawSqlIsExecuting = false;
+            StateHasChanged();
+        }
     }
 
     private void SaveSettings()

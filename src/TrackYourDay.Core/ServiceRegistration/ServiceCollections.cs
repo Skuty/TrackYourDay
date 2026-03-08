@@ -193,6 +193,9 @@ namespace TrackYourDay.Core.ServiceRegistration
                     sp.GetRequiredService<ISqliteConnectionFactory>(),
                     null));
 
+            services.AddSingleton<IRawSqlExecutor>(sp =>
+                new RawSqlExecutor(sp.GetRequiredService<ISqliteConnectionFactory>()));
+
             return services;
         }
 
