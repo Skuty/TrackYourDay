@@ -46,6 +46,13 @@
                 <ToolBarContent>
                     <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                                     AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    <MudSpacer />
+                    @if (groupedActivities != null)
+                    {
+                        <MudText Typo="Typo.body2" Class="mr-2 align-self-center">
+                            Total: <strong>@FormatDuration(TotalFilteredGroupedDuration)</strong>
+                        </MudText>
+                    }
                 </ToolBarContent>
                 <Columns>
                     <PropertyColumn Property="x => x.Date.ToShortDateString()" Title="Date" Filterable="false" />
@@ -390,6 +397,21 @@
         return Color.Default;
     }
     
+    private TimeSpan TotalFilteredGroupedDuration
+    {
+        get
+        {
+            if (groupedActivities is null)
+                return TimeSpan.Zero;
+            return groupedActivities
+                .Where(_quickFilter)
+                .Aggregate(TimeSpan.Zero, (sum, x) => sum + x.Duration);
+        }
+    }
+
+    private static string FormatDuration(TimeSpan d)
+        => (int)d.TotalHours > 0 ? $"{(int)d.TotalHours}h {d.Minutes}m" : $"{d.Minutes}m";
+
     private Func<GroupedActivity, object> _sortByDuration => x => x.Duration;
     private Func<GroupedActivity, object> _sortByDescritpion => x => x.Description;
     private Func<GroupedActivity, bool> _quickFilter => x =>
