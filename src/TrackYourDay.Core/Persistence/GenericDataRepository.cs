@@ -360,7 +360,7 @@ namespace TrackYourDay.Core.Persistence
         }
 
         /// <summary>
-        /// Initializes the database schema if it doesn't exist.
+        /// Initializes the database schema if it doesn't exist, and applies any pending structural migrations.
         /// </summary>
         private void InitializeStructure()
         {
@@ -373,9 +373,9 @@ namespace TrackYourDay.Core.Persistence
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Guid TEXT NOT NULL,
                     TypeName TEXT NOT NULL,
-                    DataJson TEXT NOT NULL
+                    DataJson TEXT NOT NULL,
+                    UNIQUE (Guid, TypeName)
                 );
-                CREATE INDEX IF NOT EXISTS idx_historical_data_guid ON historical_data(Guid);
                 CREATE INDEX IF NOT EXISTS idx_historical_data_type ON historical_data(TypeName);";
             command.ExecuteNonQuery();
         }
