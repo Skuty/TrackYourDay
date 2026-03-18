@@ -18,7 +18,7 @@ internal sealed class ShowMeetingEndConfirmationDialogHandler
         var encodedTitle = HttpUtility.UrlEncode(notification.MeetingTitle);
         var startTimeTicks = notification.StartTime.Ticks;
         var path = $"/MeetingEndConfirmation/{notification.MeetingGuid}?title={encodedTitle}&startTime={startTimeTicks}";
-        MauiPageFactory.OpenWebPageInNewWindow(path, 420, 520, allowMinimize: true, alwaysOnTop: false);
+        MauiPageFactory.OpenWebPageInNewWindow(path, 460, 780, allowMinimize: true, alwaysOnTop: false, isResizable: true);
 
         return Task.CompletedTask;
     }
