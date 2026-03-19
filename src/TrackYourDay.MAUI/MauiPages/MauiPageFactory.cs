@@ -15,7 +15,7 @@ namespace TrackYourDay.MAUI.MauiPages
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>")]
-        public static void OpenWebPageInNewWindow(string path, int width, int height, bool allowMinimize = false, bool alwaysOnTop = false)
+        public static void OpenWebPageInNewWindow(string path, int width, int height, bool allowMinimize = false, bool alwaysOnTop = false, bool isResizable = false)
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
@@ -36,7 +36,7 @@ namespace TrackYourDay.MAUI.MauiPages
                 switch (appWindow.Presenter)
                 {
                     case Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter:
-                        overlappedPresenter.IsResizable = false;
+                        overlappedPresenter.IsResizable = isResizable;
                         overlappedPresenter.IsMaximizable = false;
                         overlappedPresenter.IsMinimizable = allowMinimize;
                         overlappedPresenter.IsAlwaysOnTop = alwaysOnTop;
