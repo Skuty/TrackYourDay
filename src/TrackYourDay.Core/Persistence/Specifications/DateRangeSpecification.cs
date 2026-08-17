@@ -14,12 +14,12 @@ namespace TrackYourDay.Core.Persistence.Specifications
         public DateRangeSpecification(DateOnly fromDate, DateOnly toDate)
         {
             _fromDate = fromDate;
-            _toDate = toDate;
+            _toDate = toDate.AddDays(1);
         }
 
         public string GetSqlWhereClause()
         {
-            return "DATE(json_extract(DataJson, '$.OccurrenceDate')) >= DATE(@fromDate) AND DATE(json_extract(DataJson, '$.OccurrenceDate')) <= DATE(@toDate)";
+            return "DATE(json_extract(DataJson, '$.OccurrenceDate')) >= DATE(@fromDate) AND DATE(json_extract(DataJson, '$.OccurrenceDate')) < DATE(@toDate)";
         }
 
         public Dictionary<string, object> GetSqlParameters()
@@ -34,7 +34,7 @@ namespace TrackYourDay.Core.Persistence.Specifications
         public bool IsSatisfiedBy(T entity)
         {
             var occurrenceDate = DateOnly.FromDateTime(entity.OccurrenceDate);
-            return occurrenceDate >= _fromDate && occurrenceDate <= _toDate;
+            return occurrenceDate >= _fromDate && occurrenceDate < _toDate;
         }
     }
 }
