@@ -6,6 +6,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     {
         private const string API_URL_KEY = "Jira.ApiUrl";
         private const string API_KEY_KEY = "Jira.ApiKey";
+        private const string ISSUE_FILTER_NAME_KEY = "Jira.IssueFilterName";
+        private const string ISSUE_RAW_JQL_KEY = "Jira.IssueRawJql";
         private const string LAST_SYNC_KEY = "Jira.LastSyncTimestamp";
 
         private readonly IGenericSettingsService settingsService;
@@ -19,6 +21,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         {
             var apiUrl = settingsService.GetEncryptedSetting(API_URL_KEY, string.Empty);
             var apiKey = settingsService.GetEncryptedSetting(API_KEY_KEY, string.Empty);
+            var issueFilterName = settingsService.GetSetting(ISSUE_FILTER_NAME_KEY, string.Empty);
+            var issueRawJql = settingsService.GetSetting(ISSUE_RAW_JQL_KEY, string.Empty);
             var enabled = settingsService.GetSetting("Jira.Enabled", false);
             var fetchInterval = settingsService.GetSetting("Jira.FetchIntervalMinutes", 15);
             var cbThreshold = settingsService.GetSetting("Jira.CircuitBreakerThreshold", 5);
@@ -35,6 +39,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             {
                 ApiUrl = apiUrl,
                 ApiKey = apiKey,
+                IssueFilterName = issueFilterName,
+                IssueRawJql = issueRawJql,
                 Enabled = enabled,
                 FetchIntervalMinutes = fetchInterval,
                 CircuitBreakerThreshold = cbThreshold,
@@ -49,7 +55,15 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             settingsService.SetEncryptedSetting(API_KEY_KEY, apiKey ?? string.Empty);
         }
 
-        public void UpdateSettings(string apiUrl, string apiKey, bool enabled, int fetchIntervalMinutes, int circuitBreakerThreshold, int circuitBreakerDurationMinutes)
+        public void UpdateSettings(
+            string apiUrl,
+            string apiKey,
+            bool enabled,
+            int fetchIntervalMinutes,
+            int circuitBreakerThreshold,
+            int circuitBreakerDurationMinutes,
+            string? issueFilterName,
+            string? issueRawJql)
         {
             // Validate inputs when enabling integration
             if (enabled)
@@ -61,6 +75,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 if (string.IsNullOrWhiteSpace(apiKey))
                 {
                     throw new System.ArgumentException("API Key is required when enabling Jira integration.", nameof(apiKey));
+                }
+
+                if (string.IsNullOrWhiteSpace(issueFilterName) && string.IsNullOrWhiteSpace(issueRawJql))
+                {
+                    throw new System.ArgumentException(
+                        "At least one Jira issue query source is required when enabling Jira integration (Filter Name or Raw JQL).",
+                        nameof(issueRawJql));
                 }
             }
 
@@ -83,6 +104,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             settingsService.SetSetting("Jira.FetchIntervalMinutes", fetchIntervalMinutes);
             settingsService.SetSetting("Jira.CircuitBreakerThreshold", circuitBreakerThreshold);
             settingsService.SetSetting("Jira.CircuitBreakerDurationMinutes", circuitBreakerDurationMinutes);
+            settingsService.SetSetting(ISSUE_FILTER_NAME_KEY, issueFilterName?.Trim() ?? string.Empty);
+            settingsService.SetSetting(ISSUE_RAW_JQL_KEY, issueRawJql?.Trim() ?? string.Empty);
         }
 
         public void UpdateLastSyncTimestamp(DateTime timestamp)

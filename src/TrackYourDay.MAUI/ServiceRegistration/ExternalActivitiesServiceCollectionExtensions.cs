@@ -17,7 +17,7 @@ namespace TrackYourDay.MAUI.ServiceRegistration
         {
             services.AddSingleton<IDatabaseKeyProvider, WindowsDatabaseKeyProvider>();
             services.AddSingleton<ISqliteConnectionFactory, SqlCipherConnectionFactory>();
-            
+
             services.AddSingleton<IJiraIssueRepository, JiraIssueRepository>();
 
             return services;
@@ -40,6 +40,7 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                         {
                             client.DefaultRequestHeaders.Add("PRIVATE-TOKEN", gitLabSettings.ApiKey);
                         }
+
                         client.Timeout = TimeSpan.FromSeconds(30);
                     }
                 })
@@ -56,20 +57,7 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                 });
 
             services.AddHttpClient("Jira")
-                .ConfigureHttpClient((sp, client) =>
-                {
-                    var jiraSettings = sp.GetRequiredService<IJiraSettingsService>().GetSettings();
-                    if (!string.IsNullOrEmpty(jiraSettings.ApiUrl))
-                    {
-                        client.BaseAddress = new Uri(jiraSettings.ApiUrl);
-                        client.DefaultRequestHeaders.Remove("Authorization");
-                        if (!string.IsNullOrEmpty(jiraSettings.ApiKey))
-                        {
-                            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {jiraSettings.ApiKey}");
-                        }
-                        client.Timeout = TimeSpan.FromSeconds(30);
-                    }
-                })
+                .ConfigureHttpClient((sp, client) => ConfigureJiraHttpClient(sp, client))
                 .AddPolicyHandler((sp, req) =>
                 {
                     var settings = sp.GetRequiredService<IJiraSettingsService>().GetSettings();
@@ -82,7 +70,38 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                     return new HttpLoggingHandler(logger, "Jira");
                 });
 
+            services.AddHttpClient("JiraNoRetry")
+                .ConfigureHttpClient((sp, client) => ConfigureJiraHttpClient(sp, client))
+                .AddPolicyHandler((sp, req) =>
+                {
+                    var settings = sp.GetRequiredService<IJiraSettingsService>().GetSettings();
+                    return GetCircuitBreakerPolicy(settings.CircuitBreakerThreshold, settings.CircuitBreakerDurationMinutes);
+                })
+                .AddHttpMessageHandler(sp =>
+                {
+                    var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
+                    return new HttpLoggingHandler(logger, "JiraNoRetry");
+                });
+
             return services;
+        }
+
+        private static void ConfigureJiraHttpClient(IServiceProvider serviceProvider, HttpClient client)
+        {
+            var jiraSettings = serviceProvider.GetRequiredService<IJiraSettingsService>().GetSettings();
+            if (string.IsNullOrEmpty(jiraSettings.ApiUrl))
+            {
+                return;
+            }
+
+            client.BaseAddress = new Uri(jiraSettings.ApiUrl);
+            client.DefaultRequestHeaders.Remove("Authorization");
+            if (!string.IsNullOrEmpty(jiraSettings.ApiKey))
+            {
+                client.DefaultRequestHeaders.Add("Authorization", $"******");
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(30);
         }
 
         private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy(int threshold, int durationMinutes)
