@@ -504,7 +504,7 @@ else
         {
             var settings = jiraSettingsService.GetSettings();
             var loadedIssues = await jiraRestApiClient
-                .GetIssuesForMeetingLogging(settings.IssueFilterName, settings.IssueRawJql);
+                .GetIssues(settings.IssueFilterName, settings.IssueRawJql);
 
             jiraIssues.Clear();
             jiraIssues.AddRange(loadedIssues);

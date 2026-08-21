@@ -14,7 +14,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate);
 
-        Task<List<JiraIssue>> GetIssuesForMeetingLogging(string? issueFilterName, string? rawJql);
+        Task<List<JiraIssue>> GetIssues(string? issueFilterName, string? rawJql);
 
         Task CreateIssueWorklog(string issueKey, DateTime startedAt, int timeSpentSeconds, string comment);
     }
@@ -22,12 +22,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     public class JiraRestApiClient : IJiraRestApiClient
     {
         private readonly HttpClient _httpClient;
-        private readonly HttpClient _worklogHttpClient;
 
-        public JiraRestApiClient(HttpClient httpClient, HttpClient? worklogHttpClient = null)
+        public JiraRestApiClient(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _worklogHttpClient = worklogHttpClient ?? httpClient;
         }
 
         public async Task<JiraUser> GetCurrentUser()
@@ -92,7 +90,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 .ToList() ?? new List<JiraWorklogResponse>();
         }
 
-        public async Task<List<JiraIssue>> GetIssuesForMeetingLogging(string? issueFilterName, string? rawJql)
+        public async Task<List<JiraIssue>> GetIssues(string? issueFilterName, string? rawJql)
         {
             var effectiveJql = await ResolveJqlForIssueLookup(issueFilterName, rawJql).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(effectiveJql))
@@ -152,7 +150,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _worklogHttpClient.PostAsync(url, requestContent).ConfigureAwait(false);
+            var response = await _httpClient.PostAsync(url, requestContent).ConfigureAwait(false);
             await EnsureSuccessWithDetails(response, url).ConfigureAwait(false);
         }
 
@@ -412,8 +410,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             }
 
             var httpClient = httpClientFactory.CreateClient("Jira");
-            var noRetryHttpClient = httpClientFactory.CreateClient("JiraNoRetry");
-            return new JiraRestApiClient(httpClient, noRetryHttpClient);
+            return new JiraRestApiClient(httpClient);
         }
     }
 
@@ -427,7 +424,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         public Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
             => Task.FromResult(new List<JiraWorklogResponse>());
 
-        public Task<List<JiraIssue>> GetIssuesForMeetingLogging(string? issueFilterName, string? rawJql)
+        public Task<List<JiraIssue>> GetIssues(string? issueFilterName, string? rawJql)
             => Task.FromResult(new List<JiraIssue>());
 
         public Task CreateIssueWorklog(string issueKey, DateTime startedAt, int timeSpentSeconds, string comment)
