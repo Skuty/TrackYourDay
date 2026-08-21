@@ -124,9 +124,9 @@ public class LlmPromptService(
             sb.AppendLine("| Time | Activity Description |");
             sb.AppendLine("|------|----------------------|");
 
-            foreach (var activity in activities.OrderBy(a => a.OccuranceDate))
+            foreach (var activity in activities.OrderBy(a => a.OccurrenceDate))
             {
-                var time = activity.OccuranceDate.ToString("HH:mm");
+                var time = activity.OccurrenceDate.ToString("HH:mm");
                 var description = EscapeMarkdown(activity.Description);
                 sb.AppendLine($"| {time} | {description} |");
             }

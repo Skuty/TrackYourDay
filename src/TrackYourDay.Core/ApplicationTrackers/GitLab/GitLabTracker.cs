@@ -54,7 +54,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 var isNewByGuid = await _repository.TryAppendAsync(activity, cancellationToken).ConfigureAwait(false);
                 
                 // Secondary: Timestamp-based validation (consistency check)
-                var isNewByTimestamp = activity.OccuranceDate > watermark;
+                var isNewByTimestamp = activity.OccurrenceDate > watermark;
                 
                 // Log mismatches for debugging/monitoring
                 if (isNewByGuid != isNewByTimestamp)
@@ -65,7 +65,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                         "(OccurrenceDate={OccurrenceDate}, Watermark={Watermark}). " +
                         "Description: {Description}",
                         activity.Guid, isNewByGuid, isNewByTimestamp, 
-                        activity.OccuranceDate, watermark, activity.Description);
+                        activity.OccurrenceDate, watermark, activity.Description);
                 }
                 
                 // Publish event only for truly new activities (GUID-based decision)

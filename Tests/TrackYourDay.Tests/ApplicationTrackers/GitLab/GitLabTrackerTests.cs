@@ -63,8 +63,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var watermark = DateTime.UtcNow.AddDays(-1);
             var settings = new GitLabSettings { ApiUrl = "https://test.com", ApiKey = "test-key", LastSyncTimestamp = watermark };
-            var activity1 = new GitLabActivity { UpstreamId = "gitlab-1", OccuranceDate = watermark.AddHours(1), Description = "Opened Issue" };
-            var activity2 = new GitLabActivity { UpstreamId = "gitlab-2", OccuranceDate = watermark.AddHours(2), Description = "Closed Issue" };
+            var activity1 = new GitLabActivity { UpstreamId = "gitlab-1", OccurrenceDate = watermark.AddHours(1), Description = "Opened Issue" };
+            var activity2 = new GitLabActivity { UpstreamId = "gitlab-2", OccurrenceDate = watermark.AddHours(2), Description = "Closed Issue" };
             
             _settingsServiceMock.Setup(s => s.GetSettings()).Returns(settings);
             _activityServiceMock
@@ -93,7 +93,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var watermark = DateTime.UtcNow.AddDays(-1);
             var settings = new GitLabSettings { ApiUrl = "https://test.com", ApiKey = "test-key", LastSyncTimestamp = watermark };
-            var activity = new GitLabActivity { UpstreamId = "gitlab-3", OccuranceDate = watermark.AddHours(1), Description = "Duplicate" };
+            var activity = new GitLabActivity { UpstreamId = "gitlab-3", OccurrenceDate = watermark.AddHours(1), Description = "Duplicate" };
 
             _settingsServiceMock.Setup(s => s.GetSettings()).Returns(settings);
             _activityServiceMock
@@ -119,8 +119,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Given
             var watermark = DateTime.UtcNow.AddDays(-1);
             var settings = new GitLabSettings { ApiUrl = "https://test.com", ApiKey = "test-key", LastSyncTimestamp = watermark };
-            var newActivity = new GitLabActivity { UpstreamId = "gitlab-new", OccuranceDate = watermark.AddHours(1), Description = "New" };
-            var existingActivity = new GitLabActivity { UpstreamId = "gitlab-existing", OccuranceDate = watermark.AddHours(2), Description = "Existing" };
+            var newActivity = new GitLabActivity { UpstreamId = "gitlab-new", OccurrenceDate = watermark.AddHours(1), Description = "New" };
+            var existingActivity = new GitLabActivity { UpstreamId = "gitlab-existing", OccurrenceDate = watermark.AddHours(2), Description = "Existing" };
 
             _settingsServiceMock.Setup(s => s.GetSettings()).Returns(settings);
             _activityServiceMock
@@ -196,7 +196,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var activity = new GitLabActivity 
             { 
                 UpstreamId = "gitlab-mismatch", 
-                OccuranceDate = watermark.AddHours(-1), // Before watermark
+                OccurrenceDate = watermark.AddHours(-1), // Before watermark
                 Description = "Mismatch" 
             };
 
@@ -230,8 +230,8 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             var toDate = DateOnly.FromDateTime(DateTime.Today);
             var expectedActivities = new List<GitLabActivity>
             {
-                new() { UpstreamId = "gitlab-1", OccuranceDate = DateTime.Today.AddDays(-3), Description = "Activity 1" },
-                new() { UpstreamId = "gitlab-2", OccuranceDate = DateTime.Today.AddDays(-1), Description = "Activity 2" }
+                new() { UpstreamId = "gitlab-1", OccurrenceDate = DateTime.Today.AddDays(-3), Description = "Activity 1" },
+                new() { UpstreamId = "gitlab-2", OccurrenceDate = DateTime.Today.AddDays(-1), Description = "Activity 2" }
             };
 
             _repositoryMock
