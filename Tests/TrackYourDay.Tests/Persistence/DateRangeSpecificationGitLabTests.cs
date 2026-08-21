@@ -21,21 +21,21 @@ namespace TrackYourDay.Tests.Persistence
             var leftBorderActivity = new GitLabActivity
             {
                 UpstreamId = "Activity-1",
-                OccuranceDate = new DateTime(2000, 1, 15, 0, 0, 0),
+                OccurrenceDate = new DateTime(2000, 1, 15, 0, 0, 0),
                 Description = "Activity equal to left border"
             };
 
             var withinBorderActivity = new GitLabActivity
             {
                 UpstreamId = "Activity-2",
-                OccuranceDate = new DateTime(2000, 1, 15, 12, 0, 0),
+                OccurrenceDate = new DateTime(2000, 1, 15, 12, 0, 0),
                 Description = "Activity within the border"
             };
 
             var rightBorderActivity = new GitLabActivity
             {
                 UpstreamId = "Activity-3",
-                OccuranceDate = new DateTime(2000, 1, 15, 23, 59, 59),
+                OccurrenceDate = new DateTime(2000, 1, 15, 23, 59, 59),
                 Description = "Activity equal to right border"
             };
 

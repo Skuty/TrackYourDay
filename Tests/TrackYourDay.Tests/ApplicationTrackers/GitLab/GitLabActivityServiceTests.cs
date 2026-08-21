@@ -32,7 +32,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
 
             // Then
             activities.Count.Should().Be(1);
-            activities.First().OccuranceDate.Should().Be(gitLabEvent.CreatedAt.DateTime);
+            activities.First().OccurrenceDate.Should().Be(gitLabEvent.CreatedAt.DateTime);
             activities.First().Description.Should().Be("Opened Merge Request: Merge request from branch with 2 commits to master with squashing");
         }
 
@@ -63,9 +63,9 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
 
             activities.Count.Should().Be(2);
             // TODO Dates probably have to be handled in more conscious way including time zones and offsets
-            activities[0].OccuranceDate.Should().Be(new DateTime(2025, 03, 16, 21, 06, 53, DateTimeKind.Utc));
+            activities[0].OccurrenceDate.Should().Be(new DateTime(2025, 03, 16, 21, 06, 53, DateTimeKind.Utc));
             activities[0].Description.Should().Be("Commit to Repository: ss.skuty / test, branch: master, Title: Merge branch 'BranchPushedOnCreation' into 'master'");
-            activities[1].OccuranceDate.Should().Be(new DateTime(2025, 03, 16, 21, 06, 53, DateTimeKind.Utc));
+            activities[1].OccurrenceDate.Should().Be(new DateTime(2025, 03, 16, 21, 06, 53, DateTimeKind.Utc));
             activities[1].Description.Should().Be("Commit to Repository: ss.skuty / test, branch: master, Title: Merge request from branch with 2 commits to master with squashing");
         }
 
@@ -86,7 +86,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
 
             // Then
             activities.Count.Should().Be(1);
-            activities.First().OccuranceDate.Should().Be(gitLabEvent.CreatedAt.DateTime);
+            activities.First().OccurrenceDate.Should().Be(gitLabEvent.CreatedAt.DateTime);
             activities.First().Description.Should().Be("Created new branch 'BranchPushedOnCreation' in Repository: ss.skuty / test");
         }
 
@@ -107,7 +107,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
 
             // Then
             activities.Count.Should().Be(1);
-            activities.First().OccuranceDate.Should().Be(gitLabEvent.CreatedAt.DateTime);
+            activities.First().OccurrenceDate.Should().Be(gitLabEvent.CreatedAt.DateTime);
             activities.First().Description.Should().Be("Deleted branch 'BranchPushedOnCreation' from Repository: ss.skuty / test");
         }
 
@@ -264,10 +264,10 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             activities.Count.Should().Be(10);
             
             // Verify each commit has its own distinct timestamp
-            activities[0].OccuranceDate.Should().Be(new DateTime(2025, 03, 16, 10, 00, 00, DateTimeKind.Utc));
+            activities[0].OccurrenceDate.Should().Be(new DateTime(2025, 03, 16, 10, 00, 00, DateTimeKind.Utc));
             activities[0].Description.Should().Contain("Commit 1");
             
-            activities[9].OccuranceDate.Should().Be(new DateTime(2025, 03, 16, 19, 00, 00, DateTimeKind.Utc));
+            activities[9].OccurrenceDate.Should().Be(new DateTime(2025, 03, 16, 19, 00, 00, DateTimeKind.Utc));
             activities[9].Description.Should().Contain("Commit 10");
 
             // Verify that GetCommitsByShaRange was called (not the old GetCommits method)

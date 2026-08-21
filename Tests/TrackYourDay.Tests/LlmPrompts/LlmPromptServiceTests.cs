@@ -180,8 +180,8 @@ public class LlmPromptServiceTests
 
         var gitLabActivities = new List<GitLabActivity>
         {
-            new() { UpstreamId = "gitlab-1", OccuranceDate = DateTime.Today.AddHours(10), Description = "Opened MR !123" },
-            new() { UpstreamId = "gitlab-2", OccuranceDate = DateTime.Today.AddHours(15), Description = "Merged MR !456" }
+            new() { UpstreamId = "gitlab-1", OccurrenceDate = DateTime.Today.AddHours(10), Description = "Opened MR !123" },
+            new() { UpstreamId = "gitlab-2", OccurrenceDate = DateTime.Today.AddHours(15), Description = "Merged MR !456" }
         };
 
         mockJiraActivityRepo.Setup(r => r.FindAsync(It.IsAny<DateRangeSpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
@@ -243,7 +243,7 @@ public class LlmPromptServiceTests
 
         var gitLabActivities = new List<GitLabActivity>
         {
-            new() { UpstreamId = "gitlab-1", OccuranceDate = DateTime.Today.AddHours(10), Description = "Opened MR !123" }
+            new() { UpstreamId = "gitlab-1", OccurrenceDate = DateTime.Today.AddHours(10), Description = "Opened MR !123" }
         };
 
         mockJiraActivityRepo.Setup(r => r.FindAsync(It.IsAny<DateRangeSpecification<JiraActivity>>(), It.IsAny<CancellationToken>()))
@@ -498,7 +498,7 @@ public class LlmPromptServiceTests
 
         var gitLabActivities = new List<GitLabActivity>
         {
-            new() { UpstreamId = "gitlab-1", OccuranceDate = DateTime.Today.AddHours(10), Description = "Activity 2" }
+            new() { UpstreamId = "gitlab-1", OccurrenceDate = DateTime.Today.AddHours(10), Description = "Activity 2" }
         };
 
         var jiraIssues = new List<JiraIssueState>

@@ -11,7 +11,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
     public record class GitLabActivity : IHasDeterministicGuid, IHasOccurrenceDate
     {
         public required string UpstreamId { get; init; }
-        public required DateTime OccuranceDate { get; init; }
+        public required DateTime OccurrenceDate { get; init; }
         public required string Description { get; init; }
         
         /// <summary>
@@ -19,11 +19,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
         /// </summary>
         public Guid Guid => GenerateDeterministicGuid(UpstreamId);
         
-        /// <summary>
-        /// Gets the timestamp when the activity occurred (implements IHasOccurrenceDate).
-        /// </summary>
-        DateTime IHasOccurrenceDate.OccurrenceDate => OccuranceDate;
-
         private static Guid GenerateDeterministicGuid(string input)
         {
             var bytes = MD5.HashData(Encoding.UTF8.GetBytes(input));
@@ -143,7 +138,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 new GitLabActivity
                 {
                     UpstreamId = upstreamId,
-                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    OccurrenceDate = gitlabEvent.CreatedAt.DateTime,
                     Description = $"{gitlabEvent.Action} {gitlabEvent.TargetType}: {gitlabEvent.TargetTitle}"
                 }
             ];
@@ -164,7 +159,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                     new GitLabActivity
                     {
                         UpstreamId = upstreamId,
-                        OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                        OccurrenceDate = gitlabEvent.CreatedAt.DateTime,
                         Description = $"Created new branch '{branchName}' in Repository: {projectName}"
                     }
                 ];
@@ -179,7 +174,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                     new GitLabActivity
                     {
                         UpstreamId = upstreamId,
-                        OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                        OccurrenceDate = gitlabEvent.CreatedAt.DateTime,
                         Description = $"Created new tag '{branchName}' in Repository: {projectName}"
                     }
                 ];
@@ -195,7 +190,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                     new GitLabActivity
                     {
                         UpstreamId = upstreamId,
-                        OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                        OccurrenceDate = gitlabEvent.CreatedAt.DateTime,
                         Description = $"Deleted {refType} '{branchName}' from Repository: {projectName}"
                     }
                 ];
@@ -231,7 +226,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 gitLabActivities.Add(new GitLabActivity
                 {
                     UpstreamId = upstreamId,
-                    OccuranceDate = commit.CommittedDate.DateTime,
+                    OccurrenceDate = commit.CommittedDate.DateTime,
                     Description = $"Commit to Repository: {projectName}, branch: {branchName}, Title: {commit.Title}"
                 });
             }
@@ -259,7 +254,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 new GitLabActivity
                 {
                     UpstreamId = upstreamId,
-                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    OccurrenceDate = gitlabEvent.CreatedAt.DateTime,
                     Description = description
                 }
             ];
@@ -283,7 +278,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 new GitLabActivity
                 {
                     UpstreamId = upstreamId,
-                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    OccurrenceDate = gitlabEvent.CreatedAt.DateTime,
                     Description = description
                 }
             ];
@@ -311,7 +306,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 new GitLabActivity
                 {
                     UpstreamId = upstreamId,
-                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    OccurrenceDate = gitlabEvent.CreatedAt.DateTime,
                     Description = description
                 }
             ];
@@ -333,7 +328,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 new GitLabActivity
                 {
                     UpstreamId = upstreamId,
-                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    OccurrenceDate = gitlabEvent.CreatedAt.DateTime,
                     Description = description
                 }
             ];
@@ -357,10 +352,24 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
                 new GitLabActivity
                 {
                     UpstreamId = upstreamId,
-                    OccuranceDate = gitlabEvent.CreatedAt.DateTime,
+                    OccurrenceDate = gitlabEvent.CreatedAt.DateTime,
                     Description = description
                 }
             ];
         }
     }
 }
+
+/*
+UPDATE historical_data
+SET DataJson = json_remove(
+                json_set(
+                  DataJson,
+                  '$.OccurrenceDate',
+                  json_extract(DataJson, '$.OccuranceDate')
+                ),
+                '$.OccuranceDate'
+              )
+WHERE TypeName = 'GitLabActivity'
+  AND json_type(DataJson, '$.OccuranceDate') IS NOT NULL;
+*/
