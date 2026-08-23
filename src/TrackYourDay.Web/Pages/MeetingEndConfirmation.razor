@@ -503,8 +503,22 @@ else
         try
         {
             var settings = jiraSettingsService.GetSettings();
-            var loadedIssues = await jiraRestApiClient
-                .GetIssues(settings.IssueFilterName, settings.IssueRawJql);
+            var hasFilterName = !string.IsNullOrWhiteSpace(settings.IssueFilterName);
+            var hasRawJql = !string.IsNullOrWhiteSpace(settings.IssueRawJql);
+
+            if (!hasFilterName && !hasRawJql)
+            {
+                throw new InvalidOperationException("Jira issue query source is not configured. Configure Filter Name or Raw JQL in Settings.");
+            }
+
+            if (hasFilterName && hasRawJql)
+            {
+                throw new InvalidOperationException("Jira issue query source is ambiguous. Configure exactly one: Filter Name or Raw JQL.");
+            }
+
+            var loadedIssues = hasFilterName
+                ? await jiraRestApiClient.GetIssuesByFilterName(settings.IssueFilterName!)
+                : await jiraRestApiClient.GetIssuesByRawJql(settings.IssueRawJql!);
 
             jiraIssues.Clear();
             jiraIssues.AddRange(loadedIssues);

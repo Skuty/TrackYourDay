@@ -148,7 +148,7 @@ public sealed class JiraSettingsServiceTests
         const int cbThreshold = 10;
         const int cbDuration = 15;
         const string issueFilterName = "my-filter";
-        const string rawJql = "project = PROJ";
+        const string rawJql = "";
 
         // When
         _sut.UpdateSettings(apiUrl, apiKey, enabled, fetchInterval, cbThreshold, cbDuration, issueFilterName, rawJql);
@@ -176,6 +176,21 @@ public sealed class JiraSettingsServiceTests
 
         // Then
         act.Should().Throw<ArgumentException>()
-            .WithMessage("*Filter Name or Raw JQL*");
+            .WithMessage("*required*Filter Name or Raw JQL*");
+    }
+
+    [Fact]
+    public void GivenEnabledJiraAndBothQuerySources_WhenUpdateSettings_ThenThrowsArgumentException()
+    {
+        // Given
+        const string apiUrl = "https://jira.example.com";
+        const string apiKey = "test-key";
+
+        // When
+        var act = () => _sut.UpdateSettings(apiUrl, apiKey, true, 15, 5, 5, "my-filter", "project = PROJ");
+
+        // Then
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*only one*Filter Name or Raw JQL*");
     }
 }

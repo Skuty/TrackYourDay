@@ -38,8 +38,8 @@
         </MudText>
         <MudTextField @bind-Value="jiraApiUrl" Label="Jira API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="jiraApiKey" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
-        <MudTextField @bind-Value="jiraIssueFilterName" Label="Jira Issue Filter Name (preferred)" Variant="Variant.Outlined" />
-        <MudTextField @bind-Value="jiraIssueRawJql" Label="Jira Issue Raw JQL (fallback)" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="jiraIssueFilterName" Label="Jira Issue Filter Name (choose this or Raw JQL)" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="jiraIssueRawJql" Label="Jira Issue Raw JQL (choose this or Filter Name)" Variant="Variant.Outlined" />
         <MudNumericField T="int" @bind-Value="jiraFetchIntervalMinutes" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
         <MudNumericField T="int" @bind-Value="jiraCircuitBreakerThreshold" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
         <MudNumericField T="int" @bind-Value="jiraCircuitBreakerDurationMinutes" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
@@ -378,8 +378,12 @@
                 jiraErrors.Add("Jira Circuit Breaker Threshold must be at least 1.");
             if (this.jiraCircuitBreakerDurationMinutes < 1)
                 jiraErrors.Add("Jira Circuit Breaker Duration must be at least 1 minute.");
-            if (string.IsNullOrWhiteSpace(this.jiraIssueFilterName) && string.IsNullOrWhiteSpace(this.jiraIssueRawJql))
-                jiraErrors.Add("At least one Jira issue query source is required: Filter Name or Raw JQL.");
+            var hasFilterName = !string.IsNullOrWhiteSpace(this.jiraIssueFilterName);
+            var hasRawJql = !string.IsNullOrWhiteSpace(this.jiraIssueRawJql);
+            if (!hasFilterName && !hasRawJql)
+                jiraErrors.Add("One Jira issue query source is required: Filter Name or Raw JQL.");
+            if (hasFilterName && hasRawJql)
+                jiraErrors.Add("Choose only one Jira issue query source: Filter Name or Raw JQL.");
 
             if (jiraErrors.Count > 0)
             {

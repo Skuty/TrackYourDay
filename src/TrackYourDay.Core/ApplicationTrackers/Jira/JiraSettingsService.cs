@@ -77,10 +77,19 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                     throw new System.ArgumentException("API Key is required when enabling Jira integration.", nameof(apiKey));
                 }
 
-                if (string.IsNullOrWhiteSpace(issueFilterName) && string.IsNullOrWhiteSpace(issueRawJql))
+                var hasFilterName = !string.IsNullOrWhiteSpace(issueFilterName);
+                var hasRawJql = !string.IsNullOrWhiteSpace(issueRawJql);
+                if (!hasFilterName && !hasRawJql)
                 {
                     throw new System.ArgumentException(
-                        "At least one Jira issue query source is required when enabling Jira integration (Filter Name or Raw JQL).",
+                        "One Jira issue query source is required when enabling Jira integration (Filter Name or Raw JQL).",
+                        nameof(issueFilterName));
+                }
+
+                if (hasFilterName && hasRawJql)
+                {
+                    throw new System.ArgumentException(
+                        "Choose only one Jira issue query source when enabling Jira integration (Filter Name or Raw JQL).",
                         nameof(issueRawJql));
                 }
             }

@@ -14,7 +14,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate);
 
-        Task<List<JiraIssue>> GetIssues(string? issueFilterName, string? rawJql);
+        Task<List<JiraIssue>> GetIssuesByFilterName(string issueFilterName);
+
+        Task<List<JiraIssue>> GetIssuesByRawJql(string rawJql);
 
         Task CreateIssueWorklog(string issueKey, DateTime startedAt, int timeSpentSeconds, string comment);
     }
@@ -90,15 +92,30 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 .ToList() ?? new List<JiraWorklogResponse>();
         }
 
-        public async Task<List<JiraIssue>> GetIssues(string? issueFilterName, string? rawJql)
+        public async Task<List<JiraIssue>> GetIssuesByFilterName(string issueFilterName)
         {
-            var effectiveJql = await ResolveJqlForIssueLookup(issueFilterName, rawJql).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(effectiveJql))
+            if (string.IsNullOrWhiteSpace(issueFilterName))
             {
-                throw new InvalidOperationException("No Jira issue query available. Configure Jira Filter Name or Raw JQL in Settings.");
+                throw new ArgumentException("Issue filter name is required.", nameof(issueFilterName));
             }
 
-            var encodedJql = Uri.EscapeDataString(effectiveJql);
+            var jql = $"filter = \"{EscapeJqlLiteral(issueFilterName.Trim())}\"";
+            return await GetIssuesByJql(jql).ConfigureAwait(false);
+        }
+
+        public async Task<List<JiraIssue>> GetIssuesByRawJql(string rawJql)
+        {
+            if (string.IsNullOrWhiteSpace(rawJql))
+            {
+                throw new ArgumentException("Raw JQL is required.", nameof(rawJql));
+            }
+
+            return await GetIssuesByJql(rawJql.Trim()).ConfigureAwait(false);
+        }
+
+        private async Task<List<JiraIssue>> GetIssuesByJql(string jql)
+        {
+            var encodedJql = Uri.EscapeDataString(jql);
             var url = $"/rest/api/2/search?jql={encodedJql}&fields=summary,updated&maxResults=100";
 
             var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
@@ -154,76 +171,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             await EnsureSuccessWithDetails(response, url).ConfigureAwait(false);
         }
 
-        private async Task<string?> ResolveJqlForIssueLookup(string? issueFilterName, string? rawJql)
-        {
-            if (!string.IsNullOrWhiteSpace(issueFilterName))
-            {
-                var resolved = await TryResolveJqlFromFilterName(issueFilterName.Trim()).ConfigureAwait(false);
-                if (!string.IsNullOrWhiteSpace(resolved))
-                {
-                    return resolved;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(rawJql))
-            {
-                return rawJql.Trim();
-            }
-
-            return null;
-        }
-
-        private async Task<string?> TryResolveJqlFromFilterName(string filterName)
-        {
-            var encodedFilterName = Uri.EscapeDataString(filterName);
-            var url = $"/rest/api/2/filter/search?filterName={encodedFilterName}";
-
-            HttpResponseMessage response;
-            try
-            {
-                response = await _httpClient.GetAsync(url).ConfigureAwait(false);
-            }
-            catch
-            {
-                return null;
-            }
-
-            if (response.StatusCode == HttpStatusCode.NotFound)
-            {
-                return null;
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-            try
-            {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-                };
-                var searchResponse = JsonSerializer.Deserialize<JiraFilterSearchResponse>(content, options);
-
-                var exactFilter = searchResponse?.Values?
-                    .FirstOrDefault(filter => string.Equals(filter.Name, filterName, StringComparison.OrdinalIgnoreCase));
-
-                if (!string.IsNullOrWhiteSpace(exactFilter?.Jql))
-                {
-                    return exactFilter.Jql;
-                }
-
-                return searchResponse?.Values?.FirstOrDefault()?.Jql;
-            }
-            catch (JsonException)
-            {
-                return null;
-            }
-        }
+        private static string EscapeJqlLiteral(string value)
+            => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
 
         private static async Task EnsureSuccessWithDetails(HttpResponseMessage response, string requestPath)
         {
@@ -355,14 +304,6 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         [property: JsonPropertyName("timeSpentSeconds")] int TimeSpentSeconds
     );
 
-    public record JiraFilterSearchResponse(
-        [property: JsonPropertyName("values")] List<JiraFilterResponse>? Values);
-
-    public record JiraFilterResponse(
-        [property: JsonPropertyName("id")] string? Id,
-        [property: JsonPropertyName("name")] string? Name,
-        [property: JsonPropertyName("jql")] string? Jql);
-
     public record JiraCreateWorklogRequest(
         [property: JsonPropertyName("comment")] string Comment,
         [property: JsonPropertyName("started")] string Started,
@@ -424,7 +365,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         public Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
             => Task.FromResult(new List<JiraWorklogResponse>());
 
-        public Task<List<JiraIssue>> GetIssues(string? issueFilterName, string? rawJql)
+        public Task<List<JiraIssue>> GetIssuesByFilterName(string issueFilterName)
+            => Task.FromResult(new List<JiraIssue>());
+
+        public Task<List<JiraIssue>> GetIssuesByRawJql(string rawJql)
             => Task.FromResult(new List<JiraIssue>());
 
         public Task CreateIssueWorklog(string issueKey, DateTime startedAt, int timeSpentSeconds, string comment)
