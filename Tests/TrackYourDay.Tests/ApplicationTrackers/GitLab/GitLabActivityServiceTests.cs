@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Text.Json;
 using TrackYourDay.Core.ApplicationTrackers.GitLab;
@@ -14,7 +15,7 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
         public GitLabActivityServiceTests()
         {
             this.gitLabApiClient = new Mock<IGitLabRestApiClient>();
-            this.gitLabActivityService = new GitLabActivityService(this.gitLabApiClient.Object, null);
+            this.gitLabActivityService = new GitLabActivityService(this.gitLabApiClient.Object, Mock.Of<ILogger<GitLabActivityService>>());
             var gitlabUser = JsonSerializer.Deserialize<GitLabUser>(this.GetResponseFor_GetCurrentUser());
             this.gitLabApiClient.Setup(x => x.GetCurrentUser()).ReturnsAsync(gitlabUser);
         }
@@ -273,6 +274,82 @@ namespace TrackYourDay.Tests.ApplicationTrackers.GitLab
             // Verify that GetCommitsByShaRange was called (not the old GetCommits method)
             this.gitLabApiClient.Verify(x => x.GetCommitsByShaRange(It.IsAny<GitLabProjectId>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             this.gitLabApiClient.Verify(x => x.GetCommits(It.IsAny<GitLabProjectId>(), It.IsAny<GitLabRefName>(), It.IsAny<DateOnly>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GivenPushEventWithoutShaRange_WhenGettingActivity_ThenFallsBackToBranchCommitsSinceRequestedStartDate()
+        {
+            // Given
+            var startDate = new DateTime(2025, 03, 01);
+            var eventAuthor = new GitLabEventAuthor(8272154, "Adam Kuba", "ss.skuty", null);
+            var gitLabEvent = new GitLabEvent(
+                987654321,
+                24674429,
+                "pushed to",
+                string.Empty,
+                eventAuthor,
+                string.Empty,
+                new DateTimeOffset(2025, 03, 16, 21, 06, 54, TimeSpan.Zero),
+                new GitLabPushData(1, "pushed", "branch", null, null, "feature/commit-tracking"),
+                null);
+
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .ReturnsAsync([gitLabEvent]);
+
+            var gitLabProject = JsonSerializer.Deserialize<GitLabProject>(this.GetResponseForProject());
+            this.gitLabApiClient.Setup(x => x.GetProject(It.IsAny<GitLabProjectId>()))
+                .ReturnsAsync(gitLabProject);
+
+            var fallbackCommits = JsonSerializer.Deserialize<List<GitLabCommit>>(this.GetResponseWith2CommitsRelatedToMergeRequest())!;
+            this.gitLabApiClient.Setup(x => x.GetCommits(It.IsAny<GitLabProjectId>(), It.IsAny<GitLabRefName>(), It.IsAny<DateOnly>()))
+                .ReturnsAsync([fallbackCommits[0]]);
+
+            // When
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(startDate);
+
+            // Then
+            activities.Count.Should().Be(1);
+            this.gitLabApiClient.Verify(
+                x => x.GetCommitsByShaRange(It.IsAny<GitLabProjectId>(), It.IsAny<string>(), It.IsAny<string>()),
+                Times.Never);
+            this.gitLabApiClient.Verify(
+                x => x.GetCommits(
+                    It.IsAny<GitLabProjectId>(),
+                    It.Is<GitLabRefName>(r => r.Name == "feature/commit-tracking"),
+                    It.Is<DateOnly>(d => d == DateOnly.FromDateTime(startDate))),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task GivenUserIdentityDoesNotMatchCommitMetadata_WhenGettingActivity_ThenCommitsAreStillTracked()
+        {
+            // Given
+            var userWithDifferentIdentity = JsonSerializer.Deserialize<GitLabUser>(this.GetResponseFor_GetCurrentUser()) with
+            {
+                Email = "different.user@sample.com",
+                Name = "Completely Different User"
+            };
+            this.gitLabApiClient.Setup(x => x.GetCurrentUser()).ReturnsAsync(userWithDifferentIdentity);
+
+            var gitLabEvent = JsonSerializer.Deserialize<GitLabEvent>(this.GetResponseFor_PushedTwoCommits());
+            this.gitLabApiClient.Setup(x => x.GetUserEvents(It.IsAny<GitLabUserId>(), It.IsAny<DateOnly>()))
+                .ReturnsAsync([gitLabEvent]);
+
+            var gitLabProject = JsonSerializer.Deserialize<GitLabProject>(this.GetResponseForProject());
+            this.gitLabApiClient.Setup(x => x.GetProject(It.IsAny<GitLabProjectId>()))
+                .ReturnsAsync(gitLabProject);
+
+            var gitLabCommits = JsonSerializer.Deserialize<List<GitLabCommit>>(this.GetResponseWith2CommitsRelatedToMergeRequest());
+            this.gitLabApiClient.Setup(x => x.GetCommitsByShaRange(It.IsAny<GitLabProjectId>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(gitLabCommits);
+
+            // When
+            var activities = await this.gitLabActivityService.GetActivitiesUpdatedAfter(DateTime.Today);
+
+            // Then
+            activities.Count.Should().Be(2);
+            activities[0].Description.Should().Contain("Commit to Repository:");
+            activities[1].Description.Should().Contain("Commit to Repository:");
         }
 
         // Below are just raw responses from gitlab, not to be dependent on gitlab api but just to instantiate objects as they were real
