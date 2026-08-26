@@ -6,8 +6,10 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     {
         private const string API_URL_KEY = "Jira.ApiUrl";
         private const string API_KEY_KEY = "Jira.ApiKey";
-        private const string ISSUE_FILTER_NAME_KEY = "Jira.IssueFilterName";
-        private const string ISSUE_RAW_JQL_KEY = "Jira.IssueRawJql";
+        private const string ISSUE_FILTER_NAME_KEY = "Jira.IssuesForWorkLoggingFilterName";
+        private const string ISSUE_RAW_JQL_KEY = "Jira.IssuesForWorkLoggingRawJql";
+        private const string LEGACY_ISSUE_FILTER_NAME_KEY = "Jira.IssueFilterName";
+        private const string LEGACY_ISSUE_RAW_JQL_KEY = "Jira.IssueRawJql";
         private const string LAST_SYNC_KEY = "Jira.LastSyncTimestamp";
 
         private readonly IGenericSettingsService settingsService;
@@ -22,7 +24,16 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             var apiUrl = settingsService.GetEncryptedSetting(API_URL_KEY, string.Empty);
             var apiKey = settingsService.GetEncryptedSetting(API_KEY_KEY, string.Empty);
             var issueFilterName = settingsService.GetSetting(ISSUE_FILTER_NAME_KEY, string.Empty);
+            if (string.IsNullOrWhiteSpace(issueFilterName))
+            {
+                issueFilterName = settingsService.GetSetting(LEGACY_ISSUE_FILTER_NAME_KEY, string.Empty);
+            }
+
             var issueRawJql = settingsService.GetSetting(ISSUE_RAW_JQL_KEY, string.Empty);
+            if (string.IsNullOrWhiteSpace(issueRawJql))
+            {
+                issueRawJql = settingsService.GetSetting(LEGACY_ISSUE_RAW_JQL_KEY, string.Empty);
+            }
             var enabled = settingsService.GetSetting("Jira.Enabled", false);
             var fetchInterval = settingsService.GetSetting("Jira.FetchIntervalMinutes", 15);
             var cbThreshold = settingsService.GetSetting("Jira.CircuitBreakerThreshold", 5);

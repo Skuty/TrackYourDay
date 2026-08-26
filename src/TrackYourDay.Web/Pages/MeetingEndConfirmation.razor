@@ -154,14 +154,14 @@
             </div>
 
             <MudTextField @bind-Value="customDescription"
-                          Label="Worklog Comment (required)"
+                          Label="Worklog Comment"
                           Placeholder="Describe what was done in this meeting"
                           Variant="Variant.Outlined"
                           Lines="2"
                           Margin="Margin.Dense"
                           Class="mt-3"
-                          Error="@(showValidation && string.IsNullOrWhiteSpace(customDescription))"
-                          ErrorText="@(showValidation && string.IsNullOrWhiteSpace(customDescription) ? "Comment is required" : string.Empty)"
+                          Error="@(showWorklogValidation && string.IsNullOrWhiteSpace(customDescription))"
+                          ErrorText="@(showWorklogValidation && string.IsNullOrWhiteSpace(customDescription) ? "Comment is required for Jira logging" : string.Empty)"
                           aria-label="Meeting description" />
 
             <MudPaper Outlined="true" Class="pa-3 mt-2">
@@ -183,8 +183,8 @@
                                Variant="Variant.Outlined"
                                Margin="Margin.Dense"
                                Required="true"
-                               Error="@(showValidation && string.IsNullOrWhiteSpace(selectedJiraIssueKey))"
-                               ErrorText="@(showValidation && string.IsNullOrWhiteSpace(selectedJiraIssueKey) ? "Jira issue is required" : string.Empty)">
+                               Error="@(showWorklogValidation && string.IsNullOrWhiteSpace(selectedJiraIssueKey))"
+                               ErrorText="@(showWorklogValidation && string.IsNullOrWhiteSpace(selectedJiraIssueKey) ? "Jira issue is required for Jira logging" : string.Empty)">
                         @foreach (var issue in jiraIssues)
                         {
                             <MudSelectItem Value="@issue.Key">@($"{issue.Key} - {issue.Summary}")</MudSelectItem>
@@ -198,12 +198,30 @@
             </MudPaper>
 
             <MudButton Variant="Variant.Filled" 
-                       Color="Color.Success" 
+                       Color="Color.Primary" 
                        FullWidth="true" 
                        OnClick="ConfirmEnd"
-                       Disabled="@(!CanConfirm)"
+                       Disabled="@(!CanConfirmWithoutLogging)"
                        StartIcon="@Icons.Material.Filled.CheckCircle"
                        Class="mt-3"
+                       aria-label="Confirm meeting ended">
+                @if (isProcessing)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                }
+                else
+                {
+                    <span>Confirm Meeting End</span>
+                }
+            </MudButton>
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Success" 
+                       FullWidth="true" 
+                       OnClick="ConfirmEndAndLogTime"
+                       Disabled="@(!CanConfirmAndLog)"
+                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                       Class="mt-2"
                        aria-label="Confirm meeting ended and log time">
                 @if (isProcessing)
                 {
@@ -345,6 +363,7 @@ else
     private string errorMessage = string.Empty;
     private bool isProcessing;
     private bool showValidation;
+    private bool showWorklogValidation;
     private bool _userResponded;
     private CancellationTokenSource _timeoutCts = new();
     private TimeSpan? postponeTime;
@@ -354,7 +373,12 @@ else
     private readonly List<JiraIssue> jiraIssues = [];
     private string? selectedJiraIssueKey;
 
-    private bool CanConfirm =>
+    private bool CanConfirmWithoutLogging =>
+        !isProcessing &&
+        !localMeetingConfirmed &&
+        endTime.HasValue;
+
+    private bool CanConfirmAndLog =>
         !isProcessing &&
         !localMeetingConfirmed &&
         endTime.HasValue &&
@@ -541,10 +565,11 @@ else
             return;
 
         showValidation = true;
+        showWorklogValidation = false;
 
-        if (!endTime.HasValue || string.IsNullOrWhiteSpace(customDescription) || string.IsNullOrWhiteSpace(selectedJiraIssueKey))
+        if (!endTime.HasValue)
         {
-            errorMessage = "Meeting end time, Jira issue, and comment are required.";
+            errorMessage = "Meeting end time is required.";
             StateHasChanged();
             return;
         }
@@ -557,29 +582,94 @@ else
         try
         {
             var (customEndTime, customStartDateTime) = GetEffectiveMeetingTimes();
+            var description = string.IsNullOrWhiteSpace(customDescription) ? null : customDescription.Trim();
 
             // Try to confirm pending meeting first, if that fails try manual end
             try
             {
-                await meetingService.ConfirmMeetingEndAsync(meetingGuid, customDescription, customEndTime, customStartDateTime);
+                await meetingService.ConfirmMeetingEndAsync(meetingGuid, description, customEndTime, customStartDateTime);
             }
             catch (InvalidOperationException)
             {
                 // Meeting is not in pending state, try manual end
-                await meetingService.EndMeetingManuallyAsync(meetingGuid, customDescription, customEndTime, customStartDateTime);
+                await meetingService.EndMeetingManuallyAsync(meetingGuid, description, customEndTime, customStartDateTime);
             }
 
             localMeetingConfirmed = true;
+            await CloseWindow();
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+            isProcessing = false;
+        }
+        catch (InvalidOperationException ex)
+        {
+            errorMessage = ex.Message;
+            isProcessing = false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error during meeting confirm flow for {MeetingGuid}", meetingGuid);
+            errorMessage = $"Unexpected error while confirming meeting. {GetErrorDetails(ex)}";
+            isProcessing = false;
+        }
+    }
 
-            var effectiveStartTime = customStartDateTime ?? startTime;
-            var effectiveEndTime = customEndTime ?? DateTime.Now;
-            var timeSpentSeconds = (int)Math.Round((effectiveEndTime - effectiveStartTime).TotalSeconds);
+    private async Task ConfirmEndAndLogTime()
+    {
+        if (string.IsNullOrEmpty(meetingTitle) || isProcessing || localMeetingConfirmed)
+            return;
+
+        showValidation = true;
+        showWorklogValidation = true;
+
+        if (!endTime.HasValue || string.IsNullOrWhiteSpace(customDescription) || string.IsNullOrWhiteSpace(selectedJiraIssueKey))
+        {
+            errorMessage = "Meeting end time, Jira issue, and comment are required for Jira logging.";
+            StateHasChanged();
+            return;
+        }
+
+        var (customEndTime, customStartDateTime) = GetEffectiveMeetingTimes();
+        var effectiveStartTime = customStartDateTime ?? startTime;
+        var effectiveEndTime = customEndTime ?? DateTime.Now;
+        var timeSpentSeconds = (int)Math.Round((effectiveEndTime - effectiveStartTime).TotalSeconds);
+
+        if (timeSpentSeconds <= 0)
+        {
+            errorMessage = "Meeting duration must be greater than zero to log time to Jira.";
+            StateHasChanged();
+            return;
+        }
+
+        _userResponded = true;
+        _timeoutCts.Cancel();
+        isProcessing = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            var description = customDescription.Trim();
+
+            // Try to confirm pending meeting first, if that fails try manual end
+            try
+            {
+                await meetingService.ConfirmMeetingEndAsync(meetingGuid, description, customEndTime, customStartDateTime);
+            }
+            catch (InvalidOperationException)
+            {
+                // Meeting is not in pending state, try manual end
+                await meetingService.EndMeetingManuallyAsync(meetingGuid, description, customEndTime, customStartDateTime);
+            }
+
+            localMeetingConfirmed = true;
 
             await jiraRestApiClient.CreateIssueWorklog(
                 selectedJiraIssueKey!,
                 effectiveStartTime,
                 timeSpentSeconds,
-                customDescription.Trim());
+                description);
 
             await CloseWindow();
         }
@@ -633,7 +723,7 @@ else
         if (exception is JiraApiException jiraApiException)
         {
             return $"HTTP {(int)jiraApiException.StatusCode} {jiraApiException.ReasonPhrase}. " +
-                   $"Request: {jiraApiException.RequestPath}. Response: {jiraApiException.ResponseBody}";
+                   $"Request: {jiraApiException.RequestPath}.";
         }
 
         return exception.Message;

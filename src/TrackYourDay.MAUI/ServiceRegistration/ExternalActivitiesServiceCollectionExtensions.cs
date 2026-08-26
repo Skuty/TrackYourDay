@@ -63,24 +63,10 @@ namespace TrackYourDay.MAUI.ServiceRegistration
                     var settings = sp.GetRequiredService<IJiraSettingsService>().GetSettings();
                     return GetCircuitBreakerPolicy(settings.CircuitBreakerThreshold, settings.CircuitBreakerDurationMinutes);
                 })
-                .AddPolicyHandler((sp, req) => GetRetryPolicy())
                 .AddHttpMessageHandler(sp =>
                 {
                     var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
                     return new HttpLoggingHandler(logger, "Jira");
-                });
-
-            services.AddHttpClient("JiraNoRetry")
-                .ConfigureHttpClient((sp, client) => ConfigureJiraHttpClient(sp, client))
-                .AddPolicyHandler((sp, req) =>
-                {
-                    var settings = sp.GetRequiredService<IJiraSettingsService>().GetSettings();
-                    return GetCircuitBreakerPolicy(settings.CircuitBreakerThreshold, settings.CircuitBreakerDurationMinutes);
-                })
-                .AddHttpMessageHandler(sp =>
-                {
-                    var logger = sp.GetRequiredService<ILogger<HttpLoggingHandler>>();
-                    return new HttpLoggingHandler(logger, "JiraNoRetry");
                 });
 
             return services;
