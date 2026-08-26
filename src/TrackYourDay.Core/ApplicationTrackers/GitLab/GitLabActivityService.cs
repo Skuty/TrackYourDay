@@ -43,13 +43,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             var user = await _gitLabRestApiClient.GetCurrentUser().ConfigureAwait(false);
             var userId = new GitLabUserId(user.Id);
-            var userEmail = user.Email;
 
             var events = await _gitLabRestApiClient.GetUserEvents(userId, DateOnly.FromDateTime(startDate)).ConfigureAwait(false);
 
             foreach (var gitlabEvent in events)
             {
-                var eventActivities = await MapGitLabEventToGitLabActivityAsync(gitlabEvent, userEmail, cancellationToken).ConfigureAwait(false);
+                var eventActivities = await MapGitLabEventToGitLabActivityAsync(gitlabEvent, user, startDate, cancellationToken).ConfigureAwait(false);
                 if (eventActivities != null)
                 {
                     activities.AddRange(eventActivities);
@@ -88,7 +87,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             }
         }
 
-        private async Task<List<GitLabActivity>?> MapGitLabEventToGitLabActivityAsync(GitLabEvent gitlabEvent, string userEmail, CancellationToken cancellationToken)
+        private async Task<List<GitLabActivity>?> MapGitLabEventToGitLabActivityAsync(
+            GitLabEvent gitlabEvent,
+            GitLabUser user,
+            DateTime startDate,
+            CancellationToken cancellationToken)
         {
             if (gitlabEvent == null)
             {
@@ -98,7 +101,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             // Handle Push events (commits and branch creation)
             if (gitlabEvent.PushData != null)
             {
-                return await MapPushEventAsync(gitlabEvent, userEmail, cancellationToken).ConfigureAwait(false);
+                return await MapPushEventAsync(gitlabEvent, user, startDate, cancellationToken).ConfigureAwait(false);
             }
 
             // Handle Merge Request events
@@ -144,14 +147,24 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             ];
         }
 
-        private async Task<List<GitLabActivity>> MapPushEventAsync(GitLabEvent gitlabEvent, string userEmail, CancellationToken cancellationToken)
+        private async Task<List<GitLabActivity>> MapPushEventAsync(
+            GitLabEvent gitlabEvent,
+            GitLabUser user,
+            DateTime startDate,
+            CancellationToken cancellationToken)
         {
+            if (gitlabEvent.PushData is null)
+            {
+                return [];
+            }
+
+            var pushData = gitlabEvent.PushData;
             var project = await _gitLabRestApiClient.GetProject(new GitLabProjectId(gitlabEvent.ProjectId)).ConfigureAwait(false);
             var projectName = project.NameWithNamespace;
-            var branchName = gitlabEvent.PushData.Ref;
+            var branchName = pushData.Ref;
 
             // Check if this is a new branch creation
-            if (gitlabEvent.PushData.Action == "created" && gitlabEvent.PushData.RefType == "branch")
+            if (pushData.Action == "created" && pushData.RefType == "branch")
             {
                 var upstreamId = $"gitlab-branch-created-{gitlabEvent.ProjectId}-{branchName}-{gitlabEvent.CreatedAt:O}";
                 return
@@ -166,7 +179,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             }
 
             // Check if this is a tag creation
-            if (gitlabEvent.PushData.Action == "created" && gitlabEvent.PushData.RefType == "tag")
+            if (pushData.Action == "created" && pushData.RefType == "tag")
             {
                 var upstreamId = $"gitlab-tag-created-{gitlabEvent.ProjectId}-{branchName}-{gitlabEvent.CreatedAt:O}";
                 return
@@ -181,9 +194,9 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             }
 
             // Check if this is a branch/tag deletion
-            if (gitlabEvent.PushData.Action == "removed")
+            if (pushData.Action == "removed")
             {
-                var refType = gitlabEvent.PushData.RefType;
+                var refType = pushData.RefType;
                 var upstreamId = $"gitlab-{refType}-removed-{gitlabEvent.ProjectId}-{branchName}-{gitlabEvent.CreatedAt:O}";
                 return
                 [
@@ -198,29 +211,51 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
             // Regular commit push
             List<GitLabCommit> commits;
-            var commitFrom = gitlabEvent.PushData.CommitFrom;
-            var commitTo = gitlabEvent.PushData.CommitTo;
+            var commitFrom = pushData.CommitFrom;
+            var commitTo = pushData.CommitTo;
 
             if (!string.IsNullOrEmpty(commitFrom) && !string.IsNullOrEmpty(commitTo))
             {
-                var allCommits = await _gitLabRestApiClient.GetCommitsByShaRange(
-                    new GitLabProjectId(gitlabEvent.ProjectId), 
-                    commitFrom, 
-                    commitTo).ConfigureAwait(false);
-                commits = allCommits.Where(c => c.AuthorEmail == userEmail).ToList();
+                try
+                {
+                    commits = await _gitLabRestApiClient.GetCommitsByShaRange(
+                        new GitLabProjectId(gitlabEvent.ProjectId),
+                        commitFrom,
+                        commitTo).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to fetch commits by SHA range for project {ProjectId}, branch {BranchName}. Falling back to branch query.",
+                        gitlabEvent.ProjectId,
+                        branchName);
+                    commits = [];
+                }
             }
             else
             {
-                var allCommits = await _gitLabRestApiClient.GetCommits(
-                    new GitLabProjectId(gitlabEvent.ProjectId), 
-                    new GitLabRefName(branchName), 
-                    DateOnly.FromDateTime(DateTime.Today)).ConfigureAwait(false);
-                commits = allCommits.Where(c => c.AuthorEmail == userEmail).ToList();
+                _logger.LogWarning(
+                    "Push event {EventId} for project {ProjectId} has incomplete SHA range (from={CommitFrom}, to={CommitTo}). Falling back to branch query.",
+                    gitlabEvent.Id,
+                    gitlabEvent.ProjectId,
+                    commitFrom,
+                    commitTo);
+                commits = [];
             }
 
+            if (commits.Count == 0 && pushData.CommitCount > 0)
+            {
+                commits = await _gitLabRestApiClient.GetCommits(
+                    new GitLabProjectId(gitlabEvent.ProjectId),
+                    new GitLabRefName(branchName),
+                    DateOnly.FromDateTime(startDate)).ConfigureAwait(false);
+            }
+
+            var relevantCommits = SelectCommitsForCurrentUser(commits, user);
             var gitLabActivities = new List<GitLabActivity>();
 
-            foreach (var commit in commits)
+            foreach (var commit in relevantCommits)
             {
                 var upstreamId = $"gitlab-commit-{gitlabEvent.ProjectId}-{commit.Id}";
                 gitLabActivities.Add(new GitLabActivity
@@ -232,6 +267,36 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
             }
 
             return gitLabActivities;
+        }
+
+        private static List<GitLabCommit> SelectCommitsForCurrentUser(IEnumerable<GitLabCommit> commits, GitLabUser user)
+        {
+            var commitList = commits.ToList();
+            if (commitList.Count == 0)
+            {
+                return commitList;
+            }
+
+            var hasUserEmail = !string.IsNullOrWhiteSpace(user.Email);
+            var hasUserName = !string.IsNullOrWhiteSpace(user.Name);
+            if (!hasUserEmail && !hasUserName)
+            {
+                return commitList;
+            }
+
+            var matchingCommits = commitList.Where(commit =>
+            {
+                var emailMatches = hasUserEmail &&
+                                   (string.Equals(commit.AuthorEmail, user.Email, StringComparison.OrdinalIgnoreCase) ||
+                                    string.Equals(commit.CommitterEmail, user.Email, StringComparison.OrdinalIgnoreCase));
+                var nameMatches = hasUserName &&
+                                  (string.Equals(commit.AuthorName, user.Name, StringComparison.OrdinalIgnoreCase) ||
+                                   string.Equals(commit.CommitterName, user.Name, StringComparison.OrdinalIgnoreCase));
+
+                return emailMatches || nameMatches;
+            }).ToList();
+
+            return matchingCommits.Count > 0 ? matchingCommits : commitList;
         }
 
         private static List<GitLabActivity> MapMergeRequestEvent(GitLabEvent gitlabEvent)

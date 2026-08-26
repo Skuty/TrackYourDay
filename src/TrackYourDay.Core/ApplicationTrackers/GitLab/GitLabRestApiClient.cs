@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 
@@ -67,16 +68,39 @@ namespace TrackYourDay.Core.ApplicationTrackers.GitLab
 
         public async Task<List<GitLabCommit>> GetCommits(GitLabProjectId projectId, GitLabRefName refName, DateOnly startingFromDate)
         {
-            var response = await _httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/commits?ref_name={refName.Name}&since={startingFromDate.AddDays(-1).ToString("yyyy-MM-dd")}");
-            response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<GitLabCommit>>(content) ?? new List<GitLabCommit>();
+            var allCommits = new List<GitLabCommit>();
+            var sinceDateTimeUtc = startingFromDate
+                .AddDays(-1)
+                .ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            var encodedSince = Uri.EscapeDataString(sinceDateTimeUtc.ToString("O", CultureInfo.InvariantCulture));
+            var encodedRefName = Uri.EscapeDataString(refName.Name);
+
+            int page = 1;
+            bool hasMoreCommits;
+
+            do
+            {
+                var response = await _httpClient.GetAsync(
+                    $"/api/v4/projects/{projectId.Id}/repository/commits?per_page={PAGE_LIMIT}&page={page}&ref_name={encodedRefName}&since={encodedSince}");
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+                var commits = JsonSerializer.Deserialize<List<GitLabCommit>>(content) ?? new List<GitLabCommit>();
+                allCommits.AddRange(commits);
+
+                hasMoreCommits = commits.Count == PAGE_LIMIT;
+                page++;
+            } while (hasMoreCommits);
+
+            return allCommits;
         }
 
         public async Task<List<GitLabCommit>> GetCommitsByShaRange(GitLabProjectId projectId, string commitFromSha, string commitToSha)
         {
             // Use GitLab's compare API to get commits between two SHAs
-            var response = await _httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/compare?from={commitFromSha}&to={commitToSha}");
+            var encodedFrom = Uri.EscapeDataString(commitFromSha);
+            var encodedTo = Uri.EscapeDataString(commitToSha);
+            var response = await _httpClient.GetAsync($"/api/v4/projects/{projectId.Id}/repository/compare?from={encodedFrom}&to={encodedTo}");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
             var comparison = JsonSerializer.Deserialize<GitLabComparison>(content);
