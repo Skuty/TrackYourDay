@@ -1,7 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Globalization;
-using Microsoft.Extensions.Logging;
+using System.Net;
+using System.Text;
 
 namespace TrackYourDay.Core.ApplicationTrackers.Jira
 {
@@ -12,6 +13,12 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         Task<List<JiraIssueResponse>> GetUserIssues(JiraUser jiraUser, DateTime startingFromDate);
 
         Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate);
+
+        Task<List<JiraIssue>> GetIssuesByFilterName(string issueFilterName);
+
+        Task<List<JiraIssue>> GetIssuesByRawJql(string rawJql);
+
+        Task CreateIssueWorklog(string issueKey, DateTime startedAt, int timeSpentSeconds, string comment);
     }
 
     public class JiraRestApiClient : IJiraRestApiClient
@@ -84,6 +91,120 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 .Where(w => w.Started >= startingFromDate)
                 .ToList() ?? new List<JiraWorklogResponse>();
         }
+
+        public async Task<List<JiraIssue>> GetIssuesByFilterName(string issueFilterName)
+        {
+            if (string.IsNullOrWhiteSpace(issueFilterName))
+            {
+                throw new ArgumentException("Issue filter name is required.", nameof(issueFilterName));
+            }
+
+            var jql = $"filter = \"{EscapeJqlLiteral(issueFilterName.Trim())}\"";
+            return await GetIssuesByJql(jql).ConfigureAwait(false);
+        }
+
+        public async Task<List<JiraIssue>> GetIssuesByRawJql(string rawJql)
+        {
+            if (string.IsNullOrWhiteSpace(rawJql))
+            {
+                throw new ArgumentException("Raw JQL is required.", nameof(rawJql));
+            }
+
+            return await GetIssuesByJql(rawJql.Trim()).ConfigureAwait(false);
+        }
+
+        private async Task<List<JiraIssue>> GetIssuesByJql(string jql)
+        {
+            var encodedJql = Uri.EscapeDataString(jql);
+            var url = $"/rest/api/2/search?jql={encodedJql}&fields=summary,updated&maxResults=100";
+
+            var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
+            await EnsureSuccessWithDetails(response, url).ConfigureAwait(false);
+
+            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            };
+            options.Converters.Add(new JiraDateTimeOffsetConverter());
+
+            var searchResult = JsonSerializer.Deserialize<JiraSearchResponse>(content, options);
+            return searchResult?.Issues?
+                .Select(issue => new JiraIssue(
+                    issue.Key,
+                    issue.Fields.Summary ?? string.Empty,
+                    issue.Fields.Updated.LocalDateTime))
+                .OrderByDescending(issue => issue.Updated)
+                .ToList() ?? [];
+        }
+
+        public async Task CreateIssueWorklog(string issueKey, DateTime startedAt, int timeSpentSeconds, string comment)
+        {
+            if (string.IsNullOrWhiteSpace(issueKey))
+            {
+                throw new ArgumentException("Issue key is required.", nameof(issueKey));
+            }
+
+            if (timeSpentSeconds <= 0)
+            {
+                throw new ArgumentException("Worklog duration must be greater than zero seconds.", nameof(timeSpentSeconds));
+            }
+
+            if (string.IsNullOrWhiteSpace(comment))
+            {
+                throw new ArgumentException("Worklog comment is required.", nameof(comment));
+            }
+
+            var url = $"/rest/api/2/issue/{Uri.EscapeDataString(issueKey)}/worklog";
+            var payload = new JiraCreateWorklogRequest(
+                comment.Trim(),
+                new DateTimeOffset(startedAt).ToString("yyyy-MM-ddTHH:mm:ss.fffzzz"),
+                timeSpentSeconds);
+            var requestContent = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await _httpClient.PostAsync(url, requestContent).ConfigureAwait(false);
+            await EnsureSuccessWithDetails(response, url).ConfigureAwait(false);
+        }
+
+        private static string EscapeJqlLiteral(string value)
+            => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
+
+        private static async Task EnsureSuccessWithDetails(HttpResponseMessage response, string requestPath)
+        {
+            if (response.IsSuccessStatusCode)
+            {
+                return;
+            }
+
+            var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            throw new JiraApiException(
+                response.StatusCode,
+                response.ReasonPhrase,
+                requestPath,
+                body);
+        }
+    }
+
+    public sealed class JiraApiException : Exception
+    {
+        public JiraApiException(HttpStatusCode statusCode, string? reasonPhrase, string requestPath, string responseBody)
+            : base($"Jira API call failed ({(int)statusCode} {reasonPhrase ?? "Unknown"}). Request: {requestPath}. Response: {responseBody}")
+        {
+            StatusCode = statusCode;
+            ReasonPhrase = reasonPhrase;
+            RequestPath = requestPath;
+            ResponseBody = responseBody;
+        }
+
+        public HttpStatusCode StatusCode { get; }
+        public string? ReasonPhrase { get; }
+        public string RequestPath { get; }
+        public string ResponseBody { get; }
     }
 
     public record JiraMyselfResponse(
@@ -183,6 +304,11 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         [property: JsonPropertyName("timeSpentSeconds")] int TimeSpentSeconds
     );
 
+    public record JiraCreateWorklogRequest(
+        [property: JsonPropertyName("comment")] string Comment,
+        [property: JsonPropertyName("started")] string Started,
+        [property: JsonPropertyName("timeSpentSeconds")] int TimeSpentSeconds);
+
     public class JiraDateTimeOffsetConverter : JsonConverter<DateTimeOffset>
     {
         public override DateTimeOffset Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -238,5 +364,14 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
 
         public Task<List<JiraWorklogResponse>> GetIssueWorklogs(string issueKey, DateTime startingFromDate)
             => Task.FromResult(new List<JiraWorklogResponse>());
+
+        public Task<List<JiraIssue>> GetIssuesByFilterName(string issueFilterName)
+            => Task.FromResult(new List<JiraIssue>());
+
+        public Task<List<JiraIssue>> GetIssuesByRawJql(string rawJql)
+            => Task.FromResult(new List<JiraIssue>());
+
+        public Task CreateIssueWorklog(string issueKey, DateTime startedAt, int timeSpentSeconds, string comment)
+            => throw new InvalidOperationException("Jira integration is not configured.");
     }
 }

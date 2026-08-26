@@ -26,6 +26,10 @@ public sealed class JiraSettingsServiceTests
         _settingsServiceMock.Setup(x => x.GetSetting("Jira.FetchIntervalMinutes", 15)).Returns(15);
         _settingsServiceMock.Setup(x => x.GetSetting("Jira.CircuitBreakerThreshold", 5)).Returns(5);
         _settingsServiceMock.Setup(x => x.GetSetting("Jira.CircuitBreakerDurationMinutes", 5)).Returns(5);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssuesForWorkLoggingFilterName", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssuesForWorkLoggingRawJql", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssueFilterName", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssueRawJql", string.Empty)).Returns(string.Empty);
         _settingsServiceMock.Setup(x => x.GetSetting("Jira.LastSyncTimestamp", string.Empty)).Returns(string.Empty);
 
         // When
@@ -38,6 +42,8 @@ public sealed class JiraSettingsServiceTests
         result.FetchIntervalMinutes.Should().Be(15);
         result.CircuitBreakerThreshold.Should().Be(5);
         result.CircuitBreakerDurationMinutes.Should().Be(5);
+        result.IssueFilterName.Should().BeEmpty();
+        result.IssueRawJql.Should().BeEmpty();
         result.LastSyncTimestamp.Should().BeNull();
     }
 
@@ -49,6 +55,10 @@ public sealed class JiraSettingsServiceTests
         _settingsServiceMock.Setup(x => x.GetEncryptedSetting(It.IsAny<string>(), It.IsAny<string>())).Returns(string.Empty);
         _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<int>())).Returns(15);
         _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<bool>())).Returns(false);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssuesForWorkLoggingFilterName", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssuesForWorkLoggingRawJql", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssueFilterName", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssueRawJql", string.Empty)).Returns(string.Empty);
         _settingsServiceMock.Setup(x => x.GetSetting("Jira.LastSyncTimestamp", string.Empty))
             .Returns(expectedTimestamp.ToString("O"));
 
@@ -60,12 +70,37 @@ public sealed class JiraSettingsServiceTests
     }
 
     [Fact]
+    public void GivenLegacyIssueQueryKeys_WhenGetSettings_ThenFallsBackToLegacyValues()
+    {
+        // Given
+        _settingsServiceMock.Setup(x => x.GetEncryptedSetting(It.IsAny<string>(), It.IsAny<string>())).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<int>())).Returns(15);
+        _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<bool>())).Returns(false);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssuesForWorkLoggingFilterName", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssuesForWorkLoggingRawJql", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssueFilterName", string.Empty)).Returns("legacy-filter");
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssueRawJql", string.Empty)).Returns("project = LEGACY");
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.LastSyncTimestamp", string.Empty)).Returns(string.Empty);
+
+        // When
+        var result = _sut.GetSettings();
+
+        // Then
+        result.IssueFilterName.Should().Be("legacy-filter");
+        result.IssueRawJql.Should().Be("project = LEGACY");
+    }
+
+    [Fact]
     public void GivenInvalidLastSyncTimestamp_WhenGetSettings_ThenReturnsNull()
     {
         // Given
         _settingsServiceMock.Setup(x => x.GetEncryptedSetting(It.IsAny<string>(), It.IsAny<string>())).Returns(string.Empty);
         _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<int>())).Returns(15);
         _settingsServiceMock.Setup(x => x.GetSetting(It.IsAny<string>(), It.IsAny<bool>())).Returns(false);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssuesForWorkLoggingFilterName", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssuesForWorkLoggingRawJql", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssueFilterName", string.Empty)).Returns(string.Empty);
+        _settingsServiceMock.Setup(x => x.GetSetting("Jira.IssueRawJql", string.Empty)).Returns(string.Empty);
         _settingsServiceMock.Setup(x => x.GetSetting("Jira.LastSyncTimestamp", string.Empty))
             .Returns("invalid-date");
 
@@ -139,9 +174,11 @@ public sealed class JiraSettingsServiceTests
         const int fetchInterval = 30;
         const int cbThreshold = 10;
         const int cbDuration = 15;
+        const string issueFilterName = "my-filter";
+        const string rawJql = "";
 
         // When
-        _sut.UpdateSettings(apiUrl, apiKey, enabled, fetchInterval, cbThreshold, cbDuration);
+        _sut.UpdateSettings(apiUrl, apiKey, enabled, fetchInterval, cbThreshold, cbDuration, issueFilterName, rawJql);
 
         // Then
         _settingsServiceMock.Verify(x => x.SetEncryptedSetting("Jira.ApiUrl", apiUrl), Times.Once);
@@ -150,5 +187,37 @@ public sealed class JiraSettingsServiceTests
         _settingsServiceMock.Verify(x => x.SetSetting("Jira.FetchIntervalMinutes", fetchInterval), Times.Once);
         _settingsServiceMock.Verify(x => x.SetSetting("Jira.CircuitBreakerThreshold", cbThreshold), Times.Once);
         _settingsServiceMock.Verify(x => x.SetSetting("Jira.CircuitBreakerDurationMinutes", cbDuration), Times.Once);
+        _settingsServiceMock.Verify(x => x.SetSetting("Jira.IssuesForWorkLoggingFilterName", issueFilterName), Times.Once);
+        _settingsServiceMock.Verify(x => x.SetSetting("Jira.IssuesForWorkLoggingRawJql", rawJql), Times.Once);
+    }
+
+    [Fact]
+    public void GivenEnabledJiraAndNoQuerySources_WhenUpdateSettings_ThenThrowsArgumentException()
+    {
+        // Given
+        const string apiUrl = "https://jira.example.com";
+        const string apiKey = "test-key";
+
+        // When
+        var act = () => _sut.UpdateSettings(apiUrl, apiKey, true, 15, 5, 5, string.Empty, string.Empty);
+
+        // Then
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*required*Filter Name or Raw JQL*");
+    }
+
+    [Fact]
+    public void GivenEnabledJiraAndBothQuerySources_WhenUpdateSettings_ThenThrowsArgumentException()
+    {
+        // Given
+        const string apiUrl = "https://jira.example.com";
+        const string apiKey = "test-key";
+
+        // When
+        var act = () => _sut.UpdateSettings(apiUrl, apiKey, true, 15, 5, 5, "my-filter", "project = PROJ");
+
+        // Then
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*only one*Filter Name or Raw JQL*");
     }
 }

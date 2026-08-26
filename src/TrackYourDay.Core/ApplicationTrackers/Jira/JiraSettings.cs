@@ -5,6 +5,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
     {
         public required string ApiUrl { get; init; }
         public required string ApiKey { get; init; }
+        public string IssueFilterName { get; init; } = string.Empty;
+        public string IssueRawJql { get; init; } = string.Empty;
         public bool Enabled { get; init; }
         public int FetchIntervalMinutes { get; init; } = 15;
         public int CircuitBreakerThreshold { get; init; } = 5;
@@ -17,6 +19,8 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             {
                 ApiUrl = string.Empty,
                 ApiKey = string.Empty,
+                IssueFilterName = string.Empty,
+                IssueRawJql = string.Empty,
                 Enabled = false,
                 FetchIntervalMinutes = 15,
                 CircuitBreakerThreshold = 5,

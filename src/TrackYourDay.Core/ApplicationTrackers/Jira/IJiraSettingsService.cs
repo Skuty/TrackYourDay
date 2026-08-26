@@ -24,7 +24,17 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
         /// <param name="fetchIntervalMinutes">Fetch interval in minutes</param>
         /// <param name="circuitBreakerThreshold">Circuit breaker threshold</param>
         /// <param name="circuitBreakerDurationMinutes">Circuit breaker duration in minutes</param>
-        void UpdateSettings(string apiUrl, string apiKey, bool enabled, int fetchIntervalMinutes, int circuitBreakerThreshold, int circuitBreakerDurationMinutes);
+        /// <param name="issueFilterName">Preferred Jira filter name used to resolve issue list query</param>
+        /// <param name="issueRawJql">Raw JQL fallback query when filter name cannot be resolved</param>
+        void UpdateSettings(
+            string apiUrl,
+            string apiKey,
+            bool enabled,
+            int fetchIntervalMinutes,
+            int circuitBreakerThreshold,
+            int circuitBreakerDurationMinutes,
+            string? issueFilterName,
+            string? issueRawJql);
 
         /// <summary>
         /// Updates the last successful sync timestamp.
