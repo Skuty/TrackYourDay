@@ -48,5 +48,16 @@ namespace TrackYourDay.Tests.ApplicationTrackers.Jira
             issues.First().Fields.Summary.Should().NotBeEmpty();
             issues.First().Fields.Updated.Should().BeBefore(DateTime.Now);
         }
+
+        [Fact]
+        public async Task GivenCurrentUserJql_WhenGettingIssuesByRawJql_ThenReturnsIssues()
+        {
+            // Act
+            var issues = await this.jiraRestApiClient.GetIssuesByRawJql("assignee = currentUser() and status not in (Done, Resolved)");
+
+            // Assert
+            issues.Should().NotBeNull();
+            issues.Should().NotBeEmpty();
+        }
     }
 }

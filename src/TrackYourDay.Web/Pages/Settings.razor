@@ -38,12 +38,23 @@
         </MudText>
         <MudTextField @bind-Value="jiraApiUrl" Label="Jira API URL" Variant="Variant.Outlined" />
         <MudTextField @bind-Value="jiraApiKey" Label="Jira API Key" Variant="Variant.Outlined" InputType="InputType.Password" />
-        <MudTextField @bind-Value="jiraIssueFilterName" Label="Jira Issue Filter Name (choose this or Raw JQL)" Variant="Variant.Outlined" />
-        <MudTextField @bind-Value="jiraIssueRawJql" Label="Jira Issue Raw JQL (choose this or Filter Name)" Variant="Variant.Outlined" />
+        <MudRadioGroup T="string" @bind-Value="jiraIssueQuerySource" Class="mt-2">
+            <MudRadio T="string" Value="@JiraIssueQuerySourceFilterName" Color="Color.Primary">Use Jira Filter Name</MudRadio>
+            <MudRadio T="string" Value="@JiraIssueQuerySourceRawJql" Color="Color.Primary">Use Raw JQL</MudRadio>
+        </MudRadioGroup>
+        <MudTextField @bind-Value="jiraIssueFilterName"
+                      Label="Jira Issue Filter Name"
+                      Variant="Variant.Outlined"
+                      Disabled="@(jiraIssueQuerySource != JiraIssueQuerySourceFilterName)" />
+        <MudTextField @bind-Value="jiraIssueRawJql"
+                      Label="Jira Issue Raw JQL"
+                      Variant="Variant.Outlined"
+                      Disabled="@(jiraIssueQuerySource != JiraIssueQuerySourceRawJql)" />
         <MudNumericField T="int" @bind-Value="jiraFetchIntervalMinutes" Label="Fetch Interval (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
         <MudNumericField T="int" @bind-Value="jiraCircuitBreakerThreshold" Label="Circuit Breaker Threshold" Variant="Variant.Outlined" Min="1" Max="100" Class="mt-2" />
         <MudNumericField T="int" @bind-Value="jiraCircuitBreakerDurationMinutes" Label="Circuit Breaker Duration (minutes)" Variant="Variant.Outlined" Min="1" Max="1440" Class="mt-2" />
         <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="CheckJiraConnection" Class="mt-2">Check Connection</MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CheckJiraIssueQuery" Class="mt-2 ml-2">Check JQL</MudButton>
     </MudTabPanel>
     <MudTabPanel Text="Database Management">
         <MudText Typo="Typo.h6">Storage Overview</MudText>
@@ -199,6 +210,9 @@
     private int jiraCircuitBreakerDurationMinutes = 5;
     private string jiraIssueFilterName = string.Empty;
     private string jiraIssueRawJql = string.Empty;
+    private const string JiraIssueQuerySourceFilterName = "filter-name";
+    private const string JiraIssueQuerySourceRawJql = "raw-jql";
+    private string jiraIssueQuerySource = JiraIssueQuerySourceFilterName;
     
     private long activitiesSize;
     private long breaksSize;
@@ -253,6 +267,11 @@
         this.jiraCircuitBreakerDurationMinutes = jiraSettings.CircuitBreakerDurationMinutes;
         this.jiraIssueFilterName = jiraSettings.IssueFilterName;
         this.jiraIssueRawJql = jiraSettings.IssueRawJql;
+        this.jiraIssueQuerySource = !string.IsNullOrWhiteSpace(this.jiraIssueFilterName)
+            ? JiraIssueQuerySourceFilterName
+            : !string.IsNullOrWhiteSpace(this.jiraIssueRawJql)
+                ? JiraIssueQuerySourceRawJql
+                : JiraIssueQuerySourceFilterName;
     }
     
     private void LoadDatabaseStats()
@@ -368,6 +387,10 @@
         if (this.jiraEnabled)
         {
             var jiraErrors = new System.Collections.Generic.List<string>();
+            var useFilterName = this.jiraIssueQuerySource == JiraIssueQuerySourceFilterName;
+            var effectiveFilterName = useFilterName ? this.jiraIssueFilterName : string.Empty;
+            var effectiveRawJql = useFilterName ? string.Empty : this.jiraIssueRawJql;
+
             if (string.IsNullOrWhiteSpace(this.jiraApiUrl))
                 jiraErrors.Add("Jira API URL cannot be empty.");
             if (string.IsNullOrWhiteSpace(this.jiraApiKey))
@@ -378,12 +401,10 @@
                 jiraErrors.Add("Jira Circuit Breaker Threshold must be at least 1.");
             if (this.jiraCircuitBreakerDurationMinutes < 1)
                 jiraErrors.Add("Jira Circuit Breaker Duration must be at least 1 minute.");
-            var hasFilterName = !string.IsNullOrWhiteSpace(this.jiraIssueFilterName);
-            var hasRawJql = !string.IsNullOrWhiteSpace(this.jiraIssueRawJql);
-            if (!hasFilterName && !hasRawJql)
-                jiraErrors.Add("One Jira issue query source is required: Filter Name or Raw JQL.");
-            if (hasFilterName && hasRawJql)
-                jiraErrors.Add("Choose only one Jira issue query source: Filter Name or Raw JQL.");
+            if (useFilterName && string.IsNullOrWhiteSpace(effectiveFilterName))
+                jiraErrors.Add("Jira Issue Filter Name cannot be empty when Filter Name is selected.");
+            if (!useFilterName && string.IsNullOrWhiteSpace(effectiveRawJql))
+                jiraErrors.Add("Jira Issue Raw JQL cannot be empty when Raw JQL is selected.");
 
             if (jiraErrors.Count > 0)
             {
@@ -396,6 +417,20 @@
 
         try
         {
+            var useFilterName = this.jiraIssueQuerySource == JiraIssueQuerySourceFilterName;
+            var issueFilterNameToSave = useFilterName ? this.jiraIssueFilterName : string.Empty;
+            var issueRawJqlToSave = useFilterName ? string.Empty : this.jiraIssueRawJql;
+
+            // Keep entered values while switching query source; clear inactive value only after save.
+            if (useFilterName)
+            {
+                this.jiraIssueRawJql = string.Empty;
+            }
+            else
+            {
+                this.jiraIssueFilterName = string.Empty;
+            }
+
             this.jiraSettingsService.UpdateSettings(
                 this.jiraApiUrl,
                 this.jiraApiKey,
@@ -403,8 +438,8 @@
                 this.jiraFetchIntervalMinutes,
                 this.jiraCircuitBreakerThreshold,
                 this.jiraCircuitBreakerDurationMinutes,
-                this.jiraIssueFilterName,
-                this.jiraIssueRawJql);
+                issueFilterNameToSave,
+                issueRawJqlToSave);
             this.jiraSettingsService.PersistSettings();
         }
         catch (System.Exception ex)
@@ -521,6 +556,85 @@
             connectionCheckMessage = $"Failed to connect to Jira: {ex.Message}";
         }
         
+        ShowConnectionCheckDialog();
+    }
+
+    private async Task CheckJiraIssueQuery()
+    {
+        if (string.IsNullOrWhiteSpace(this.jiraApiUrl))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "Jira API URL cannot be empty.";
+            ShowConnectionCheckDialog();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(this.jiraApiKey))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "Jira API Key cannot be empty.";
+            ShowConnectionCheckDialog();
+            return;
+        }
+
+        if (!Uri.TryCreate(this.jiraApiUrl, UriKind.Absolute, out var uri))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "Invalid Jira API URL format. Please provide a valid URL.";
+            ShowConnectionCheckDialog();
+            return;
+        }
+
+        var useFilterName = this.jiraIssueQuerySource == JiraIssueQuerySourceFilterName;
+        if (useFilterName && string.IsNullOrWhiteSpace(this.jiraIssueFilterName))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "Jira Issue Filter Name cannot be empty when Filter Name is selected.";
+            ShowConnectionCheckDialog();
+            return;
+        }
+
+        if (!useFilterName && string.IsNullOrWhiteSpace(this.jiraIssueRawJql))
+        {
+            connectionCheckSuccess = false;
+            connectionCheckMessage = "Jira Issue Raw JQL cannot be empty when Raw JQL is selected.";
+            ShowConnectionCheckDialog();
+            return;
+        }
+
+        try
+        {
+            var httpClient = new HttpClient
+            {
+                BaseAddress = uri,
+                Timeout = TimeSpan.FromSeconds(30)
+            };
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"******");
+
+            var jiraClient = new JiraRestApiClient(httpClient);
+            var issues = useFilterName
+                ? await jiraClient.GetIssuesByFilterName(this.jiraIssueFilterName)
+                : await jiraClient.GetIssuesByRawJql(this.jiraIssueRawJql);
+
+            connectionCheckSuccess = issues.Count > 0;
+            var querySource = useFilterName ? "filter name" : "raw JQL";
+            connectionCheckMessage = connectionCheckSuccess
+                ? $"Jira JQL check succeeded (HTTP 200). Query source '{querySource}' returned {issues.Count} issue(s)."
+                : $"Jira JQL check failed. Query source '{querySource}' returned HTTP 200 but 0 issue(s).";
+        }
+        catch (JiraApiException ex)
+        {
+            logger.LogError(ex, "Error checking Jira JQL query");
+            connectionCheckSuccess = false;
+            connectionCheckMessage = $"Jira JQL check failed: HTTP {(int)ex.StatusCode} {ex.ReasonPhrase}.";
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error checking Jira JQL query");
+            connectionCheckSuccess = false;
+            connectionCheckMessage = $"Jira JQL check failed: {ex.Message}";
+        }
+
         ShowConnectionCheckDialog();
     }
 }
