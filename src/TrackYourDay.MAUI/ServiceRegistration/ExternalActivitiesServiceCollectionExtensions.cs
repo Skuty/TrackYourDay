@@ -84,7 +84,8 @@ namespace TrackYourDay.MAUI.ServiceRegistration
             client.DefaultRequestHeaders.Remove("Authorization");
             if (!string.IsNullOrEmpty(jiraSettings.ApiKey))
             {
-                client.DefaultRequestHeaders.Add("Authorization", jiraSettings.ApiKey);
+                            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {jiraSettings.ApiKey}");
+
             }
 
             client.Timeout = TimeSpan.FromSeconds(30);
