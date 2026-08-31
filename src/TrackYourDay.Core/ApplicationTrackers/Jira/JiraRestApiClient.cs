@@ -119,7 +119,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
             var url = $"/rest/api/2/search?jql={encodedJql}&fields=summary,updated&maxResults=100";
 
             var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
-            await EnsureSuccessWithDetails(response, url).ConfigureAwait(false);
+            await EnsureSuccessWithDetails(response, url, string.Empty).ConfigureAwait(false);
 
             var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
@@ -157,10 +157,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 throw new ArgumentException("Worklog comment is required.", nameof(comment));
             }
 
+
             var url = $"/rest/api/2/issue/{Uri.EscapeDataString(issueKey)}/worklog";
+            var jiraFormattedDate = new DateTimeOffset(startedAt).ToString("yyyy-MM-ddTHH:mm:ss.fff") +
+                        new DateTimeOffset(startedAt).ToString("zzz").Replace(":", "");
             var payload = new JiraCreateWorklogRequest(
                 comment.Trim(),
-                new DateTimeOffset(startedAt).ToString("yyyy-MM-ddTHH:mm:ss.fffzzz"),
+                jiraFormattedDate,
                 timeSpentSeconds);
             var requestContent = new StringContent(
                 JsonSerializer.Serialize(payload),
@@ -168,13 +171,13 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 "application/json");
 
             var response = await _httpClient.PostAsync(url, requestContent).ConfigureAwait(false);
-            await EnsureSuccessWithDetails(response, url).ConfigureAwait(false);
+            await EnsureSuccessWithDetails(response, url, JsonSerializer.Serialize(payload)).ConfigureAwait(false);
         }
 
         private static string EscapeJqlLiteral(string value)
             => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
 
-        private static async Task EnsureSuccessWithDetails(HttpResponseMessage response, string requestPath)
+        private static async Task EnsureSuccessWithDetails(HttpResponseMessage response, string requestPath, string request)
         {
             if (response.IsSuccessStatusCode)
             {
@@ -186,7 +189,7 @@ namespace TrackYourDay.Core.ApplicationTrackers.Jira
                 response.StatusCode,
                 response.ReasonPhrase,
                 requestPath,
-                body);
+                $"Response: {body}; Request: {request}");
         }
     }
 

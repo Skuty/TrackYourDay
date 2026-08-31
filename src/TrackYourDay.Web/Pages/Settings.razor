@@ -193,6 +193,9 @@
     [Inject]
     private IRawSqlExecutor rawSqlExecutor { get; init; }
 
+    [Inject]
+    private IJiraRestApiClient jiraRestApiClient { get; init; }
+
     private int minutesOfNoActivityToStartBreak = 5;
     private bool isSettingsSavedDialogVisible;
     private bool isClearDatabaseDialogVisible;
@@ -534,15 +537,7 @@
         
         try
         {
-            var httpClient = new HttpClient
-            {
-                BaseAddress = uri,
-                Timeout = TimeSpan.FromSeconds(30)
-            };
-            httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {this.jiraApiKey}");
-            
-            var jiraClient = new JiraRestApiClient(httpClient);
-            var user = await jiraClient.GetCurrentUser();
+            var user = await jiraRestApiClient.GetCurrentUser();
 
             connectionCheckSuccess = user != null && !string.IsNullOrEmpty(user.DisplayName) && user.DisplayName != "Not recognized";
             connectionCheckMessage = connectionCheckSuccess 
@@ -604,17 +599,9 @@
 
         try
         {
-            var httpClient = new HttpClient
-            {
-                BaseAddress = uri,
-                Timeout = TimeSpan.FromSeconds(30)
-            };
-            httpClient.DefaultRequestHeaders.Add("Authorization", $"******");
-
-            var jiraClient = new JiraRestApiClient(httpClient);
             var issues = useFilterName
-                ? await jiraClient.GetIssuesByFilterName(this.jiraIssueFilterName)
-                : await jiraClient.GetIssuesByRawJql(this.jiraIssueRawJql);
+                ? await jiraRestApiClient.GetIssuesByFilterName(this.jiraIssueFilterName)
+                : await jiraRestApiClient.GetIssuesByRawJql(this.jiraIssueRawJql);
 
             connectionCheckSuccess = issues.Count > 0;
             var querySource = useFilterName ? "filter name" : "raw JQL";
